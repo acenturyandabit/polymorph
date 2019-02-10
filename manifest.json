@@ -1,0 +1,15 @@
+{
+    "short_name": "PM",
+    "name": "Polymorph",
+    "icons": [{
+            "src": "assets/icon-192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        }
+    ],
+    "start_url": "/polymorph/",
+    "background_color": "#3367D6",
+    "display": "standalone",
+    "scope": "/polymorph/",
+    "theme_color": "#3367D6"
+}

@@ -1,0 +1,6 @@
+tests
+For each innerRect + the rootRect:
+- add operator
+- save and load
+- remove self
+- resize up down left right

@@ -1,0 +1,40 @@
+<html style='height:100%'>
+
+    <head>
+        <!--External libraries-->
+        <script src="3pt/localforage.min.js"></script>
+        <script src="genui/useful.js"></script>
+        <script src="genui/bind.js"></script>
+        <script src="genui/filescreen.js"></script>
+        <script src="genui/queryLoader.js"></script>
+        <script src="genui/scriptassert.js"></script>
+        <script src="genui/eventAPI.js"></script>
+        <script src="ui.js"></script>
+        <script src="core.js"></script>
+        <script src="pwa.js"></script>
+        <script>
+        var pwaManager=new _pwaManager();
+        </script>
+
+        <!-- Put all operators here -->
+        <script src="operators/itemList.js"></script>
+        <script src="operators/descbox.js"></script>
+        <script src="operators/calendar.js"></script>
+        <style>
+            h1{
+                margin:0;
+            }
+        </style>
+    </head>
+
+    <body style="display:flex; height:100%; flex-direction:column; margin:0">
+        <div class="banner">
+            <h1 class="docName" contentEditable>Pad name</h1>
+            <ul class="topbar">
+            </ul>
+        </div>
+        <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
+            
+        </div>
+    </body>
+</html>
