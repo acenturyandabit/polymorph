@@ -10,9 +10,9 @@ const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 10;
 
-function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
+function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Putting all the variables here for quick reference.
-    this.parent = parent; // parent is either a CSS Query String or another rect.
+    this.parent = parent; // parent is either a DOM element or another rect.
     if (typeof XorY == 'object') {
         this.XorY = XorY.XorY; // XorY determines whether the split is in the X or the Y direction. 
         this.pos = XorY.pos; //if first, the size; otherwise position (and size);
@@ -30,14 +30,14 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
     this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
     let me = this;
 
-    //Handle the parent in general
-    if (typeof (this.parent) == "string") {
+    //Determine whether the item is a root item.
+    if (!this.parent.core) {
         this.isRoot = true;
     } else {
         this.parentRect = this.parent;
     }
 
-    // Create the innerDiv
+    // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
     this.outerDiv.style.position = "absolute ";
     this.outerDiv.style["box-sizing"] = "border-box";
@@ -48,66 +48,120 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
     this.outerDiv.style['flex-direction'] = "column";
     this.outerDiv.style.background = "lightgrey";
 
-    this.innerDiv = document.createElement("div");
-    this.innerDiv.style.height = "100%";
-    this.innerDiv.style.width = "100%";
-    this.innerDiv.style.overflow = "hidden";
-    this.innerDiv.style.background = "lightgrey";
-    this._typeName = document.createElement("p");
-    this.typeName = document.createElement("span");;
-    this._typeName.style.cssText = `display:block;margin:0; width:100%;background:white`
-    this.cross = document.createElement("button");
-    this.cross.addEventListener("click", () => {
-        me.remove()
-    })
-    this.cross.style.cssText = `color:red;font-weight:bold; font-style:normal`;
-    this.cross.innerHTML = "x";
-    this._typeName.appendChild(this.typeName);
-    this.settingsgear=document.createElement("img");
-    this.settingsgear.src="assets/gear.png";
-    this.settingsgear.style.cssText="width: 1em; height:1em;"
-    this.settingsgear.addEventListener("click",()=>{
-        this.operator.baseOperator.showSettings();
-    })
-    this._typeName.appendChild(this.settingsgear);
-    this._typeName.appendChild(this.cross);
-    this.outerDiv.appendChild(this._typeName);
-    this.outerDiv.appendChild(this.innerDiv);
-
-
-
-    this.refreshBlankScreen = function (recursive) {
-        if (!this.operator) {
-            this.innerDiv.innerHTML = "";
-            this.blankinnerDiv = document.createElement("div");
-            this.blankinnerDiv.style.height = "100%";
-            this.blankinnerDiv.style.width = "100%";
-            this.blankinnerDiv.overflow = "hidden";
-            this.blankinnerDiv.style.background = "lightgrey";
-            let _innerHTML = `<h1>Select a view</h1>`
-            this.blankinnerDiv.innerHTML = _innerHTML;
-            for (let i in core.operators) {
-                let b = document.createElement("button");
-                b.innerHTML = i;
-                b.addEventListener("click", () => {
-                    me.operator = new core.operator(b.innerHTML, me);
-                })
-                this.blankinnerDiv.appendChild(b);
-            }
-            this.innerDiv.appendChild(this.blankinnerDiv);
-        }
-        if (recursive && this.children.length > 0) {
-            this.children[0].refreshBlankScreen();
-            this.children[1].refreshBlankScreen();
-        }
+    // For handling operators. Each operator has its own innerDiv, and a typespan (with the name, and a cross) in the tabspan bar.
+    // Create the innerDivs and generator for innerDivs..
+    this.innerDivs = [];
+    this.createInnerDiv = function () {
+        let indiv = document.createElement("div");
+        indiv.style.height = "100%";
+        indiv.style.width = "100%";
+        indiv.style.overflow = "hidden";
+        indiv.style.background = "lightgrey";
+        indiv.style.display = "none";
+        return indiv;
     }
 
+    this.tabspans = [];
+    this.createTypeName = function () {
+        let tyspan = document.createElement("span");
+        let tyname = document.createElement("span");
+        let tybtn = document.createElement("button");
+        let tygear = document.createElement("img");
+        tybtn.style.cssText = `color:red;font-weight:bold; font-style:normal`;
+        tybtn.innerText = 'x';
+        tygear.src = "assets/gear.png";
+        tygear.style.cssText = "width: 1em; height:1em;"
+        tyspan.style.border = "1px solid black";
+        tyspan.appendChild(tyname);
+        tyspan.appendChild(tybtn);
+        tyspan.appendChild(tygear);
+        return tyspan;
+    }
+
+    //Function for adding an operator to this rect. Operator must already exist.
+    this.tieOperator = function (operator) {
+        if (!this.operators) this.operators = [];
+        if (!this.operators.includes(operator)) {
+            this.operators.push(operator);
+            //Create a button for it
+            this.tabspans.push(this.createTypeName());
+            this.tabspans[this.tabspans.length - 1].querySelector("span").innerText = operator.type;
+            this.tabbar.insertBefore(this.tabspans[this.tabspans.length - 1], this.plus);
+            //Create a tab for it
+            this.innerDivs.push(this.createInnerDiv());
+            //Hook it up
+            this.innerDivs[this.innerDivs.length - 1].appendChild(operator.topdiv);
+            this.outerDiv.appendChild(this.innerDivs[this.innerDivs.length - 1]);
+        } else {
+            this.tabspans[this.operators.indexOf(operator)].querySelector("span").innerText = operator.type;
+            //just refresh the tabspan.
+        }
+        operator.rect = this;
+    }
+
+    //Callback for tab clicks to switch between operators.
+    this.switchOperator = function (index) {
+        this.selectedOperator = index;
+        for (let i = 0; i < this.innerDivs.length; i++) {
+            this.innerDivs[i].style.display = "none";
+        }
+        if (this.innerDivs[index]) this.innerDivs[index].style.display = "block";
+        if (this.operators[index] && this.operators[index].baseOperator.resize)this.operators[index].baseOperator.resize();
+    }
+
+    // The actual tabbar.
+    this.tabbar = document.createElement("p");
+    this.tabbar.style.cssText = `displaparentElementy:block;margin:0; width:100%;background:white`
+    this.plus = document.createElement("button");
+    this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
+    this.plus.innerText = "+";
+    this.tabbar.appendChild(this.plus);
+    this.plus.addEventListener("click", () => {
+        this.tieOperator(new core.operator("opSelect", this));
+        this.switchOperator(this.operators.length - 1);
+    })
+    //Delegated operator switching
+    this.tabbar.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() == 'span') {
+            this.switchOperator(this.tabspans.indexOf(e.target.parentElement));
+        }
+    })
+
+    //Delegated cross button handler
+    this.tabbar.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x") {
+            let i = this.tabspans.indexOf(e.target.parentElement);
+            e.target.parentElement.remove();
+            //this.outerDiv.children[i+1].remove();
+            this.innerDivs[i].remove();
+            this.innerDivs.splice(i, 1);
+            this.tabspans.splice(i, 1);
+            this.operators.splice(i, 1);
+            if (this.innerDivs.length == 0) {
+                this.remove();
+            } else {
+                if (i < this.innerDivs.length - 1) this.switchOperator(i);
+                else this.switchOperator(i - 1);
+            }
+        }
+    })
+
+    this.selectedOperator = 0;
+    //And a delegated settings button handler
+    this.tabbar.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() == "img") {
+            this.operators[this.selectedOperator].baseOperator.showSettings();
+        }
+    })
+    this.outerDiv.appendChild(this.tabbar);
+
     // Generate placeholder content if no content is provided.
-    if (operator) {
-        this.operator = operator;
-        operator.setParent(this);
+    if (operators) {
+        for (let i = 0; i < operators.length; i++) this.tieOperator(operators[i]);
+        this.switchOperator(0);
     } else {
-        this.refreshBlankScreen();
+        this.tieOperator(new core.operator("opSelect", this));
+        this.switchOperator(0);
     }
 
     //handle a resize event.
@@ -136,11 +190,16 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
         if (this.children.length) {
             me.outerDiv.style.border = "none"; // verify border removal
             //hide other items
-            me._typeName.style.display = "none";
+            me.tabbar.style.display = "none";
             this.children[0].resize();
             this.children[1].resize();
-        }else{
-            me._typeName.style.display = "block";
+        } else {
+            if (this.operators) {
+                for (let i = 0; i < this.operators.length; i++) {
+                    if (this.operators[i].baseOperator.resize) this.operators[i].baseOperator.resize();
+                }
+            }
+            me.tabbar.style.display = "block";
             me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
         }
     }
@@ -148,18 +207,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
     // If parent is body, ensure loaded, so we can create a new rect whenever.
-    function appendToParentString() {
-        parent = document.body.querySelector(parent);
-        parent.appendChild(me.outerDiv);
-        me.resize();
-    }
     if (this.isRoot) {
-        if (document.readyState != "loading") appendToParentString();
-        else document.addEventListener("DOMContentLoaded", appendToParentString);
+        parent.appendChild(me.outerDiv);
     } else {
-        parent.innerDiv.appendChild(this.outerDiv);
-        this.resize();
+        parent.outerDiv.appendChild(this.outerDiv);
     }
+    this.resize();
     //events
     this.mouseMoveHandler = function (e) {
         let inOrOut = [false, false, false, false];
@@ -198,24 +251,40 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
                 if (!me.children.length) me.outerDiv.style["border-" + borders[dirn]] = RECT_BORDER_WIDTH + "px red solid";
             }
             if (me.split != -1 && me.split != dirn) {
+                if (!(e.buttons % 2)) {
+                    me.split = -1;
+                    e.preventDefault();
+                    //reset and return
+                    return;
+                }
                 // a split has been called. Initialise the split!
                 me.outerDiv.style.border = "none";
-                me._typeName.style.display = "none";
-                me.outerDiv.appendChild(me.innerDiv);
+                me.tabbar.style.display = "none";
+                for (let i = 0; i < me.innerDivs.length; i++) me.innerDivs[i].remove();
+                me.innerDivs = [];
+                me.tabspans = [];
+                while (me.tabbar.children.length > 1) me.tabbar.children[0].remove();
+
+                //me.outerDiv.appendChild(me.innerDiv);
                 let _XorY = (me.split > 1) * 1;
                 let _firstOrSecond = me.split % 2;
                 if (_firstOrSecond) {
-                    me.children = [new _rect(core, me, _XorY, 1, 0, me.operator), new _rect(core, me, _XorY, 1, 1)];
+                    me.children = [new _rect(core, me, _XorY, 1, 0, me.operators), new _rect(core, me, _XorY, 1, 1)];
                 } else {
-                    me.children = [new _rect(core, me, _XorY, 0, 0), new _rect(core, me, _XorY, 0, 1, me.operator)];
+                    me.children = [new _rect(core, me, _XorY, 0, 0), new _rect(core, me, _XorY, 0, 1, me.operators)];
                 }
-                me.operator=undefined;
+                me.operators = undefined;
                 me.children[_firstOrSecond].resizing = me.split;
-
                 me.split = -1;
                 //move the operator into the new box; create a blank box; set this box to a nonprimary box
             }
             if (me.resizing != -1) {
+                if (!(e.buttons % 2)) {
+                    me.resizing = -1;
+                    e.preventDefault();
+                    //reset and return
+                    return;
+                }
                 //calculate the pos parameter (it can be fed to both siblings)
                 if (me.XorY) me.pos = (e.clientY - me.outerDiv.parentElement.getClientRects()[0].top) / me.outerDiv.parentElement.getClientRects()[0].height;
                 else me.pos = (e.clientX - me.outerDiv.parentElement.getClientRects()[0].left) / me.outerDiv.parentElement.getClientRects()[0].width;
@@ -278,7 +347,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
     let toSaveProperties = ['XorY', 'firstOrSecond', 'pos'];
     this.toSaveData = function () {
         let obj = {};
-        if (this.operator) obj.operator = this.operator.toSaveData();
+        if (this.operators) {
+            obj.operators = [];
+            for (let i = 0; i < this.operators.length; i++) obj.operators.push(this.operators[i].toSaveData());
+            obj.selectedOperator = this.selectedOperator;
+        }
         for (let i = 0; i < toSaveProperties.length; i++) {
             obj[toSaveProperties[i]] = this[toSaveProperties[i]];
         }
@@ -288,17 +361,49 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
         return obj;
     }
     this.fromSaveData = function (obj) {
-        if (obj.operator) this.operator = new me.core.operator(obj.operator, me);
-        else {
+        //children first!
+        if (obj.children) {
+            me.outerDiv.style.border = "none";
+            me.tabbar.style.display = "none";
+            for (let i = 0; i < me.innerDivs.length; i++) me.innerDivs[i].remove();
+            me.innerDivs = [];
+            me.tabspans = [];
+            while (me.tabbar.children.length > 1) me.tabbar.children[0].remove();
+            me.operators = undefined;
+            this.children = [new _rect(core, this, obj.children[0]), new _rect(core, this, obj.children[1])];
             for (let i = 0; i < toSaveProperties.length; i++) {
                 this[toSaveProperties[i]] = obj[toSaveProperties[i]];
             }
-            if (obj.children) {
-                me.innerDiv.innerHTML = "";
-                this.children = [new _rect(core, this, obj.children[0]), new _rect(core, this, obj.children[1])];
+        } else if (obj.operators) {
+            for (let i = 0; i < this.outerDiv.children.length; i++) {
+                if (this.outerDiv.children[i] != this.tabbar) {
+                    this.outerDiv.children[i].remove();
+                }
             }
-            this.resize();
+            this.innerDivs = [];
+            for (let i = 0; i < this.tabbar.children.length; i++) {
+                this.tabbar.children[i].remove();
+            }
+            this.tabspans = [];
+            //Clear everything; reinstantiate topbar
+            //show opselect if it does not already exist
+            this.operators = [];
+
+            for (let i = 0; i < obj.operators.length; i++) {
+                let op=new me.core.operator(obj.operators[i], me)
+                this.tieOperator(op);
+            }
+            if (obj.selectedOperator) this.selectedOperator = obj.selectedOperator;
+            if (this.selectedOperator > this.operators.length - 1) this.selectedOperator = this.operators.length - 1;
+            this.switchOperator(this.selectedOperator);
+        } else if (obj.operator) {
+            //legacy support
+            this.tieOperator(new me.core.operator(obj.operator, me));
+            this.switchOperator(this.selectedOperator);
+        } else {
+            this.tieOperator(new me.core.operator("opSelect", me));
         }
+        this.resize();
     }
     if (typeof XorY == 'object') this.fromSaveData(XorY);
 
@@ -308,27 +413,28 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operator) {
     }
     this._remove = function (_firstOrSecond) {
         //if remaining innerDiv has an operator, adopt it
-        this.operator = this.children[(!_firstOrSecond) * 1].operator;
-        if (this.operator) {
-            this.operator.setParent(this);
+        if (this.children[(!_firstOrSecond) * 1].operators && this.children[(!_firstOrSecond) * 1].operators.length) {
+            for (let i = 0; i < this.children[(!_firstOrSecond) * 1].operators.length; i++) this.tieOperator(this.children[(!_firstOrSecond) * 1].operators[i]);
+            //remove the children
+            this.children[0].outerDiv.remove();
+            this.children[1].outerDiv.remove();
             this.children = [];
+            //reshow tabbar
+            this.tabbar.style.display = "block";
         } else {
             //otherwise adopt the children
             this.children = this.children[(!_firstOrSecond) * 1].children;
-            while (this.innerDiv.firstChild) {
-                this.innerDiv.removeChild(this.innerDiv.firstChild);
+            while (this.outerDiv.children.length > 1) {
+                this.outerDiv.children[this.outerDiv.children.length - 1].remove();
             }
-            if (this.children.length) {
-                //kick out the old children and in with the new   
-                this.children[0].parentRect = this;
-                this.children[1].parentRect = this;
-                this.innerDiv.appendChild(this.children[0].outerDiv);
-                this.innerDiv.appendChild(this.children[1].outerDiv);
-            }
+            this.outerDiv.appendChild(this.children[0].outerDiv);
+            this.outerDiv.appendChild(this.children[1].outerDiv);
+            this.children[0].parentRect = this;
+            this.children[1].parentRect = this;
         }
-
         //delete this.children[0];
         //delete this.children[1];
         this.resize();
+        this.switchOperator(0);
     }
 }

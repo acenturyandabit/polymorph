@@ -1,5 +1,5 @@
 /*
-scriptAssert V1.1: Load multiple scripts, links etc in a chain, to preserve dependencies; but also prevent redundant loading.
+scriptAssert V2.1: Load multiple scripts, links etc in a chain, to preserve dependencies; but also prevent redundant loading.
 Now with CSS loading!
 list: list of pairs:
 [[module name,path to script]]
@@ -8,7 +8,7 @@ For consistency, the module name should be in all lowercase and not include the 
 */
 
 var __assert_states={};
-function assert(list, done) {
+function scriptassert(list, done,sroot) {//shadow root option
     if (list.length) {
         let varname = list[0][0];
         let path = list[0][1];
@@ -17,7 +17,7 @@ function assert(list, done) {
         if (!__assert_states[varname]) {
             __assert_states[varname]={state:'loading'};
             __assert_states[varname].callbacks=[];
-            __assert_states[varname].callbacks.push(()=>{assert(list,done)});
+            __assert_states[varname].callbacks.push(()=>{scriptassert(list,done)});
             //append script to root
             //wait until script is done loading?
             // if there is a css file load that as well.
@@ -43,11 +43,11 @@ function assert(list, done) {
             //while(waiting);
             //console.log("started...");
         }else if (__assert_states[varname].state=='loading'){
-            __assert_states[varname].callbacks.push(()=>{assert(list,done)});
+            __assert_states[varname].callbacks.push(()=>{scriptassert(list,done)});
             //console.log("skipped, waiting");
         }else{
             //console.log("skipped, ready");
-            assert(list,done)
+            scriptassert(list,done)
         }
-    } else done();
+    } else if (done)done();
 }

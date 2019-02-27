@@ -64,7 +64,7 @@ core.registerOperator("descbox", function (operator) {
     me.textarea.addEventListener("input",me.somethingwaschanged);
 
     //Create a settings dialog
-    assert([["dialog","genui/dialog.js"]],()=>{
+    scriptassert([["dialog","genui/dialog.js"]],()=>{
         me.dialog=document.createElement("div");
 
         me.dialog.innerHTML=`

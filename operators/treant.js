@@ -1,30 +1,15 @@
-core.registerOperator("template", function (operator) {
+core.registerOperator("treant", function (operator) {
     let me = this;
     this.settings = {};
-    //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
-    this.style = document.createElement("style");
-    this.style.innerHTML = `
-        textarea{
-            width:5em;
-            height:5em;
-            resize:none; 
-        }
-        button{
-            width: 5em;
-            display:block;
-        }
-        .containerDiv{
-            display:flex;
-            flex-direction: row;
-
-        }
-    `
-    operator.div.appendChild(this.style);
-
 
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = ``;
+    
+    scriptassert([["jquery","3pt/jquery.min.js"],["treant","3pt/Treant.js","3pt/Treant.css"]],()=>{
+        
+    })
+
 
     operator.div.appendChild(this.rootdiv);
 
@@ -38,7 +23,6 @@ core.registerOperator("template", function (operator) {
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
-        //This is also called when items are created.
     });
 
     core.on("focus", function (d) {
@@ -58,17 +42,17 @@ core.registerOperator("template", function (operator) {
         let id = d.id;
         let s = d.sender;
         if (sender == me) return;
-        // An item was deleted.
+        // An item was created.
     });
 
-    core.on("dateUpdate", function (d) {
+    core.on("dateUpdate",function (d) {
         let id = d.id;
         let s = d.sender;
         if (sender == me) return;
         // The date of an item was updated.
     });
 
-    this.resize = function () {
+    this.resize=function(){
         // This is called when my parent rect is resized.
     }
 
@@ -159,7 +143,7 @@ core.registerOperator("template", function (operator) {
 
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
-            me.processSettings();
+            me.updateSettings();
         })
 
         me.showSettings = function () {

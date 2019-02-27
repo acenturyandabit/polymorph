@@ -1,6 +1,7 @@
-//V2.0: finally removed JQ dependency. Also added global dialogmanager. yeets
+//V2.1: direct styling to add compatibility with shadow roots
 /*
 Todo: checkDialogs takes styling information and additional parameters.
+Todo: move entirely to shadow DOM.
 */
 
 function _dialogManager(userSettings) {
@@ -16,7 +17,7 @@ function _dialogManager(userSettings) {
         //class of the close button. A close handler is included but like don't include this elsewhere? Modify if you want
         closeButtonClass: 'cb',
         //////////////////The below is mostly styling, modify if you want.//////////////////
-        closeButtonStyle: `{
+        closeButtonStyle: `
             position: absolute;
             top: 0px;
             right: 0px;
@@ -30,12 +31,12 @@ function _dialogManager(userSettings) {
             text-align: center;
             color: white;
             font-family: sans-serif;
-        }`,
+        `,
 
         dialogLayers: [ // Layers of wrapping for the dialog. The outermost layer will be scanned for.
             {
                 className: "dialog",
-                styling: `{
+                styling: `
                 display: none;
                 position: absolute;
                 top: 0;
@@ -44,29 +45,29 @@ function _dialogManager(userSettings) {
                 height:100%;
                 background-color: rgba(0,0,0,0.5);
                 z-index:100;
-            }`
+            `
             },
             {
                 className: "midmid",
-                styling: `{
+                styling: `
                 display: table;
                 position: absolute;
                 top: 0;
                 left: 0;
                 height: 100%;
                 width: 100%;
-            }`
+            `
             },
             {
                 className: "mid",
-                styling: `{
+                styling: `
                 display: table-cell;
                 vertical-align: middle;
-            }`
+            `
             },
             {
                 className: "innerDialog",
-                styling: `{
+                styling: `
                 position:relative;
                 display: flex;
                 flex-direction: column;
@@ -76,7 +77,7 @@ function _dialogManager(userSettings) {
                 background-color: white;
                 border-radius: 30px;
                 padding: 30px;
-            }`
+            `
             }
         ]
     }
@@ -94,6 +95,8 @@ function _dialogManager(userSettings) {
                 let prediv = e;
                 for (let i = me.settings.dialogLayers.length - 1; i >= 0; i--) {
                     let thisdiv = document.createElement("div");
+                    //chuck the relevant css in.
+                    thisdiv.style.cssText=me.settings.dialogLayers[i].styling;
                     thisdiv.classList.add(me.settings.dialogLayers[i].className);
                     thisdiv.appendChild(prediv);
                     prediv = thisdiv;
@@ -106,6 +109,7 @@ function _dialogManager(userSettings) {
                 if (!e.classList.contains(me.settings.noCloseClass)) {
                     let closeButton = document.createElement("div");
                     closeButton.innerText = "X";
+                    closeButton.style.cssText=me.settings.closeButtonStyle;
                     closeButton.classList.add(me.settings.closeButtonClass);
                     closeButton.addEventListener("click", () => {
                         prediv.style.display = "none";
@@ -124,16 +128,12 @@ function _dialogManager(userSettings) {
             }
         }
     }
-    //chuck the relevant css in.
-    me.settings.dialogLayers.forEach((v, i) => {
-        let s=document.createElement("style");
-        s.innerHTML=`.` + v.className + v.styling;
-        document.head.appendChild(s);
-    })
+    
+
     //css for the close button
-    let s=document.createElement("style");
-    s.innerHTML=`.` + me.settings.closeButtonClass + me.settings.closeButtonStyle;
-    document.head.appendChild(s);
+    //let s=document.createElement("style");
+    //s.innerHTML=`.` + me.settings.closeButtonClass + me.settings.closeButtonStyle;
+    //document.head.appendChild(s);
     me.mo = new MutationObserver(me.checkDialogs);
     //document.addEventListener("DOMContentLoaded", () => {
     if (me.settings.autoDialogUpgrade){

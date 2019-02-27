@@ -18,10 +18,7 @@ saveRecentDocument(id,offline=true);
 function _filescreen(userSettings) {
     this.settings = {
         headprompt: "Welcome!",
-        onlineEnabled: true,
-        onlineQueryParam: "",
-        offlineEnabled: true,
-        offlineQueryParam: "offline",
+        formats:[{prompt:"Make a new document"}],
         documentQueryKeyword: "doc",
         tutorialEnabled: true,
         tutorialURL: "?tute",
@@ -76,29 +73,20 @@ function _filescreen(userSettings) {
         me.newDocInput = document.createElement("input");
         me.newDocInput.placeholder = "Enter Name...";
         innerDiv.appendChild(me.newDocInput);
-        if (me.settings.onlineEnabled) {
-            me.newOnlineButton = document.createElement("button");
-            me.newOnlineButton.innerText = "Make an online (shared) document";
-            me.newOnlineButton.addEventListener("click", () => {
+        for (let i=0;i<me.settings.formats.length;i++){
+            let b = document.createElement("button");
+            b.innerText=me.settings.formats[i].prompt;
+            if (me.settings.formats[i].queryParam)b.dataset.queryParam=me.settings.formats[i].queryParam;
+            b.addEventListener("click",(e)=>{
                 if (me.newDocInput.value.length) {
                     let url=new URL(window.location);
-                    url.search="?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value + "&" + me.settings.onlineQueryParam;
+                    let totalString="?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value;
+                    if (e.target.dataset.queryParam)totalString += "&" + e.target.dataset.queryParam;
+                    url.search=totalString;
                     window.location.href = url.toString();
                 }
             })
-            innerDiv.appendChild(me.newOnlineButton);
-        }
-        if (me.settings.offlineEnabled) {
-            me.newOfflineButton = document.createElement("button");
-            me.newOfflineButton.innerText = "Make an offline (local) document";
-            me.newOfflineButton.addEventListener("click", () => {
-                if (me.newDocInput.value.length) {
-                    let url=new URL(window.location);
-                    url.search="?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value + "&" + me.settings.offlineQueryParam;
-                    window.location.href = url.toString();
-                }
-            })
-            innerDiv.appendChild(me.newOfflineButton);
+            innerDiv.appendChild(b);
         }
         let recentHeading = document.createElement("h2");
         recentHeading.innerText = "Open a recent document:";

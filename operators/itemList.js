@@ -1,16 +1,12 @@
-core.registerOperator("itemList", function (operator, settings) {
+core.registerOperator("itemList", function (operator) {
     let me = this;
     //Initialise with default settings
-    if (settings) {
-        this.settings = settings;
-        this.updateSettings();
-    } else {
-        this.settings = {
-            properties: {
-                title: "text"
-            }
-        };
-    }
+    this.settings = {
+        properties: {
+            title: "text"
+        },
+        filterProp:undefined
+    };
 
     this.settingsBar = document.createElement('div');
     this.settingsBar.innerHTML = `<div></div>`
@@ -42,24 +38,32 @@ core.registerOperator("itemList", function (operator, settings) {
                     it[i] = currentItemSpan.querySelector("[data-role='" + i + "']").value;
                     break;
                 case "date":
-                    if (!it[i])it[i]={};
-                    if (typeof it[i]=="string")it[i]={datestring:it[i]};
+                    if (!it[i]) it[i] = {};
+                    if (typeof it[i] == "string") it[i] = {
+                        datestring: it[i]
+                    };
                     it[i].datestring = currentItemSpan.querySelector("[data-role='" + i + "']").value;
                     break;
             }
             me.template.querySelector("[data-role='" + i + "']").value = "";
         }
-        currentItemSpan.querySelector("button").innerHTML="X";
+        currentItemSpan.querySelector("button").innerHTML = "X";
         it.itemList = true;
         let id = core.insertItem(it);
         currentItemSpan.querySelector("[data-role='id']").innerText = id;
         currentItemSpan.dataset.id = id;
         //clear the template
-        core.fire("create",{id:id, sender:this});
-        core.fire("updateItem",{id:id, sender:this});
+        core.fire("create", {
+            id: id,
+            sender: this
+        });
+        core.fire("updateItem", {
+            id: id,
+            sender: this
+        });
         me.datereparse(id);
     }
-    
+
     this.template.querySelector("button").innerText = ">";
     this.template.querySelector("button").addEventListener("click", this.createItem);
     this.template.addEventListener("keydown", (e) => {
@@ -70,10 +74,10 @@ core.registerOperator("itemList", function (operator, settings) {
 
 
     core.on("updateItem", function (d) {
-        let id=d.id;
+        let id = d.id;
         let s = d.sender;
-        me.settings.currentID=id;
-        me.updateItem(id,s);
+        me.settings.currentID = id;
+        me.updateItem(id, s);
     });
 
     this.updateItem = function (id, sender) {
@@ -88,7 +92,7 @@ core.registerOperator("itemList", function (operator, settings) {
             currentItemSpan = me.template.cloneNode(true);
             me.taskList.appendChild(currentItemSpan);
             currentItemSpan.dataset.id = id;
-            currentItemSpan.querySelector("button").innerHTML="X";
+            currentItemSpan.querySelector("button").innerHTML = "X";
         }
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
@@ -105,30 +109,37 @@ core.registerOperator("itemList", function (operator, settings) {
                     if (it[i] && it[i].datestring) {
                         currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
                     } else {
-                        if (it[i] && typeof it[i]=="string"){
-                            it[i]={datestring:it[i]};
+                        if (it[i] && typeof it[i] == "string") {
+                            it[i] = {
+                                datestring: it[i]
+                            };
                             currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
                             // May want to reparse the date aswell.
-                            if (me.datereparse)me.datereparse(id);
+                            if (me.datereparse) me.datereparse(id);
                         }
                     }
                     break;
             }
         }
-        
+
     }
 
     //Handle item deletion
-    this.taskList.addEventListener("click",(e)=>{
-        if (e.target.tagName.toLowerCase()=="button"){
-            core.fire("deleteItem",{id:e.target.parentElement.dataset.id,sender:this});
+    this.taskList.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() == "button") {
+            core.fire("deleteItem", {
+                id: e.target.parentElement.dataset.id,
+                sender: this
+            });
         }
     })
-    this.deleteItem=function(id){
-        this.taskList.querySelector("span[data-id='"+id+"']").remove();
+    this.deleteItem = function (id) {
+        this.taskList.querySelector("span[data-id='" + id + "']").remove();
     }
 
-    core.on("deleteItem",(d)=>{me.deleteItem(d.id)});
+    core.on("deleteItem", (d) => {
+        me.deleteItem(d.id)
+    });
 
     this.updateSettings = function () {
         //Look at the settings and apply any relevant changes
@@ -152,7 +163,7 @@ core.registerOperator("itemList", function (operator, settings) {
             this.updateItem(i);
         }
     }
-    
+
     //First time load
     this.updateSettings();
     //Saving and loading
@@ -173,70 +184,92 @@ core.registerOperator("itemList", function (operator, settings) {
             case "text":
             case "number":
             case "tag":
-                currentItem[e.target.dataset.role] = e.target.value;        
+                currentItem[e.target.dataset.role] = e.target.value;
                 break;
             case "date":
-                if (!currentItem[e.target.dataset.role])currentItem[e.target.dataset.role]={};
-                if (typeof currentItem[e.target.dataset.role] =="string")currentItem[e.target.dataset.role]={"datestring":currentItem[e.target.dataset.role]};
+                if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
+                if (typeof currentItem[e.target.dataset.role] == "string") currentItem[e.target.dataset.role] = {
+                    "datestring": currentItem[e.target.dataset.role]
+                };
                 currentItem[e.target.dataset.role].datestring = e.target.value;
                 break;
         }
-        
+
         //match all the item data and currentITem data
-        core.fire("updateItem",{id:e.target.parentElement.parentElement.dataset.id,sender:me});
+        core.fire("updateItem", {
+            id: e.target.parentElement.parentElement.dataset.id,
+            sender: me
+        });
     })
 
     this.taskList.addEventListener("keyup", (e) => {
-        if (e.target.tagName.toLowerCase()=="input" && this.settings.properties[e.target.dataset.role]=='date' && e.key=="Enter"){
+        if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
             me.datereparse(e.target.parentElement.parentElement.dataset.id);
         }
     })
 
+    this.focusItem = function (id) {
+        //Highlight in purple
+        for (let i = 0; i < me.taskList.children.length; i++) {
+            me.taskList.children[i].style.borderTop = "";
+            me.taskList.children[i].style.borderBottom = "";
+        }
+        let _target = me.taskList.querySelector("[data-id='" + id + "']");
+        _target.style.borderTop = "solid 3px purple";
+        _target.style.borderBottom = "solid 3px purple";
+    }
+
     this.taskList.addEventListener("focusin", (e) => {
         if (e.target.matches("input")) {
-            core.fire("focus",{id:e.target.parentElement.parentElement.dataset.id, sender:this});
-            //Highlight in purple
-            for (let i = 0; i < me.taskList.children.length; i++) {
-                me.taskList.children[i].style.borderTop = "";
-                me.taskList.children[i].style.borderBottom = "";
-            }
-            let _target = e.target;
-            while (_target.parentElement != me.taskList) {
-                _target = _target.parentElement;
-            }
-            _target.style.borderTop = "solid 3px purple";
-            _target.style.borderBottom = "solid 3px purple";
+            core.fire("focus", {
+                id: e.target.parentElement.parentElement.dataset.id,
+                sender: this
+            });
+            this.focusItem(e.target.parentElement.parentElement.dataset.id);
         }
     })
-    assert([['dateparser','genui/dateparser.js']],()=>{
-        me.datereparse=function(it){
-            let dateprop="";
-            for (let i in me.settings.properties){
-                if (me.settings.properties[i]=='date'){
-                    dateprop=i;
+    scriptassert([
+        ['dateparser', 'genui/dateparser.js']
+    ], () => {
+        me.datereparse = function (it) {
+            let dateprop = "";
+            for (let i in me.settings.properties) {
+                if (me.settings.properties[i] == 'date') {
+                    dateprop = i;
                     break;
                 }
             }
-            if (dateprop=="") return;
+            if (dateprop == "") return;
             //specifically reparse the date on it;
-            if (it){
-                let tryExtractedDate=dateParser.extractTime(core.items[it][dateprop].datestring);
-                if (tryExtractedDate)core.items[it][dateprop].date=tryExtractedDate.getTime();
-                else core.items[it][dateprop].date=undefined;
+            if (it) {
+                core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
+                if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
                 //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
             }
             // get a list of Items
-            let its=[];
+            let its = [];
             me.taskList.querySelectorAll("[data-id]").forEach(e => {
-                let itm={id:e.dataset.id};
-                if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date)itm.date=core.items[itm.id][dateprop].date;
-                else itm.date=Date.now()*10000;
+                let itm = {
+                    id: e.dataset.id
+                };
+                //we are going to upgrade all dates that don't match protocol)
+                if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
+                    if (typeof core.items[itm.id][dateprop].date == "number") {
+                        core.items[itm.id][dateprop].date = [{
+                            date: core.items[itm.id][dateprop].date
+                        }];
+                    }
+                    if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
+                    else itm.date = Date.now() * 10000;
+                } else itm.date = Date.now() * 10000;
                 its.push(itm);
             });
             //sort everything based on the date.
-            its.sort((a,b)=>{return a.date-b.date});
-            for (let i=0;i<its.length;i++){
-                me.taskList.appendChild(me.taskList.querySelector("[data-id='"+its[i].id+"']"));
+            its.sort((a, b) => {
+                return a.date - b.date
+            });
+            for (let i = 0; i < its.length; i++) {
+                me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
             }
             core.fire("dateUpdate");
         }
@@ -244,7 +277,7 @@ core.registerOperator("itemList", function (operator, settings) {
     })
 
 
-    assert([
+    scriptassert([
         ["dialog", "genui/dialog.js"]
     ], () => {
         me._dialog = document.createElement("div");
@@ -269,7 +302,9 @@ core.registerOperator("itemList", function (operator, settings) {
         <p>Options</p>
         <p><input type="checkbox"><span>Sort by date</span></p>
         <p><input type="checkbox"><span>Delete items (instead of hiding)</span></p>
-        `;
+        <p>View items with the following property:</p> 
+        <input data-role='filterProp' placeholder = 'Property name'></input>
+        `
         d.querySelector(".adbt").addEventListener("click",
             function () {
                 if (d.querySelector(".adpt").value != "") {
@@ -281,14 +316,14 @@ core.registerOperator("itemList", function (operator, settings) {
             }
         )
         me.innerDialog.appendChild(d);
-        me._dialog.querySelector(".cb").addEventListener("click", function(){
+        me._dialog.querySelector(".cb").addEventListener("click", function () {
             me.updateSettings();
         })
 
         me.proplist = me.innerDialog.querySelector(".proplist");
         //Handle select's in proplist
-        me.proplist.addEventListener('change', function(e){
-            me.settings.properties[e.target.dataset.role]=e.target.value;
+        me.proplist.addEventListener('change', function (e) {
+            me.settings.properties[e.target.dataset.role] = e.target.value;
         })
         me.opList = me.innerDialog.querySelector("select._prop");
         //retrieve stuff
@@ -297,12 +332,14 @@ core.registerOperator("itemList", function (operator, settings) {
         //Style tags button
         me.showSettings = function () {
             //Fill in dialog information
+            //set the propertyname one
+            me.innerDialog.querySelector('input[data-role="filterProp"]').value=me.settings.filterProp;
             //Get all available properties, by looping through all elements (?)
             me.opList.innerHTML = "";
             let props = {};
             for (let i in core.items) {
                 for (let j in core.items[i]) {
-                    if (typeof core.items[i][j]!="function")props[j] = true;
+                    if (typeof core.items[i][j] != "function") props[j] = true;
                 }
             }
             for (let prop in props) {
@@ -318,7 +355,7 @@ core.registerOperator("itemList", function (operator, settings) {
             for (let prop in me.settings.properties) {
                 let pspan = document.createElement("p");
                 pspan.innerHTML = `<span>` + prop + `</span>
-                <select data-role=`+prop+`>
+                <select data-role=` + prop + `>
                     <option value="text">Text</option>
                     <option value="date">Date</option>
                     <option value="tag">Tag</option>
@@ -331,4 +368,8 @@ core.registerOperator("itemList", function (operator, settings) {
             me._dialog.style.display = "block";
         }
     });
+
+    core.on("focus", function (data) {
+        me.focusItem(data.id);
+    })
 });
