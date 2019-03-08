@@ -1,6 +1,6 @@
 core.registerOperator("httree", function (operator) {
     let me = this;
-    me.operator=operator;
+    me.operator = operator;
     this.settings = {};
 
     this.style = document.createElement("style");
@@ -24,6 +24,23 @@ core.registerOperator("httree", function (operator) {
             flex-direction: column;
             align-items: center;
         }
+        .bar{
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            border-top: 1px solid black;
+        }
+        .bar>span{
+            flex:1 1 70%;
+            background:white;
+        }
+        .bar>img{
+            flex: 0 0 auto;
+            height:1.5em;
+        }
+        .bar>button{
+            flex:0 0 20%;
+        }
     `
     operator.div.appendChild(this.style);
     this.rootdiv = document.createElement("div");
@@ -37,12 +54,16 @@ core.registerOperator("httree", function (operator) {
     this.rootdiv.appendChild(this.secondaryDiv);
 
     this.template = document.createElement("div");
+    this.template.draggable = true;
     this.template.innerHTML = `
-    <button>x</button>
+    <span class="bar"><img src="assets/draghandler.jpg" draggable="false" user-select:"none"/><span></span><button>x</button></span>
     <textarea></textarea>
     <button>+</button>
     <div class="containerDiv"></div>
     `
+    this.template.ondragover = (e) => {
+        e.preventDefault()
+    };
     //delegated handler for the plus button
     this.rootdiv.addEventListener("click", function (e) {
         if (e.target.tagName.toLowerCase() == "button") {
@@ -66,13 +87,62 @@ core.registerOperator("httree", function (operator) {
             } else if (e.target.innerText == "x") {
                 //remove the current item
                 core.fire("deleteItem", {
-                    id: e.target.parentElement.dataset.id,
+                    id: e.target.parentElement.parentElement.dataset.id,
                     sender: me
                 });
             }
         }
     })
     operator.div.appendChild(this.rootdiv);
+
+    //delegated drag event handler
+    let draggingNode;
+    this.rootdiv.addEventListener("dragstart", (e) => {
+        draggingNode = e.target;
+    })
+    //while dragging, if hovering over a box, higlight one side
+    this.rootdiv.addEventListener("drag", (e) => {
+        //reset everyone
+        let dataids = operator.div.querySelectorAll("[data-id]");
+        for (let i = 0; i < dataids.length; i++) {
+            dataids[i].style.borderLeft = "none";
+            dataids[i].style.borderRight = "none";
+        }
+        let els = operator.div.elementsFromPoint(e.clientX, e.clientY);
+        for (let i = 0; i < els.length; i++) {
+            if (els[i].matches("[data-id]")) {
+                let deltaX = e.clientX - els[i].clientLeft;
+                if (deltaX > els[i].clientWidth / 2) {
+                    els[i].style.borderRight = "3px solid red";
+                } else {
+                    els[i].style.borderLeft = "3px solid red";
+                }
+            }
+        }
+    });
+
+    //the drop itself
+    this.drophandle = function (e) {
+        let dataids = operator.div.querySelectorAll("[data-id]");
+        for (let i = 0; i < dataids.length; i++) {
+            dataids[i].style.borderLeft = "none";
+            dataids[i].style.borderRight = "none";
+        }
+        e.preventDefault();
+        let divtarget = e.target;
+        while (!(divtarget.matches("[data-id]") || divtarget == me.rootdiv)) {
+            divtarget = divtarget.parentElement;
+        }
+        if (divtarget.matches("[data-id]")) {
+            let dropLocation = divtarget.dataset.id;
+            e.preventDefault();
+            let id = draggingNode.dataset.id;
+            //change the httree.parent of the element
+            core.items[id].httree.parent = core.items[dropLocation].httree.parent;
+            //insert the div itself
+            divtarget.parentNode.insertBefore(draggingNode, divtarget.nextSibling);
+        }
+    }
 
     //////////////////Handle core item updates//////////////////
     //cache requests to items that haven't been updated yet.
@@ -81,6 +151,15 @@ core.registerOperator("httree", function (operator) {
 
     this.drawItem = function (id) {
         //Check if item is shown
+        function mkdiv(id) {
+            let cdiv = me.template.cloneNode(true);
+            cdiv.ondragover = (e) => {
+                e.preventDefault()
+            };
+            cdiv.addEventListener("drop", me.drophandle);
+            cdiv.dataset.id = id;
+            return cdiv;
+        }
         if (core.items[id].httree) {
             let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
             if (!cdiv) {
@@ -92,15 +171,13 @@ core.registerOperator("httree", function (operator) {
                         if (!this.cachedUpdateRequests[core.items[id].httree.parent]) this.cachedUpdateRequests[core.items[id].httree.parent] = [];
                         this.cachedUpdateRequests[core.items[id].httree.parent].push(id);
                     } else {
-                        cdiv = me.template.cloneNode(true);
-                        cdiv.dataset.id = id;
+                        cdiv=mkdiv(id);
                         pdiv.children[3].appendChild(cdiv);
                         if (this.cachedUpdateRequests[id])
                             for (let i = 0; i < this.cachedUpdateRequests[id].length; i++) this.drawItem(this.cachedUpdateRequests[id][i]);
                     }
                 } else {
-                    cdiv = me.template.cloneNode(true);
-                    cdiv.dataset.id = id;
+                    cdiv=mkdiv(id);
                     me.secondaryDiv.appendChild(cdiv);
                     if (this.cachedUpdateRequests[id])
                         for (let i = 0; i < this.cachedUpdateRequests[id].length; i++) this.drawItem(this.cachedUpdateRequests[id][i]);
@@ -171,11 +248,6 @@ core.registerOperator("httree", function (operator) {
         });
     }
 
-    this.somethingwasdeleted = function () {
-
-        //Don't actually delete() the item! core will manage that.
-    }
-
     //Saving and loading
     this.toSaveData = function () {
         return this.settings;
@@ -185,12 +257,8 @@ core.registerOperator("httree", function (operator) {
         Object.assign(this.settings, d);
         this.processSettings();
     }
-
-
-
-    //Handle a change in settings (either from load or from the settings dialog or somewhere else)
     this.processSettings = function () {
-
+        //dummy required for fromsavedata. leave blank or remove processSettings() calls!
     }
 
     //Create a settings dialog

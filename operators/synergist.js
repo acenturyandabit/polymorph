@@ -237,6 +237,19 @@
                     if (it.classList.contains("selected")) return;
                     if (me.dragging) return;
                     me.movingDiv = it;
+                    //reduce the z-indices to prevent overflow
+                    let relements=me.rootdiv.querySelectorAll(".floatingItem");
+                    let minzind=me.settings.maxZ;
+                    for (let i=0;i<relements;i++){
+                        let contest=Number(relements[i].style["z-index"]);
+                        if (minzind>contest)minzind=contest;
+                    }
+                    me.settings.maxZ-=minzind;
+                    me.settings.maxZ+=1;
+                    for (let i=0;i<relements;i++){
+                        let contest=Number(relements[i].style["z-index"]);
+                        relements[i].style["z-index"]=contest-minzind+1;
+                    }
                     it.style["z-index"] = ++me.settings.maxZ;
                     me.dragging = true;
                     let rect = it.getBoundingClientRect();

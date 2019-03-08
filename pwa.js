@@ -155,48 +155,51 @@ try {
       })
     );
   });
-  switch (serviceWorkerSettings.RETRIEVAL_METHOD) {
-    case "cacheOnly":
-      self.addEventListener("fetch", event => {
+  let cache;
+  async function setup() {
+    cache = await caches.open(serviceWorkerSettings.CACHE_NAME);
+  }
+  setup();
+  function updateCache(event) {
+    return new Promise(async function (resolve) {
+      try {
+        networkResponsePromise = fetch(event.request);
+        const networkResponse = await networkResponsePromise;
+        cache.put(event.request, networkResponse.clone());
+        console.log("fetch OK");
+        resolve(networkResponse);
+      } catch (e) {
+        //network failure
+        console.log("fetch error");
+        console.log(e);
+        resolve(404);
+
+      }
+    });
+  }
+  self.addEventListener("fetch", event => {
+    switch (serviceWorkerSettings.RETRIEVAL_METHOD) {
+      case "cacheOnly":
+
         //cache only speed test
         if (event.request.method == "GET") {
           event.respondWith(caches.match(event.request));
         }
-      });
-      break;
-    case "cacheReupdate":
-      let cache;
-      async function setup() {
-        cache = await caches.open(serviceWorkerSettings.CACHE_NAME);
-      }
-      setup();
 
-      function updateCache(event) {
-        return new Promise(async function (resolve) {
-          try {
-            networkResponsePromise = fetch(event.request);
-            const networkResponse = await networkResponsePromise;
-            cache.put(event.request, networkResponse.clone());
-            console.log("fetch OK");
-            resolve(networkResponse);
-          } catch (e) {
-            //network failure
-            console.log("fetch error");
-            console.log(e);
-            resolve(404);
-
-          }
-        });
-      }
-      self.addEventListener("fetch", event => {
+        break;
+      case "cacheReupdate":
         //better version with self cache matching
         if (event.request.url.startsWith(self.location.origin)) {
           if (event.request.method == "GET") {
             event.respondWith(
               (async function () {
-                const cachedResponse = await cache.match(event.request, {
-                  ignoreSearch: event.request.url.indexOf("?") != -1
-                });
+                let cachedResponse=undefined;
+                if (cache){
+                   cachedResponse= await cache.match(event.request, {
+                    ignoreSearch: event.request.url.indexOf("?") != -1
+                  });
+                }
+                
                 // Returned the cached response if we have one, otherwise return the network response.
                 if (event.request.type == "cors") {
                   return fetch(event.request);
@@ -206,7 +209,7 @@ try {
                     console.log("cacheUpdate");
                     updateCache(event);
                     return cachedResponse;
-                  }else{
+                  } else {
                     return updateCache(event);
                   }
                 }
@@ -215,16 +218,17 @@ try {
             console.log("non-get");
             event.respondWith(fetch(event.request));
           }
+        }else{
+          event.respondWith(fetch(event.request));  
         }
-      });
-      break;
-    case "networkOnly":
-      self.addEventListener("fetch", (async function (event) {
+
+        break;
+      case "networkOnly":
         //cache only speed test
-        event.respondWith(await fetch(event.request));
-      }));
-      break;
-  }
+        event.respondWith(fetch(event.request));
+        break;
+    }
+  });
 }
 /*
 A sample web app manifest for yuo! aswell!
