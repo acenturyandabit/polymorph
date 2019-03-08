@@ -1,23 +1,10 @@
-core.registerOperator("template", function (operator) {
+
+core.registerOperator("aon", function (operator) {
     let me = this;
-    me.operator=operator;
     this.settings = {};
     //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
     this.style = document.createElement("style");
     this.style.innerHTML = `
-        textarea{
-            width:5em;
-            height:5em;
-            resize:none; 
-        }
-        button{
-            width: 5em;
-            display:block;
-        }
-        .containerDiv{
-            display:flex;
-            flex-direction: row;
-        }
     `
     operator.div.appendChild(this.style);
 
@@ -160,7 +147,6 @@ core.registerOperator("template", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.processSettings();
-            me.fire("viewUpdate");
         })
 
         me.showSettings = function () {

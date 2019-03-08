@@ -1,6 +1,8 @@
 <html style='height:100%'>
 
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Polymorph</title>
         <!--External libraries-->
         <script src="3pt/localforage.min.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script>
@@ -13,10 +15,13 @@
         <script src="genui/queryLoader.js"></script>
         <script src="genui/scriptassert.js"></script>
         <script src="genui/eventAPI.js"></script>
+        <script src="genui/topbar.js"></script>
         <script src="ui.js"></script>
         <script src="core.js"></script>
         <script src="pwa.js"></script>
         <script>
+
+        //ok now the PWA manager
         var pwaManager=new _pwaManager();
         </script>
 
@@ -27,6 +32,8 @@
         <script src="operators/calendar.js"></script>
         <script src="operators/iframe.js"></script>
         <script src="operators/synergist.js"></script>
+        <!--<script src="operators/drawio.js"></script>-->
+        <!--<script src="operators/goframe.js"></script>-->
         <script src="operators/subframe.js"></script>
         <script src="operators/httree.js"></script>
         <style>
@@ -40,6 +47,12 @@
         <div class="banner">
             <h1 class="docName" contentEditable>Pad name</h1>
             <ul class="topbar">
+                <li>File
+                    <ul>
+                        <li class="dataSources">Load/Save...</li> <!-- default is always localforage for now -->
+                    </ul>
+                </li>
+                <li class="viewdialog">Views</li>
             </ul>
         </div>
         <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">

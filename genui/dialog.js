@@ -2,6 +2,31 @@
 /*
 Todo: checkDialogs takes styling information and additional parameters.
 Todo: move entirely to shadow DOM.
+
+Use case 1: Upgrade an existing dialog
+1. upgrade the dialog (pass as DOM element - can either be already attached or not.): 
+    dialog=dialogManager.checkDialogs(dialog)[0];
+    that's it, really
+
+Use case 2: Create new dialog:
+2. do some reshuffling
+    me.innerDialog = me.dialog.querySelector(".innerDialog");
+    root.appendChild(me.dialog);
+3. insert innerHTML
+    let d = document.createElement("div");
+    d.innerHTML = `
+    WHAT YOU WANT TO PUT IN YOUR DIALOG
+    `;
+    me.innerDialog.appendChild(d);
+4. hook the close button
+    me.dialog.querySelector(".cb").addEventListener("click", function () {
+        me.processSettings();
+    })
+5. show the dialog
+    me.showSettings = function () {
+        me.dialog.style.display = "block";
+    }
+
 */
 
 function _dialogManager(userSettings) {
@@ -84,10 +109,15 @@ function _dialogManager(userSettings) {
 
     if (userSettings) Object.assign(this.settings, userSettings);
     this.checkDialogs = (root) => {
-        if (!root)root=document.body;
-        let toCheckDialogs=root.querySelectorAll("." + me.settings.dialogLayers[0].className);
-
-        for (let i=0;i<toCheckDialogs.length;i++){
+        let returns = [];
+        if (!root) root = document.body;
+        let _toCheckDialogs = root.querySelectorAll("." + me.settings.dialogLayers[0].className);
+        let toCheckDialogs=[];
+        for (let i=0;i<_toCheckDialogs.length;i++){
+            toCheckDialogs.push(_toCheckDialogs[i]);
+        }
+        if (root.matches("." + me.settings.dialogLayers[0].className))toCheckDialogs.push(root);
+        for (let i = 0; i < toCheckDialogs.length; i++) {
             let e = toCheckDialogs[i];
             if (!(e.children.length && e.children[0].classList.contains(me.settings.dialogLayers[1].className))) {
                 //create the new dialog!
@@ -96,7 +126,7 @@ function _dialogManager(userSettings) {
                 for (let i = me.settings.dialogLayers.length - 1; i >= 0; i--) {
                     let thisdiv = document.createElement("div");
                     //chuck the relevant css in.
-                    thisdiv.style.cssText=me.settings.dialogLayers[i].styling;
+                    thisdiv.style.cssText = me.settings.dialogLayers[i].styling;
                     thisdiv.classList.add(me.settings.dialogLayers[i].className);
                     thisdiv.appendChild(prediv);
                     prediv = thisdiv;
@@ -109,7 +139,7 @@ function _dialogManager(userSettings) {
                 if (!e.classList.contains(me.settings.noCloseClass)) {
                     let closeButton = document.createElement("div");
                     closeButton.innerText = "X";
-                    closeButton.style.cssText=me.settings.closeButtonStyle;
+                    closeButton.style.cssText = me.settings.closeButtonStyle;
                     closeButton.classList.add(me.settings.closeButtonClass);
                     closeButton.addEventListener("click", () => {
                         prediv.style.display = "none";
@@ -118,17 +148,24 @@ function _dialogManager(userSettings) {
                 }
                 while (e.classList.length) e.classList.remove(e.classList[e.classList.length - 1]);
 
-
-                //add the stack to the parent                
-                parent.appendChild(prediv);
+                if (parent) {
+                    //add the stack to the parent                
+                    parent.appendChild(prediv);
+                }
                 //Block events to lower levels from dialogs: mostly doubleclick and click
                 //This should not be delegated because we want to catch it as early up the dom tree as possible.
-                prediv.addEventListener("click", (e)=>{e.stopImmediatePropagation()});
-                prediv.addEventListener("dblclick", (e)=>{e.stopImmediatePropagation()});
+                prediv.addEventListener("click", (e) => {
+                    e.stopImmediatePropagation()
+                });
+                prediv.addEventListener("dblclick", (e) => {
+                    e.stopImmediatePropagation()
+                });
+                returns.push(prediv);
             }
         }
+        return returns;
     }
-    
+
 
     //css for the close button
     //let s=document.createElement("style");
@@ -136,7 +173,7 @@ function _dialogManager(userSettings) {
     //document.head.appendChild(s);
     me.mo = new MutationObserver(me.checkDialogs);
     //document.addEventListener("DOMContentLoaded", () => {
-    if (me.settings.autoDialogUpgrade){
+    if (me.settings.autoDialogUpgrade) {
         let config = {
             childList: true,
             subtree: true

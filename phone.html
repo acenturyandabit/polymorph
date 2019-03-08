@@ -1,0 +1,53 @@
+<html style='height:100%'>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--External libraries-->
+    <script src="3pt/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"></script>
+    <!--<script src="3pt/firebase-app.js"></script>
+        <script src="3pt/firebase-firestore.js"></script>-->
+    <script src="genui/useful.js"></script>
+    <script src="genui/bind.js"></script>
+    <script src="genui/filescreen.mobile.js"></script>
+    <script src="genui/queryLoader.js"></script>
+    <script src="genui/scriptassert.js"></script>
+    <script src="genui/eventAPI.js"></script>
+    <script src="ui.js"></script>
+    <script src="core.js"></script>
+    <script src="pwa.js"></script>
+    <script>
+
+        //ok now the PWA manager
+        var pwaManager = new _pwaManager();
+    </script>
+
+    <!-- Put all operators here -->
+    <script src="operators/opSelect.js"></script>
+    <script src="operators/itemList.js"></script>
+    <script src="operators/descbox.js"></script>
+    <script src="operators/calendar.js"></script>
+    <script src="operators/iframe.js"></script>
+    <script src="operators/synergist.js"></script>
+    <script src="operators/subframe.js"></script>
+    <script src="operators/httree.js"></script>
+    <style>
+        h1 {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body style="display:flex; height:100%; flex-direction:column; margin:0">
+    <div class="banner">
+        <h1 class="docName" contentEditable>Pad name</h1>
+        <ul class="topbar">
+        </ul>
+    </div>
+    <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
+
+    </div>
+</body>
+
+</html>

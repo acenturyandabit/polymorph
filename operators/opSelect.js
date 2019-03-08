@@ -1,5 +1,6 @@
 core.registerOperator("opSelect", function (operator) {
     let me = this;
+    me.operator=operator;
     this.settings = {};
 
     this.rootdiv = document.createElement("div");
@@ -13,6 +14,7 @@ core.registerOperator("opSelect", function (operator) {
             b.innerHTML = i;
             b.addEventListener("click", () => {
                 operator.reload(b.innerHTML);
+                core.fire("viewUpdate",{sender:this});
                 operator.rect.tieOperator(operator);
             })
             this.rootdiv.appendChild(b);
@@ -67,6 +69,7 @@ core.registerOperator("opSelect", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.updateSettings();
+            me.fire("viewUpdate");
         })
 
         me.showSettings = function () {

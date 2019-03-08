@@ -1,35 +1,54 @@
-core.registerOperator("subframe", function (operator) {
+core.registerOperator("goframe",{noShadow:true}, function (operator) {
     let me = this;
-    me.operator=operator;
-    this.settings = {};
+    this.settings = {
+        divid: guid()
+    };
 
     this.rootdiv = document.createElement("div");
-    //Add div HTML here
+    //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = ``;
-    this.rootdiv.style.cssText=`width:100%; height: 100%; position:relative`;
+    this.rootdiv.style.width="100%";
+    this.rootdiv.style.height="100%";
     operator.div.appendChild(this.rootdiv);
-    this.rect=new _rect(core,this.rootdiv,RECT_ORIENTATION_X,1,0);
-    //////////////////Handle core item updates//////////////////
-
-    this.resize=function(){
-        this.rect.resize();
-    }
-    //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
-    this.processSettings=function(){
-    }
+    me.rootdiv.id=this.settings.divid;
+    scriptassert([
+        ["go", "3pt/go-debug.js"]
+    ], () => {
+        me.redrawDiagram = function () {
+            let gmk = go.GraphObject.make;
+            me.diagram = gmk(go.Diagram, me.settings.divid);
+            me.model = gmk(go.Model);
+            me.model.nodeDataArray = [{
+                    key: "Alpha"
+                },
+                {
+                    key: "Beta"
+                },
+                {
+                    key: "Gamma"
+                }
+            ];
+            //me.settings.data;
+            me.diagram.model = me.model;
+        }
+        me.redrawDiagram();
+    })
 
     //////////////////Handling local changes to push to core//////////////////
 
+    //Handle a change in settings (either from load or from the settings dialog or somewhere else)
+    this.processSettings = function () {
+        me.rootdiv.id=me.settings.divid;
+        if (me.redrawDiagram) me.redrawDiagram();
+    }
+
     //Saving and loading
     this.toSaveData = function () {
-        this.settings.rectUnderData=this.rect.toSaveData();
         return this.settings;
     }
 
     this.fromSaveData = function (d) {
         Object.assign(this.settings, d);
-        this.rect.fromSaveData(this.settings.rectUnderData);
-        this.rect.resize();
         this.processSettings();
     }
 
@@ -55,8 +74,7 @@ core.registerOperator("subframe", function (operator) {
 
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
-            me.updateSettings();
-            me.fire("viewUpdate");
+            me.processSettings();
         })
 
         me.showSettings = function () {

@@ -1,11 +1,12 @@
 core.registerOperator("itemList", function (operator) {
     let me = this;
+    me.operator=operator;
     //Initialise with default settings
     this.settings = {
         properties: {
             title: "text"
         },
-        filterProp:undefined
+        filterProp: guid()
     };
 
     this.settingsBar = document.createElement('div');
@@ -49,6 +50,8 @@ core.registerOperator("itemList", function (operator) {
         }
         currentItemSpan.querySelector("button").innerHTML = "X";
         it.itemList = true;
+        //ensure the filter property exists
+        if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = true;
         let id = core.insertItem(it);
         currentItemSpan.querySelector("[data-role='id']").innerText = id;
         currentItemSpan.dataset.id = id;
@@ -83,7 +86,7 @@ core.registerOperator("itemList", function (operator) {
     this.updateItem = function (id, sender) {
         let it = core.items[id];
         //First check if we should show the item
-        if (!it.itemList) {
+        if (!it[me.settings.filterProp]) {
             return;
         }
         //Then check if the item already exists; if so then update it
@@ -134,7 +137,11 @@ core.registerOperator("itemList", function (operator) {
         }
     })
     this.deleteItem = function (id) {
-        this.taskList.querySelector("span[data-id='" + id + "']").remove();
+        try {
+            this.taskList.querySelector("span[data-id='" + id + "']").remove();
+        }catch(e){
+            return;
+        }
     }
 
     core.on("deleteItem", (d) => {
@@ -315,9 +322,13 @@ core.registerOperator("itemList", function (operator) {
                 me.showSettings();
             }
         )
+        d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
+            me.settings.filterProp = e.target.value;
+        })
         me.innerDialog.appendChild(d);
         me._dialog.querySelector(".cb").addEventListener("click", function () {
             me.updateSettings();
+            me.fire("viewUpdate");
         })
 
         me.proplist = me.innerDialog.querySelector(".proplist");
@@ -333,7 +344,7 @@ core.registerOperator("itemList", function (operator) {
         me.showSettings = function () {
             //Fill in dialog information
             //set the propertyname one
-            me.innerDialog.querySelector('input[data-role="filterProp"]').value=me.settings.filterProp;
+            me.innerDialog.querySelector('input[data-role="filterProp"]').value = me.settings.filterProp;
             //Get all available properties, by looping through all elements (?)
             me.opList.innerHTML = "";
             let props = {};

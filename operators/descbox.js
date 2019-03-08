@@ -1,6 +1,7 @@
 core.registerOperator("descbox", function (operator) {
     let me = this;
-    me.settings={property:"description"};
+    me.operator=operator;
+    me.settings={property:"description",operationMode:"focus",staticItem:""};
 
     me.rootdiv=document.createElement("div");
     //Add div HTML here
@@ -30,6 +31,7 @@ core.registerOperator("descbox", function (operator) {
     core.on("updateItem", function (d) {
         let id=d.id;
         let sender=d.sender;
+
         if (sender == me) return;
         //Check if item is shown
         //Update item if relevant
@@ -41,6 +43,16 @@ core.registerOperator("descbox", function (operator) {
     me.updateItem(me.settings.currentID);
 
     me.updateSettings=function(){
+        if (me.settings.operationMode=='static'){
+            me.settings.currentID=me.settings.staticItem;
+            if (!core.items[staticItem]){
+                let it=new _item();
+                it[me.settings.property]="";
+                core.items[staticItem]=it;
+                core.fire("create",{sender:this,id:staticItem});
+                core.fire("updateItem",{sender:this,id:staticItem});
+            }
+        }
         me.updateItem(me.settings.currentID);
     }
 
@@ -77,16 +89,30 @@ core.registerOperator("descbox", function (operator) {
         operator.div.appendChild(me.dialog);
         let d=document.createElement("div");
         d.innerHTML=`
-            <input placeholder="Enter the property to display...">
+            <h1>Role</h1>
+            <select data-role="operationMode">
+            <option value="static">Display static item</option>
+            <option value="focus">Display focused item</option>
+            </select>
+            <input data-role="staticItem" placeholder="Static item to display...">
+            <input data-role="property" placeholder="Enter the property to display...">
         `;
+        let roledItems=d.querySelector("[data-role]");
+        for(let q=0;q<roledItems.length;q++){
+            roledItems[q].value=me.settings[roledItems[q].dataset.role];
+        }
+
         me.innerDialog.appendChild(d);
-        me.innerDialog.querySelector("input").addEventListener("input",function(){
-            me.settings.property=me.innerDialog.querySelector("input").value;
+        me.innerDialog.addEventListener("input",function(e){
+            if (e.target.dataset.role){
+                me.settings[e.target.dataset.role]=e.target.value;
+            }
         })
 
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function(){
             me.updateSettings();
+            me.fire("viewUpdate");
         })
 
         me.showSettings=function(){
@@ -97,9 +123,20 @@ core.registerOperator("descbox", function (operator) {
     //Core will call me when an object is focused on from somewhere
     core.on("focus", function (d) {
         let id=d.id;
-        let s = d.sender;
-        me.settings.currentID=id;
-        me.updateItem(id);
+        let sender = d.sender;
+        //calculate the base rect of the sender
+        let baserectSender=sender.operator.rect;
+        while (baserectSender.parentRect)baserectSender=baserectSender.parentRect;
+        //calculate my base rect
+        let myBaseRect=me.operator.rect;
+        while (myBaseRect.parentRect)myBaseRect=myBaseRect.parentRect;
+        //if they're the same, then update.
+        if (myBaseRect==baserectSender){
+            if (me.settings.operationMode=='focus'){
+                me.settings.currentID=id;
+                me.updateItem(id);
+            }
+        }
     });
     core.on("deleteItem", function (d) {
         let id=d.id;

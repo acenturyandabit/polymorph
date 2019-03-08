@@ -1,5 +1,6 @@
 core.registerOperator("httree", function (operator) {
     let me = this;
+    me.operator=operator;
     this.settings = {};
 
     this.style = document.createElement("style");
@@ -215,6 +216,7 @@ core.registerOperator("httree", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.processSettings();
+            me.fire("viewUpdate");
         })
 
         me.showSettings = function () {

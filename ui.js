@@ -123,7 +123,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Delegated operator switching
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == 'span') {
-            this.switchOperator(this.tabspans.indexOf(e.target.parentElement));
+            let ptg=e.target;
+            if (ptg.parentElement.tagName.toLowerCase()=='span')ptg=ptg.parentElement;
+            this.switchOperator(this.tabspans.indexOf(ptg));
         }
     })
 
@@ -202,8 +204,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             me.tabbar.style.display = "block";
             me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
         }
+        core.fire('resize',{sender:this});
     }
-
+    let rectChanged=false;
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
     // If parent is body, ensure loaded, so we can create a new rect whenever.
@@ -273,11 +276,13 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 } else {
                     me.children = [new _rect(core, me, _XorY, 0, 0), new _rect(core, me, _XorY, 0, 1, me.operators)];
                 }
+                rectChanged=true;
                 me.operators = undefined;
                 me.children[_firstOrSecond].resizing = me.split;
                 me.split = -1;
                 //move the operator into the new box; create a blank box; set this box to a nonprimary box
             }
+            //for resizing
             if (me.resizing != -1) {
                 if (!(e.buttons % 2)) {
                     me.resizing = -1;
@@ -300,18 +305,23 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 me.resize();
                 me.parentRect.children[!me.firstOrSecond * 1].resize();
                 e.preventDefault();
+                rectChanged=true;
             }
         }
-
     }
 
     this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
     this.mouseUpHandler = function (e) {
+        //push the new view, if anything interesting happened
         me.resizing = -1;
         if (me.children.length > 0) {
             me.children[0].mouseUpHandler(e);
             me.children[1].mouseUpHandler(e);
+        }
+        if (rectChanged){
+            core.fire("viewUpdate",{sender:me});
+            rectChanged=false;
         }
     }
     this.outerDiv.addEventListener("mouseup", this.mouseUpHandler);
@@ -362,6 +372,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
     this.fromSaveData = function (obj) {
         //children first!
+        if (!obj)return;
         if (obj.children) {
             me.outerDiv.style.border = "none";
             me.tabbar.style.display = "none";
@@ -384,6 +395,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             for (let i = 0; i < this.tabbar.children.length; i++) {
                 this.tabbar.children[i].remove();
             }
+            this.tabbar.appendChild(this.plus);
             this.tabspans = [];
             //Clear everything; reinstantiate topbar
             //show opselect if it does not already exist
@@ -401,7 +413,22 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.tieOperator(new me.core.operator(obj.operator, me));
             this.switchOperator(this.selectedOperator);
         } else {
+            for (let i = 0; i < this.outerDiv.children.length; i++) {
+                if (this.outerDiv.children[i] != this.tabbar) {
+                    this.outerDiv.children[i].remove();
+                }
+            }
+            this.innerDivs = [];
+            for (let i = 0; i < this.tabbar.children.length; i++) {
+                this.tabbar.children[i].remove();
+            }
+            this.tabbar.appendChild(this.plus);
+            this.tabspans = [];
+            //Clear everything; reinstantiate topbar
+            //show opselect if it does not already exist
+            this.operators = [];
             this.tieOperator(new me.core.operator("opSelect", me));
+            this.switchOperator(0);
         }
         this.resize();
     }
