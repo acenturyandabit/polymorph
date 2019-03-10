@@ -1,10 +1,10 @@
 (function () {
     core.registerOperator("itemCluster", function (operator) {
         let me = this;
-        me.operator=operator;
+        me.operator = operator;
         this.settings = {
             currentViewName: undefined,
-            maxZ: 1
+            maxZ: 1,
         };
 
         this.rootdiv = document.createElement("div");
@@ -134,16 +134,18 @@
         })
 
         this.viewDropdown.addEventListener("click", function (e) {
-            if (e.currentTarget.dataset.isnew) {
-                //make a new view
-                nv = Date.now().toString();
-                me.makeNewView(nv);
-                me.switchView(nv);
-            } else {
-                ln = e.currentTarget.dataset.listname;
-                me.switchView(ln);
+            if (e.target.tagName.toLowerCase() == 'a') {
+                if (e.target.dataset.isnew) {
+                    //make a new view
+                    nv = Date.now().toString();
+                    me.makeNewView(nv);
+                    me.switchView(nv);
+                } else {
+                    ln = e.target.dataset.listname;
+                    me.switchView(ln);
+                }
+                me.viewDropdown.style.display = "none";
             }
-            me.viewDropdown.style.display = "none";
             e.stopPropagation();
         })
 
@@ -232,23 +234,23 @@
                     while (!it.matches(".floatingItem")) it = it.parentElement;
                     core.fire("focus", {
                         id: it.dataset.id,
-                        sender:me
+                        sender: me
                     });
                     if (it.classList.contains("selected")) return;
                     if (me.dragging) return;
                     me.movingDiv = it;
                     //reduce the z-indices to prevent overflow
-                    let relements=me.rootdiv.querySelectorAll(".floatingItem");
-                    let minzind=me.settings.maxZ;
-                    for (let i=0;i<relements;i++){
-                        let contest=Number(relements[i].style["z-index"]);
-                        if (minzind>contest)minzind=contest;
+                    let relements = me.rootdiv.querySelectorAll(".floatingItem");
+                    let minzind = me.settings.maxZ;
+                    for (let i = 0; i < relements; i++) {
+                        let contest = Number(relements[i].style["z-index"]);
+                        if (minzind > contest) minzind = contest;
                     }
-                    me.settings.maxZ-=minzind;
-                    me.settings.maxZ+=1;
-                    for (let i=0;i<relements;i++){
-                        let contest=Number(relements[i].style["z-index"]);
-                        relements[i].style["z-index"]=contest-minzind+1;
+                    me.settings.maxZ -= minzind;
+                    me.settings.maxZ += 1;
+                    for (let i = 0; i < relements; i++) {
+                        let contest = Number(relements[i].style["z-index"]);
+                        relements[i].style["z-index"] = contest - minzind + 1;
                     }
                     it.style["z-index"] = ++me.settings.maxZ;
                     me.dragging = true;
@@ -264,8 +266,23 @@
                     let rect = it.getBoundingClientRect();
                     me.linking = true;
                 }
+            } else {
+                //shift to pan
+                if (e.which != 1) return;
+                if (e.getModifierState("Shift")) {
+                    me.globalDrag = true;
+                    me.dragDX = e.pageX;
+                    me.dragDY = e.pageY;
+                    me.ocx = core.items[me.settings.currentViewName].synergist.cx || 0;
+                    me.ocy = core.items[me.settings.currentViewName].synergist.cy || 0;
+                }
             };
         })
+
+        let c = new capacitor(300, 10, () => {
+            me.switchView(me.settings.currentViewName);
+        });
+
         this.itemSpace.addEventListener("mousemove", function (e) {
             if (me.dragging) {
                 if (me.movingDiv.parentElement.matches(".floatingItem")) { //nested items
@@ -295,6 +312,12 @@
                 let rect = me.linkingDiv.getBoundingClientRect();
                 let rect2 = me.itemSpace.getBoundingClientRect();
                 me.linkingLine.plot(rect.left + rect.width / 2 - rect2.left, rect.top + rect.height - rect2.top, e.clientX - rect2.left, e.clientY - rect2.top);
+            } else if (me.globalDrag) {
+                // shift the view by delta
+                core.items[me.settings.currentViewName].synergist.cx = me.ocx - (e.pageX - me.dragDX) / me.itemSpace.clientWidth;
+                core.items[me.settings.currentViewName].synergist.cy = me.ocy - (e.pageY - me.dragDY) / me.itemSpace.clientHeight;
+                //arrange all items
+                c.submit();
             }
         })
 
@@ -306,6 +329,10 @@
         });
 
         me.handleMoveEnd = function (e, touch) {
+            if(me.globalDrag){
+                setTimeout(()=>c.submit(),500);
+                me.globalDrag = false;
+            }
             if (me.dragging) {
                 //disengage drag
                 me.dragging = false;
@@ -331,7 +358,9 @@
                     }
                 }
                 me.updatePosition(thing);
-                core.fire("updateItem",{id:thing});
+                core.fire("updateItem", {
+                    id: thing
+                });
             } else if (me.linking) {
                 //reset linking line
                 me.linkingLine.plot(0, 0, 0, 0);
@@ -349,8 +378,12 @@
                     //add a new line connecting the items
                     me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
                     //push the change
-                    core.fire("updateItem",{id:me.linkingDiv.dataset.id});
-                    core.fire("updateItem",{id:linkedTo.dataset.id});
+                    core.fire("updateItem", {
+                        id: me.linkingDiv.dataset.id
+                    });
+                    core.fire("updateItem", {
+                        id: linkedTo.dataset.id
+                    });
                 }
             }
         };
@@ -358,7 +391,7 @@
         this.itemSpace.addEventListener("dblclick", function (e) {
             if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
                 let rect = me.itemSpace.getBoundingClientRect();
-                me.createItem((e.pageX - rect.left) / me.itemSpace.clientWidth, (e.pageY - rect.top) / me.itemSpace.clientHeight);
+                me.createItem((e.pageX - rect.left) / me.itemSpace.clientWidth + (core.items[me.settings.currentViewName].synergist.cx || 0), (e.pageY - rect.top) / me.itemSpace.clientHeight + (core.items[me.settings.currentViewName].synergist.cy || 0));
                 // Make a new item
             }
         })
@@ -405,22 +438,22 @@
                     me.arrangeItem(i);
                 }
             }
-            setTimeout(()=>{
-                if (me.updateLines){
+            setTimeout(() => {
+                if (me.updateLines) {
                     for (let i in core.items) {
                         if (me.updateLines && core.items[i].synergist) me.updateLines(i);
                     }
                 }
-            },500);
-            
+            }, 500);
+
         }
 
 
         //----------item functions----------//
         this.updatePosition = function (id) {
             let it = me.rootdiv.querySelector(".floatingItem[data-id='" + id + "']");
-            core.items[id].synergist.viewData[this.settings.currentViewName].x = (it.getBoundingClientRect().left - me.itemSpace.getBoundingClientRect().left) / me.itemSpace.clientWidth;
-            core.items[id].synergist.viewData[this.settings.currentViewName].y = (it.getBoundingClientRect().top - me.itemSpace.getBoundingClientRect().top) / me.itemSpace.clientHeight;
+            core.items[id].synergist.viewData[this.settings.currentViewName].x = (it.getBoundingClientRect().left - me.itemSpace.getBoundingClientRect().left) / me.itemSpace.clientWidth + (core.items[me.settings.currentViewName].synergist.cx || 0);
+            core.items[id].synergist.viewData[this.settings.currentViewName].y = (it.getBoundingClientRect().top - me.itemSpace.getBoundingClientRect().top) / me.itemSpace.clientHeight + (core.items[me.settings.currentViewName].synergist.cy || 0);
             me.arrangeItem(id);
         }
 
@@ -476,9 +509,9 @@
                     if (core.items[id].synergist.viewData[me.settings.currentViewName]) {
                         //position it
                         it.style.display = "block";
-                        it.style.left = Math.floor(core.items[id].synergist.viewData[me.settings.currentViewName].x * me.itemSpace.clientWidth) +
+                        it.style.left = Math.floor((core.items[id].synergist.viewData[me.settings.currentViewName].x - (core.items[me.settings.currentViewName].synergist.cx || 0)) * me.itemSpace.clientWidth) +
                             "px";
-                        it.style.top = Math.floor(core.items[id].synergist.viewData[me.settings.currentViewName].y * me.itemSpace.clientHeight) +
+                        it.style.top = Math.floor((core.items[id].synergist.viewData[me.settings.currentViewName].y - (core.items[me.settings.currentViewName].synergist.cy || 0)) * me.itemSpace.clientHeight) +
                             "px";
                     } else {
                         //otherwise hide it
@@ -526,14 +559,17 @@
             this.rootdiv.querySelector(".floatingItem[data-id='" + id + "']").remove();
             //also remove all lines attached to it
             if (me.activeLines) {
-                let pairs=[];
+                let pairs = [];
                 for (let s in me.activeLines) {
                     for (let e in me.activeLines[s]) {
-                        if (e == id || s==id) pairs.push({s:s,e:e});
+                        if (e == id || s == id) pairs.push({
+                            s: s,
+                            e: e
+                        });
                     }
                 }
-                for (let i=0;i<pairs.length;i++){
-                    me.toggleLine(pairs[i].s,pairs[i].e);
+                for (let i = 0; i < pairs.length; i++) {
+                    me.toggleLine(pairs[i].s, pairs[i].e);
                 }
             }
 
@@ -583,18 +619,18 @@
                 width: 5
             });
             me.activeLines = {};
-            me.toggleLine=function(start,end){
+            me.toggleLine = function (start, end) {
                 //check if linked; if linked, remove link
                 if (!core.items[start].synergist.links) core.items[start].synergist.links = {};
-                if (core.items[start].synergist.links[end]){
+                if (core.items[start].synergist.links[end]) {
                     delete core.items[start].synergist.links[end];
-                    if (me.activeLines[start])me.activeLines[start][end].remove();
-                    delete me.activeLines[start,end];
-                }else{
+                    if (me.activeLines[start]) me.activeLines[start][end].remove();
+                    delete me.activeLines[start, end];
+                } else {
                     //otherwise create link
                     core.items[start].synergist.links[end] = true;
-                    me.enforceLine(start,end);
-                }             
+                    me.enforceLine(start, end);
+                }
             }
 
             me.enforceLine = function (start, end) {
@@ -779,6 +815,7 @@
         display: flex;
         height: 100%;
         flex-direction: column;
+        overflow:hidden;
     }
     
     /*---------------------Banner----------------*/
