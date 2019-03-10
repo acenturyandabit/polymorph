@@ -52,7 +52,7 @@ let serviceWorkerSettings = {
     "3pt/fullcalendar.min.js",
     "manifest.json"
   ],
-  CACHE_NAME: "version 5",
+  CACHE_NAME: "version 6",
   RETRIEVAL_METHOD: "cacheReupdate" // cacheReupdate, networkOnly, cacheOnly
 };
 
