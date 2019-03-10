@@ -232,23 +232,26 @@
                 if (!e.getModifierState("Shift")) {
                     let it = e.target;
                     while (!it.matches(".floatingItem")) it = it.parentElement;
-                    core.fire("focus", {
-                        id: it.dataset.id,
-                        sender: me
-                    });
+
                     if (it.classList.contains("selected")) return;
                     if (me.dragging) return;
                     me.movingDiv = it;
                     //reduce the z-indices to prevent overflow
                     let relements = me.rootdiv.querySelectorAll(".floatingItem");
                     let minzind = me.settings.maxZ;
-                    for (let i = 0; i < relements; i++) {
+                    for (let i = 0; i < relements.length; i++) {
+                        relements[i].style.border="";
                         let contest = Number(relements[i].style["z-index"]);
                         if (minzind > contest) minzind = contest;
                     }
+                    core.fire("focus", {
+                        id: it.dataset.id,
+                        sender: me
+                    });
+                    it.style.border = "3px solid #ffa2fc";
                     me.settings.maxZ -= minzind;
                     me.settings.maxZ += 1;
-                    for (let i = 0; i < relements; i++) {
+                    for (let i = 0; i < relements.length; i++) {
                         let contest = Number(relements[i].style["z-index"]);
                         relements[i].style["z-index"] = contest - minzind + 1;
                     }
@@ -297,6 +300,7 @@
                 me.movingDiv.style.top =
                     e.clientY - me.dragDY - rect.top;
                 let elements = document.elementsFromPoint(e.clientX, e.clientY);
+                /*
                 let fi = me.rootdiv.querySelectorAll(".floatingItem");
                 for (let i = 0; i < fi.length; i++) {
                     fi[i].style.border = "";
@@ -307,6 +311,7 @@
                         break;
                     }
                 }
+                */
             } else if (me.linking) {
                 // draw a line from the object to the mouse cursor
                 let rect = me.linkingDiv.getBoundingClientRect();
@@ -339,10 +344,11 @@
                 me.movingDiv.classList.remove("moving");
 
                 let fi = me.rootdiv.querySelectorAll(".floatingItem");
+                /*
                 for (let i = 0; i < fi.length; i++) {
                     fi[i].style.border = "";
                 }
-
+                */
                 //define some stuff
                 let thing = me.movingDiv.dataset.id
                 let elements = document.elementsFromPoint(e.clientX, e.clientY);
@@ -774,6 +780,7 @@
     
     .floatingItem{
         position:absolute;
+        box-sizing:border-box;
     }
     
     .floatingItem,
