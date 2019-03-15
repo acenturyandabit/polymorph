@@ -1,4 +1,4 @@
-// V3.1: added various retrieval methods, request filtering, and more!.
+// V3.2: debug switch + better debug messages
 
 /*
 You can use pwaExtract() to find a list of active scripts and links for caching.
@@ -52,9 +52,14 @@ let serviceWorkerSettings = {
     "3pt/fullcalendar.min.js",
     "manifest.json"
   ],
-  CACHE_NAME: "version 6",
-  RETRIEVAL_METHOD: "cacheReupdate" // cacheReupdate, networkOnly, cacheOnly
+  CACHE_NAME: "version 7x",
+  RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
+  debug:true
 };
+
+function dbglog(message){
+  if (serviceWorkerSettings.debug)console.log(message);
+}
 
 //Default functions (will be minified)
 function waitDOMExecute(f) {
@@ -123,14 +128,14 @@ function _pwaManager(userSettings) {
         navigator.serviceWorker.register(me.settings.serviceWorkerURL).then(
           function (registration) {
             // Registration was successful
-            console.log(
+            dbglog(
               "ServiceWorker registration successful with scope: ",
               registration.scope
             );
           },
           function (err) {
             // registration failed :(
-            console.log("ServiceWorker registration failed: ", err);
+            dbglog("ServiceWorker registration failed: ", err);
           }
         );
       });
@@ -150,7 +155,7 @@ try {
     // Perform install steps
     event.waitUntil(
       caches.open(serviceWorkerSettings.CACHE_NAME).then(function (cache) {
-        console.log("Opened cache");
+        dbglog("Opened cache: " +serviceWorkerSettings.CACHE_NAME);
         return cache.addAll(serviceWorkerSettings.urlsToCache);
       })
     );
@@ -166,12 +171,12 @@ try {
         networkResponsePromise = fetch(event.request);
         const networkResponse = await networkResponsePromise;
         cache.put(event.request, networkResponse.clone());
-        console.log("fetch OK");
+        dbglog("fetch OK: "+event.request.url);
         resolve(networkResponse);
       } catch (e) {
         //network failure
-        console.log("fetch error");
-        console.log(e);
+        dbglog("fetch error: "+event.request.url);
+        dbglog(e);
         resolve(404);
 
       }
@@ -206,7 +211,7 @@ try {
                 } else {
                   if (cachedResponse) {
                     //avoid CORS for things like firebase
-                    console.log("cacheUpdate");
+                    dbglog("cacheUpdate: "+event.request.url);
                     updateCache(event);
                     return cachedResponse;
                   } else {
@@ -215,7 +220,7 @@ try {
                 }
               })());
           } else {
-            console.log("non-get");
+            dbglog("non-get: "+event.request.url);
             event.respondWith(fetch(event.request));
           }
         }else{

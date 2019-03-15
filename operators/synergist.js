@@ -54,6 +54,7 @@
             if (!me.settings.currentViewName) {
                 //Show blank
             } else {
+                if (!core.items[me.settings.currentViewName])return;
                 this.viewName.innerText = core.items[me.settings.currentViewName].synergist.viewName;
                 for (i in core.items) {
                     if (core.items[i].synergist && core.items[i].synergist.viewData) {

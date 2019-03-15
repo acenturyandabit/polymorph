@@ -53,6 +53,16 @@ core.registerOperator("httree", function (operator) {
     this.secondaryDiv.classList.add("containerDiv");
     this.rootdiv.appendChild(this.secondaryDiv);
 
+    this.secondaryDiv.addEventListener("click",function(e){
+        if (e.target.tagName.toLowerCase()=="textarea"){
+            let t= e.target;
+            while (!t.dataset.id){
+                t=t.parentElement;
+            }
+            core.fire("focus",{sender:me,id:t.dataset.id});
+        }
+    })
+
     this.template = document.createElement("div");
     this.template.draggable = true;
     this.template.innerHTML = `

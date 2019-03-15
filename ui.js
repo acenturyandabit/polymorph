@@ -260,6 +260,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                     //reset and return
                     return;
                 }
+                e.preventDefault();
                 // a split has been called. Initialise the split!
                 me.outerDiv.style.border = "none";
                 me.tabbar.style.display = "none";
@@ -290,6 +291,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                     //reset and return
                     return;
                 }
+                e.preventDefault();
                 //calculate the pos parameter (it can be fed to both siblings)
                 if (me.XorY) me.pos = (e.clientY - me.outerDiv.parentElement.getClientRects()[0].top) / me.outerDiv.parentElement.getClientRects()[0].height;
                 else me.pos = (e.clientX - me.outerDiv.parentElement.getClientRects()[0].left) / me.outerDiv.parentElement.getClientRects()[0].width;
@@ -436,7 +438,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.remove = function () {
         //signal my brother to promote itself
-        this.parentRect._remove(me.firstOrSecond);
+        if (this.parentRect)this.parentRect._remove(me.firstOrSecond);
     }
     this._remove = function (_firstOrSecond) {
         //if remaining innerDiv has an operator, adopt it

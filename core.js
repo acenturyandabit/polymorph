@@ -185,7 +185,8 @@ function _core() {
       };
     } else {
       this.operators[type] = {
-        constructor: options
+        constructor: options,
+        options:{}
       };
     }
     me.fire("operatorAdded", {
