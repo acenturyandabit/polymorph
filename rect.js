@@ -53,6 +53,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.innerDivs = [];
     this.createInnerDiv = function () {
         let indiv = document.createElement("div");
+        indiv.style.cursor="default";
         indiv.style.height = "100%";
         indiv.style.width = "100%";
         indiv.style.overflow = "hidden";
@@ -97,6 +98,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             //just refresh the tabspan.
         }
         operator.rect = this;
+        if (operator.baseOperator.resize)operator.baseOperator.resize();
     }
 
     //Callback for tab clicks to switch between operators.
@@ -438,9 +440,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.remove = function () {
         //signal my brother to promote itself
-        if (this.parentRect)this.parentRect._remove(me.firstOrSecond);
+        if (this.parentRect)this.parentRect._remove(me.firstOrSecond,this);
     }
     this._remove = function (_firstOrSecond) {
+        core.fire("viewUpdate",{sender:me});
         //if remaining innerDiv has an operator, adopt it
         if (this.children[(!_firstOrSecond) * 1].operators && this.children[(!_firstOrSecond) * 1].operators.length) {
             for (let i = 0; i < this.children[(!_firstOrSecond) * 1].operators.length; i++) this.tieOperator(this.children[(!_firstOrSecond) * 1].operators[i]);
@@ -465,5 +468,26 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         //delete this.children[1];
         this.resize();
         this.switchOperator(0);
+    }
+
+    this.activateTargets=function(){
+        if (me.children && me.children.length){
+            me.children[0].activateTargets();
+            me.children[1].activateTargets();
+        }else{
+            for (let i=0;i<this.operators.length;i++){
+                this.operators[i].activateTargets();
+            }
+        }
+    }
+    this.deactivateTargets=function(){
+        if (me.children && me.children.length){
+            me.children[0].deactivateTargets();
+            me.children[1].deactivateTargets();
+        }else{
+            for (let i=0;i<this.operators.length;i++){
+                this.operators[i].deactivateTargets();
+            }
+        }
     }
 }

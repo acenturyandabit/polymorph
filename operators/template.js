@@ -1,9 +1,9 @@
 core.registerOperator("template", {
     displayName: "Template",
     description: "A quickstart template. Very minimal."
-}, function (operator) {
+}, function (container) {
     let me = this;
-    me.operator = operator;
+    me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {};
 
     this.rootdiv = document.createElement("div");

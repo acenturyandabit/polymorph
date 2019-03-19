@@ -31,7 +31,8 @@ let serviceWorkerSettings = {
     "genui/scriptassert.js",
     "genui/eventAPI.js",
     "genui/topbar.js",
-    "ui.js",
+    "rect.js",
+    "operator.js",
     "core.js",
     "genui/dialog.js",
     "operators/opSelect.js",
@@ -200,7 +201,10 @@ try {
               (async function () {
                 let cachedResponse=undefined;
                 if (cache){
-                   cachedResponse= await cache.match(event.request, {
+                   cachedResponse= await cache.match(event.request);
+                }
+                if (!cachedResponse &&event.request.url.indexOf("?") != -1){
+                  cachedResponse= await cache.match(event.request,{
                     ignoreSearch: event.request.url.indexOf("?") != -1
                   });
                 }
@@ -215,6 +219,7 @@ try {
                     updateCache(event);
                     return cachedResponse;
                   } else {
+                    dbglog("passiveUpdate: "+event.request.url);
                     return updateCache(event);
                   }
                 }

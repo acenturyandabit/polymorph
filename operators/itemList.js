@@ -328,7 +328,7 @@ core.registerOperator("itemList", function (operator) {
         me.innerDialog.appendChild(d);
         me._dialog.querySelector(".cb").addEventListener("click", function () {
             me.updateSettings();
-            me.fire("viewUpdate");
+            core.fire("viewUpdate");
         })
 
         me.proplist = me.innerDialog.querySelector(".proplist");

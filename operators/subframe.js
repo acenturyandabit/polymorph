@@ -1,4 +1,4 @@
-core.registerOperator("subframe", function (operator) {
+core.registerOperator("subframe", {targetForward:true},function (operator) {
     let me = this;
     me.operator=operator;
     this.settings = {};
@@ -19,6 +19,14 @@ core.registerOperator("subframe", function (operator) {
     }
 
     //////////////////Handling local changes to push to core//////////////////
+
+    this.forwardTarget=function(){
+        this.rect.activateTargets();
+    }
+
+    this.forwardUntarget=function(){
+        this.rect.deactivateTargets();
+    }
 
     //Saving and loading
     this.toSaveData = function () {

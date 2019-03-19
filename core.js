@@ -97,6 +97,30 @@ function _core() {
     me.userData = JSON.parse(me.userData);
   }
 
+  this.targeter = undefined;
+  this.submitTarget=function(id){
+    if (me.targeter){
+      me.targeter(id);//resolves promise
+      me.targeter=undefined;
+      //untarget everything
+      me.baseRect.deactivateTargets();
+    }
+  }
+  this.target = function () {
+    // activate targeting
+    me.baseRect.activateTargets();
+    let promise = new Promise((resolve) => {
+      me.targeter = resolve;
+    })
+    return promise;
+  }
+  //use:
+  /*
+  core.target().then(senderID){
+
+  }
+
+  */
 
   this.queryLoader = new _queryLoader({
     loaders: [{
@@ -111,72 +135,8 @@ function _core() {
 
   //items
   this.items = {};
-  //operator. Wrapper around an actual base operator. base operator should not change typically.
   this.operators = {};
   this.operatorLoadCallbacks = {};
-  this.operator = function operator(_type, _rect) {
-    this.rect = _rect;
-    let top = this;
-    this.topdiv = document.createElement("div");
-    this.topdiv.style.height = "100%";
-    this.topdiv.style.width = "100%";
-    this.topdiv.style.overflowY = "auto";
-    this.topdiv.overflow = "hidden";
-    this.topdiv.style.background = "lightgrey";
-    this.innerdiv = document.createElement("div");
-    this.topdiv.appendChild(this.innerdiv);
-    this.topdiv.style.height = "100%";
-    this.topdiv.style.width = "100%";
-    this.shadow = this.topdiv.attachShadow({
-      mode: "open"
-    });
-    this.reload = function (__type) {
-      let data;
-      let options = {
-        noShadow: false
-      };
-      if (typeof __type == "string") {
-        this.type = __type;
-      } else {
-        this.type = __type.type;
-        data = __type.data;
-      }
-      //parse options and decide what to do re: a div
-      if (me.operators[this.type]) {
-        if (core.operators[this.type].options)
-          Object.assign(options, core.operators[this.type].options);
-        //clear the shadow and the div
-        this.shadow.innerHTML = "";
-        this.innerdiv.innerHTML = "";
-        if (options.noShadow) {
-          this.div = this.innerdiv;
-        } else {
-          this.div = this.shadow;
-        }
-        this.baseOperator = new me.operators[this.type].constructor(this);
-        this.baseOperator.fromSaveData(data);
-      } else {
-        this.waitOperatorReady(this.type);
-      }
-    };
-
-    this.waitOperatorReady = function (__type) {
-      let h1 = document.createElement("h1");
-      h1.innerHTML = "Loading operator...";
-      this.div.appendChild(h1);
-      this.operatorLoadCallbacks[__type].push({
-        op: top,
-        data: __type
-      });
-    };
-    this.reload(_type);
-    this.toSaveData = function () {
-      let obj = {};
-      obj.type = this.type;
-      obj.data = this.baseOperator.toSaveData();
-      return obj;
-    };
-  };
   this.registerOperator = function (type, options, _constructor) {
     if (_constructor) {
       this.operators[type] = {
@@ -186,7 +146,7 @@ function _core() {
     } else {
       this.operators[type] = {
         constructor: options,
-        options:{}
+        options: {}
       };
     }
     me.fire("operatorAdded", {
@@ -534,17 +494,10 @@ function _core() {
         me.firebase.update(id);
       }
     };
-
-
-
-
-
-
-
   };
   this.firebaseSync = function (docname) {
     //setup some defaults in case fb does not load
-    me.views={};
+    me.views = {};
 
     try {
       this.readyFirebase();
@@ -734,13 +687,13 @@ function _core() {
   });
 
   //firebase view saving
-  me.requestCapacitor=new capacitor(500,10,(uuid)=>{
+  me.requestCapacitor = new capacitor(500, 10, (uuid) => {
     me.firebase.db
-        .collection("polymorph")
-        .doc(me.docName)
-        .collection("views")
-        .doc(uuid)
-        .set(me.baseRect.toSaveData());
+      .collection("polymorph")
+      .doc(me.docName)
+      .collection("views")
+      .doc(uuid)
+      .set(me.baseRect.toSaveData());
   });
   me.on("viewUpdate", function () {
     me.views[me.userCurrentDoc.currentView] = me.baseRect.toSaveData();

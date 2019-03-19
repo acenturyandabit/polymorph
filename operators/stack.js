@@ -1,11 +1,11 @@
 core.registerOperator("stack", {
     displayName: "Stack",
-    description: "Stack operators and scroll through them like a browseable webpage."
+    description: "Stack operators and scroll through them like a browseable webpage.",
+    targetForward:true
 }, function (operator) {
     let me = this;
     me.operator = operator;
     this.settings = {};
-
     this.style = document.createElement("style");
     this.style.innerHTML = `
         .addMore{
@@ -18,23 +18,85 @@ core.registerOperator("stack", {
         }
     `
     operator.div.appendChild(this.style);
+    
+    this.forwardTarget=function(){
+        for (let i=0;i<this.rects.length;i++){
+            this.rects[i].rect.activateTargets();
+        }
+    }
+
+    this.forwardUntarget=function(){
+        for (let i=0;i<this.rects.length;i++){
+            this.rects[i].rect.deactivateTargets();
+        }
+    }
+
 
     this.rootdiv = document.createElement("div");
+    this.rootdiv.style.cssText=`width:100%; height: 100vh; position:relative`;
     this.rootdiv.classList.add("root")
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `<div class="addMore"><div>+</div><div>`;
     this.more = this.rootdiv.querySelector(".addMore");
     operator.div.appendChild(this.rootdiv);
-
     this.rects = [];
     this.addStack = function (r) {
         let obj = {};
         obj.div = document.createElement("div");
-        obj.div.style.height = "20em";
+        if (r && r.size)obj.div.style.height = r.size+"px";
+        else obj.div.style.height = "20em";
+        obj.div.style.width = "100%";
+        obj.div.style.borderBottom="5px solid black";
+        obj.div.style.cursor="ns-resize";
+        obj.div.style.boxSizing="border-box";
+        obj.div.classList.add("stack_Container");
         me.rootdiv.insertBefore(obj.div,me.more);
         obj.rect = new _rect(core, obj.div, RECT_ORIENTATION_X, 1, 0);
-        if (r) obj.rect.fromSaveData(r);
+        obj.rect.parentRect=me;
+        if (r) obj.rect.fromSaveData(r.rect);
         me.rects.push(obj);
+    }
+
+    //delegated vertical resize handler
+    let resizingDiv=undefined;
+    let mouseY=0;
+    let originalSize=0;
+    let resizingN=0;
+    this.rootdiv.addEventListener("mousedown",function(e){
+        if (e.target.classList.contains("stack_Container")){
+            //its my child
+            resizingDiv=e.target;
+            //start the resize
+            mouseY=e.clientY;
+            originalSize=resizingDiv.clientHeight;
+            for (let i=0;i<me.rects.length;i++){
+                if (me.rects[i].div==resizingDiv)resizingN=i;
+            }
+        }
+    })
+
+    this.rootdiv.addEventListener("mousemove",function(e){
+        if (resizingDiv){
+            resizingDiv.style.height=originalSize+(e.clientY-mouseY)+"px";
+            me.rects[resizingN].rect.resize();
+            me.rects[resizingN].size=originalSize+(e.clientY-mouseY);
+        }
+    })
+
+    this.rootdiv.addEventListener("mouseup",function(e){
+        resizingDiv=undefined;
+        // if in correct direction, resize.
+    })
+
+    this._remove=function(burn,obj){
+        for (let i in me.rects){
+            if (me.rects[i].rect==obj){
+                //remove this!
+                me.rects[i].div.remove();
+                delete(me.rects[i]);
+            }
+        }
+        core.fire("viewUpdate",{sender:this});
     }
     this.more.addEventListener("click", this.addStack);
     //////////////////Handle core item updates//////////////////
@@ -42,21 +104,29 @@ core.registerOperator("stack", {
     this.toSaveData = function () {
         let obj = {};
         obj.settings = this.settings;
-        obj.stack = [];
+        obj.rects = [];
         for (let i = 0; i < this.rects.length; i++) {
-            obj.stack.push({
-                rect: this.rects[i].rect.toSaveData()
+            obj.rects.push({
+                rect: this.rects[i].rect.toSaveData(),
+                size:this.rects[i].size
             });
         }
         return obj;
     }
 
+    this.resize=function(){
+        for (let i=0;i<this.rects.length;i++){
+            this.rects[i].rect.resize();
+        }
+        this.parentRect=this.operator.rect;//enable forwarding for elements in the stack.
+    }
+
     this.fromSaveData = function (d) {
         if (!d) return;
         Object.assign(this.settings, d.settings);
-        this.stack = [];
-        for (let i = 0; i < d.stack.length; i++) {
-            this.addStack(d.stack[i].rect);
+        this.rects = [];
+        if (d.rects)for (let i = 0; i < d.rects.length; i++) {
+            this.addStack(d.rects[i]);
         }
     }
 });

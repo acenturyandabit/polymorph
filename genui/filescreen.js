@@ -144,19 +144,12 @@ function _filescreen(userSettings) {
         });
     }
 
-    this.saveRecentDocument = function (id, offline = true) {
+    this.saveRecentDocument = function () {
         let url = new URL(window.location);
-        let query = "?" + me.settings.documentQueryKeyword + "=" + id + "&";
-        if (offline) {
-            query += me.settings.offlineQueryParam;
-        } else {
-            query += me.settings.onlineQueryParam;
-        }
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
         if (!recents) recents = [];
         let seenbefore = false;
-        url.search = query;
-        url = url.toString();
+        url=url.toString();
         recents.forEach((v) => {
             if (v == url) {
                 seenbefore = true;
