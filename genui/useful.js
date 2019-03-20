@@ -56,7 +56,7 @@ function documentReady(f) {
 
 //Capacitor: for storing calls to an external api which shouldn't be called frequently (e.g. a firebase backend or XHR!)
 //arguments: t: time between requests. load: the number of requests after which to submit the request. send: function to send the data to.
-//call function: submit(uuid, data(optional)): submit some data to the capacitor.
+//call function: submit(uuid(optional), data(optional)): submit some data to the capacitor.
 function capacitor(t, limit, send, checkInterval = 100) {
     let me = this;
     let lastUID;

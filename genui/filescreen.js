@@ -1,5 +1,5 @@
-//V2.2.1 Filescreen: Loading screen for files
-
+//V2.2.2 Filescreen: Loading screen for files
+//Queryparam can now either be a string or a function!
 
 /*
 TODO:
@@ -84,15 +84,22 @@ function _filescreen(userSettings) {
         me.newDocInput = document.createElement("input");
         me.newDocInput.placeholder = "Enter Name...";
         innerDiv.appendChild(me.newDocInput);
+        //create a button for each format specifier
         for (let i = 0; i < me.settings.formats.length; i++) {
             let b = document.createElement("button");
             b.innerText = me.settings.formats[i].prompt;
-            if (me.settings.formats[i].queryParam) b.dataset.queryParam = me.settings.formats[i].queryParam;
+            b.dataset.index=i;
+            //if (me.settings.formats[i].queryParam) b.dataset.queryParam = me.settings.formats[i].queryParam;
             b.addEventListener("click", (e) => {
                 if (me.newDocInput.value.length) {
                     let url = new URL(window.location);
                     let totalString = "?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value;
-                    if (e.target.dataset.queryParam) totalString += "&" + e.target.dataset.queryParam;
+                    let index=Number(e.target.dataset.index);
+                    if (me.settings.formats[i].queryParam) {
+                        if (typeof me.settings.formats[i].queryParam=="string"){
+                            totalString += "&" + me.settings.formats[i].queryParam;
+                        }else totalString += "&" + me.settings.formats[i].queryParam();//string or function
+                    }
                     url.search = totalString;
                     window.location.href = url.toString();
                 }

@@ -53,7 +53,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.innerDivs = [];
     this.createInnerDiv = function () {
         let indiv = document.createElement("div");
-        indiv.style.cursor="default";
+        indiv.style.cursor = "default";
         indiv.style.height = "100%";
         indiv.style.width = "100%";
         indiv.style.overflow = "hidden";
@@ -65,14 +65,27 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.tabspans = [];
     this.createTypeName = function () {
         let tyspan = document.createElement("span");
-        let tyname = document.createElement("span");
+        let tyname = document.createElement("button");
         let tybtn = document.createElement("button");
         let tygear = document.createElement("img");
-        tybtn.style.cssText = `color:red;font-weight:bold; font-style:normal`;
+        tyname.style.cssText=tybtn.style.cssText=`
+        background: unset;
+        color:unset;
+        border:unset;
+        cursor:pointer;
+        `;
+        tybtn.style.cssText += `color:red;font-weight:bold; font-style:normal`;
         tybtn.innerText = 'x';
+        tybtn.style.display = "none";
         tygear.src = "assets/gear.png";
         tygear.style.cssText = "width: 1em; height:1em;"
-        tyspan.style.border = "1px solid black";
+        tygear.style.display = "none";
+        
+        tyspan.style.cssText = `border: 1px solid black;
+        background: purple;
+        color: white;
+        align-items: center;
+        display: inline-flex;`;
         tyspan.appendChild(tyname);
         tyspan.appendChild(tybtn);
         tyspan.appendChild(tygear);
@@ -86,7 +99,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.operators.push(operator);
             //Create a button for it
             this.tabspans.push(this.createTypeName());
-            this.tabspans[this.tabspans.length - 1].querySelector("span").innerText = operator.type;
+            this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.type;
             this.tabbar.insertBefore(this.tabspans[this.tabspans.length - 1], this.plus);
             //Create a tab for it
             this.innerDivs.push(this.createInnerDiv());
@@ -94,11 +107,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.innerDivs[this.innerDivs.length - 1].appendChild(operator.topdiv);
             this.outerDiv.appendChild(this.innerDivs[this.innerDivs.length - 1]);
         } else {
-            this.tabspans[this.operators.indexOf(operator)].querySelector("span").innerText = operator.type;
+            this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.type;
             //just refresh the tabspan.
         }
         operator.rect = this;
-        if (operator.baseOperator.resize)operator.baseOperator.resize();
+        if (operator.baseOperator.resize) operator.baseOperator.resize();
     }
 
     //Callback for tab clicks to switch between operators.
@@ -108,7 +121,17 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.innerDivs[i].style.display = "none";
         }
         if (this.innerDivs[index]) this.innerDivs[index].style.display = "block";
-        if (this.operators[index] && this.operators[index].baseOperator.resize)this.operators[index].baseOperator.resize();
+        if (this.operators[index] && this.operators[index].baseOperator.resize) this.operators[index].baseOperator.resize();
+        // hide buttons on previous operator
+        for (let i = 0; i < this.tabspans.length; i++) {
+            this.tabspans[i].children[1].style.display = "none";
+            this.tabspans[i].children[2].style.display = "none";
+            this.tabspans[i].style.background = "mediumpurple";
+        }
+        //show buttons on this operator
+        this.tabspans[index].children[1].style.display = "inline";
+        this.tabspans[index].children[2].style.display = "inline";
+        this.tabspans[index].style.background = "purple";
     }
 
     // The actual tabbar.
@@ -124,9 +147,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     })
     //Delegated operator switching
     this.tabbar.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() == 'span') {
-            let ptg=e.target;
-            if (ptg.parentElement.tagName.toLowerCase()=='span')ptg=ptg.parentElement;
+        if (!e.target.previousSibling) {
+            let ptg = e.target;
+            if (ptg.parentElement.tagName.toLowerCase() == 'span') ptg = ptg.parentElement;
             this.switchOperator(this.tabspans.indexOf(ptg));
         }
     })
@@ -206,9 +229,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             me.tabbar.style.display = "block";
             me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
         }
-        core.fire('resize',{sender:this});
+        core.fire('resize', {
+            sender: this
+        });
     }
-    let rectChanged=false;
+    let rectChanged = false;
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
     // If parent is body, ensure loaded, so we can create a new rect whenever.
@@ -279,7 +304,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 } else {
                     me.children = [new _rect(core, me, _XorY, 0, 0), new _rect(core, me, _XorY, 0, 1, me.operators)];
                 }
-                rectChanged=true;
+                rectChanged = true;
                 me.operators = undefined;
                 me.children[_firstOrSecond].resizing = me.split;
                 me.split = -1;
@@ -309,7 +334,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 me.resize();
                 me.parentRect.children[!me.firstOrSecond * 1].resize();
                 e.preventDefault();
-                rectChanged=true;
+                rectChanged = true;
             }
         }
     }
@@ -323,9 +348,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             me.children[0].mouseUpHandler(e);
             me.children[1].mouseUpHandler(e);
         }
-        if (rectChanged){
-            core.fire("viewUpdate",{sender:me});
-            rectChanged=false;
+        if (rectChanged) {
+            core.fire("viewUpdate", {
+                sender: me
+            });
+            rectChanged = false;
         }
     }
     this.outerDiv.addEventListener("mouseup", this.mouseUpHandler);
@@ -376,7 +403,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
     this.fromSaveData = function (obj) {
         //children first!
-        if (!obj)return;
+        if (!obj) return;
         if (obj.children) {
             me.outerDiv.style.border = "none";
             me.tabbar.style.display = "none";
@@ -406,7 +433,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.operators = [];
 
             for (let i = 0; i < obj.operators.length; i++) {
-                let op=new me.core.operator(obj.operators[i], me)
+                let op = new me.core.operator(obj.operators[i], me)
                 this.tieOperator(op);
             }
             if (obj.selectedOperator) this.selectedOperator = obj.selectedOperator;
@@ -440,10 +467,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.remove = function () {
         //signal my brother to promote itself
-        if (this.parentRect)this.parentRect._remove(me.firstOrSecond,this);
+        if (this.parentRect) this.parentRect._remove(me.firstOrSecond, this);
     }
     this._remove = function (_firstOrSecond) {
-        core.fire("viewUpdate",{sender:me});
+        core.fire("viewUpdate", {
+            sender: me
+        });
         //if remaining innerDiv has an operator, adopt it
         if (this.children[(!_firstOrSecond) * 1].operators && this.children[(!_firstOrSecond) * 1].operators.length) {
             for (let i = 0; i < this.children[(!_firstOrSecond) * 1].operators.length; i++) this.tieOperator(this.children[(!_firstOrSecond) * 1].operators[i]);
@@ -470,22 +499,22 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         this.switchOperator(0);
     }
 
-    this.activateTargets=function(){
-        if (me.children && me.children.length){
+    this.activateTargets = function () {
+        if (me.children && me.children.length) {
             me.children[0].activateTargets();
             me.children[1].activateTargets();
-        }else{
-            for (let i=0;i<this.operators.length;i++){
+        } else {
+            for (let i = 0; i < this.operators.length; i++) {
                 this.operators[i].activateTargets();
             }
         }
     }
-    this.deactivateTargets=function(){
-        if (me.children && me.children.length){
+    this.deactivateTargets = function () {
+        if (me.children && me.children.length) {
             me.children[0].deactivateTargets();
             me.children[1].deactivateTargets();
-        }else{
-            for (let i=0;i<this.operators.length;i++){
+        } else {
+            for (let i = 0; i < this.operators.length; i++) {
                 this.operators[i].deactivateTargets();
             }
         }

@@ -54,7 +54,7 @@
             if (!me.settings.currentViewName) {
                 //Show blank
             } else {
-                if (!core.items[me.settings.currentViewName])return;
+                if (!core.items[me.settings.currentViewName]) return;
                 this.viewName.innerText = core.items[me.settings.currentViewName].synergist.viewName;
                 for (i in core.items) {
                     if (core.items[i].synergist && core.items[i].synergist.viewData) {
@@ -84,6 +84,7 @@
                 id: id
             });
             this.switchView(id);
+            return id;
         }
 
         this.cloneView = function () {
@@ -138,15 +139,21 @@
             if (e.target.tagName.toLowerCase() == 'a') {
                 if (e.target.dataset.isnew) {
                     //make a new view
-                    nv = Date.now().toString();
-                    me.makeNewView(nv);
+                    nv=me.makeNewView();
                     me.switchView(nv);
                 } else {
                     ln = e.target.dataset.listname;
                     me.switchView(ln);
                 }
-                me.viewDropdown.style.display = "none";
+
+            } else {
+                if (e.target.tagName.toLowerCase() == 'em') {
+                    nv = Date.now().toString();
+                    nv=me.makeNewView();
+                    me.switchView(nv);
+                }
             }
+            me.viewDropdown.style.display = "none";
             e.stopPropagation();
         })
 
@@ -169,8 +176,12 @@
         })
 
         this.rootdiv.addEventListener("mousedown", function (e) {
-            if (e.target.parentElement != me.viewDropdown)
-                me.viewDropdown.style.display = "none";
+            let p = e.target;
+            while (p != me.rootdiv) {
+                if (p == me.viewDropdown) return;
+                p = p.parentElement;
+            }
+            me.viewDropdown.style.display = "none";
         })
         scriptassert([
             ["contextmenu", "genui/contextMenu.js"]
@@ -241,7 +252,7 @@
                     let relements = me.rootdiv.querySelectorAll(".floatingItem");
                     let minzind = me.settings.maxZ;
                     for (let i = 0; i < relements.length; i++) {
-                        relements[i].style.border="";
+                        relements[i].style.border = "";
                         let contest = Number(relements[i].style["z-index"]);
                         if (minzind > contest) minzind = contest;
                     }
@@ -335,8 +346,8 @@
         });
 
         me.handleMoveEnd = function (e, touch) {
-            if(me.globalDrag){
-                setTimeout(()=>c.submit(),500);
+            if (me.globalDrag) {
+                setTimeout(() => c.submit(), 500);
                 me.globalDrag = false;
             }
             if (me.dragging) {

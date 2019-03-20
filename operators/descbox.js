@@ -139,7 +139,7 @@ core.registerOperator("descbox", function (operator) {
 
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
-            let its=me.dialog.querySelector("[data-role='" + i + "']");
+            let its=me.dialog.querySelector("[data-role]");
             for (let i=0;i<its.length;i++){
                 me.settings[its.dataset.role]=its.value;
             }

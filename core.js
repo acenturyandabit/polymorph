@@ -39,7 +39,9 @@ function _core() {
       },
       {
         prompt: "Make a new shared (online) document",
-        queryParam: "online"
+        queryParam: ()=>{
+          return "f="+guid(10);
+        }
       }
     ],
     tutorialEnabled: false,
@@ -54,19 +56,21 @@ function _core() {
       this.settings.displayName + " - Polymorph";
   };
 
-  function localLoad(id, online) {
+  function localLoad(id) {
     me.filescreen.saveRecentDocument(id);
     me.docName = id; // for all user save data. that got real important real quick :/
+    //new doc,create a new entry
     if (!me.userData[id] || !me.userData[id].primarySaveSource) me.userData[id] = {
       currentView: "default",
-      primarySaveSource: "local"
     };
     me.userCurrentDoc = me.userData[id];
     //PUT ADDITIONAL QUERY HANDLING HERE: OPTIONS, VIEWS
+    //query handling for online doc 
     let params = new URLSearchParams(window.location.search);
-    if (params.has("online")) {
-      me.userCurrentDoc.firebaseDocName = id;
-      me.userCurrentDoc.primarySaveSource = "firebase";
+    if (params.has("f")) {
+      me.userCurrentDoc.firebaseDocName = params.get("f");
+      me.userCurrentDoc.firebaseSync = true;
+      //start the firebase syncer down the line
     }
     if (params.has("view")) {
       me.userCurrentDoc.currentView = params.get("view");
@@ -81,7 +85,7 @@ function _core() {
           }
         };
       }
-      me.fromSaveData(d, "first");
+      me.fromSaveData(d);
     });
   }
 
@@ -98,10 +102,10 @@ function _core() {
   }
 
   this.targeter = undefined;
-  this.submitTarget=function(id){
-    if (me.targeter){
-      me.targeter(id);//resolves promise
-      me.targeter=undefined;
+  this.submitTarget = function (id) {
+    if (me.targeter) {
+      me.targeter(id); //resolves promise
+      me.targeter = undefined;
       //untarget everything
       me.baseRect.deactivateTargets();
     }
@@ -240,41 +244,19 @@ function _core() {
     }
   };
 
-  this.fromSaveData = function (obj, loadType) {
+  this.fromSaveData = function (obj) {
     //dont wipe and regen everything twice if we're doing a first load
-    if (loadType != "first") {
-      //Regenerate items
-      this.items = {};
-    }
+    this.items = {};
     //copy over the settings
     this.resetDefaultSettings();
     if (this.settings) {
       Object.assign(this.settings, obj.settings);
     }
     this.updateSettings();
-    switch (loadType) {
-      case "first":
-        //this is the first load, redo the load with another source
-        this.fromSaveData(obj, me.userCurrentDoc.primarySaveSource);
-        break;
-      case "local":
-        //just pass the existing object
-        this.directLoadFromSaveData(obj);
-        break;
-      case "firebase":
-        //activate the firebase listener
-        // Create or load a default view (firebase will overwrite)
-
-        if (!this.firebaseSync(me.userCurrentDoc.firebaseDocName)) {
-          me.directLoadFromSaveData(obj);
-          //report to the user something's gone wrong
-        }
-        break;
-      case "server":
-        this.loadFromServer(me.userCurrentDoc.saveAddress, () => {
-          me.directLoadFromSaveData(obj);
-        });
-        break;
+    //get the cached data, while we're waiting for new data
+    this.directLoadFromSaveData(obj);
+    if (me.userCurrentDoc.firebaseSync){
+      this.firebaseSync(me.userCurrentDoc.firebaseDocName)
     }
   };
 
@@ -306,37 +288,44 @@ function _core() {
         <p class="firebase">
             Firebase
             <label><input class="enableSync" type="checkbox">Enable sync</label>
-            <label><input name="defaultSource" type="radio" value="firebase">Set as default load source</label>
-            <input class="ref" placeholder="Enter reference...">
+            <input class="ref" placeholder="Enter Reference..."/>
+            <input disabled class="pswd" placeholder="Enter Password..."/>
+            <button disabled class="pswdbtn" placeholder="Set password"></button>
         </p>
         <p class="server">
             Server
-            <label><input type="checkbox">Save to</label>
-            <label><input name="defaultSource" type="radio" value="server">Set as default load source</label>
             <input class="url" placeholder="Enter URL...">
+            <input class="docid" placeholder="Enter Document ID...">
+            <input class="srv_pass" placeholder="Enter Password...">
             <button class="save">Save to source</button>
             <button class="load">Load from source</button>
         </p>
         <p class="local">
             Local
-            <label><input name="defaultSource" type="radio" value=""local>Set as default load source</label>
+            <label><input type="checkbox" class="autosave">Enable autosave</label>
             <button class="save">Save to source</button>
             <button class="load">Load from source</button>
         </p>
         <button class="setting">Save settings</button>
-        <!--These do nothing right now-->
-        <!--<p><button class="sync">Sync<button> <button class="merge">Merge<button> <button class="force">Force<button></p>-->
         `;
     documentReady(() => {
       document.body.appendChild(loadDialog);
       document.querySelector(".dataSources").addEventListener("click", () => {
         //fill in the apporpriate datasources
+        //firebase name
         if (me.userCurrentDoc.firebaseDocName)
-          loadDialog.querySelector(".firebase>input.ref").value =
+          loadDialog.querySelector(".firebase input.ref").value =
           me.userCurrentDoc.firebaseDocName;
+        //firebase sync enabled?
+        if (me.userCurrentDoc.firebaseSync)
+          loadDialog.querySelector(".firebase input.enableSync").checked = true;
+        //server url
         if (me.userCurrentDoc.saveAddress)
-          loadDialog.querySelector(".server>input.url").value =
+          loadDialog.querySelector(".server input.url").value =
           me.userCurrentDoc.saveAddress;
+        //autosave
+        if (me.userCurrentDoc.autosave)
+          loadDialog.querySelector(".local input.autosave").checked = true;
         loadDialog.style.display = "block";
       });
     });
@@ -360,24 +349,23 @@ function _core() {
             delete me.firebase.unsub;
           }
           me.userCurrentDoc.firebaseDocName = "";
+          me.userCurrentDoc.firebaseSync = false;
         } else {
           me.userCurrentDoc.firebaseDocName = name;
+          me.userCurrentDoc.firebaseSync = true;
+          //unsub first
+          if (me.firebase && me.firebase.unsub) {
+            for (let i in me.firebase.unsub) me.firebase.unsub[i]();
+            delete me.firebase.unsub;
+          }
+          //and resub
           me.firebaseSync(name);
         }
         //server
-        let url = loadInnerDialog.querySelector(".server>input.url").value;
-        if (url) {
-          me.lockServer(url);
-        } else {
-          me.userCurrentDoc.saveAddress = "";
-        }
-        //handle the radio button
-        if (
-          loadInnerDialog.querySelector("input[name='defaultSource']:checked")
-        ) {
-          me.userCurrentDoc.primarySaveSource = loadInnerDialog.querySelector(
-            "input[name='defaultSource']:checked"
-          ).value;
+        me.userCurrentDoc.saveAddress = loadInnerDialog.querySelector(".server>input.url").value;
+        //autosave
+        if (loadInnerDialog.querySelector(".local input.autosave").checked) {
+          me.userCurrentDoc.autosave = true;
         }
         me.saveUserData();
       });
@@ -391,11 +379,9 @@ function _core() {
             me.saveToServer(me.userCurrentDoc.saveAddress);
             me.saveUserData();
           });
-        } else {
-          me.userCurrentDoc.saveAddress = "";
-          me.saveUserData();
         }
       });
+    //local save
     loadInnerDialog
       .querySelector(".local>button.save")
       .addEventListener("click", function () {
@@ -417,6 +403,7 @@ function _core() {
           me.saveUserData();
         }
       });
+    //local load
     loadInnerDialog
       .querySelector(".local>button.load")
       .addEventListener("click", function () {
@@ -427,6 +414,13 @@ function _core() {
   this.saveToLocal = function () {
     localforage.setItem("__polymorph_" + core.docName, core.toSaveData());
   };
+  //----------Autosave----------//
+  let autosaveCapacitor = new capacitor(200, 20, me.saveToLocal);
+  this.on("updateItem", function (d) {
+    if (me.userCurrentDoc.autosave) {
+      autosaveCapacitor.submit();
+    }
+  });
   this.lockServer = function (url, success) {
     //send a request to get json from the server
     let xhr = new XMLHttpRequest();
@@ -709,6 +703,9 @@ var core = new _core();
 //What else?
 //Saving.
 document.addEventListener("DOMContentLoaded", e => {
+  window.addEventListener("resize", () => {
+    core.baseRect.resize();
+  })
   document.body.addEventListener("keydown", e => {
     if (e.ctrlKey && e.key == "s") {
       core.saveToLocal();
