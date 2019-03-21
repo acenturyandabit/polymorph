@@ -11,10 +11,14 @@ core.registerOperator("stack", {
         .addMore{
             padding: 70px 0;
             border: 3px gray dashed;
-  text-align: center;
+            text-align: center;
         }
         .root>div{
             position:relative;
+        }
+        .root{
+            overflow-y: scroll;
+            overflow-x: hidden;
         }
     `
     operator.div.appendChild(this.style);
@@ -33,7 +37,7 @@ core.registerOperator("stack", {
 
 
     this.rootdiv = document.createElement("div");
-    this.rootdiv.style.cssText=`width:100%; height: 100vh; position:relative`;
+    this.rootdiv.style.cssText=`width:100%; height: 100%; position:relative`;
     this.rootdiv.classList.add("root")
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `<div class="addMore"><div>+</div><div>`;

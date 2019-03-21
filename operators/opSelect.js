@@ -17,6 +17,8 @@
         operator.div.appendChild(this.style);
 
         this.rootdiv = document.createElement("div");
+        this.rootdiv.style.height="100%";
+        this.rootdiv.style.overflowY="auto";
         //Add div HTML here
         this.rootdiv.innerHTML = `
     <h1>Quick start</h1>
@@ -27,7 +29,7 @@
     <p>Choose an operator for this space!</p>
     <div class="operators">
     <div class="buttons"></div>
-    <div class="descriptions"></div>
+    <div class="descriptions" style="height:5em;"></div>
     </div>`;
         this.buttondiv = this.rootdiv.querySelector("div.operators>div.buttons");
         this.descInnerDiv = this.rootdiv.querySelector("div.descriptions");

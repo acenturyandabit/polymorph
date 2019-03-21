@@ -68,7 +68,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         let tyname = document.createElement("button");
         let tybtn = document.createElement("button");
         let tygear = document.createElement("img");
-        tyname.style.cssText=tybtn.style.cssText=`
+        tyname.style.cssText = tybtn.style.cssText = `
         background: unset;
         color:unset;
         border:unset;
@@ -80,7 +80,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         tygear.src = "assets/gear.png";
         tygear.style.cssText = "width: 1em; height:1em;"
         tygear.style.display = "none";
-        
+
         tyspan.style.cssText = `border: 1px solid black;
         background: purple;
         color: white;
@@ -433,8 +433,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.operators = [];
 
             for (let i = 0; i < obj.operators.length; i++) {
-                let op = new me.core.operator(obj.operators[i], me)
-                this.tieOperator(op);
+                try {
+                    let op = new me.core.operator(obj.operators[i], me)
+                    this.tieOperator(op);
+                } catch (e) {
+                    console.log(e);
+                }
             }
             if (obj.selectedOperator) this.selectedOperator = obj.selectedOperator;
             if (this.selectedOperator > this.operators.length - 1) this.selectedOperator = this.operators.length - 1;

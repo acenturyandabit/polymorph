@@ -31,7 +31,7 @@
             let id = d.id;
             let sender = d.sender;
             if (sender == me) return;
-            me.arrangeItem(id);
+            if (me.arrangeItem)me.arrangeItem(id,true);
             //Check if item is shown
             //Update item if relevant
             //This will be called for all items when the items are loaded.
@@ -377,6 +377,7 @@
                 }
                 me.updatePosition(thing);
                 core.fire("updateItem", {
+                    sender:me,
                     id: thing
                 });
             } else if (me.linking) {
@@ -397,9 +398,11 @@
                     me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
                     //push the change
                     core.fire("updateItem", {
+                        sender:me,
                         id: me.linkingDiv.dataset.id
                     });
                     core.fire("updateItem", {
+                        sender:me,
                         id: linkedTo.dataset.id
                     });
                 }
@@ -474,7 +477,6 @@
             core.items[id].synergist.viewData[this.settings.currentViewName].y = (it.getBoundingClientRect().top - me.itemSpace.getBoundingClientRect().top) / me.itemSpace.clientHeight + (core.items[me.settings.currentViewName].synergist.cy || 0);
             me.arrangeItem(id);
         }
-
         scriptassert([
             ["quill", "3pt/quill.min.js"]
         ], () => {
@@ -493,12 +495,13 @@
                         let id = lt.dataset.id;
                         core.items[id].synergist.description = me.deltas[id].getContents();
                         core.fire("updateItem", {
+                            sender:me,
                             id: id
                         });
                     }
                 })
 
-                me.arrangeItem = function (id) {
+                me.arrangeItem = function (id,extern) {
                     if (!core.items[id].synergist || !core.items[id].synergist.viewData) return;
                     //visual aspect of updating position.
                     //Check if the item actually exists yet
@@ -536,16 +539,32 @@
                         it.style.display = "none";
                     }
                     //set the contents of the quill
-                    /*q.setContents([{
-    
-                    }])*/
+                    if (extern){
+                        me.deltas[id].setContents(core.items[id].synergist.description);
+                    }
                     if (me.updateLines) me.updateLines(id);
-                } // arrange all items
+                }
+                // arrange all items on startup
                 for (let i in core.items) {
                     me.arrangeItem(i);
                 }
             })
             operator.div.appendChild(s);
+            //delegate event handlers for all quills because jesus
+            /*
+            me.rootdiv.addEventListener("keyup",(e)=>{
+                me.selfunset=true;
+                let id;
+                let r=e.target;
+                while (r!=me.rootdiv){
+                    if (r.dataset.id){
+                        id=r.dataset.id;
+                        break;
+                    }
+                    r=r.parentElement;
+                }
+                core.fire("updateItem",{sender:me,id:id});
+            })*/
         })
 
         this.createItem = function (x, y) {
