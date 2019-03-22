@@ -33,4 +33,15 @@ core.registerOperator("template", {
         //this is called when your operator is started OR your operator loads for the first time
         Object.assign(this.settings, d);
     }
+
+    //Handle the settings dialog click!
+    this.dialogDiv=document.createElement("div");
+    this.dialogDiv.innerHTML=``;
+    this.showDialog=function(){
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings=function(){
+        // pull settings and update when your dialog is closed.
+    }
+
 });

@@ -141,10 +141,13 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
     this.plus.innerText = "+";
     this.tabbar.appendChild(this.plus);
+
+    //operator creation
     this.plus.addEventListener("click", () => {
         this.tieOperator(new core.operator("opSelect", this));
         this.switchOperator(this.operators.length - 1);
     })
+
     //Delegated operator switching
     this.tabbar.addEventListener("click", (e) => {
         if (!e.target.previousSibling) {
@@ -175,11 +178,25 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.selectedOperator = 0;
     //And a delegated settings button handler
+    this.settingOperator = 0;
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "img") {
-            this.operators[this.selectedOperator].baseOperator.showSettings();
+            //dont show settings - instead, copy the settings div onto the core settings div.
+            if (this.operators[this.selectedOperator].baseOperator.dialogDiv) {
+                this.settingOperator = this.selectedOperator;
+                core.dialog.register(me, this.operators[this.selectedOperator].baseOperator);
+            } else {
+                //old version
+                if (this.operators[this.selectedOperator].baseOperator.showSettings) {
+                    this.operators[this.selectedOperator].baseOperator.showSettings();
+                }
+            }
         }
     })
+
+    this.submitDialog = function (d) {
+        this.tabspans[this.settingOperator].children[0].innerText = d.querySelector("input.tabDisplayName").value;
+    }
     this.outerDiv.appendChild(this.tabbar);
 
     // Generate placeholder content if no content is provided.
@@ -390,7 +407,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         let obj = {};
         if (this.operators) {
             obj.operators = [];
-            for (let i = 0; i < this.operators.length; i++) obj.operators.push(this.operators[i].toSaveData());
+            for (let i = 0; i < this.operators.length; i++) obj.operators.push({
+                name: me.tabspans[i].children[0].innerText,
+                opdata: this.operators[i].toSaveData()
+            });
             obj.selectedOperator = this.selectedOperator;
         }
         for (let i = 0; i < toSaveProperties.length; i++) {
@@ -433,11 +453,19 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.operators = [];
 
             for (let i = 0; i < obj.operators.length; i++) {
-                try {
+
+                if (obj.operators[i].opdata) {
+                    let op;
+                    try {
+                        op = new me.core.operator(obj.operators[i].opdata, me)
+                    } catch (e) {
+                        console.log(e);
+                    }
+                    this.tieOperator(op);
+                    this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
+                } else {
                     let op = new me.core.operator(obj.operators[i], me)
                     this.tieOperator(op);
-                } catch (e) {
-                    console.log(e);
                 }
             }
             if (obj.selectedOperator) this.selectedOperator = obj.selectedOperator;

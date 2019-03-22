@@ -31,7 +31,7 @@
             let id = d.id;
             let sender = d.sender;
             if (sender == me) return;
-            if (me.arrangeItem)me.arrangeItem(id,true);
+            if (me.arrangeItem) me.arrangeItem(id, true);
             //Check if item is shown
             //Update item if relevant
             //This will be called for all items when the items are loaded.
@@ -139,7 +139,7 @@
             if (e.target.tagName.toLowerCase() == 'a') {
                 if (e.target.dataset.isnew) {
                     //make a new view
-                    nv=me.makeNewView();
+                    nv = me.makeNewView();
                     me.switchView(nv);
                 } else {
                     ln = e.target.dataset.listname;
@@ -149,7 +149,7 @@
             } else {
                 if (e.target.tagName.toLowerCase() == 'em') {
                     nv = Date.now().toString();
-                    nv=me.makeNewView();
+                    nv = me.makeNewView();
                     me.switchView(nv);
                 }
             }
@@ -186,7 +186,7 @@
         scriptassert([
             ["contextmenu", "genui/contextMenu.js"]
         ], () => {
-            contextMenuManager.init(me.rootdiv);
+            let contextMenuManager = new _contextMenuManager(me.rootdiv);
             me.viewContextMenu = contextMenuManager.registerContextMenu(
                 `<li class="viewDeleteButton">Delete</li>
             <li class="viewCloneButton">Clone view</li>`,
@@ -204,6 +204,30 @@
                 me.cloneView(synergist.currentView);
                 me.viewContextMenu.style.display = "none";
             })
+            me.itemContextMenu = contextMenuManager.registerContextMenu(
+                `<li class="deleteButton">Delete</li>
+            <li class="subview">Open Subview</li>`,
+                me.rootdiv,
+                ".floatingItem",
+                e => {
+                    let cte = e.target;
+                    while (!cte.matches(".floatingItem")) cte = cte.parentElement;
+                    me.contextedElement = cte;
+                    return true;
+                }
+            );
+            me.itemContextMenu.querySelector(".deleteButton").addEventListener("click", e => {
+                //delete the div and delete its corresponding item
+                me.removeItem(me.contextedElement.dataset.id);
+                me.itemContextMenu.style.display = "none";
+            });
+
+            me.itemContextMenu.querySelector(".subView").addEventListener("click", e => {
+                //delete the div and delete its corresponding item
+                core.items[me.contextedElement.dataset.id].synergist.viewName = me.deltas[me.contextedElement.dataset.id].getText();
+                me.switchView(me.contextedElement.dataset.id);
+                me.itemContextMenu.style.display = "none";
+            });
         })
 
 
@@ -377,7 +401,7 @@
                 }
                 me.updatePosition(thing);
                 core.fire("updateItem", {
-                    sender:me,
+                    sender: me,
                     id: thing
                 });
             } else if (me.linking) {
@@ -398,11 +422,11 @@
                     me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
                     //push the change
                     core.fire("updateItem", {
-                        sender:me,
+                        sender: me,
                         id: me.linkingDiv.dataset.id
                     });
                     core.fire("updateItem", {
-                        sender:me,
+                        sender: me,
                         id: linkedTo.dataset.id
                     });
                 }
@@ -424,34 +448,6 @@
             }
         })
 
-        scriptassert([
-            ["contextmenu", "genui/contextMenu.js"]
-        ], () => {
-            me.itemContextMenu = contextMenuManager.registerContextMenu(
-                `<li class="deleteButton">Delete</li>
-            <li class="subview">Open Subview</li>`,
-                me.rootdiv,
-                ".floatingItem",
-                e => {
-                    let cte = e.target;
-                    while (!cte.matches(".floatingItem")) cte = cte.parentElement;
-                    me.contextedElement = cte;
-                }
-            );
-            me.itemContextMenu.querySelector(".deleteButton").addEventListener("click", e => {
-                //delete the div and delete its corresponding item
-                me.removeItem(me.contextedElement.dataset.id);
-                me.itemContextMenu.style.display = "none";
-            });
-
-            me.itemContextMenu.querySelector(".subView").addEventListener("click", e => {
-                //delete the div and delete its corresponding item
-                core.items[me.contextedElement.dataset.id].synergist.viewName = me.deltas[me.contextedElement.dataset.id].getText();
-                me.switchView(me.contextedElement.dataset.id);
-                me.itemContextMenu.style.display = "none";
-            });
-        })
-
 
         this.resize = function () {
             if (me.arrangeItem) {
@@ -459,16 +455,14 @@
                     me.arrangeItem(i);
                 }
             }
-            setTimeout(() => {
+            /*setTimeout(() => {
                 if (me.updateLines) {
                     for (let i in core.items) {
                         if (me.updateLines && core.items[i].synergist) me.updateLines(i);
                     }
                 }
-            }, 500);
-
+            }, 500);*/
         }
-
 
         //----------item functions----------//
         this.updatePosition = function (id) {
@@ -495,13 +489,13 @@
                         let id = lt.dataset.id;
                         core.items[id].synergist.description = me.deltas[id].getContents();
                         core.fire("updateItem", {
-                            sender:me,
+                            sender: me,
                             id: id
                         });
                     }
                 })
 
-                me.arrangeItem = function (id,extern) {
+                me.arrangeItem = function (id, extern) {
                     if (!core.items[id].synergist || !core.items[id].synergist.viewData) return;
                     //visual aspect of updating position.
                     //Check if the item actually exists yet
@@ -539,10 +533,10 @@
                         it.style.display = "none";
                     }
                     //set the contents of the quill
-                    if (extern){
+                    if (extern) {
                         me.deltas[id].setContents(core.items[id].synergist.description);
                     }
-                    if (me.updateLines) me.updateLines(id);
+                    //if (me.updateLines) me.updateLines(id);
                 }
                 // arrange all items on startup
                 for (let i in core.items) {
@@ -698,7 +692,7 @@
                 }
                 delete me.toDrawLineCache[id];
                 //for all my lines, if other element exists, draw line to it
-                if (core.items[id].synergist.links) {
+                if (core.items[id].synergist && core.items[id].synergist.links) {
                     for (let i in core.items[id].synergist.links) {
                         if (me.rootdiv.querySelector("[data-id='" + i + "']")) {
                             me.enforceLine(id, i);
@@ -717,6 +711,21 @@
                     }
                 }
             }
+            let freeze=false;
+            let observer = new MutationObserver(() => {
+                if (freeze)return;
+                freeze=true;
+                let itemlist=me.itemSpace.querySelectorAll(".floatingItem");
+                for (let i=0;i<itemlist.length;i++){
+                    me.updateLines(itemlist[i].dataset.id);
+                }
+                setTimeout(()=>{freeze=false},100);
+            });
+            observer.observe(this.itemSpace, {
+                childList: true,
+                attributes: true,
+                subtree: true //Omit or set to false to observe only changes to the parent node.
+            });
         })
 
 

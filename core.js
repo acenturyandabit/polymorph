@@ -15,7 +15,28 @@ function _item() {
 function _core() {
   //Event API. pretty important, it turns out.
   addEventAPI(this);
+  this.tutorial = new _tutorial();
+  //call the dialog manager
+  dialogSystemManager(this);
   let me = this;
+
+
+  //Item handling. Very basic stuff.
+  //Handling delete item.
+  this.on("deleteItem", d => {
+    delete this.items[d.id];
+  });
+  this.insertItem = function (itm) {
+    let nuid;
+    do {
+      nuid = guid();
+    } while (this.items[nuid]);
+    this.items[nuid] = itm;
+    return nuid;
+  };
+
+
+
   this.resetDefaultSettings = function () {
     this.settings = {
       /* Either local or firebase or server */
@@ -39,8 +60,8 @@ function _core() {
       },
       {
         prompt: "Make a new shared (online) document",
-        queryParam: ()=>{
-          return "f="+guid(10);
+        queryParam: () => {
+          return "f=" + guid(10);
         }
       }
     ],
@@ -48,6 +69,7 @@ function _core() {
     savePrefix: "polymorph"
   });
 
+  //update settings from somewhere
   this.updateSettings = function () {
     document.body.querySelector(
       ".docName"
@@ -84,6 +106,7 @@ function _core() {
             displayName: id
           }
         };
+        core.tutorial.start();
       }
       me.fromSaveData(d);
     });
@@ -108,11 +131,13 @@ function _core() {
       me.targeter = undefined;
       //untarget everything
       me.baseRect.deactivateTargets();
+      me.dialog.div.style.display="block";
     }
   }
   this.target = function () {
     // activate targeting
     me.baseRect.activateTargets();
+    me.dialog.div.style.display="none";
     let promise = new Promise((resolve) => {
       me.targeter = resolve;
     })
@@ -174,14 +199,7 @@ function _core() {
       1
     ))
   );
-  this.insertItem = function (itm) {
-    let nuid;
-    do {
-      nuid = guid();
-    } while (this.items[nuid]);
-    this.items[nuid] = itm;
-    return nuid;
-  };
+  
 
   this.toSaveData = function () {
     let obj = {};
@@ -255,15 +273,10 @@ function _core() {
     this.updateSettings();
     //get the cached data, while we're waiting for new data
     this.directLoadFromSaveData(obj);
-    if (me.userCurrentDoc.firebaseSync){
+    if (me.userCurrentDoc.firebaseSync) {
       this.firebaseSync(me.userCurrentDoc.firebaseDocName)
     }
   };
-
-  //Handling delete item.
-  this.on("deleteItem", d => {
-    delete this.items[d.id];
-  });
 
   //core user interface elements
   let tbman = new _topbarManager();
@@ -527,10 +540,13 @@ function _core() {
             if (!core.items[change.doc.id])
               core.items[change.doc.id] = new _item();
             core.items[change.doc.id].fromSaveData(change.doc.data());
-            localChange = true;
-            core.fire("updateItem", {
-              id: change.doc.id
-            });
+            if (!change.doc.metadata.hasPendingWrites) {
+              //dont double up local updates
+              localChange = true;
+              core.fire("updateItem", {
+                id: change.doc.id
+              });
+            }
             break;
           case "removed":
             localChange = true;
@@ -696,6 +712,7 @@ function _core() {
       me.requestCapacitor.submit(me.userCurrentDoc.currentView);
     }
   });
+  readyTutorial(me);
 }
 
 var core = new _core();

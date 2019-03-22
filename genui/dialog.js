@@ -5,13 +5,18 @@ Todo: move entirely to shadow DOM.
 
 Use case 1: Upgrade an existing dialog
 1. upgrade the dialog (pass as DOM element - can either be already attached or not.): 
+    dialog=document.getElementById("somedialog");// or whatever
     dialog=dialogManager.checkDialogs(dialog)[0];
     that's it, really
 
 Use case 2: Create new dialog:
-2. do some reshuffling
-    me.innerDialog = me.dialog.querySelector(".innerDialog");
-    root.appendChild(me.dialog);
+1. create the dialog and add the class
+    let dialog = document.createElement('div');
+    dialog.classList.add(".dialog");
+2. Let dialogmanager take care of it
+    dialog=dialogManager.checkDialogs(dialog)[0];
+    innerDialog = dialog.querySelector(".innerDialog");
+    root.appendChild(dialog); // where root is the document
 3. insert innerHTML
     let d = document.createElement("div");
     d.innerHTML = `

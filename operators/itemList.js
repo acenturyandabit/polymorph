@@ -1,6 +1,6 @@
 core.registerOperator("itemList", function (operator) {
     let me = this;
-    me.operator=operator;
+    me.operator = operator;
     //Initialise with default settings
     this.settings = {
         properties: {
@@ -12,7 +12,7 @@ core.registerOperator("itemList", function (operator) {
     this.settingsBar = document.createElement('div');
     this.settingsBar.innerHTML = `<div></div>`
     this.taskListBar = document.createElement("div");
-    this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex; flex-direction:column;";
+    this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
     this.template = document.createElement('span');
     this.template.style.cssText = "display: inline-block; width: 100%;";
     this._template = document.createElement("span");
@@ -21,6 +21,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar.appendChild(this.template);
     this.taskListBar.appendChild(document.createElement("hr"));
     this.taskList = document.createElement("div");
+    this.taskList.style.cssText = "height:100%; overflow-y:auto";
     this.taskListBar.appendChild(this.taskList);
     operator.div.appendChild(this.taskListBar);
 
@@ -139,7 +140,7 @@ core.registerOperator("itemList", function (operator) {
     this.deleteItem = function (id) {
         try {
             this.taskList.querySelector("span[data-id='" + id + "']").remove();
-        }catch(e){
+        } catch (e) {
             return;
         }
     }
@@ -217,13 +218,15 @@ core.registerOperator("itemList", function (operator) {
 
     this.focusItem = function (id) {
         //Highlight in purple
-        for (let i = 0; i < me.taskList.children.length; i++) {
-            me.taskList.children[i].style.borderTop = "";
-            me.taskList.children[i].style.borderBottom = "";
-        }
         let _target = me.taskList.querySelector("[data-id='" + id + "']");
-        _target.style.borderTop = "solid 3px purple";
-        _target.style.borderBottom = "solid 3px purple";
+        if (_target) {
+            for (let i = 0; i < me.taskList.children.length; i++) {
+                me.taskList.children[i].style.borderTop = "";
+                me.taskList.children[i].style.borderBottom = "";
+            }
+            _target.style.borderTop = "solid 3px purple";
+            _target.style.borderBottom = "solid 3px purple";
+        }
     }
 
     this.taskList.addEventListener("focusin", (e) => {
@@ -283,102 +286,115 @@ core.registerOperator("itemList", function (operator) {
         me.datereparse();
     })
 
-
     scriptassert([
-        ["dialog", "genui/dialog.js"]
+        ["contextmenu", "genui/contextMenu.js"]
     ], () => {
-        me._dialog = document.createElement("div");
+        let ctm = new _contextMenuManager(me.taskList);
+        let contextedItem;
 
-        me._dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-        dialogManager.checkDialogs(me._dialog);
-        //Restyle dialog to be a bit smaller
-        me._dialog = me._dialog.querySelector(".dialog");
-        me.innerDialog = me._dialog.querySelector(".innerDialog");
-
-        let d = document.createElement("div");
-        d.innerHTML = `
-        <p>Columns to show</p>
-        <div class="proplist"></div>
-        <p>You can pick more from the list below, or add a new property! </p>
-        <span>Choose existing property:</span><select class="_prop">
-        </select><br>
-        <input class="adpt" placeholder="Or type a new property..."><br>
-        <button class="adbt">Add</button>
-        <p>Options</p>
-        <p><input type="checkbox"><span>Sort by date</span></p>
-        <p><input type="checkbox"><span>Delete items (instead of hiding)</span></p>
-        <p>View items with the following property:</p> 
-        <input data-role='filterProp' placeholder = 'Property name'></input>
-        `
-        d.querySelector(".adbt").addEventListener("click",
-            function () {
-                if (d.querySelector(".adpt").value != "") {
-                    me.settings.properties[d.querySelector(".adpt").value] = 'text';
-                } else {
-                    me.settings.properties[d.querySelector("select._prop").value] = 'text';
-                }
-                me.showSettings();
+        function filter(e) {
+            contextedItem = e.target;
+            if (me.settings.properties[e.target.dataset.role] == "date") {
+                return true;
             }
-        )
-        d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
-            me.settings.filterProp = e.target.value;
-        })
-        me.innerDialog.appendChild(d);
-        me._dialog.querySelector(".cb").addEventListener("click", function () {
-            me.updateSettings();
-            core.fire("viewUpdate");
-        })
-
-        me.proplist = me.innerDialog.querySelector(".proplist");
-        //Handle select's in proplist
-        me.proplist.addEventListener('change', function (e) {
-            me.settings.properties[e.target.dataset.role] = e.target.value;
-        })
-        me.opList = me.innerDialog.querySelector("select._prop");
-        //retrieve stuff
-        operator.div.appendChild(me._dialog);
-        //sort by date checkbox
-        //Style tags button
-        me.showSettings = function () {
-            //Fill in dialog information
-            //set the propertyname one
-            me.innerDialog.querySelector('input[data-role="filterProp"]').value = me.settings.filterProp;
-            //Get all available properties, by looping through all elements (?)
-            me.opList.innerHTML = "";
-            let props = {};
-            for (let i in core.items) {
-                for (let j in core.items[i]) {
-                    if (typeof core.items[i][j] != "function") props[j] = true;
-                }
-            }
-            for (let prop in props) {
-                if (!me.settings.properties[prop]) {
-                    let opt = document.createElement("option");
-                    opt.innerText = prop;
-                    opt.value = prop;
-                    me.opList.appendChild(opt);
-                }
-            }
-            // Now fill in the ones which we're currently monitoring.
-            me.proplist.innerHTML = "";
-            for (let prop in me.settings.properties) {
-                let pspan = document.createElement("p");
-                pspan.innerHTML = `<span>` + prop + `</span>
-                <select data-role=` + prop + `>
-                    <option value="text">Text</option>
-                    <option value="date">Date</option>
-                    <option value="tag">Tag</option>
-                    <option value="number">Number</option>
-                </select>`
-                pspan.querySelector("select").value = me.settings.properties[prop];
-                me.proplist.appendChild(pspan);
-            }
-            //A checkbox for all properties, with types
-            me._dialog.style.display = "block";
+            return false;
         }
-    });
+        let menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, me.taskList, "input", filter)
+        menu.querySelector(".fixed").addEventListener("click", function (e) {
+            let id = contextedItem;
+            while (!id.dataset.id) {
+                id = id.parentElement;
+            }
+            id = id.dataset.id;
+            contextedItem.value = new Date(core.items[id][contextedItem.dataset.role].date[0].date).toLocaleString();
+            core.items[id][contextedItem.dataset.role].datestring = contextedItem.value;
+            me.datereparse(id);
+        })
+    })
+
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = `
+    <p>Columns to show</p>
+    <div class="proplist"></div>
+    <p>You can pick more from the list below, or add a new property! </p>
+    <span>Choose existing property:</span><select class="_prop">
+    </select><br>
+    <input class="adpt" placeholder="Or type a new property..."><br>
+    <button class="adbt">Add</button>
+    <p>Options</p>
+    <p><input type="checkbox"><span>Sort by date</span></p>
+    <p><input type="checkbox"><span>Delete items (instead of hiding)</span></p>
+    <p>View items with the following property:</p> 
+    <input data-role='filterProp' placeholder = 'Property name'></input>`;
+    let d = this.dialogDiv;
+    this.showDialog = function () {
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings = function () {
+        // pull settings and update when your dialog is closed.
+        me.updateSettings();
+        core.fire("viewUpdate");
+    }
+
+    d.querySelector(".adbt").addEventListener("click",
+        function () {
+            if (d.querySelector(".adpt").value != "") {
+                me.settings.properties[d.querySelector(".adpt").value] = 'text';
+            } else {
+                me.settings.properties[d.querySelector("select._prop").value] = 'text';
+            }
+            me.showSettings();
+        }
+    )
+    d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
+        me.settings.filterProp = e.target.value;
+    })
+    me.proplist = me.dialogDiv.querySelector(".proplist");
+    //Handle select's in proplist
+    me.proplist.addEventListener('change', function (e) {
+        me.settings.properties[e.target.dataset.role] = e.target.value;
+    })
+    me.opList = me.dialogDiv.querySelector("select._prop");
+    //retrieve stuff
+    //sort by date checkbox
+    //Style tags button
+    me.showSettings = function () {
+        //Fill in dialog information
+        //set the propertyname one
+        me.dialogDiv.querySelector('input[data-role="filterProp"]').value = me.settings.filterProp;
+        //Get all available properties, by looping through all elements (?)
+        me.opList.innerHTML = "";
+        let props = {};
+        for (let i in core.items) {
+            for (let j in core.items[i]) {
+                if (typeof core.items[i][j] != "function") props[j] = true;
+            }
+        }
+        for (let prop in props) {
+            if (!me.settings.properties[prop]) {
+                let opt = document.createElement("option");
+                opt.innerText = prop;
+                opt.value = prop;
+                me.opList.appendChild(opt);
+            }
+        }
+        // Now fill in the ones which we're currently monitoring.
+        me.proplist.innerHTML = "";
+        for (let prop in me.settings.properties) {
+            let pspan = document.createElement("p");
+            pspan.innerHTML = `<span>` + prop + `</span>
+            <select data-role=` + prop + `>
+                <option value="text">Text</option>
+                <option value="date">Date</option>
+                <option value="tag">Tag</option>
+                <option value="number">Number</option>
+            </select>`
+            pspan.querySelector("select").value = me.settings.properties[prop];
+            me.proplist.appendChild(pspan);
+        }
+    }
 
     core.on("focus", function (data) {
         me.focusItem(data.id);

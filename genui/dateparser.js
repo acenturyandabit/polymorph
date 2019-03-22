@@ -19,7 +19,7 @@ function _dateParser() {
             operate: function (regres, d, data) {
                 d.setMinutes(0);
                 d.setSeconds(0);
-                data.noDateSpecific = true;
+                //data.noDateSpecific = true;
                 if (regres[1]) {
                     d.setDate(Number(regres[1]))
                     data.noDateSpecific = false;
@@ -152,7 +152,7 @@ function _dateParser() {
         }
         me.tempdata = {
             hr: 9,
-            noDateSpecific: false
+            noDateSpecific: true
         };
         let seen = false;
         let regres;

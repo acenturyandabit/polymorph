@@ -88,72 +88,55 @@ core.registerOperator("descbox", function (operator) {
 
     me.textarea.addEventListener("input", me.somethingwaschanged);
 
-    //Create a settings dialog
-    scriptassert([
-        ["dialog", "genui/dialog.js"]
-    ], () => {
-        me.dialog = document.createElement("div");
 
-        me.dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-        dialogManager.checkDialogs(me.dialog);
-        //Restyle dialog to be a bit smaller
-        me.dialog = me.dialog.querySelector(".dialog");
-        me.innerDialog = me.dialog.querySelector(".innerDialog");
-        operator.div.appendChild(me.dialog);
-        let d = document.createElement("div");
-        d.innerHTML = `
-            <h1>Role</h1>
-            <select data-role="operationMode">
-            <option value="static">Display static item</option>
-            <option value="focus">Display focused item</option>
-            </select>
-            <br/>
-            <input data-role="staticItem" placeholder="Static item to display...">
-            <br>
-            <p> Or, click to target 'focus' events from an operator...
-            <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-            <button class="targeter">Select operator</button>
-            </br>
-            <input data-role="property" placeholder="Enter the property to display...">
-        `;
-        let targeter = d.querySelector("button.targeter");
-        targeter.addEventListener("click", function () {
-            core.target().then((id) => {
-                d.querySelector("[data-role='focusOperatorID']").value = id;
-                me.settings['focusOperatorID'] = id
-            })
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = `
+    <h1>Role</h1>
+    <select data-role="operationMode">
+    <option value="static">Display static item</option>
+    <option value="focus">Display focused item</option>
+    </select>
+    <br/>
+    <input data-role="staticItem" placeholder="Static item to display...">
+    <br>
+    <p> Or, click to target 'focus' events from an operator...
+    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
+    <button class="targeter">Select operator</button>
+    </br>
+    <input data-role="property" placeholder="Enter the property to display...">
+    `;
+    let targeter = this.dialogDiv.querySelector("button.targeter");
+    targeter.addEventListener("click", function () {
+        core.target().then((id) => {
+            me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+            me.settings['focusOperatorID'] = id
         })
-        let roledItems = d.querySelector("[data-role]");
-        for (let q = 0; q < roledItems.length; q++) {
-            roledItems[q].value = me.settings[roledItems[q].dataset.role];
+    })
+    let roledItems = this.dialogDiv.querySelector("[data-role]");
+    for (let q = 0; q < roledItems.length; q++) {
+        roledItems[q].value = me.settings[roledItems[q].dataset.role];
+    }
+    this.showDialog = function () {
+        // update your dialog elements with your settings
+        //fill out some details
+        for (i in me.settings) {
+            let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
+            if (it) it.value = me.settings[i];
         }
-
-        me.innerDialog.appendChild(d);
-        me.innerDialog.addEventListener("input", function (e) {
-            if (e.target.dataset.role) {
-                me.settings[e.target.dataset.role] = e.target.value;
-            }
-        })
-
-        //When the dialog is closed, update the settings.
-        me.dialog.querySelector(".cb").addEventListener("click", function () {
-            let its=me.dialog.querySelector("[data-role]");
-            for (let i=0;i<its.length;i++){
-                me.settings[its.dataset.role]=its.value;
-            }
-            me.updateSettings();
-            
-        })
-
-        me.showSettings = function () {
-            //fill out some details
-            for (i in me.settings) {
-                let it=me.dialog.querySelector("[data-role='" + i + "']");
-                if (it)it.value = me.settings[i];
-            }
-            me.dialog.style.display = "block";
+    }
+    this.dialogUpdateSettings = function () {
+        // pull settings and update when your dialog is closed.
+        let its = me.dialogDiv.querySelector("[data-role]");
+        for (let i = 0; i < its.length; i++) {
+            me.settings[its.dataset.role] = its.value;
+        }
+        me.updateSettings();
+    }
+    me.dialogDiv.addEventListener("input", function (e) {
+        if (e.target.dataset.role) {
+            me.settings[e.target.dataset.role] = e.target.value;
         }
     })
 

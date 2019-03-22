@@ -1,9 +1,17 @@
 /*
 scriptAssert V2.1: Load multiple scripts, links etc in a chain, to preserve dependencies; but also prevent redundant loading.
 Now with CSS loading!
+
+
+
+How to use:
+
+scriptassert([[module_name, path_to_script, path_to_css]], function_to_execute)
+
 list: list of pairs:
 [[module name,path to script]]
 done: some function.
+
 For consistency, the module name should be in all lowercase and not include the extension name e.g. fullCalendar.js should be just fullcalendar.
 */
 
@@ -15,6 +23,16 @@ function scriptassert(list, done,sroot) {//shadow root option
         let csspath = list[0][2];
         list.splice(0, 1);
         if (!__assert_states[varname]) {
+            //first check if the script already exists in the document.
+            let scripts=document.querySelectorAll("script");
+            for (let i=0;i<scripts.length;i++){
+                if (scripts[i].src==path){
+                    //ok we done here
+                    __assert_states[varname]={state:'done'};
+                    //add the css to the root anyways?
+                    done();
+                }
+            }
             __assert_states[varname]={state:'loading'};
             __assert_states[varname].callbacks=[];
             __assert_states[varname].callbacks.push(()=>{scriptassert(list,done)});

@@ -117,37 +117,6 @@
 
         }
 
-        //Create a settings dialog
-        scriptassert([
-            ["dialog", "genui/dialog.js"]
-        ], () => {
-            me.dialog = document.createElement("div");
-
-            me.dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-            dialogManager.checkDialogs(me.dialog);
-            //Restyle dialog to be a bit smaller
-            me.dialog = me.dialog.querySelector(".dialog");
-            me.innerDialog = me.dialog.querySelector(".innerDialog");
-            operator.div.appendChild(me.dialog);
-            let d = document.createElement("div");
-            d.innerHTML = `
-        `; //WHAT YOU WANT TO PUT IN YOUR DIALOG
-            me.innerDialog.appendChild(d);
-
-            //When the dialog is closed, update the settings.
-            me.dialog.querySelector(".cb").addEventListener("click", function () {
-                me.updateSettings();
-                me.fire("viewUpdate");
-            })
-
-            me.showSettings = function () {
-                me.dialog.style.display = "block";
-            }
-        })
-
-
 
     });
     viewsets = {

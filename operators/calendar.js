@@ -13,6 +13,7 @@ core.registerOperator("calendar", {
 
         this.rootdiv = document.createElement("div");
         this.rootdiv.innerHTML = ``;
+        this.rootdiv.style.cssText='height:100%; overflow-y: scroll';
         this.cstyle = document.createElement("link");
         this.cstyle.rel = "stylesheet";
         this.cstyle.type = "text/css";
@@ -136,39 +137,23 @@ core.registerOperator("calendar", {
         }
 
 
-        //Create a settings dialog
-        scriptassert([
-            ["dialog", "genui/dialog.js"]
-        ], () => {
-            me.dialog = document.createElement("div");
-
-            me.dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-            dialogManager.checkDialogs(me.dialog);
-            //Restyle dialog to be a bit smaller
-            me.dialog = me.dialog.querySelector(".dialog");
-            me.innerDialog = me.dialog.querySelector(".innerDialog");
-            operator.div.appendChild(me.dialog);
-            let d = document.createElement("div");
-            d.innerHTML = `
-            <input data-role='dateproperty' placeholder="Enter the date property">
-            <input data-role='titleproperty' placeholder="Enter the property for calendar item names.">
+        //Handle the settings dialog click!
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = `
+        <input data-role='dateproperty' placeholder="Enter the date property">
+        <input data-role='titleproperty' placeholder="Enter the property for calendar item names.">
         `;
-            me.innerDialog.addEventListener("input", function (e) {
-                me.settings[e.target.dataset.role] = e.target.value;
-            })
-            me.innerDialog.appendChild(d);
 
-            //When the dialog is closed, update the settings.
-            me.dialog.querySelector(".cb").addEventListener("click", function () {
-                me.updateSettings();
-            })
-
-            me.showSettings = function () {
-                me.dialog.style.display = "block";
-            }
+        this.dialogDiv.addEventListener("input", function (e) {
+            me.settings[e.target.dataset.role] = e.target.value;
         })
+
+        this.showDialog = function () {
+            // update your dialog elements with your settings
+        }
+        this.dialogUpdateSettings = function () {
+            // pull settings and update when your dialog is closed.
+        }
 
         core.on("createItem", (d) => {
             try {

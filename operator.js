@@ -2,6 +2,8 @@
 core.operator = function operator(_type, _rect) {
     this.rect = _rect;
     let me = this;
+
+    //topmost 'root' div.
     this.topdiv = document.createElement("div");
     this.topdiv.style.height = "100%";
     this.topdiv.style.width = "100%";
@@ -9,36 +11,43 @@ core.operator = function operator(_type, _rect) {
     this.topdiv.overflow = "hidden";
     this.topdiv.position = "relative";
     this.topdiv.style.background = "lightgrey";
+
+    //inner div. for non shadow divs. has a uuid for an id.
     this.innerdiv = document.createElement("div");
     this.topdiv.appendChild(this.innerdiv);
-    this.topdiv.style.height = "100%";
-    this.topdiv.style.width = "100%";
+    this.innerdiv.id=guid(12);
+
+    //uuid.
     this.uuid = guid(6);
+    this.options={};
+
+    //bulkhead for item selection.
     this.bulkhead=document.createElement("div");
     this.bulkhead.style.display="none";
     this.bulkhead.style.background="rgba(0,0,0,0.5)";
     //fill in some innerHTML
-    this.bulkhead.innerHTML=`
-    <div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white">Click to select this operator.</p></div>
-    `
+    this.bulkhead.innerHTML=`<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white">Click to select this operator.</p></div>`
     this.bulkhead.style.width="100%";
     this.bulkhead.style.height="100%";
     this.bulkhead.style.position="absolute";
     this.bulkhead.style.zIndex="100";
     this.topdiv.appendChild(this.bulkhead);
-    this.shader=document.createElement("div");
-    this.shader.style.width="100%";
-    this.shader.style.height="100%";
-    this.topdiv.appendChild(this.shader);
-    this.options={};
-    this.shadow = this.shader.attachShadow({
-        mode: "open"
-    });
     this.bulkhead.addEventListener("click",function(e){
         me.bulkhead.style.display="none";
         core.submitTarget(me.uuid);
         e.stopPropagation();
     })
+
+    //shadow root.
+    this.shader=document.createElement("div");
+    this.shader.style.width="100%";
+    this.shader.style.height="100%";
+    this.topdiv.appendChild(this.shader);
+    this.shadow = this.shader.attachShadow({
+        mode: "open"
+    });
+
+    //reload: called when you reload a function.
     this.reload = function (__type) {
         let data;
         me.options = {
@@ -53,6 +62,7 @@ core.operator = function operator(_type, _rect) {
             if (!this.uuid) this.uuid = guid(6); //upgrade older versions.
             data = __type.data;
         }
+
         //parse options and decide what to do re: a div
         if (core.operators[this.type]) {
             if (core.operators[this.type].options)
