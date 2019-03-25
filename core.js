@@ -701,7 +701,7 @@ function _core() {
 
   //firebase view saving
   me.requestCapacitor = new capacitor(500, 10, (uuid) => {
-    scrubbedData=JSON.parse(JSON.stringify(me.baseRect.toSaveData));
+    scrubbedData=JSON.parse(JSON.stringify(me.baseRect.toSaveData()));
     me.firebase.db
       .collection("polymorph")
       .doc(me.docName)
