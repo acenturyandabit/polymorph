@@ -701,12 +701,13 @@ function _core() {
 
   //firebase view saving
   me.requestCapacitor = new capacitor(500, 10, (uuid) => {
+    scrubbedData=JSON.parse(JSON.stringify(me.baseRect.toSaveData));
     me.firebase.db
       .collection("polymorph")
       .doc(me.docName)
       .collection("views")
       .doc(uuid)
-      .set(me.baseRect.toSaveData());
+      .set(scrubbedData);
   });
   me.on("viewUpdate", function () {
     me.views[me.userCurrentDoc.currentView] = me.baseRect.toSaveData();
