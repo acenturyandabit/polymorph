@@ -88,7 +88,16 @@ core.registerOperator("descbox", function (operator) {
 
     me.textarea.addEventListener("input", me.somethingwaschanged);
 
-
+    me.textarea.addEventListener("keydown", (e) => {
+        if (e.key == "Enter" && this.settings.operationMode == "putter") {
+            let operator = core.getOperator(me.settings.focusOperatorID);
+            if (operator && operator.baseOperator.quickAdd) {
+                operator.baseOperator.quickAdd(me.textarea.value);
+                me.textarea.value = "";
+                e.preventDefault();
+            }
+        }
+    });
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
@@ -97,6 +106,7 @@ core.registerOperator("descbox", function (operator) {
     <select data-role="operationMode">
     <option value="static">Display static item</option>
     <option value="focus">Display focused item</option>
+    <option value="putter">Use as data entry</option>
     </select>
     <br/>
     <input data-role="staticItem" placeholder="Static item to display...">
@@ -114,10 +124,6 @@ core.registerOperator("descbox", function (operator) {
             me.settings['focusOperatorID'] = id
         })
     })
-    let roledItems = this.dialogDiv.querySelector("[data-role]");
-    for (let q = 0; q < roledItems.length; q++) {
-        roledItems[q].value = me.settings[roledItems[q].dataset.role];
-    }
     this.showDialog = function () {
         // update your dialog elements with your settings
         //fill out some details
@@ -128,9 +134,9 @@ core.registerOperator("descbox", function (operator) {
     }
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
-        let its = me.dialogDiv.querySelector("[data-role]");
+        let its = me.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
-            me.settings[its.dataset.role] = its.value;
+            me.settings[its[i].dataset.role] = its[i].value;
         }
         me.updateSettings();
     }
@@ -144,27 +150,29 @@ core.registerOperator("descbox", function (operator) {
     core.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;
-        if (me.settings['focusOperatorID']) {
-            if (me.settings['focusOperatorID'] == sender.container.uuid) {
-                me.settings.currentID = id;
-                me.updateItem(id);
-            }
-        } else {
-            //calculate the base rect of the sender
-            let baserectSender = sender.operator.rect;
-            while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
-            //calculate my base rect
-            let myBaseRect = me.operator.rect;
-            while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
-            //if they're the same, then update.
-            if (myBaseRect == baserectSender) {
-                if (me.settings.operationMode == 'focus') {
+        if (me.settings.operationMode == "focus") {
+            if (me.settings['focusOperatorID']) {
+                if (me.settings['focusOperatorID'] == sender.container.uuid) {
                     me.settings.currentID = id;
                     me.updateItem(id);
                 }
+            } else {
+                //calculate the base rect of the sender
+                let baserectSender = sender.operator.rect;
+                while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
+                //calculate my base rect
+                let myBaseRect = me.operator.rect;
+                while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
+                //if they're the same, then update.
+                if (myBaseRect == baserectSender) {
+                    if (me.settings.operationMode == 'focus') {
+                        me.settings.currentID = id;
+                        me.updateItem(id);
+                    }
+                }
             }
+            core.fire("viewUpdate");
         }
-        core.fire("viewUpdate");
     });
     core.on("deleteItem", function (d) {
         let id = d.id;

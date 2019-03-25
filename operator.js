@@ -112,4 +112,13 @@ core.operator = function operator(_type, _rect) {
             this.baseOperator.forwardUntarget();
         }else this.bulkhead.style.display="none";
     }
+    this.getOperator=function(id){
+        if (this.uuid==id){
+            return this;
+        }else{
+            if (this.baseOperator.getOperator){
+                return this.baseOperator.getOperator(id);
+            }
+        }
+    }
 };

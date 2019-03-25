@@ -52,4 +52,8 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
         // pull settings and update when your dialog is closed.
     }
 
+    this.getOperator=function(id){
+        return this.rect.getOperator(id);
+    }
+
 });

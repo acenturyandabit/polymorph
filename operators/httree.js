@@ -52,14 +52,37 @@ core.registerOperator("httree", function (operator) {
     this.secondaryDiv = document.createElement("div");
     this.secondaryDiv.classList.add("containerDiv");
     this.rootdiv.appendChild(this.secondaryDiv);
+    this.settings.selected = undefined;
 
-    this.secondaryDiv.addEventListener("click",function(e){
-        if (e.target.tagName.toLowerCase()=="textarea"){
-            let t= e.target;
-            while (!t.dataset.id){
-                t=t.parentElement;
+    function select(id) {
+        let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
+        if (cdiv) {
+            cdiv.scrollIntoViewIfNeeded();
+            let cbtn = me.rootdiv.querySelector("[data-id='" + id + "']>button");
+            cbtn.style.background = "lightpink";
+        }
+        me.settings.selected = id;
+    }
+
+    function deselect() {
+        btns = me.rootdiv.querySelectorAll("button");
+        for (let i = 0; i < btns.length; i++) {
+            btns[i].style.background = "";
+        }
+    }
+
+    this.secondaryDiv.addEventListener("click", function (e) {
+        if (e.target.tagName.toLowerCase() == "textarea") {
+            deselect();
+            let t = e.target;
+            while (!t.dataset.id) {
+                t = t.parentElement;
             }
-            core.fire("focus",{sender:me,id:t.dataset.id});
+            select(t.dataset.id);
+            core.fire("focus", {
+                sender: me,
+                id: t.dataset.id
+            });
         }
     })
 
@@ -181,13 +204,13 @@ core.registerOperator("httree", function (operator) {
                         if (!this.cachedUpdateRequests[core.items[id].httree.parent]) this.cachedUpdateRequests[core.items[id].httree.parent] = [];
                         this.cachedUpdateRequests[core.items[id].httree.parent].push(id);
                     } else {
-                        cdiv=mkdiv(id);
+                        cdiv = mkdiv(id);
                         pdiv.children[3].appendChild(cdiv);
                         if (this.cachedUpdateRequests[id])
                             for (let i = 0; i < this.cachedUpdateRequests[id].length; i++) this.drawItem(this.cachedUpdateRequests[id][i]);
                     }
                 } else {
-                    cdiv=mkdiv(id);
+                    cdiv = mkdiv(id);
                     me.secondaryDiv.appendChild(cdiv);
                     if (this.cachedUpdateRequests[id])
                         for (let i = 0; i < this.cachedUpdateRequests[id].length; i++) this.drawItem(this.cachedUpdateRequests[id][i]);
@@ -195,6 +218,7 @@ core.registerOperator("httree", function (operator) {
             }
             if (cdiv) {
                 cdiv.children[1].value = core.items[id].title;
+                me.nudge(cdiv.children[1]);
             }
         }
     }
@@ -212,11 +236,9 @@ core.registerOperator("httree", function (operator) {
         let id = d.id;
         let s = d.sender;
         if (s == me) return;
+        deselect();
         if (core.items[id].httree) {
-            let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
-            if (cdiv) {
-                cdiv.scrollIntoViewIfNeeded();
-            }
+            select(id);
         }
         // An item was focused.
     });
@@ -229,6 +251,16 @@ core.registerOperator("httree", function (operator) {
         }
         // An item was deleted.
     });
+
+    this.nudge = function (elem) {
+        if (elem.scrollHeight > elem.offsetHeight) {
+            elem.style.width = (elem.offsetWidth + 10) + "px";
+            setTimeout(() => {
+                this.nudge(elem)
+            }, 200);
+        }
+
+    }
 
     this.resize = function () {
         // This is called when my parent rect is resized.
@@ -243,6 +275,7 @@ core.registerOperator("httree", function (operator) {
 
     this.rootdiv.addEventListener("input", (e) => {
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
+        this.nudge(e.target);
         let itemID = e.target.parentElement.dataset.id;
         core.fire("updateItem", {
             id: itemID,
@@ -294,7 +327,7 @@ core.registerOperator("httree", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.processSettings();
-            me.fire("viewUpdate");
+            core.fire("viewUpdate");
         })
 
         me.showSettings = function () {
@@ -302,6 +335,26 @@ core.registerOperator("httree", function (operator) {
         }
     })
 
+    this.quickAdd = function (data) {
+        //Create a new item
+        let it = new _item();
+        it.httree = {};
+        it.httree.parent = me.settings.selected;
+        it.title = data;
+        //register it with the core
+        let id = core.insertItem(it);
 
+        //register a change
+        core.fire("create", {
+            sender: me,
+            id: id
+        });
+        core.fire("updateItem", {
+            sender: me,
+            id: id
+        });
+        deselect();
+        select(id);
+    }
 
 });

@@ -231,6 +231,9 @@ function _core() {
     //set user's current view
     me.userCurrentDoc.currentView = view;
     me.saveUserData();
+    for (let i in me.items){
+      me.fire("updateItem",{id:i});
+    }
   };
 
   this.directLoadFromSaveData = function (obj) {
@@ -713,6 +716,9 @@ function _core() {
     }
   });
   readyTutorial(me);
+  this.getOperator=function(id){
+    return me.baseRect.getOperator(id);
+  }
 }
 
 var core = new _core();

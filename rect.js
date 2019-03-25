@@ -73,6 +73,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         color:unset;
         border:unset;
         cursor:pointer;
+        padding: 5px;
         `;
         tybtn.style.cssText += `color:red;font-weight:bold; font-style:normal`;
         tybtn.innerText = 'x';
@@ -550,5 +551,16 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 this.operators[i].deactivateTargets();
             }
         }
+    }
+
+    this.getOperator=function(id){
+        let result=undefined;
+        let iterable;
+        if (this.operators)iterable=this.operators;
+        else iterable=this.children;
+        for (let i=0;i<iterable.length;i++){
+            result=result||iterable[i].getOperator(id)
+        }
+        return result;
     }
 }
