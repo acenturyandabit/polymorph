@@ -131,13 +131,13 @@ function _core() {
       me.targeter = undefined;
       //untarget everything
       me.baseRect.deactivateTargets();
-      me.dialog.div.style.display="block";
+      me.dialog.div.style.display = "block";
     }
   }
   this.target = function () {
     // activate targeting
     me.baseRect.activateTargets();
-    me.dialog.div.style.display="none";
+    me.dialog.div.style.display = "none";
     let promise = new Promise((resolve) => {
       me.targeter = resolve;
     })
@@ -199,7 +199,7 @@ function _core() {
       1
     ))
   );
-  
+
 
   this.toSaveData = function () {
     let obj = {};
@@ -231,8 +231,10 @@ function _core() {
     //set user's current view
     me.userCurrentDoc.currentView = view;
     me.saveUserData();
-    for (let i in me.items){
-      me.fire("updateItem",{id:i});
+    for (let i in me.items) {
+      me.fire("updateItem", {
+        id: i
+      });
     }
   };
 
@@ -491,7 +493,11 @@ function _core() {
     }
     me.firebase.stackman = function (id) {
       if (id != me.firebase.preid && me.firebase.preid) {
-        me.firebase.update(me.firebase.preid);
+        try {
+          me.firebase.update(me.firebase.preid);
+        } catch (e) {
+          console.log(e)
+        }
         me.firebase.rcount = 0;
       }
       me.firebase.preid = id;
@@ -701,7 +707,7 @@ function _core() {
 
   //firebase view saving
   me.requestCapacitor = new capacitor(500, 10, (uuid) => {
-    scrubbedData=JSON.parse(JSON.stringify(me.baseRect.toSaveData()));
+    scrubbedData = JSON.parse(JSON.stringify(me.baseRect.toSaveData()));
     me.firebase.db
       .collection("polymorph")
       .doc(me.docName)
@@ -717,7 +723,7 @@ function _core() {
     }
   });
   readyTutorial(me);
-  this.getOperator=function(id){
+  this.getOperator = function (id) {
     return me.baseRect.getOperator(id);
   }
 }

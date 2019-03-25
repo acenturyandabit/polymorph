@@ -353,7 +353,7 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
             sender: me,
             id: id
         });
-        deselect();
+        deselect(); 
         select(id);
         core.fire("updateItem", {
             id: id,
