@@ -396,9 +396,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             dirn = 3;
         }
         if (e.shiftKey) {
-            me.resizing = dirn;
-        } else {
             me.split = dirn;
+        } else {
+            me.resizing = dirn;
         }
 
     })
@@ -553,13 +553,13 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
     }
 
-    this.getOperator=function(id){
-        let result=undefined;
+    this.getOperator = function (id) {
+        let result = undefined;
         let iterable;
-        if (this.operators)iterable=this.operators;
-        else iterable=this.children;
-        for (let i=0;i<iterable.length;i++){
-            result=result||iterable[i].getOperator(id)
+        if (this.operators) iterable = this.operators;
+        else iterable = this.children;
+        for (let i = 0; i < iterable.length; i++) {
+            result = result || iterable[i].getOperator(id)
         }
         return result;
     }

@@ -254,10 +254,10 @@ core.registerOperator("httree", function (operator) {
 
     this.nudge = function (elem) {
         if (elem.scrollHeight > elem.offsetHeight) {
-            elem.style.width = (elem.offsetWidth + 10) + "px";
+            elem.style.minWidth = (elem.offsetWidth + 10) + "px";
             setTimeout(() => {
                 this.nudge(elem)
-            }, 200);
+            }, 100);
         }
 
     }

@@ -71,7 +71,7 @@ function _contextMenuManager(root) {
             box-shadow: 0px 0px 5px black;
             user-select: none;
             position: absolute;
-            z-index:100;
+            z-index:1000;
         }
         
         .contextMenu li {

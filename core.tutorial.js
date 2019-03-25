@@ -12,7 +12,7 @@ function readyTutorial(core) {
       target: ()=>{return core.baseRect.outerDiv},
       type: "internal",
       location:'left',
-      contents: `<p>Click and drag this border to split the item! (Shift-click to resize)</p>`,
+      contents: `<p>Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
       to:[["Next","clickop"],["Skip"]]
     });
     t.push({

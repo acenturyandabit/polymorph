@@ -224,7 +224,7 @@
 
             me.itemContextMenu.querySelector(".subView").addEventListener("click", e => {
                 //delete the div and delete its corresponding item
-                core.items[me.contextedElement.dataset.id].synergist.viewName = me.deltas[me.contextedElement.dataset.id].getText();
+                core.items[me.contextedElement.dataset.id].synergist.viewName = me.deltas[me.contextedElement.dataset.id].getText().split("\n")[0];
                 me.switchView(me.contextedElement.dataset.id);
                 me.itemContextMenu.style.display = "none";
             });
@@ -272,7 +272,6 @@
                     if (it.classList.contains("selected")) return;
                     if (me.dragging) return;
                     me.movingDiv = it;
-                    //reduce the z-indices to prevent overflow
                     let relements = me.rootdiv.querySelectorAll(".floatingItem");
                     let minzind = me.settings.maxZ;
                     for (let i = 0; i < relements.length; i++) {
@@ -727,22 +726,6 @@
                 subtree: true //Omit or set to false to observe only changes to the parent node.
             });
         })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         //Saving and loading
         this.toSaveData = function () {
