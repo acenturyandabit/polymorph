@@ -1,4 +1,4 @@
-core.registerOperator("httree", function (operator) {
+core.registerOperator("httree", {outerScroll:true},function (operator) {
     let me = this;
     me.operator = operator;
     this.settings = {};
@@ -355,6 +355,10 @@ core.registerOperator("httree", function (operator) {
         });
         deselect();
         select(id);
+        core.fire("updateItem", {
+            id: id,
+            sender: me
+        });
     }
 
 });

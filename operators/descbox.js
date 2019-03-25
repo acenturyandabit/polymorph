@@ -79,11 +79,13 @@ core.registerOperator("descbox", function (operator) {
 
     //Register changes with core
     me.somethingwaschanged = function () {
+        if (me.settings.operationMode!="putter"){
         core.items[me.settings.currentID][me.settings.property] = me.textarea.value;
         core.fire("updateItem", {
             id: me.settings.currentID,
             sender: me
         });
+    }
     }
 
     me.textarea.addEventListener("input", me.somethingwaschanged);

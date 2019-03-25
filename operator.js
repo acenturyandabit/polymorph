@@ -75,6 +75,11 @@ core.operator = function operator(_type, _rect) {
             } else {
                 this.div = this.shadow;
             }
+            if (me.options.outerScroll){
+                this.topdiv.style.overflowY="auto";
+            }else{
+                this.topdiv.style.overflowY="hidden";
+            }
             this.baseOperator = new core.operators[this.type].constructor(this);
             this.baseOperator.fromSaveData(data);
             this.baseOperator.container=this;
