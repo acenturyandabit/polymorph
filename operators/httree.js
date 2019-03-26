@@ -110,7 +110,9 @@ core.registerOperator("httree", {
                 it.httree.parent = e.target.parentElement.dataset.id;
                 //register it with the core
                 let id = core.insertItem(it);
-
+                if(me.settings.filter && !it[me.settings.filter]){
+                    it[me.settings.filter]=true;
+                }
                 //register a change
                 core.fire("create", {
                     sender: me,
@@ -210,7 +212,7 @@ core.registerOperator("httree", {
             cdiv.dataset.id = id;
             return cdiv;
         }
-        if (core.items[id].httree) {
+        if (core.items[id].httree && (!me.settings.filter || core.items[id][me.settings.filter])) {
             let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
             if (!cdiv) {
                 if (core.items[id].httree.parent) {
@@ -284,18 +286,18 @@ core.registerOperator("httree", {
 
     this.resize = function () {
         // This is called when my parent rect is resized.
-        let tas=this.rootdiv.querySelectorAll("textarea");
-        for (let i=0;i<tas.length;i++){
+        let tas = this.rootdiv.querySelectorAll("textarea");
+        for (let i = 0; i < tas.length; i++) {
             this.nudge(tas[i]);
         }
     }
 
-    setInterval(()=>{
-        let tas=this.rootdiv.querySelectorAll("textarea");
-        for (let i=0;i<tas.length;i++){
+    setInterval(() => {
+        let tas = this.rootdiv.querySelectorAll("textarea");
+        for (let i = 0; i < tas.length; i++) {
             this.nudge(tas[i]);
         }
-    },5000);
+    }, 5000);
 
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
@@ -305,7 +307,7 @@ core.registerOperator("httree", {
     //Register changes with core
 
     this.rootdiv.addEventListener("input", (e) => {
-        if (!e.target.parentElement.matches("[data-id]"))return;
+        if (!e.target.parentElement.matches("[data-id]")) return;
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
         this.nudge(e.target);
         let itemID = e.target.parentElement.dataset.id;
@@ -344,7 +346,9 @@ core.registerOperator("httree", {
         it.title = data;
         //register it with the core
         let id = core.insertItem(it);
-
+        if(me.settings.filter && !it[me.settings.filter]){
+            it[me.settings.filter]=true;
+        }
         //register a change
         core.fire("create", {
             sender: me,
@@ -382,17 +386,45 @@ core.registerOperator("httree", {
             <input class="color">
             </li>`,
             me.rootdiv, ".bar", ctxhook);
-        function updateStyle(e){
-            if (!core.items[contextedElement].style)core.items[contextedElement].style={};
+
+        function updateStyle(e) {
+            if (!core.items[contextedElement].style) core.items[contextedElement].style = {};
             core.items[contextedElement].style[e.target.className] = e.target.value;
-            core.fire("updateItem",{sender:this,id:contextedElement});
+            core.fire("updateItem", {
+                sender: this,
+                id: contextedElement
+            });
         }
         me.viewContextMenu.querySelector(".background").addEventListener("input", updateStyle);
         me.viewContextMenu.querySelector(".color").addEventListener("input", updateStyle);
     })
 
 
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = `<h2>Filter</h2>
+    <p>Only show items with the following property:</p>
+    <input class="filterclass"></input>
+    `;
+    this.showDialog = ()=>{
+        if (this.settings.filter)this.dialogDiv.querySelector(".filterclass").value=this.settings.filter;
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings = ()=>{
+        this.settings.filter=this.dialogDiv.querySelector(".filterclass").value;
+        // pull settings and update when your dialog is closed.
+        core.fire("viewUpdate");
+        for (let i=0;i<this.secondaryDiv.children.length;i++){
+            this.secondaryDiv.children[i].remove();
+        }
+        for (let i in core.items){
+            this.drawItem(i);
+        }
+    }
 
+    this.quickAdd = function (data) {
+        // An operation that is called to quickly add an item. may be called by other operators sometimes. data will always be plaintext. do what you will with it.
+    }
 
 
     //support the terminal protocol

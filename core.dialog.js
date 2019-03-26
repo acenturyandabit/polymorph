@@ -1,3 +1,13 @@
+/*
+To implement a dialog:
+
+
+see reference lol
+
+
+*/
+
+
 function dialogSystemManager(core) {
     scriptassert([["dialog", "genui/dialog.js"]], () => {
         core.dialog = {};

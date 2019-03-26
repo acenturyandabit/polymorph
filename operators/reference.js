@@ -145,4 +145,8 @@ core.registerOperator("reference", {
         // An operation that is called to quickly add an item. may be called by other operators sometimes. data will always be plaintext. do what you will with it.
     }
 
+    //Terminal protocol: If you want to add terminal-callable functions, put them under this.callables
+    this.callables={}
+    this.callables.fn=this.fn; //etc
+
 });
