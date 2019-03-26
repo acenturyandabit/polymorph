@@ -563,4 +563,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
         return result;
     }
+    this.listOperators=function(list){
+        let iterable;
+        if (this.operators) iterable = this.operators;
+        else iterable = this.children;
+        for (let i = 0; i < iterable.length; i++) {
+            iterable[i].listOperators(list)
+        }
+    }
 }

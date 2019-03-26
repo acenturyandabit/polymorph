@@ -10,7 +10,7 @@ core.registerOperator("template", {
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = ``;
 
-    operator.div.appendChild(this.rootdiv);
+    container.div.appendChild(this.rootdiv);
 
     //////////////////Handle core item updates//////////////////
 

@@ -126,4 +126,10 @@ core.operator = function operator(_type, _rect) {
             }
         }
     }
+    this.listOperators=function(list){
+        list.push({id:me.uuid,type:me.type});
+        if (this.baseOperator.listOperators){
+            this.baseOperator.listOperators(list);
+        }
+    }
 };

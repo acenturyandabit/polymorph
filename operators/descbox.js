@@ -24,6 +24,10 @@ core.registerOperator("descbox", function (operator) {
             if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
             else me.textarea.value = "";
             me.textarea.disabled = false;
+            if (core.items[id].style){
+                me.textarea.style.background=core.items[id].style.background;
+                me.textarea.style.color=core.items[id].style.color;
+            }
         } else {
             if (!me.settings.currentID) {
                 me.textarea.disabled = true;
@@ -62,6 +66,8 @@ core.registerOperator("descbox", function (operator) {
                     id: staticItem
                 });
             }
+        }else if (me.settings.operationMode=='putter'){
+            me.textarea.disabled=false;
         }
         me.updateItem(me.settings.currentID);
     }

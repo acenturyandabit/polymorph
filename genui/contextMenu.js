@@ -58,7 +58,7 @@ function _contextMenuManager(root) {
                 if (e.target.matches(delegate) || e.target.matches(delegate + " *")) f(e);
             } else f(e);
         })
-        document.body.addEventListener("click", function (e) {
+        element.addEventListener("click", function (e) {
             if (!thisCTXM.contains(e.target)) thisCTXM.style.display = "none";
         })
         return thisCTXM;
@@ -73,7 +73,6 @@ function _contextMenuManager(root) {
             position: absolute;
             z-index:1000;
         }
-        
         .contextMenu li {
             padding: 10px;
             display: block;

@@ -136,8 +136,13 @@ core.registerOperator("stack", {
     this.getOperator=function(id){
         let result=undefined;
         for (let i=0;i<this.rects.length;i++){
-            result=result||this.rects[i].getOperator(id);
+            result=result||this.rects[i].rect.getOperator(id);
         }
         return result;
+    }
+    this.listOperators=function(list){
+        for (let i=0;i<this.rects.length;i++){
+            this.rects[i].rect.listOperators(list);
+        }
     }
 });

@@ -1,4 +1,6 @@
-core.registerOperator("httree", {outerScroll:true},function (operator) {
+core.registerOperator("httree", {
+    outerScroll: true
+}, function (operator) {
     let me = this;
     me.operator = operator;
     this.settings = {};
@@ -94,6 +96,7 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
     <button>+</button>
     <div class="containerDiv"></div>
     `
+    this.template.querySelector("img").draggable.true;
     this.template.ondragover = (e) => {
         e.preventDefault()
     };
@@ -130,7 +133,17 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
 
     //delegated drag event handler
     let draggingNode;
+    let preventDrag;
+    this.rootdiv.addEventListener("mousemove", (e) => {
+        if (e.target.tagName == "TEXTAREA") {
+            preventDrag = true;
+        }
+    })
     this.rootdiv.addEventListener("dragstart", (e) => {
+        if (preventDrag) {
+            preventDrag = false;
+            return;
+        }
         draggingNode = e.target;
     })
     //while dragging, if hovering over a box, higlight one side
@@ -174,6 +187,10 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
             core.items[id].httree.parent = core.items[dropLocation].httree.parent;
             //insert the div itself
             divtarget.parentNode.insertBefore(draggingNode, divtarget.nextSibling);
+            core.fire("updateItem", {
+                sender: this,
+                id: id
+            });
         }
     }
 
@@ -218,6 +235,10 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
             }
             if (cdiv) {
                 cdiv.children[1].value = core.items[id].title;
+                if (core.items[id].style) {
+                    cdiv.children[1].style.background = core.items[id].style.background;
+                    cdiv.children[1].style.color = core.items[id].style.color;
+                }
                 me.nudge(cdiv.children[1]);
             }
         }
@@ -259,12 +280,22 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
                 this.nudge(elem)
             }, 100);
         }
-
     }
 
     this.resize = function () {
         // This is called when my parent rect is resized.
+        let tas=this.rootdiv.querySelectorAll("textarea");
+        for (let i=0;i<tas.length;i++){
+            this.nudge(tas[i]);
+        }
     }
+
+    setInterval(()=>{
+        let tas=this.rootdiv.querySelectorAll("textarea");
+        for (let i=0;i<tas.length;i++){
+            this.nudge(tas[i]);
+        }
+    },5000);
 
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
@@ -274,6 +305,7 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
     //Register changes with core
 
     this.rootdiv.addEventListener("input", (e) => {
+        if (!e.target.parentElement.matches("[data-id]"))return;
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
         this.nudge(e.target);
         let itemID = e.target.parentElement.dataset.id;
@@ -304,37 +336,6 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
         //dummy required for fromsavedata. leave blank or remove processSettings() calls!
     }
 
-    //Create a settings dialog
-    scriptassert([
-        ["dialog", "genui/dialog.js"]
-    ], () => {
-        me.dialog = document.createElement("div");
-
-        me.dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-        dialogManager.checkDialogs(me.dialog);
-        //Restyle dialog to be a bit smaller
-        me.dialog = me.dialog.querySelector(".dialog");
-        me.innerDialog = me.dialog.querySelector(".innerDialog");
-        operator.div.appendChild(me.dialog);
-        let d = document.createElement("div");
-        d.innerHTML = `
-        WHAT YOU WANT TO PUT IN YOUR DIALOG
-        `;
-        me.innerDialog.appendChild(d);
-
-        //When the dialog is closed, update the settings.
-        me.dialog.querySelector(".cb").addEventListener("click", function () {
-            me.processSettings();
-            core.fire("viewUpdate");
-        })
-
-        me.showSettings = function () {
-            me.dialog.style.display = "block";
-        }
-    })
-
     this.quickAdd = function (data) {
         //Create a new item
         let it = new _item();
@@ -353,7 +354,7 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
             sender: me,
             id: id
         });
-        deselect(); 
+        deselect();
         select(id);
         core.fire("updateItem", {
             id: id,
@@ -361,4 +362,40 @@ core.registerOperator("httree", {outerScroll:true},function (operator) {
         });
     }
 
+    scriptassert([
+        ["contextmenu", "genui/contextMenu.js"],
+    ], () => {
+        let contextMenuManager = new _contextMenuManager(me.rootdiv);
+        let contextedElement;
+
+        function ctxhook(e) {
+            let tgt = e.target;
+            while (!tgt.matches("[data-id]")) {
+                tgt = tgt.parentElement;
+            }
+            contextedElement = tgt.dataset.id;
+            return true;
+        }
+        me.viewContextMenu = contextMenuManager.registerContextMenu(
+            `<li><span>Edit style</span><br>
+            <input class="background">
+            <input class="color">
+            </li>`,
+            me.rootdiv, ".bar", ctxhook);
+        function updateStyle(e){
+            if (!core.items[contextedElement].style)core.items[contextedElement].style={};
+            core.items[contextedElement].style[e.target.className] = e.target.value;
+            core.fire("updateItem",{sender:this,id:contextedElement});
+        }
+        me.viewContextMenu.querySelector(".background").addEventListener("input", updateStyle);
+        me.viewContextMenu.querySelector(".color").addEventListener("input", updateStyle);
+    })
+
+
+
+
+
+    //support the terminal protocol
+    this.callables = {};
+    this.callables.add = this.quickAdd;
 });
