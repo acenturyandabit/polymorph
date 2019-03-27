@@ -138,7 +138,7 @@ core.registerOperator("httree", {
     //delegated drag event handler
     let draggingNode;
     let preventDrag;
-    this.rootdiv.addEventListener("mousemove", (e) => {
+    this.rootdiv.addEventListener("mousedown", (e) => {
         if (e.target.tagName == "TEXTAREA") {
             preventDrag = true;
         }
