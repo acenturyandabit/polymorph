@@ -422,11 +422,6 @@ core.registerOperator("httree", {
         }
     }
 
-    this.quickAdd = function (data) {
-        // An operation that is called to quickly add an item. may be called by other operators sometimes. data will always be plaintext. do what you will with it.
-    }
-
-
     //support the terminal protocol
     this.callables = {};
     this.callables.add = this.quickAdd;

@@ -20,26 +20,29 @@ core.registerOperator("descbox", function (operator) {
 
     //Handle item updates
     me.updateItem = function (id) {
-        if (id == me.settings.currentID && id) {
-            if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
-            else me.textarea.value = "";
+        if (me.settings.operationMode != "putter") {
+            if (id == me.settings.currentID && id) {
+                if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
+                else me.textarea.value = "";
+                me.textarea.disabled = false;
+                if (core.items[id].style) {
+                    me.textarea.style.background = core.items[id].style.background;
+                    me.textarea.style.color = core.items[id].style.color;
+                }
+            } else {
+                if (!me.settings.currentID) {
+                    me.textarea.disabled = true;
+                    me.textarea.value = "Select an item to view its description.";
+                }
+            }
+        }else{
             me.textarea.disabled = false;
-            if (core.items[id].style){
-                me.textarea.style.background=core.items[id].style.background;
-                me.textarea.style.color=core.items[id].style.color;
-            }
-        } else {
-            if (!me.settings.currentID) {
-                me.textarea.disabled = true;
-                me.textarea.value = "Select an item to view its description.";
-            }
         }
     }
 
     core.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
-
         if (sender == me) return;
         //Check if item is shown
         //Update item if relevant
@@ -66,8 +69,10 @@ core.registerOperator("descbox", function (operator) {
                     id: staticItem
                 });
             }
-        }else if (me.settings.operationMode=='putter'){
-            me.textarea.disabled=false;
+        } else if (me.settings.operationMode == 'putter') {
+            if (me.settings.focusOperatorID)me.focusOperatorID=me.settings.focusOperatorID;
+            me.textarea.value = "";
+            me.textarea.disabled = false;
         }
         me.updateItem(me.settings.currentID);
     }
@@ -79,26 +84,27 @@ core.registerOperator("descbox", function (operator) {
 
     me.fromSaveData = function (d) {
         Object.assign(me.settings, d);
+        me.updateSettings();
         //then rehash the display or sth
         me.updateItem(me.settings.currentID);
     }
 
     //Register changes with core
     me.somethingwaschanged = function () {
-        if (me.settings.operationMode!="putter"){
-        core.items[me.settings.currentID][me.settings.property] = me.textarea.value;
-        core.fire("updateItem", {
-            id: me.settings.currentID,
-            sender: me
-        });
-    }
+        if (me.settings.operationMode != "putter") {
+            core.items[me.settings.currentID][me.settings.property] = me.textarea.value;
+            core.fire("updateItem", {
+                id: me.settings.currentID,
+                sender: me
+            });
+        }
     }
 
     me.textarea.addEventListener("input", me.somethingwaschanged);
 
     me.textarea.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            let operator = core.getOperator(me.settings.focusOperatorID);
+            let operator = core.getOperator(me.focusOperatorID);
             if (operator && operator.baseOperator.quickAdd) {
                 operator.baseOperator.quickAdd(me.textarea.value);
                 me.textarea.value = "";
@@ -130,6 +136,7 @@ core.registerOperator("descbox", function (operator) {
         core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
+            me.focusOperatorID=me.settings['focusOperatorID'];
         })
     })
     this.showDialog = function () {
@@ -180,6 +187,10 @@ core.registerOperator("descbox", function (operator) {
                 }
             }
             core.fire("viewUpdate");
+        }else if (me.settings.operationMode=="putter"){
+            if (!me.settings.focusOperatorID){
+                me.focusOperatorID=d.sender.container.uuid;
+            }
         }
     });
     core.on("deleteItem", function (d) {
