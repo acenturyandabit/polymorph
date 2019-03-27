@@ -625,7 +625,7 @@ function _core() {
       });
     });
     //get the target view and render it (first time)
-    me.firebase.db.collection("polymorph").doc(docName).collection("views").doc(me.userCurrentDoc.currentView).get().then(doc => {
+    me.firebase.db.collection("polymorph").doc(docname).collection("views").doc(me.userCurrentDoc.currentView).get().then(doc => {
       if (doc.exists) {
         me.views[me.userCurrentDoc.currentView] = doc.data();
         me.presentView(me.userCurrentDoc.currentView);

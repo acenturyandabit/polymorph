@@ -12,7 +12,9 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     //////////////////Handle core item updates//////////////////
 
     this.resize=function(){
+        this.rect.pos=1;
         this.rect.resize();
+        core.fire("viewUpdate",{});
     }
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
     this.processSettings=function(){

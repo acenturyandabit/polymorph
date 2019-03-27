@@ -23,7 +23,6 @@
         this.itemSpace = this.rootdiv.querySelector(".backwall");
         operator.div.appendChild(this.rootdiv);
 
-
         //////////////////Handle core item updates//////////////////
 
         //these are optional but can be used as a reference.
@@ -115,11 +114,6 @@
             delete core.items[viewName].synergist;
             this.switchView();
         }
-
-
-
-
-
 
         ////////////////////////Banner///////////////////////////////
         //----------View options menu----------//
@@ -323,7 +317,7 @@
 
         this.itemSpace.addEventListener("mousemove", function (e) {
             if (me.dragging) {
-                if (me.movingDiv.parentElement.matches(".floatingItem")) { //nested items
+                if (me.movingDiv.parentElement.parentElement.matches(".floatingItem")) { //nested items
                     me.itemSpace.appendChild(me.movingDiv);
                     me.clearParent(me.movingDiv.dataset.id);
                     //me.items[me.movingDiv.dataset.id].viewData[me.currentView].parent = undefined;
@@ -386,7 +380,7 @@
                 */
                 //define some stuff
                 let thing = me.movingDiv.dataset.id
-                let elements = document.elementsFromPoint(e.clientX, e.clientY);
+                let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
                 /*
                   case 1: hidden
                   case 2: dragged into another object
@@ -470,6 +464,21 @@
             core.items[id].synergist.viewData[this.settings.currentViewName].y = (it.getBoundingClientRect().top - me.itemSpace.getBoundingClientRect().top) / me.itemSpace.clientHeight + (core.items[me.settings.currentViewName].synergist.cy || 0);
             me.arrangeItem(id);
         }
+
+        this.clearParent=function(id){
+            delete core.items[id].links.parent;
+            let itm=me.itemSpace.querySelector(".floatingitem[data-id='"+id+"']");
+            itm.style.border="";
+            itm.style.position="absolute";
+        }
+
+        this.setParent=function(childID,parentID){
+            if (!core.items[childID].links)core.items[childID].links={};
+            core.items[childID].links.parent=parentID;
+            core.fire("updateItem",{sender:this,id:childID});
+            me.arrangeItem(childID);
+        }
+
         scriptassert([
             ["quill", "3pt/quill.min.js"]
         ], () => {
@@ -493,7 +502,7 @@
                         });
                     }
                 })
-
+                me.waitingChildren={};
                 me.arrangeItem = function (id, extern) {
                     if (!core.items[id].synergist || !core.items[id].synergist.viewData) return;
                     //visual aspect of updating position.
@@ -504,6 +513,8 @@
                         it.classList.add("floatingItem");
                         it.dataset.id = id;
                         it.style.resize = "both";
+                        let dchilds=document.createElement("div");
+                        it.appendChild(dchilds);
                         let dqiv = document.createElement("div");
                         it.appendChild(dqiv);
                         me.itemSpace.appendChild(it);
@@ -534,6 +545,26 @@
                     //set the contents of the quill
                     if (extern) {
                         me.deltas[id].setContents(core.items[id].synergist.description);
+                    }
+                    //also enforce parent, if possible; otherwise add it to a queue
+                    if (core.items[id].links && core.items[id].links.parent){
+                        let parentElement=me.itemSpace.querySelector(".floatingItem[data-id='"+core.items[id].links.parent+"']");
+                        if (parentElement){
+                            parentElement.children[0].appendChild(it);
+                            it.style.border="1px solid black";
+                            it.style.position="static";
+                        }else{
+                            if (!me.waitingChildren[core.items[id].links.parent])me.waitingChildren[core.items[id].links.parent]=[];
+                            me.waitingChildren[core.items[id].links.parent].push(id);
+                            //cry
+                        }
+                    }
+                    //rearrange all my orphaned children, if i have any
+                    if (me.waitingChildren[id]){
+                        while (me.waitingChildren[id].length){
+                            childid=me.waitingChildren[id].pop();
+                            me.arrangeItem(childid);
+                        }
                     }
                     //if (me.updateLines) me.updateLines(id);
                 }
@@ -972,42 +1003,6 @@
     
     .floatingItem.selected {
         border: 3px dotted rgb(0, 110, 255);
-    }
-    
-    /*------------floating action button(s)----------*/
-    .fab {
-        z-index: 10;
-        position: absolute;
-        bottom: 10vw;
-        right: 10vw;
-        background-color: rgb(0, 110, 255);
-        width: 15vw;
-        height: 15vw;
-        border-radius: 100%;
-        background: rgb(0, 110, 255);
-        border: none;
-        outline: none;
-        color: #FFF;
-        font-size: 36px;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
-    }
-    
-    .phone .phoneNoShow {
-        display: none;
-    }
-    
-    /*------------Loginshield----------*/
-    .dialog.loginShield{
-        top:0;
-        left:0;
-        display:none;
-        position: absolute;
-        width: 100%;
-        height:100%;
-        background: lightblue;
-    }
-    .loginShield section{
-        display:none;
     }
     </style>
     <div class="synergist-container">
