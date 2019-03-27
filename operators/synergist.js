@@ -183,7 +183,7 @@
             let contextMenuManager = new _contextMenuManager(me.rootdiv);
             me.viewContextMenu = contextMenuManager.registerContextMenu(
                 `<li class="viewDeleteButton">Delete</li>
-            <li class="viewCloneButton">Clone view</li>`,
+                <li class="viewCloneButton">Clone view</li>`,
                 me.viewDropdownContainer);
             me.viewDeleteButton = me.viewContextMenu.querySelector(".viewDeleteButton");
             me.viewDeleteButton.addEventListener("click", (e) => {
@@ -200,7 +200,11 @@
             })
             me.itemContextMenu = contextMenuManager.registerContextMenu(
                 `<li class="deleteButton">Delete</li>
-            <li class="subview">Open Subview</li>`,
+                <li class="subview">Open Subview</li>
+                <li>Edit style</li>
+                <li><input class="background" placeholder="Background"></li>
+                <li><input class="color" placeholder="Color"></li>
+                `,
                 me.rootdiv,
                 ".floatingItem",
                 e => {
@@ -210,6 +214,19 @@
                     return true;
                 }
             );
+
+            function updateStyle(e) {
+                let cid=me.contextedElement.dataset.id;
+                if (!core.items[cid].style) core.items[cid].style = {};
+                core.items[cid].style[e.target.className] = e.target.value;
+                core.fire("updateItem", {
+                    sender: this,
+                    id: cid
+                });
+            }
+            me.itemContextMenu.querySelector(".background").addEventListener("input", updateStyle);
+            me.itemContextMenu.querySelector(".color").addEventListener("input", updateStyle);
+
             me.itemContextMenu.querySelector(".deleteButton").addEventListener("click", e => {
                 //delete the div and delete its corresponding item
                 me.removeItem(me.contextedElement.dataset.id);
@@ -488,6 +505,9 @@
             s.type = "text/css";
             s.addEventListener("load", function () {
                 me.deltas = {}; //this is necessary apparently.
+                let typecap=new capacitor(300,100,(id)=>{
+                    core.fire("updateItem",{sender:me,id:id})
+                })
                 me.itemSpace.addEventListener("keyup", function (e) {
                     if (e.target.matches(".floatingItem *") || e.target.matches(".floatingItem")) {
                         let lt = e.target;
@@ -496,10 +516,7 @@
                         }
                         let id = lt.dataset.id;
                         core.items[id].synergist.description = me.deltas[id].getContents();
-                        core.fire("updateItem", {
-                            sender: me,
-                            id: id
-                        });
+                        typecap.submit(id);
                     }
                 })
                 me.waitingChildren={};
@@ -538,6 +555,10 @@
                             "px";
                         it.style.top = Math.floor((core.items[id].synergist.viewData[me.settings.currentViewName].y - (core.items[me.settings.currentViewName].synergist.cy || 0)) * me.itemSpace.clientHeight) +
                             "px";
+                        if (core.items[id].style){
+                            it.style.color=core.items[id].style.color;
+                            it.style.background=core.items[id].style.background;
+                        }
                     } else {
                         //otherwise hide it
                         it.style.display = "none";
@@ -868,7 +889,6 @@
     .floatingItem {
         background: white;
         width: fit-content;
-        padding: 5px;
         transition: left 0.5s ease, top 0.5s ease;
     }
     

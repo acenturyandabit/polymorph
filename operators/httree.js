@@ -383,10 +383,10 @@ core.registerOperator("httree", {
             return true;
         }
         me.viewContextMenu = contextMenuManager.registerContextMenu(
-            `<li><span>Edit style</span><br>
-            <input class="background">
-            <input class="color">
-            </li>`,
+            `<li><span>Edit style</span></li>
+            <li><input class="background" placeholder="Background"></li>
+            <li><input class="color" placeholder="Color"></li>
+            `,
             me.rootdiv, ".bar", ctxhook);
 
         function updateStyle(e) {
