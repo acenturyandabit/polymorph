@@ -550,9 +550,13 @@
                     if (core.items[id].links && core.items[id].links.parent){
                         let parentElement=me.itemSpace.querySelector(".floatingItem[data-id='"+core.items[id].links.parent+"']");
                         if (parentElement){
+                            try{
                             parentElement.children[0].appendChild(it);
                             it.style.border="1px solid black";
                             it.style.position="static";
+                            }catch (e){
+                                console.log(e);
+                            }
                         }else{
                             if (!me.waitingChildren[core.items[id].links.parent])me.waitingChildren[core.items[id].links.parent]=[];
                             me.waitingChildren[core.items[id].links.parent].push(id);
