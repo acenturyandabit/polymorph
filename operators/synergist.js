@@ -311,7 +311,7 @@
             };
         })
 
-        let c = new capacitor(300, 10, () => {
+        let c = new capacitor(300, 100, () => {
             me.switchView(me.settings.currentViewName);
         });
 

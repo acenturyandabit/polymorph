@@ -46,7 +46,9 @@ core.registerOperator("httree", {
     `
     operator.div.appendChild(this.style);
     this.rootdiv = document.createElement("div");
+    this.rootdiv.style.minWidth = "100%";
     this.rootdiv.style.width = "fit-content";
+    this.rootdiv.style.minHeight = "100%";
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.plusbutton = document.createElement("button");
     this.plusbutton.innerText = "+";
