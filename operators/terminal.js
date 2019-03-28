@@ -96,7 +96,9 @@ core.registerOperator("terminal", {
     this.querybox = this.rootdiv.querySelector("input");
     this.querybox.addEventListener("keyup", (e) => {
         if (e.key == "Enter") {
-            me.state.output(me.querybox.value);
+            if (me.settings.echoOn) {
+                me.state.output(me.querybox.value);
+            }
             processQuery(me.querybox.value);
             me.querybox.value = "";
         }
@@ -128,7 +130,9 @@ core.registerOperator("terminal", {
             try {
                 this.ws = new WebSocket(this.settings.wsurl);
                 this.ws.onmessage = function (e) {
-                    me.state.output(e.data);
+                    if (me.settings.echoOn) {
+                        me.state.output(e.data);
+                    }
                     processQuery(e.data);
                 }
             } catch (e) {
@@ -145,11 +149,19 @@ core.registerOperator("terminal", {
         <input class="wshook" placeholder="Websocket URL (include prefix) - empty for none"></input>
         <button class="wsset">Set websocket</button>
     `;
+    let op = new _option({
+        div: this.dialogDiv,
+        type: "bool",
+        object: this.settings,
+        property: "echoOn",
+        label: "Echo commands"
+    });
     this.dialogDiv.querySelector(".wsset").addEventListener("click", () => {
         this.settings.wsurl = this.dialogDiv.querySelector(".wshook").value;
         this.tryEstablishWS();
     })
     this.showDialog = function () {
+        op.load();
         if (this.settings.wsurl) this.dialogDiv.querySelector(".wshook").value = this.settings.wsurl;
         // update your dialog elements with your settings
     }

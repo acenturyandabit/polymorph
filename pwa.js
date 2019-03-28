@@ -1,22 +1,19 @@
-// V3.2: debug switch + better debug messages
+// V3.3: added setTimeout to allow fast loading from cache before content download
 
 /*
-You can use pwaExtract() to find a list of active scripts and links for caching.
+Installation is easy! Just follow these three steps:
+1. Add this script to your root directory with your index.html.
+2. Also add the sample manifest.json at the bottom of this file.
+3. Include the following script:
+<script>
+var pwaManager = new _pwaManager();
+</script>
+
+And you're done!
+
+Call pwaExtract() from a developer console to find a list of active scripts and links on your page for caching. 
+Place those scripts in the 'urlsToCache' property and you'll be ready to go.
 */
-
-/*TODO:
-this.tryTriggerPrompt();
-
-settings.appInstalled;
-
-Auto search script tags to find my url wHoA
-
-//generateCacheList(): generates a cache list based on all the scripts in the index file.
-
-*/
-
-//Dang so you do have to modify this file. Well, here are the settings then. :3
-//Also there's a sample manifest.json at the bottom of this file for you as well :) enjoy
 let serviceWorkerSettings = {
   urlsToCache: [
     "index.html",
@@ -55,11 +52,11 @@ let serviceWorkerSettings = {
   ],
   CACHE_NAME: "version 7x",
   RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
-  debug:true
+  debug: true
 };
 
-function dbglog(message){
-  if (serviceWorkerSettings.debug)console.log(message);
+function dbglog(message) {
+  if (serviceWorkerSettings.debug) console.log(message);
 }
 
 //Default functions (will be minified)
@@ -156,7 +153,7 @@ try {
     // Perform install steps
     event.waitUntil(
       caches.open(serviceWorkerSettings.CACHE_NAME).then(function (cache) {
-        dbglog("Opened cache: " +serviceWorkerSettings.CACHE_NAME);
+        dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
         return cache.addAll(serviceWorkerSettings.urlsToCache);
       })
     );
@@ -166,21 +163,24 @@ try {
     cache = await caches.open(serviceWorkerSettings.CACHE_NAME);
   }
   setup();
+
   function updateCache(event) {
     return new Promise(async function (resolve) {
-      try {
-        networkResponsePromise = fetch(event.request);
-        const networkResponse = await networkResponsePromise;
-        cache.put(event.request, networkResponse.clone());
-        dbglog("fetch OK: "+event.request.url);
-        resolve(networkResponse);
-      } catch (e) {
-        //network failure
-        dbglog("fetch error: "+event.request.url);
-        dbglog(e);
-        resolve(404);
+      setTimeout(async function (){
+        try {
+          networkResponsePromise = fetch(event.request);
+          const networkResponse = await networkResponsePromise;
+          cache.put(event.request, networkResponse.clone());
+          dbglog("fetch OK: " + event.request.url);
+          resolve(networkResponse);
+        } catch (e) {
+          //network failure
+          dbglog("fetch error: " + event.request.url);
+          dbglog(e);
+          resolve(404);
 
-      }
+        }
+      }, 1000); //deliver content to user asap
     });
   }
   self.addEventListener("fetch", event => {
@@ -199,37 +199,37 @@ try {
           if (event.request.method == "GET") {
             event.respondWith(
               (async function () {
-                let cachedResponse=undefined;
-                if (cache){
-                   cachedResponse= await cache.match(event.request);
+                let cachedResponse = undefined;
+                if (cache) {
+                  cachedResponse = await cache.match(event.request);
                 }
-                if (!cachedResponse &&event.request.url.indexOf("?") != -1){
-                  cachedResponse= await cache.match(event.request,{
+                if (!cachedResponse && event.request.url.indexOf("?") != -1) {
+                  cachedResponse = await cache.match(event.request, {
                     ignoreSearch: event.request.url.indexOf("?") != -1
                   });
                 }
-                
+
                 // Returned the cached response if we have one, otherwise return the network response.
                 if (event.request.type == "cors") {
                   return fetch(event.request);
                 } else {
                   if (cachedResponse) {
                     //avoid CORS for things like firebase
-                    dbglog("cacheUpdate: "+event.request.url);
+                    dbglog("cacheUpdate: " + event.request.url);
                     updateCache(event);
                     return cachedResponse;
                   } else {
-                    dbglog("passiveUpdate: "+event.request.url);
+                    dbglog("passiveUpdate: " + event.request.url);
                     return updateCache(event);
                   }
                 }
               })());
           } else {
-            dbglog("non-get: "+event.request.url);
+            dbglog("non-get: " + event.request.url);
             event.respondWith(fetch(event.request));
           }
-        }else{
-          event.respondWith(fetch(event.request));  
+        } else {
+          event.respondWith(fetch(event.request));
         }
 
         break;
@@ -241,10 +241,11 @@ try {
   });
 }
 /*
-A sample web app manifest for yuo! aswell!
+A sample web app manifest. Put this in a file in your home directory!
+(you may have to add or remove icons - this template has them as a reference.)
 {
-  "short_name": "Maps",
-  "name": "Google Maps",
+  "short_name": "Webapp",
+  "name": "My New Webapp",
   "icons": [
     {
       "src": "/images/icons-192.png",
@@ -257,10 +258,10 @@ A sample web app manifest for yuo! aswell!
       "sizes": "512x512"
     }
   ],
-  "start_url": "/maps/?source=pwa",
-  "background_color": "#3367D6",
+  "start_url": "/index.html",
+  "background_color": "#FFFFFF",
   "display": "standalone",
-  "scope": "/maps/",
-  "theme_color": "#3367D6"
+  "scope": "/",
+  "theme_color": "#FFFFFF"
 }
 */

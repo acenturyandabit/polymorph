@@ -95,6 +95,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     //Function for adding an operator to this rect. Operator must already exist.
     this.tieOperator = function (operator) {
+        if (!operator){
+            console.log("Ack!");
+            return;
+        }
         if (!this.operators) this.operators = [];
         if (!this.operators.includes(operator)) {
             this.operators.push(operator);
