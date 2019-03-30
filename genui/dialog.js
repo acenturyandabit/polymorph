@@ -12,7 +12,7 @@ Use case 1: Upgrade an existing dialog
 Use case 2: Create new dialog:
 1. create the dialog and add the class
     let dialog = document.createElement('div');
-    dialog.classList.add(".dialog");
+    dialog.classList.add("dialog");
 2. Let dialogmanager take care of it
     dialog=dialogManager.checkDialogs(dialog)[0];
     innerDialog = dialog.querySelector(".innerDialog");

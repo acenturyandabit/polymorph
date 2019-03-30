@@ -191,7 +191,7 @@ core.registerOperator(
         e.preventDefault();
         let id = draggingNode.dataset.id;
         //change the httree.parent of the element
-        core.items[id].httree.parent = core.items[dropLocation].httree.parent;
+        core.items[id].links.parent = core.items[dropLocation].links.parent;
         //insert the div itself
         divtarget.parentNode.insertBefore(draggingNode, divtarget.nextSibling);
         core.fire("updateItem", {
@@ -218,19 +218,19 @@ core.registerOperator(
         return cdiv;
       }
       if (
-        core.items[id].httree &&
+        core.items[id].links &&
         (!me.settings.filter || core.items[id][me.settings.filter])
       ) {
         let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
         if (!cdiv) {
-          if (core.items[id].httree.parent) {
+          if (core.items[id].links.parent) {
             let pdiv = me.rootdiv.querySelector(
-              "[data-id='" + core.items[id].httree.parent + "']"
+              "[data-id='" + core.items[id].links.parent + "']"
             );
             if (!pdiv) {
-              if (!this.cachedUpdateRequests[core.items[id].httree.parent])
-                this.cachedUpdateRequests[core.items[id].httree.parent] = [];
-              this.cachedUpdateRequests[core.items[id].httree.parent].push(id);
+              if (!this.cachedUpdateRequests[core.items[id].links.parent])
+                this.cachedUpdateRequests[core.items[id].links.parent] = [];
+              this.cachedUpdateRequests[core.items[id].links.parent].push(id);
             } else {
               cdiv = mkdiv(id);
               pdiv.children[3].appendChild(cdiv);
@@ -270,7 +270,7 @@ core.registerOperator(
       let s = d.sender;
       if (s == me) return;
       deselect();
-      if (core.items[id].httree) {
+      if (core.items[id].links) {
         select(id);
       }
       // An item was focused.

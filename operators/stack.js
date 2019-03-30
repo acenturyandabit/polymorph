@@ -97,7 +97,7 @@ core.registerOperator("stack", {
             if (me.rects[i].rect==obj){
                 //remove this!
                 me.rects[i].div.remove();
-                delete(me.rects[i]);
+                me.rects.splice(i,1);
             }
         }
         core.fire("viewUpdate",{sender:this});
@@ -145,4 +145,15 @@ core.registerOperator("stack", {
             this.rects[i].rect.listOperators(list);
         }
     }
+
+    //Handle the settings dialog click!
+    this.dialogDiv=document.createElement("div");
+    this.dialogDiv.innerHTML=``;
+    this.showDialog=function(){
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings=function(){
+        // pull settings and update when your dialog is closed.
+    }
+
 });

@@ -99,6 +99,18 @@ var _tutorial = (function () {
                         left: 50%;
                         transform: translateX(-50%);`;
                         break;
+                    case 'top':
+                        data.div.style.cssText += `
+                        left: 50%;
+                        top: 0%;
+                        transform: translateX(-50%);`;
+                        break;
+                    case 'center':
+                        data.div.style.cssText += `
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%,-50%);`;
+                        break;
                 }
                 data.innerdiv = document.createElement("div");
                 data.div.appendChild(data.innerdiv);
@@ -159,6 +171,7 @@ var _tutorial = (function () {
             }
             if (id) {
                 //present the current item
+                if(!me.items[id])return;
                 lastType = me.items[id].type;
                 lastData = types[me.items[id].type].render(me.items[id], me.present);
             }

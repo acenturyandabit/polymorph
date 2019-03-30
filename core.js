@@ -17,6 +17,11 @@ function _item() {
   };
   this.fromSaveData = function (item) {
     Object.assign(this, item);
+    // do some upgrading lol
+    if (this.httree) {
+      this.links = {};
+      Object.assign(this.links, this.httree);
+    }
   };
 }
 
@@ -26,8 +31,9 @@ function _core() {
   this.tutorial = new _tutorial();
   //call the dialog manager
   dialogSystemManager(this);
+  
   let me = this;
-
+  readyTutorial(me);
 
   //Item handling. Very basic stuff.
   //Handling delete item.
@@ -42,16 +48,16 @@ function _core() {
       nuid = guid();
     } while (this.items[nuid]);
     this.items[nuid] = itm;
-    if (this.firebase){
-      if (!me.userData.uniqueStyle){
-        let rc=randCSSCol();
-        me.userData.uniqueStyle={
-          background:rc,
-          color:matchContrast(rc)
+    if (this.firebase) {
+      if (!me.userData.uniqueStyle) {
+        let rc = randCSSCol();
+        me.userData.uniqueStyle = {
+          background: rc,
+          color: matchContrast(rc)
         };
         me.saveUserData();
       }
-      this.items[nuid].style=me.userData.uniqueStyle;
+      this.items[nuid].style = me.userData.uniqueStyle;
     }
     return nuid;
   };
@@ -73,7 +79,7 @@ function _core() {
     }
   };
   this.resetDefaultSettings();
-  
+
   //Instantiate filemanager
   this.filescreen = new _filescreen({
     prompt: "Welcome to Polymorph.",
@@ -99,13 +105,13 @@ function _core() {
     document.querySelector("title").innerHTML =
       this.settings.displayName + " - Polymorph";
   };
-  let docNameEditCapacitor=new capacitor(300,1000,()=>{
+  let docNameEditCapacitor = new capacitor(300, 1000, () => {
     me.firebase.root.set(me.settings);
   })
   documentReady(() => {
     document.querySelector(".docName").addEventListener("keyup", () => {
       this.settings.displayName = document.body.querySelector(".docName").innerText;
-      if (this.firebase.unsub){
+      if (this.firebase.unsub) {
         docNameEditCapacitor.submit();
       }
     })
@@ -120,12 +126,12 @@ function _core() {
     me.filescreen.saveRecentDocument(id);
 
     me.docName = id; // for all user save data. that got real important real quick :/
-    
+
     //new doc,create a new entry
     if (!me.userData[id] || !me.userData[id].primarySaveSource) me.userData[id] = {
       currentView: "default",
     };
-    
+
     me.userCurrentDoc = me.userData[id];
 
     //PUT ADDITIONAL QUERY HANDLING HERE: OPTIONS, VIEWS
@@ -136,9 +142,14 @@ function _core() {
       me.userCurrentDoc.firebaseSync = true;
       //start the firebase syncer down the line
     }
+    let tutorialStarted = false;
     if (params.has("view")) {
       me.userCurrentDoc.currentView = params.get("view");
     } else if (!me.userCurrentDoc.currentView) me.userCurrentDoc.currentView = "default";
+    if (params.has("t")) {
+      core.tutorial.start(params.get("t"));
+      tutorialStarted = true;
+    }
     me.saveUserData();
 
 
@@ -149,7 +160,9 @@ function _core() {
             displayName: id
           }
         };
-        core.tutorial.start();
+        if (!tutorialStarted) {
+          core.tutorial.start();
+        }
       }
       me.fromSaveData(d);
     });
@@ -159,16 +172,16 @@ function _core() {
   this.saveUserData = function () {
     localStorage.setItem("userData", JSON.stringify(me.userData));
   };
-  
+
   me.userData = localStorage.getItem("userData");
   if (!me.userData) {
-    let rc=randCSSCol();
+    let rc = randCSSCol();
     me.userData = {
-      uniqueStyle:{
-        background:rc,
-        color:matchContrast(rc)
+      uniqueStyle: {
+        background: rc,
+        color: matchContrast(rc)
       },
-      alias:guid(10)
+      alias: guid(10)
     };
     me.saveUserData();
   } else {
@@ -251,6 +264,13 @@ function _core() {
     ))
   );
 
+  this.getItems = function () {
+    let result = {};
+    for (let i in this.items) {
+      result[i] = this.items[i].toSaveData();
+    }
+    return result;
+  }
 
   this.toSaveData = function () {
     let obj = {};
@@ -260,10 +280,7 @@ function _core() {
     obj.views[me.userCurrentDoc.currentView] = this.baseRect.toSaveData();
     obj.settings = this.settings;
     // save all items
-    obj.items = {};
-    for (let i in this.items) {
-      obj.items[i] = this.items[i].toSaveData();
-    }
+    obj.items = this.getItems();
     return obj;
   };
 
@@ -577,13 +594,13 @@ function _core() {
       .collection("polymorph")
       .doc(docname)
       .collection("items");
-      me.firebase.viewRoot = me.firebase.db
+    me.firebase.viewRoot = me.firebase.db
       .collection("polymorph")
       .doc(docname)
       .collection("views");
-    me.firebase.root=me.firebase.db
-    .collection("polymorph")
-    .doc(docname);
+    me.firebase.root = me.firebase.db
+      .collection("polymorph")
+      .doc(docname);
     //syncing to remote from local updateItem calls
     if (me.firebase.unsub) {
       for (let i in me.firebase.unsub) me.firebase.unsub[i]();
@@ -779,7 +796,6 @@ function _core() {
       me.requestCapacitor.submit(me.userCurrentDoc.currentView);
     }
   });
-  readyTutorial(me);
   this.getOperator = function (id) {
     return me.baseRect.getOperator(id);
   }

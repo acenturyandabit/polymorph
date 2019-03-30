@@ -326,44 +326,26 @@ core.registerOperator("itemList", function (operator) {
     <p>Options</p>
     <p><input type="checkbox"><span>Sort by date</span></p>
     <p><input type="checkbox"><span>Delete items (instead of hiding)</span></p>
+    <h1>Role</h1>
+    <select data-role="operationMode">
+    <option value="static">Display static list</option>
+    <option value="focus">Display focused list</option>
+    </select>
     <p>View items with the following property:</p> 
-    <input data-role='filterProp' placeholder = 'Property name'></input>`;
+    <input data-role='filterProp' placeholder = 'Property name'></input>
+    <p>Operator to focus on:</p> 
+    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
+    <button class="targeter">Select operator</button>
+    `;
     let d = this.dialogDiv;
     this.showDialog = function () {
         // update your dialog elements with your settings
-    }
-    this.dialogUpdateSettings = function () {
-        // pull settings and update when your dialog is closed.
-        me.updateSettings();
-        core.fire("viewUpdate");
-    }
-
-    d.querySelector(".adbt").addEventListener("click",
-        function () {
-            if (d.querySelector(".adpt").value != "") {
-                me.settings.properties[d.querySelector(".adpt").value] = 'text';
-            } else {
-                me.settings.properties[d.querySelector("select._prop").value] = 'text';
-            }
-            me.showSettings();
-        }
-    )
-    d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
-        me.settings.filterProp = e.target.value;
-    })
-    me.proplist = me.dialogDiv.querySelector(".proplist");
-    //Handle select's in proplist
-    me.proplist.addEventListener('change', function (e) {
-        me.settings.properties[e.target.dataset.role] = e.target.value;
-    })
-    me.opList = me.dialogDiv.querySelector("select._prop");
-    //retrieve stuff
-    //sort by date checkbox
-    //Style tags button
-    me.showSettings = function () {
         //Fill in dialog information
         //set the propertyname one
-        me.dialogDiv.querySelector('input[data-role="filterProp"]').value = me.settings.filterProp;
+        for (i in me.settings) {
+            let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
+            if (it) it.value = me.settings[i];
+        }
         //Get all available properties, by looping through all elements (?)
         me.opList.innerHTML = "";
         let props = {};
@@ -396,7 +378,50 @@ core.registerOperator("itemList", function (operator) {
         }
     }
 
+    let targeter = this.dialogDiv.querySelector("button.targeter");
+    targeter.addEventListener("click", function () {
+        core.target().then((id) => {
+            me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+            me.settings['focusOperatorID'] = id
+            me.focusOperatorID=me.settings['focusOperatorID'];
+        })
+    })
+
+    this.dialogUpdateSettings = function () {
+        // pull settings and update when your dialog is closed.
+        me.updateSettings();
+        core.fire("viewUpdate");
+    }
+
+    d.querySelector(".adbt").addEventListener("click",
+        function () {
+            if (d.querySelector(".adpt").value != "") {
+                me.settings.properties[d.querySelector(".adpt").value] = 'text';
+            } else {
+                me.settings.properties[d.querySelector("select._prop").value] = 'text';
+            }
+            me.showSettings();
+        }
+    )
+    d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
+        me.settings.filterProp = e.target.value;
+    })
+    me.proplist = me.dialogDiv.querySelector(".proplist");
+    //Handle select's in proplist
+    me.proplist.addEventListener('change', function (e) {
+        me.settings.properties[e.target.dataset.role] = e.target.value;
+    })
+    me.opList = me.dialogDiv.querySelector("select._prop");
+    //retrieve stuff
+    //sort by date checkbox
+    //Style tags button
+
     core.on("focus", function (data) {
+        if (me.settings.operationMode=="focus"){
+            if (data.sender.container.container.uuid==me.settings.focusOperatorID){
+                me.settings.filterProp=data.id;
+            }
+        }
         me.focusItem(data.id);
     })
 });

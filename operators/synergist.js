@@ -52,12 +52,21 @@
       });
     });
 
-    this.switchView = function (ln) {
+    this.switchView = function (ln, assert) {
       me.settings.currentViewName = ln;
       if (!me.settings.currentViewName) {
         //Show blank
       } else {
         if (!core.items[me.settings.currentViewName]) return;
+        if (!core.items[me.settings.currentViewName].synergist) {
+          if (assert) {
+            core.items[me.settings.currentViewName].synergist = {
+              viewName: core.items[ln].title
+            };
+          } else {
+            return;
+          }
+        }
         this.viewName.innerText =
           core.items[me.settings.currentViewName].synergist.viewName;
         for (i in core.items) {
@@ -186,6 +195,27 @@
       ["contextmenu", "genui/contextMenu.js"]
     ], () => {
       let contextMenuManager = new _contextMenuManager(me.rootdiv);
+
+      me.rootcontextMenu = contextMenuManager.registerContextMenu(`
+      <li class="pastebtn">Paste</li>`, me.rootdiv);
+      me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
+        if (me.cpyelem) {
+          let rect = me.itemSpace.getBoundingClientRect();
+          let rect2 = me.rootcontextMenu.getBoundingClientRect();
+          core.items[me.cpyelem].synergist.viewData[me.settings.currentViewName] = {
+            x: (rect2.left - rect.left) / me.itemSpace.clientWidth +
+              (core.items[me.settings.currentViewName].synergist.cx || 0),
+            y: (rect2.top - rect.top) / me.itemSpace.clientHeight +
+              (core.items[me.settings.currentViewName].synergist.cy || 0),
+          }
+          me.rootcontextMenu.style.display = "none";
+          me.arrangeItem(me.cpyelem);
+          core.fire("updateItem", {
+            id: me.cpyelem,
+            sender: me
+          });
+        }
+      })
       me.viewContextMenu = contextMenuManager.registerContextMenu(
         `<li class="viewDeleteButton">Delete</li>
                 <li class="viewCloneButton">Clone view</li>`,
@@ -208,12 +238,13 @@
       });
       me.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
-                <li class="subview">Open Subview</li>
-                <li>Edit style</li>
-                <li><input class="background" placeholder="Background"></li>
-                <li><input class="color" placeholder="Color"></li>
-                <li class="orientation">Reorient subitems</li>
-                `,
+        <li class="cpybtn">Copy (between views)</li>
+        <li class="subview">Open Subview</li>
+        <li>Edit style</li>
+        <li><input class="background" placeholder="Background"></li>
+        <li><input class="color" placeholder="Color"></li>
+        <li class="orientation">Reorient subitems</li>
+        `,
         me.rootdiv,
         ".floatingItem",
         e => {
@@ -247,12 +278,18 @@
           me.removeItem(me.contextedElement.dataset.id);
           me.itemContextMenu.style.display = "none";
         });
-
+      me.itemContextMenu
+        .querySelector(".cpybtn")
+        .addEventListener("click", e => {
+          //delete the div and delete its corresponding item
+          me.cpyelem = me.contextedElement.dataset.id;
+          me.itemContextMenu.style.display = "none";
+        });
       me.itemContextMenu
         .querySelector(".orientation")
         .addEventListener("click", e => {
           //toggle the synergist orientation
-          core.items[me.contextedElement.dataset.id].synergist.subitemOrientation=!core.items[me.contextedElement.dataset.id].synergist.subitemOrientation;
+          core.items[me.contextedElement.dataset.id].synergist.subitemOrientation = !core.items[me.contextedElement.dataset.id].synergist.subitemOrientation;
           //reupdate
           me.arrangeItem(me.contextedElement.dataset.id);
           me.itemContextMenu.style.display = "none";
@@ -361,19 +398,21 @@
         let rect = me.itemSpace.getBoundingClientRect();
         me.movingDiv.style.left = e.clientX - me.dragDX - rect.left;
         me.movingDiv.style.top = e.clientY - me.dragDY - rect.top;
-        let elements = document.elementsFromPoint(e.clientX, e.clientY);
-        /*
-                let fi = me.rootdiv.querySelectorAll(".floatingItem");
-                for (let i = 0; i < fi.length; i++) {
-                    fi[i].style.border = "";
-                }
-                for (let i = 0; i < elements.length; i++) {
-                    if (elements[i].matches(".floatingItem") && elements[i] != me.movingDiv) {
-                        elements[i].style.border = "3px dotted red";
-                        break;
-                    }
-                }
-                */
+        let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
+        //borders for the drag item in item
+        let fi = me.rootdiv.querySelectorAll(".floatingItem");
+        for (let i = 0; i < fi.length; i++) {
+          fi[i].style.border = "";
+        }
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].matches(".floatingItem") && elements[i] != me.movingDiv) {
+            elements[i].style.border = "3px dotted red";
+            break;
+          }
+
+        }
+        //highlighting for the bottom tray
+
       } else if (me.linking) {
         // draw a line from the object to the mouse cursor
         let rect = me.linkingDiv.getBoundingClientRect();
@@ -413,11 +452,12 @@
         me.movingDiv.classList.remove("moving");
 
         let fi = me.rootdiv.querySelectorAll(".floatingItem");
-        /*
-                for (let i = 0; i < fi.length; i++) {
-                    fi[i].style.border = "";
-                }
-                */
+
+        for (let i = 0; i < fi.length; i++) {
+          fi[i].style.border = "";
+        }
+
+
         //define some stuff
         let thing = me.movingDiv.dataset.id;
         let elements = me.rootdiv
@@ -434,7 +474,7 @@
             elements[i] != me.movingDiv
           ) {
             me.setParent(thing, elements[i].dataset.id);
-            return;
+            break;
           }
         }
         me.updatePosition(thing);
@@ -495,6 +535,7 @@
     });
 
     this.resize = function () {
+      me.switchView(me.settings.currentViewName,true);
       if (me.arrangeItem) {
         for (let i in core.items) {
           me.arrangeItem(i);
@@ -577,6 +618,14 @@
         me.arrangeItem = function (id, extern) {
           if (!core.items[id].synergist || !core.items[id].synergist.viewData)
             return;
+          if (!core.items[id].synergist.viewData[me.settings.currentViewName]) {
+            //if an item of it exists, hide the item
+            let it = me.rootdiv.querySelector(
+              ".floatingItem[data-id='" + id + "']"
+            );
+            if (it) it.style.display = "none";
+            return; //dont care about things i dont care about
+          }
           //visual aspect of updating position.
           //Check if the item actually exists yet
           let it = me.rootdiv.querySelector(
@@ -588,7 +637,7 @@
             it.dataset.id = id;
             it.style.resize = "both";
             let dchilds = document.createElement("div");
-            dchilds.style.display="flex";
+            dchilds.style.display = "flex";
             it.appendChild(dchilds);
             let dqiv = document.createElement("div");
             it.appendChild(dqiv);
@@ -612,7 +661,7 @@
           if (core.items[id].synergist.viewData[me.settings.currentViewName]) {
             //position it
             it.style.display = "block";
-            it.children[0].style.flexDirection=(core.items[id].synergist.subitemOrientation)?"row":"column";
+            it.children[0].style.flexDirection = (core.items[id].synergist.subitemOrientation) ? "row" : "column";
             it.style.left =
               Math.floor(
                 (core.items[id].synergist.viewData[me.settings.currentViewName]
@@ -668,6 +717,7 @@
           }
           //if (me.updateLines) me.updateLines(id);
         };
+        me.switchView(me.settings.currentViewName, true);
         // arrange all items on startup
         for (let i in core.items) {
           me.arrangeItem(i);
@@ -717,9 +767,8 @@
     };
 
     this.removeItem = function (id) {
-      this.rootdiv
-        .querySelector(".floatingItem[data-id='" + id + "']")
-        .remove();
+      delete core.items[id].synergist.viewData[me.settings.currentViewName];
+
       //also remove all lines attached to it
       if (me.activeLines) {
         let pairs = [];
@@ -736,28 +785,15 @@
           me.toggleLine(pairs[i].s, pairs[i].e);
         }
       }
-
-      core.fire("deleteItem", {
+      me.arrangeItem(id);
+      /*core.fire("deleteItem", {
         id: id
-      });
+      });*/
     };
+    ///////////////////////////////////////////////////////////////////////////////////////
 
-    //Register changes with core
-    this.somethingwaschanged = function () {
-      core.fire("updateItem", {
-        id: itemID,
-        sender: this
-      });
-    };
-
-    //Register focus with core
-    this.somethingwasfocused = function () {
-      core.fire("focus", {
-        id: itemID,
-        sender: this
-      });
-    };
-
+    //////////////////Lines API//////////////////
+    //
     scriptassert([
       ["svg", "3pt/svg.min.js"]
     ], () => {
@@ -794,9 +830,19 @@
         }
         let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
         let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
+        if (!sd || !ed) {
+          l.remove();
+          return;
+        }
         let r1 = sd.getBoundingClientRect();
         let r2 = ed.getBoundingClientRect();
         let rb = me.itemSpace.getBoundingClientRect();
+        //if either is not visible, then dont draw
+        if (sd.style.display == "none" || ed.style.display == "none") {
+          l.hide();
+          return;
+        }
+        l.show();
         l.plot(
           r1.left + r1.width / 2 - rb.left,
           r1.top + r1.height - rb.top,
@@ -888,36 +934,53 @@
       }
     };
 
-    //Create a settings dialog
-    scriptassert([
-      ["dialog", "genui/dialog.js"]
-    ], () => {
-      me.dialog = document.createElement("div");
+    this.updateSettings = function () {
+      //nothing necessary here atm
+    }
 
-      me.dialog.innerHTML = `
-        <div class="dialog">
-        </div>`;
-      dialogManager.checkDialogs(me.dialog);
-      //Restyle dialog to be a bit smaller
-      me.dialog = me.dialog.querySelector(".dialog");
-      me.innerDialog = me.dialog.querySelector(".innerDialog");
-      operator.div.appendChild(me.dialog);
-      let d = document.createElement("div");
-      d.innerHTML = `
-        WHAT YOU WANT TO PUT IN YOUR DIALOG
-        `;
-      me.innerDialog.appendChild(d);
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = `<h1>Mode</h1>
+    <select data-role="operationMode">
+    <option value="standalone">Standalone</option>
+    <option value="focus">Display view from focused item</option>
+    </select>
+    <h2>Operator to link focus to:<h2>
+    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
+    <button class="targeter">Select operator</button>
+    `;
+    let targeter = this.dialogDiv.querySelector("button.targeter");
+    targeter.addEventListener("click", function () {
+      core.target().then((id) => {
+        me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+        me.settings['focusOperatorID'] = id
+        me.focusOperatorID = me.settings['focusOperatorID'];
+      })
+    })
+    this.showDialog = function () {
+      for (i in me.settings) {
+        let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
+        if (it) it.value = me.settings[i];
+      }
+      // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings = function () {
+      let its = me.dialogDiv.querySelectorAll("[data-role]");
+      for (let i = 0; i < its.length; i++) {
+        me.settings[its[i].dataset.role] = its[i].value;
+      }
+      me.updateSettings();
+      core.fire("viewUpdate");
+      // pull settings and update when your dialog is closed.
+    }
 
-      //When the dialog is closed, update the settings.
-      me.dialog.querySelector(".cb").addEventListener("click", function () {
-        me.updateSettings();
-        me.fire("viewUpdate");
-      });
-
-      me.showSettings = function () {
-        me.dialog.style.display = "block";
-      };
-    });
+    core.on("focus", (e) => {
+      if (me.settings.operationMode == "focus") {
+        if (e.sender.container.uuid == me.settings.focusOperatorID) {
+          me.switchView(e.id, true);
+        }
+      }
+    })
   });
 
   var innerHTML = `<style>
@@ -1097,6 +1160,7 @@
     .floatingItem.selected {
         border: 3px dotted rgb(0, 110, 255);
     }
+
     </style>
     <div class="synergist-container">
     <div class="synergist-banner">
@@ -1120,7 +1184,6 @@
                     <option value="blank">Blank</option>
                     <option value="singleAxis">Single Axis</option>
                     <!--<option value="doubleAxis">Double Axis</option>-->
-
                 </select> </p>
         </div>
         <div class="dialog moreMenu">

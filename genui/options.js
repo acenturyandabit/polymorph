@@ -9,9 +9,6 @@ let op=new _option({
         property:String (the name of the property value in the object. e.g. if object=cabbage and property='tastiness', you could retrieve the option value at cabbage.tastiness.),
         label:String (the label associated with the input.)
     });
-
-
-
 */
 
 function _option(settings){

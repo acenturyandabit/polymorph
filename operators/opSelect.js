@@ -17,8 +17,8 @@
         operator.div.appendChild(this.style);
 
         this.rootdiv = document.createElement("div");
-        this.rootdiv.style.height="100%";
-        this.rootdiv.style.overflowY="auto";
+        this.rootdiv.style.height = "100%";
+        this.rootdiv.style.overflowY = "auto";
         //Add div HTML here
         this.rootdiv.innerHTML = `
     <h1>Quick start</h1>
@@ -196,14 +196,17 @@
                 "pos": 0,
                 "children": [{
                     "operators": [{
-                        "type": "itemList",
-                        "uuid": "nvd5b4",
-                        "data": {
-                            "properties": {
-                                "title": "text"
-                            },
-                            "filterProp": "isbq4x",
-                            "currentID": "3q4wfi"
+                        "name": "Ideas",
+                        "opdata": {
+                            "type": "itemList",
+                            "uuid": "nvd5b4",
+                            "data": {
+                                "properties": {
+                                    "title": "text"
+                                },
+                                "filterProp": "isbq4x",
+                                "currentID": "f3lsg5"
+                            }
                         }
                     }],
                     "selectedOperator": 0,
@@ -212,81 +215,221 @@
                     "pos": 0.15520833333333334
                 }, {
                     "operators": [{
-                        "type": "stack",
-                        "uuid": "hbs2c7",
-                        "data": {
-                            "settings": {},
-                            "rects": [{
-                                "rect": {
+                        "name": "Vision",
+                        "opdata": {
+                            "type": "subframe",
+                            "uuid": "65pc5c",
+                            "data": {
+                                "rectUnderData": {
                                     "XorY": 0,
                                     "firstOrSecond": 0,
                                     "pos": 1,
                                     "children": [{
                                         "operators": [{
-                                            "type": "opSelect",
-                                            "uuid": "kz5fga",
-                                            "data": {}
+                                            "name": "Aspects",
+                                            "opdata": {
+                                                "type": "itemCluster",
+                                                "uuid": "zl53mw",
+                                                "data": {
+                                                    "currentViewName": "r3k4ko",
+                                                    "maxZ": 1
+                                                }
+                                            }
                                         }],
                                         "selectedOperator": 0,
                                         "XorY": 1,
                                         "firstOrSecond": 0,
-                                        "pos": 0
+                                        "pos": 0.5043050430504306
+                                    }, {
+                                        "XorY": 1,
+                                        "firstOrSecond": 1,
+                                        "pos": 0.5043050430504306,
+                                        "children": [{
+                                            "operators": [{
+                                                "name": "Vision",
+                                                "opdata": {
+                                                    "type": "descbox",
+                                                    "uuid": "bx1aa0",
+                                                    "data": {
+                                                        "property": "vision",
+                                                        "operationMode": "focus",
+                                                        "staticItem": "",
+                                                        "focusOperatorID": "nvd5b4"
+                                                    }
+                                                }
+                                            }],
+                                            "selectedOperator": 0,
+                                            "XorY": 0,
+                                            "firstOrSecond": 0,
+                                            "pos": 0.22596754057428214
+                                        }, {
+                                            "XorY": 0,
+                                            "firstOrSecond": 1,
+                                            "pos": 0.22596754057428214,
+                                            "children": [{
+                                                "operators": [{
+                                                    "name": "Mission",
+                                                    "opdata": {
+                                                        "type": "descbox",
+                                                        "uuid": "1g6lfj",
+                                                        "data": {
+                                                            "property": "Mission",
+                                                            "operationMode": "focus",
+                                                            "staticItem": "",
+                                                            "focusOperatorID": "nvd5b4"
+                                                        }
+                                                    }
+                                                }],
+                                                "selectedOperator": 0,
+                                                "XorY": 0,
+                                                "firstOrSecond": 0,
+                                                "pos": 0.46048387096774196
+                                            }, {
+                                                "operators": [{
+                                                    "name": "Strategy",
+                                                    "opdata": {
+                                                        "type": "descbox",
+                                                        "uuid": "tdp0j2",
+                                                        "data": {
+                                                            "property": "strategy",
+                                                            "operationMode": "focus",
+                                                            "staticItem": "",
+                                                            "focusOperatorID": ""
+                                                        }
+                                                    }
+                                                }],
+                                                "selectedOperator": 0,
+                                                "XorY": 0,
+                                                "firstOrSecond": 1,
+                                                "pos": 0.46048387096774196
+                                            }]
+                                        }]
+                                    }]
+                                }
+                            }
+                        }
+                    }, {
+                        "name": "Planning",
+                        "opdata": {
+                            "type": "subframe",
+                            "uuid": "zuv6lb",
+                            "data": {
+                                "rectUnderData": {
+                                    "XorY": 0,
+                                    "firstOrSecond": 0,
+                                    "pos": 1,
+                                    "children": [{
+                                        "operators": [{
+                                            "name": "Aspects",
+                                            "opdata": {
+                                                "type": "itemCluster",
+                                                "uuid": "hqpwhx",
+                                                "data": {
+                                                    "currentViewName": "f3lsg5",
+                                                    "maxZ": 1
+                                                }
+                                            }
+                                        }],
+                                        "selectedOperator": 0,
+                                        "XorY": 1,
+                                        "firstOrSecond": 0,
+                                        "pos": 0.5067650676506765
+                                    }, {
+                                        "XorY": 1,
+                                        "firstOrSecond": 1,
+                                        "pos": 0.5067650676506765,
+                                        "children": [{
+                                            "operators": [{
+                                                "name": "Tasks",
+                                                "opdata": {
+                                                    "type": "itemList",
+                                                    "uuid": "jh2xbf",
+                                                    "data": {
+                                                        "properties": {
+                                                            "title": "text"
+                                                        },
+                                                        "filterProp": ""
+                                                    }
+                                                }
+                                            }],
+                                            "selectedOperator": 0,
+                                            "XorY": 0,
+                                            "firstOrSecond": 0,
+                                            "pos": 0.4700374531835206
+                                        }, {
+                                            "operators": [{
+                                                "name": "Calendar",
+                                                "opdata": {
+                                                    "type": "calendar",
+                                                    "uuid": "dmz590",
+                                                    "data": {
+                                                        "dateproperty": "datestring",
+                                                        "dateRetrieval": "rDate",
+                                                        "titleproperty": "title"
+                                                    }
+                                                }
+                                            }],
+                                            "selectedOperator": 0,
+                                            "XorY": 0,
+                                            "firstOrSecond": 1,
+                                            "pos": 0.4700374531835206
+                                        }]
+                                    }]
+                                }
+                            }
+                        }
+                    }, {
+                        "name": "Feasibility",
+                        "opdata": {
+                            "type": "subframe",
+                            "uuid": "m9e68h",
+                            "data": {
+                                "rectUnderData": {
+                                    "XorY": 0,
+                                    "firstOrSecond": 0,
+                                    "pos": 1,
+                                    "children": [{
+                                        "operators": [{
+                                            "name": "Financial feasibility",
+                                            "opdata": {
+                                                "type": "descbox",
+                                                "uuid": "5zpog3",
+                                                "data": {
+                                                    "property": "Finance",
+                                                    "operationMode": "focus",
+                                                    "staticItem": "",
+                                                    "focusOperatorID": "nvd5b4"
+                                                }
+                                            }
+                                        }],
+                                        "selectedOperator": 0,
+                                        "XorY": 1,
+                                        "firstOrSecond": 0,
+                                        "pos": 0.3813038130381304
                                     }, {
                                         "operators": [{
-                                            "type": "descbox",
-                                            "uuid": "7vtb00",
-                                            "data": {
-                                                "property": "title",
-                                                "operationMode": "undefined",
-                                                "staticItem": "",
-                                                "currentID": "toz04g",
-                                                "focusOperatorID": "nvd5b4",
-                                                "focusOperatorId": "nvd5b4"
+                                            "name": "Technical feasilibity",
+                                            "opdata": {
+                                                "type": "descbox",
+                                                "uuid": "ng7kpw",
+                                                "data": {
+                                                    "property": "technical",
+                                                    "operationMode": "focus",
+                                                    "staticItem": "",
+                                                    "focusOperatorID": "nvd5b4"
+                                                }
                                             }
                                         }],
                                         "selectedOperator": 0,
                                         "XorY": 1,
                                         "firstOrSecond": 1,
-                                        "pos": 0
+                                        "pos": 0.3813038130381304
                                     }]
-                                },
-                                "size": 115
-                            }, {
-                                "rect": {
-                                    "operators": [{
-                                        "type": "descbox",
-                                        "uuid": "wluenl",
-                                        "data": {
-                                            "property": "description",
-                                            "operationMode": "focus",
-                                            "staticItem": "",
-                                            "currentID": "toz04g"
-                                        }
-                                    }],
-                                    "selectedOperator": 0,
-                                    "XorY": 0,
-                                    "firstOrSecond": 0,
-                                    "pos": 1
                                 }
-                            }, {
-                                "rect": {
-                                    "operators": [{
-                                        "type": "itemCluster",
-                                        "uuid": "63tjpc",
-                                        "data": {
-                                            "currentViewName": "3nlafn",
-                                            "maxZ": 6
-                                        }
-                                    }],
-                                    "selectedOperator": 0,
-                                    "XorY": 0,
-                                    "firstOrSecond": 0,
-                                    "pos": 1
-                                }
-                            }]
+                            }
                         }
                     }],
-                    "selectedOperator": 0,
+                    "selectedOperator": 1,
                     "XorY": 0,
                     "firstOrSecond": 1,
                     "pos": 0.15520833333333334
