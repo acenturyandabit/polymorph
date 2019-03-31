@@ -1,9 +1,8 @@
 core.registerOperator(
-  "httree",
-  {
+  "httree", {
     outerScroll: true
   },
-  function(operator) {
+  function (operator) {
     let me = this;
     me.operator = operator;
     this.settings = {};
@@ -47,6 +46,8 @@ core.registerOperator(
             flex:0 0 20%;
         }
     `;
+
+
     operator.div.appendChild(this.style);
     this.rootdiv = document.createElement("div");
     this.rootdiv.style.minWidth = "100%";
@@ -60,6 +61,26 @@ core.registerOperator(
     this.secondaryDiv.classList.add("containerDiv");
     this.rootdiv.appendChild(this.secondaryDiv);
     this.settings.selected = undefined;
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //tutorial
+    if (!core.userData.introductions.httree) {
+      let tu = new _tutorial({
+        root: me.rootdiv
+      });
+      tu.push({
+        id: "hello",
+        target: me.rootdiv,
+        type: "shader",
+        contents: `<p>Click any of the + icons to add a new box.</p>
+        <p>Type in the boxes to write a message!</p>`,
+        to: [
+          ["OK!"]
+        ]
+      });
+      tu.start("hello").end(() => {
+        core.userData.introductions.httree = true;
+      });
+    }
 
     function select(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
@@ -78,7 +99,7 @@ core.registerOperator(
       }
     }
 
-    this.secondaryDiv.addEventListener("click", function(e) {
+    this.secondaryDiv.addEventListener("click", function (e) {
       if (e.target.tagName.toLowerCase() == "textarea") {
         deselect();
         let t = e.target;
@@ -106,7 +127,7 @@ core.registerOperator(
       e.preventDefault();
     };
     //delegated handler for the plus button
-    this.rootdiv.addEventListener("click", function(e) {
+    this.rootdiv.addEventListener("click", function (e) {
       if (e.target.tagName.toLowerCase() == "button") {
         if (e.target.innerText == "+") {
           //Create a new item
@@ -175,7 +196,7 @@ core.registerOperator(
     });
 
     //the drop itself
-    this.drophandle = function(e) {
+    this.drophandle = function (e) {
       let dataids = operator.div.querySelectorAll("[data-id]");
       for (let i = 0; i < dataids.length; i++) {
         dataids[i].style.borderLeft = "none";
@@ -206,7 +227,7 @@ core.registerOperator(
     this.cachedUpdateRequests = {};
     //these are optional but can be used as a reference.
 
-    this.drawItem = function(id) {
+    this.drawItem = function (id) {
       //Check if item is shown
       function mkdiv(id) {
         let cdiv = me.template.cloneNode(true);
@@ -265,7 +286,7 @@ core.registerOperator(
     //This will be called for all items when the items are loaded.
     //This is also called when items are created.
 
-    core.on("focus", function(d) {
+    core.on("focus", function (d) {
       let id = d.id;
       let s = d.sender;
       if (s == me) return;
@@ -276,7 +297,7 @@ core.registerOperator(
       // An item was focused.
     });
 
-    core.on("deleteItem", function(d) {
+    core.on("deleteItem", function (d) {
       let id = d.id;
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (cdiv) {
@@ -285,7 +306,7 @@ core.registerOperator(
       // An item was deleted.
     });
 
-    this.nudge = function(elem) {
+    this.nudge = function (elem) {
       if (elem.scrollHeight > elem.offsetHeight) {
         if (elem.offsetWidth < 500) {
           elem.style.minWidth = elem.offsetWidth + 10 + "px";
@@ -296,7 +317,7 @@ core.registerOperator(
       }
     };
 
-    this.resize = function() {
+    this.resize = function () {
       // This is called when my parent rect is resized.
       let tas = this.rootdiv.querySelectorAll("textarea");
       for (let i = 0; i < tas.length; i++) {
@@ -329,7 +350,7 @@ core.registerOperator(
     });
 
     //Register focus with core
-    this.somethingwasfocused = function() {
+    this.somethingwasfocused = function () {
       core.fire("focus", {
         id: itemID,
         sender: this
@@ -337,19 +358,19 @@ core.registerOperator(
     };
 
     //Saving and loading
-    this.toSaveData = function() {
+    this.toSaveData = function () {
       return this.settings;
     };
 
-    this.fromSaveData = function(d) {
+    this.fromSaveData = function (d) {
       Object.assign(this.settings, d);
       this.processSettings();
     };
-    this.processSettings = function() {
+    this.processSettings = function () {
       //dummy required for fromsavedata. leave blank or remove processSettings() calls!
     };
 
-    this.quickAdd = function(data) {
+    this.quickAdd = function (data) {
       //Create a new item
       let it = new _item();
       it.httree = {};
@@ -377,7 +398,9 @@ core.registerOperator(
       });
     };
 
-    scriptassert([["contextmenu", "genui/contextMenu.js"]], () => {
+    scriptassert([
+      ["contextmenu", "genui/contextMenu.js"]
+    ], () => {
       let contextMenuManager = new _contextMenuManager(me.rootdiv);
       let contextedElement;
 

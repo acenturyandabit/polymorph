@@ -38,19 +38,31 @@ function _contextMenuManager(root) {
         let re = element;
         while (re.parentElement) re = re.parentElement;
         re.appendChild(thisCTXM);
+        function intellishow(e) {
+            let mbr=thisCTXM.getBoundingClientRect();
+            let pbr=thisCTXM.parentElement.getBoundingClientRect();
+            let _left=e.pageX - pbr.x;
+            let _top= e.pageY - pbr.y;
+            //adjust for out of the page scenarios.
+            /*if (((pbr.x+pbr.w)-(mbr.x+mbr.w))>0)_left =_left-((pbr.x+pbr.w)-(mbr.x+mbr.w));
+            if (((pbr.y+pbr.h)-(mbr.y+mbr.h))>0)_top =_top-((pbr.y+pbr.h)-(mbr.y+mbr.h));
+            if (mbr.x-pbr.x>0)_left =_left-(mbr.x-pbr.x);
+            if (mbr.y-pbr.y>0)_left =_left-(mbr.y-pbr.y);
+            */
+            //set
+            thisCTXM.style.top = _top;
+            thisCTXM.style.left = _left;
+            thisCTXM.style.display = "block";
+        }
         let f = function (e) {
             //show the context menu
             e.preventDefault();
             if (contextmenuEventPassThrough) {
                 if (contextmenuEventPassThrough(e)) {
-                    thisCTXM.style.left = e.pageX - thisCTXM.parentElement.getBoundingClientRect().x;
-                    thisCTXM.style.top = e.pageY - thisCTXM.parentElement.getBoundingClientRect().y;
-                    thisCTXM.style.display = "block";
+                    intellishow(e);
                 }
             } else {
-                thisCTXM.style.left = e.pageX - thisCTXM.parentElement.getBoundingClientRect().x;
-                thisCTXM.style.top = e.pageY - thisCTXM.parentElement.getBoundingClientRect().y;
-                thisCTXM.style.display = "block";
+                intellishow(e);
             }
         };
         element.addEventListener("contextmenu", function (e) {
@@ -74,8 +86,11 @@ function _contextMenuManager(root) {
             z-index:1000;
         }
         .contextMenu li {
-            padding: 10px;
+            padding: 2px;
             display: block;
+        }
+        .contextMenu li:hover {
+            background:pink;
         }`;
     root.appendChild(s);
 }

@@ -111,7 +111,7 @@ function _core() {
   documentReady(() => {
     document.querySelector(".docName").addEventListener("keyup", () => {
       this.settings.displayName = document.body.querySelector(".docName").innerText;
-      if (this.firebase.unsub) {
+      if (this.firebase && this.firebase.unsub) {
         docNameEditCapacitor.submit();
       }
     })
@@ -181,13 +181,15 @@ function _core() {
         background: rc,
         color: matchContrast(rc)
       },
-      alias: guid(10)
+      alias: guid(10),
     };
     me.saveUserData();
   } else {
     me.userData = JSON.parse(me.userData);
   }
-
+  if (!me.userData.introductions){
+    me.userData.introductions={};
+  }
   this.targeter = undefined;
   this.submitTarget = function (id) {
     if (me.targeter) {

@@ -27,6 +27,25 @@
     this.itemSpace = this.rootdiv.querySelector(".backwall");
     operator.div.appendChild(this.rootdiv);
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //tutorial
+    if (!core.userData.introductions.synergist){
+      let tu=new _tutorial({root:me.rootdiv});
+      tu.push({
+        id:"hello",
+        target:me.rootdiv,
+        type:"shader",
+        contents:`<p>Double click to add a new box.</p>
+        <p>Click and drag to add new boxes!</p>`,
+        to:[["OK!"]]
+      });
+      tu.start("hello").end(()=>{
+        core.userData.introductions.synergist=true;
+      });
+    }
+
+
     //////////////////Handle core item updates//////////////////
 
     //these are optional but can be used as a reference.
@@ -311,15 +330,44 @@
 
     ////////////////////////////ITEMS
     this.itemSpace.addEventListener("click", function (e) {
+      if (me.preselected) {
+        me.preselected.classList.remove("selected");
+        me.preselected.classList.remove("anchored");
+      }
       if (
         e.target.matches(".floatingItem") ||
         e.target.matches(".floatingItem *")
       ) {
         let it = e.target;
         while (!it.matches(".floatingItem")) it = it.parentElement;
-        if (me.preselected) me.preselected.classList.remove("selected");
+        if (me.preselected==it){
+          //keep it anchored
+          it.classList.add("anchored");
+        }else{
+          me.preselected = it;
+          it.classList.add("selected");
+        }
+      }else{
+        me.preselected=undefined;
+      }
+    });
+
+    this.itemSpace.addEventListener("dblclick", function (e) {
+      if (me.preselected) {
+        me.preselected.classList.remove("selected");
+        me.preselected.classList.remove("anchored");
+      }
+      if (
+        e.target.matches(".floatingItem") ||
+        e.target.matches(".floatingItem *")
+      ) {
+        let it = e.target;
+        while (!it.matches(".floatingItem")) it = it.parentElement;
+
         me.preselected = it;
-        it.classList.add("selected");
+        it.classList.add("anchored");
+      }else{
+        me.preselected=undefined;
       }
     });
 
@@ -334,7 +382,7 @@
           let it = e.target;
           while (!it.matches(".floatingItem")) it = it.parentElement;
 
-          if (it.classList.contains("selected")) return;
+          if (it.classList.contains("anchored")) return;
           if (me.dragging) return;
           me.movingDiv = it;
           let relements = me.rootdiv.querySelectorAll(".floatingItem");
@@ -348,7 +396,7 @@
             id: it.dataset.id,
             sender: me
           });
-          it.style.border = "3px solid #ffa2fc";
+          //it.style.border = "3px solid #ffa2fc";
           me.settings.maxZ -= minzind;
           me.settings.maxZ += 1;
           for (let i = 0; i < relements.length; i++) {
@@ -411,7 +459,9 @@
           }
 
         }
-        //highlighting for the bottom tray
+        //if we are moving something ensure it wont be twice-click selected.
+        me.preselected=undefined;
+        
 
       } else if (me.linking) {
         // draw a line from the object to the mouse cursor
@@ -527,15 +577,8 @@
       }
     });
 
-    this.itemSpace.addEventListener("click", function (e) {
-      let fi = me.rootdiv.querySelectorAll(".floatingItem");
-      for (let i = 0; i < fi.length; i++) {
-        fi[i].classList.remove("selected");
-      }
-    });
-
     this.resize = function () {
-      me.switchView(me.settings.currentViewName,true);
+      me.switchView(me.settings.currentViewName, true);
       if (me.arrangeItem) {
         for (let i in core.items) {
           me.arrangeItem(i);
@@ -1157,7 +1200,7 @@
         transition: none;
     }
     
-    .floatingItem.selected {
+    .floatingItem.anchored {
         border: 3px dotted rgb(0, 110, 255);
     }
 

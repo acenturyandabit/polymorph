@@ -6,14 +6,19 @@ How to use:
 var t = new _tutorial({
     root: rootElement,
     indicateRemaining: true // whether or not to list the number of steps remaining
-    shader: true, // whether or not to apply a shader div over the rest of the document.
 });
 
 - Push steps:
 var id=t.push({
+    
     id: 'uniqueID' (optional),
-    target: DOMElement,
-    type:"overlay" (darken and text in center) OR "highlight" (just like intro.js) OR "internal" (tooltip without hiding)
+    
+    target: DOMElement OR
+    target: ()=>{return DOMElement}
+
+    type: "overlay" (darken and text in center) OR 
+    type: "highlight" (just like intro.js) OR
+    type: "internal" (tooltip without hiding)
     contents: 'some text' OR 'HTML string' OR DOMElement,
     to: 'nextID', OR
     to: [{button:'buttonText',id:'uniqueID'},{button:'buttonText',id:'uniqueID'}],
@@ -43,7 +48,9 @@ var _tutorial = (function () {
                 display:flex;
                 flex-direction:column;
                 background: rgba(0,0,0,0.7);
-                z-index:300`;
+                z-index:300;
+                top:0;
+                left:0;`;
                 data.innerdiv = document.createElement("div");
                 data.div.appendChild(data.innerdiv);
                 data.innerdiv.innerHTML = itm.contents;
@@ -174,6 +181,8 @@ var _tutorial = (function () {
                 if(!me.items[id])return;
                 lastType = me.items[id].type;
                 lastData = types[me.items[id].type].render(me.items[id], me.present);
+            }else{
+                if (me.end)me.end();
             }
             //otherwise finish
         }
@@ -193,6 +202,9 @@ var _tutorial = (function () {
                 id = this.firstItem;
             }
             this.present(id);
+            return {
+                end:(f)=>{me.end=f;}
+            }
         }
     }
     return _tutorial;
