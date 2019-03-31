@@ -132,8 +132,8 @@ core.registerOperator(
         if (e.target.innerText == "+") {
           //Create a new item
           let it = new _item();
-          it.httree = {};
-          it.httree.parent = e.target.parentElement.dataset.id;
+          it.links = {};
+          it.links.parent = e.target.parentElement.dataset.id;
           //register it with the core
           let id = core.insertItem(it);
           if (me.settings.filter && !it[me.settings.filter]) {
