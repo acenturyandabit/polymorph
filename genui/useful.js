@@ -80,3 +80,8 @@ function documentReady(f) {
         document.addEventListener("DOMContentLoaded", f);
     } else f();
 }
+function htmlwrap(html,el="div"){
+    let d=document.createElement(el);
+    d.innerHTML=html;
+    return d;
+}

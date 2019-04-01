@@ -31,7 +31,7 @@ function _core() {
   this.tutorial = new _tutorial();
   //call the dialog manager
   dialogSystemManager(this);
-  
+
   let me = this;
   readyTutorial(me);
 
@@ -82,7 +82,10 @@ function _core() {
 
   //Instantiate filemanager
   this.filescreen = new _filescreen({
-    prompt: "Welcome to Polymorph.",
+    headprompt: htmlwrap(`
+    <h1>Welcome to Polymorph!</h1>
+    <h2>Organise your work, your way.</h2>
+    `,"div"),
     formats: [{
         prompt: "Make a new local (offline) document"
       },
@@ -187,23 +190,30 @@ function _core() {
   } else {
     me.userData = JSON.parse(me.userData);
   }
-  if (!me.userData.introductions){
-    me.userData.introductions={};
+  if (!me.userData.introductions) {
+    me.userData.introductions = {};
   }
   this.targeter = undefined;
+  this.dialoghide = false;
   this.submitTarget = function (id) {
     if (me.targeter) {
       me.targeter(id); //resolves promise
       me.targeter = undefined;
       //untarget everything
       me.baseRect.deactivateTargets();
-      me.dialog.div.style.display = "block";
+      if (this.dialoghide) {
+        me.dialog.div.style.display = "block";
+        this.dialoghide = false;
+      }
     }
   }
   this.target = function () {
     // activate targeting
     me.baseRect.activateTargets();
-    me.dialog.div.style.display = "none";
+    if (me.dialog.div.style == "block") {
+      this.dialoghide = true;
+      me.dialog.div.style.display = "none";
+    }
     let promise = new Promise((resolve) => {
       me.targeter = resolve;
     })

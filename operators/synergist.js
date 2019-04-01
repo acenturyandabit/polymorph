@@ -30,18 +30,23 @@
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //tutorial
-    if (!core.userData.introductions.synergist){
-      let tu=new _tutorial({root:me.rootdiv});
-      tu.push({
-        id:"hello",
-        target:me.rootdiv,
-        type:"shader",
-        contents:`<p>Double click to add a new box.</p>
-        <p>Click and drag to add new boxes!</p>`,
-        to:[["OK!"]]
+    if (!core.userData.introductions.synergist) {
+      let tu = new _tutorial({
+        root: me.rootdiv
       });
-      tu.start("hello").end(()=>{
-        core.userData.introductions.synergist=true;
+      tu.push({
+        id: "hello",
+        target: me.rootdiv,
+        type: "shader",
+        contents: `<p>Double click to add a new box.</p>
+        <p>Click and drag to add new boxes!</p>`,
+        to: [
+          ["OK!"]
+        ]
+      });
+      tu.start("hello").end(() => {
+        core.userData.introductions.synergist = true;
+        core.saveUserData();
       });
     }
 
@@ -340,15 +345,15 @@
       ) {
         let it = e.target;
         while (!it.matches(".floatingItem")) it = it.parentElement;
-        if (me.preselected==it){
+        if (me.preselected == it) {
           //keep it anchored
           it.classList.add("anchored");
-        }else{
+        } else {
           me.preselected = it;
           it.classList.add("selected");
         }
-      }else{
-        me.preselected=undefined;
+      } else {
+        me.preselected = undefined;
       }
     });
 
@@ -366,8 +371,8 @@
 
         me.preselected = it;
         it.classList.add("anchored");
-      }else{
-        me.preselected=undefined;
+      } else {
+        me.preselected = undefined;
       }
     });
 
@@ -460,8 +465,8 @@
 
         }
         //if we are moving something ensure it wont be twice-click selected.
-        me.preselected=undefined;
-        
+        me.preselected = undefined;
+
 
       } else if (me.linking) {
         // draw a line from the object to the mouse cursor
@@ -469,7 +474,7 @@
         let rect2 = me.itemSpace.getBoundingClientRect();
         me.linkingLine.plot(
           rect.left + rect.width / 2 - rect2.left,
-          rect.top + rect.height - rect2.top,
+          rect.top + rect.height/2 - rect2.top,
           e.clientX - rect2.left,
           e.clientY - rect2.top
         );
@@ -584,13 +589,6 @@
           me.arrangeItem(i);
         }
       }
-      /*setTimeout(() => {
-                if (me.updateLines) {
-                    for (let i in core.items) {
-                        if (me.updateLines && core.items[i].synergist) me.updateLines(i);
-                    }
-                }
-            }, 500);*/
     };
 
     //----------item functions----------//
@@ -758,7 +756,6 @@
               me.arrangeItem(childid);
             }
           }
-          //if (me.updateLines) me.updateLines(id);
         };
         me.switchView(me.settings.currentViewName, true);
         // arrange all items on startup
@@ -871,6 +868,19 @@
           if (!me.activeLines[start]) me.activeLines[start] = {};
           me.activeLines[start][end] = l;
         }
+        let _start = start;
+        let _end = end;
+        start = 0;
+        end = 0;
+        for (i in _start) start = start + _start.charCodeAt(i)
+        for (i in _end) end = end + _end.charCodeAt(i)
+        if (start > end) {
+          start = _start;
+          end = _end;
+        } else {
+          start = _end;
+          end = _start;
+        }
         let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
         let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
         if (!sd || !ed) {
@@ -888,9 +898,9 @@
         l.show();
         l.plot(
           r1.left + r1.width / 2 - rb.left,
-          r1.top + r1.height - rb.top,
+          r1.top + r1.height / 2 - rb.top,
           r2.left + r2.width / 2 - rb.left,
-          r2.top - rb.top
+          r2.top + r2.height / 2 - rb.top
         );
       };
       me.toDrawLineCache = {};
@@ -924,23 +934,21 @@
           }
         }
       };
-      let freeze = false;
-      let observer = new MutationObserver(() => {
-        if (freeze) return;
-        freeze = true;
+      let c = new capacitor(300, 100, () => {
         let itemlist = me.itemSpace.querySelectorAll(".floatingItem");
         for (let i = 0; i < itemlist.length; i++) {
           me.updateLines(itemlist[i].dataset.id);
         }
-        setTimeout(() => {
-          freeze = false;
-        }, 100);
+      })
+      let observer = new MutationObserver(() => {
+        c.submit();
       });
       observer.observe(this.itemSpace, {
         childList: true,
         attributes: true,
         subtree: true //Omit or set to false to observe only changes to the parent node.
       });
+
     });
 
     //Saving and loading

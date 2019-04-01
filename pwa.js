@@ -52,7 +52,7 @@ let serviceWorkerSettings = {
   ],
   CACHE_NAME: "version 7x",
   RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
-  debug: true
+  debug: false
 };
 
 function dbglog(message) {

@@ -76,11 +76,17 @@ core.registerOperator("calendar", {
                                         else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
                                         isostring = isostring.toISOString();
                                         eisostring = eisostring.toISOString();
+                                        let col="";
+                                        let bak="";
+                                        if (core.items[i].style){
+                                            bak=core.items[i].style.background;
+                                            col=core.items[i].style.color;
+                                        }
                                         allList.push({
                                             id: i,
                                             title: core.items[i][me.settings.titleproperty],
-                                            //backgroundColor: $(e).find("input")[0].style.backgroundColor,
-                                            //textColor: $(e).find("input")[0].style.color || "black",
+                                            backgroundColor:bak,
+                                            textColor:col,
                                             start: isostring,
                                             end: eisostring
                                         });
@@ -99,6 +105,11 @@ core.registerOperator("calendar", {
                         sender: me
                     })
                 },
+                header:{
+                    left:   'title',
+                    center: '',
+                    right:  'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
+                },
                 defaultView: "agendaWeek",
                 height: "parent"
             });
@@ -116,6 +127,7 @@ core.registerOperator("calendar", {
             //Update item if relevant
         }
         core.on("dateUpdate", this.updateItem);
+        core.on("updateItem", (d)=>{this.updateItem(d.id,d.sender)});
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
             try {

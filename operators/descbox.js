@@ -35,7 +35,7 @@ core.registerOperator("descbox", function (operator) {
                     me.textarea.value = "Select an item to view its description.";
                 }
             }
-        }else{
+        } else {
             me.textarea.disabled = false;
         }
     }
@@ -70,7 +70,7 @@ core.registerOperator("descbox", function (operator) {
                 });
             }
         } else if (me.settings.operationMode == 'putter') {
-            if (me.settings.focusOperatorID)me.focusOperatorID=me.settings.focusOperatorID;
+            if (me.settings.focusOperatorID) me.focusOperatorID = me.settings.focusOperatorID;
             me.textarea.value = "";
             me.textarea.disabled = false;
         }
@@ -89,14 +89,17 @@ core.registerOperator("descbox", function (operator) {
         me.updateItem(me.settings.currentID);
     }
 
+    let upc = new capacitor(300, 40, (id,data) => {
+        core.items[id][me.settings.property] = data;
+        core.fire("updateItem", {
+            id: id,
+            sender: me
+        });
+    })
     //Register changes with core
     me.somethingwaschanged = function () {
         if (me.settings.operationMode != "putter") {
-            core.items[me.settings.currentID][me.settings.property] = me.textarea.value;
-            core.fire("updateItem", {
-                id: me.settings.currentID,
-                sender: me
-            });
+            upc.submit(me.settings.currentID,me.textarea.value);
         }
     }
 
@@ -136,7 +139,7 @@ core.registerOperator("descbox", function (operator) {
         core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
-            me.focusOperatorID=me.settings['focusOperatorID'];
+            me.focusOperatorID = me.settings['focusOperatorID'];
         })
     })
     this.showDialog = function () {
@@ -187,9 +190,9 @@ core.registerOperator("descbox", function (operator) {
                 }
             }
             core.fire("viewUpdate");
-        }else if (me.settings.operationMode=="putter"){
-            if (!me.settings.focusOperatorID){
-                me.focusOperatorID=d.sender.container.uuid;
+        } else if (me.settings.operationMode == "putter") {
+            if (!me.settings.focusOperatorID) {
+                me.focusOperatorID = d.sender.container.uuid;
             }
         }
     });

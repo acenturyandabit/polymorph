@@ -63,25 +63,28 @@ core.registerOperator(
     this.settings.selected = undefined;
     ///////////////////////////////////////////////////////////////////////////////////////
     //tutorial
-    if (!core.userData.introductions.httree) {
-      let tu = new _tutorial({
-        root: me.rootdiv
-      });
-      tu.push({
-        id: "hello",
-        target: me.rootdiv,
-        type: "shader",
-        contents: `<p>Click any of the + icons to add a new box.</p>
-        <p>Type in the boxes to write a message!</p>`,
-        to: [
-          ["OK!"]
-        ]
-      });
+    let tu = new _tutorial({
+      root: me.rootdiv
+    });
+    tu.push({
+      id: "hello",
+      target: me.rootdiv,
+      type: "shader",
+      contents: `<p>Click any of the + icons to add a new box.</p>
+      <p>Type in the boxes to write a message!</p>`,
+      to: [
+        ["OK!"]
+      ]
+    });
+    this.startTutorial=function(){
       tu.start("hello").end(() => {
         core.userData.introductions.httree = true;
+        core.saveUserData();
       });
     }
-
+    if (!core.userData.introductions.httree) {
+      this.startTutorial();
+    }
     function select(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (cdiv) {

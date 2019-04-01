@@ -125,7 +125,10 @@ core.registerOperator("itemList", function (operator) {
                     break;
             }
         }
-
+        if (it.style){
+            currentItemSpan.style.background=it.style.background;
+            currentItemSpan.style.color=it.style.color;
+        }
     }
 
     //Handle item deletion
@@ -291,15 +294,20 @@ core.registerOperator("itemList", function (operator) {
     ], () => {
         let ctm = new _contextMenuManager(me.taskList);
         let contextedItem;
-
+        let menu;
         function filter(e) {
             contextedItem = e.target;
             if (me.settings.properties[e.target.dataset.role] == "date") {
-                return true;
+                menu.querySelector(".fixed").style.display="block";
+            }else{
+                menu.querySelector(".fixed").style.display="none";
             }
-            return false;
+            return true;
         }
-        let menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, me.taskList, "input", filter)
+        menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>
+        <li class="back"><input class="background" placeholder="Background color"></input></li>
+        <li class="fore"><input class="color" placeholder="Foreground color"></input></li>
+        `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
             while (!id.dataset.id) {
@@ -309,7 +317,28 @@ core.registerOperator("itemList", function (operator) {
             contextedItem.value = new Date(core.items[id][contextedItem.dataset.role].date[0].date).toLocaleString();
             core.items[id][contextedItem.dataset.role].datestring = contextedItem.value;
             me.datereparse(id);
+            menu.style.display="none";
         })
+
+        function updateStyle(e) {
+            let id = contextedItem;
+            while (!id.dataset.id) {
+                id = id.parentElement;
+            }
+            let cid = id.dataset.id;
+            if (!core.items[cid].style) core.items[cid].style = {};
+            core.items[cid].style[e.target.className] = e.target.value;
+            core.fire("updateItem", {
+              sender: this,
+              id: cid
+            });
+          }
+          menu
+            .querySelector(".back input")
+            .addEventListener("input", updateStyle);
+          menu
+            .querySelector(".fore input")
+            .addEventListener("input", updateStyle);
     })
 
 

@@ -155,6 +155,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     //Delegated operator switching
     this.tabbar.addEventListener("click", (e) => {
+        //pass direct clicks so we don't switch to blank operators
+        if (e.target==this.tabbar)return;
         if (!e.target.previousSibling) {
             let ptg = e.target;
             if (ptg.parentElement.tagName.toLowerCase() == 'span') ptg = ptg.parentElement;

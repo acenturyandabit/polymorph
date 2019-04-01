@@ -1,5 +1,5 @@
-//V2.2.2 Filescreen: Loading screen for files
-//Queryparam can now either be a string or a function!
+//V2.2.3 Filescreen: Loading screen for files
+//headprompt can now be a DOM element.
 
 /*
 TODO:
@@ -8,6 +8,18 @@ Better formatting for recent files using split.
 */
 
 /*
+How to use:
+let f = new _filescreen({
+    headprompt: STRING OR DOM_ELEMENT
+    formats:[
+        {
+            prompt: STRING
+            queryParam: STRING (appended to the URL if the user decides to load that URL)
+        }
+    ]
+})
+
+
 Methods:
 showSplash();
 saveRecentDocument(id,offline=true);
@@ -40,7 +52,12 @@ function _filescreen(userSettings) {
             font-family: sans-serif;
             cursor: pointer;
             color: red;
-        }`
+        }
+        .filescreen_recentDocDiv{
+            overflow-y: auto;
+            max-height: 40vh;
+        }
+        `
         document.head.appendChild(sstyle);
 
         me.baseDiv = document.createElement("div");
@@ -66,17 +83,20 @@ function _filescreen(userSettings) {
         outerDiv.appendChild(midDiv);
         let innerDiv;
         innerDiv = document.createElement("div");
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;";
-        }else{
+        } else {
             innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; width: 40vw; background-color: white; border-radius: 30px; padding: 30px;";
         }
-        
+
         midDiv.appendChild(innerDiv);
-        let heading;
-        heading = document.createElement("h1");
-        heading.innerText = me.settings.headprompt;
-        innerDiv.appendChild(heading);
+        if ((typeof me.settings.headprompt).toLowerCase() == "string") {
+            let heading = document.createElement("h1");
+            heading.innerText = me.settings.headprompt;
+            innerDiv.appendChild(heading);
+        } else {
+            innerDiv.appendChild(me.settings.headprompt);
+        }
         //ddi of h2
         let newDocHeading = document.createElement("h2");
         newDocHeading.innerText = "Make a new document";
@@ -88,17 +108,17 @@ function _filescreen(userSettings) {
         for (let i = 0; i < me.settings.formats.length; i++) {
             let b = document.createElement("button");
             b.innerText = me.settings.formats[i].prompt;
-            b.dataset.index=i;
+            b.dataset.index = i;
             //if (me.settings.formats[i].queryParam) b.dataset.queryParam = me.settings.formats[i].queryParam;
             b.addEventListener("click", (e) => {
                 if (me.newDocInput.value.length) {
                     let url = new URL(window.location);
                     let totalString = "?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value;
-                    let index=Number(e.target.dataset.index);
+                    let index = Number(e.target.dataset.index);
                     if (me.settings.formats[i].queryParam) {
-                        if (typeof me.settings.formats[i].queryParam=="string"){
+                        if (typeof me.settings.formats[i].queryParam == "string") {
                             totalString += "&" + me.settings.formats[i].queryParam;
-                        }else totalString += "&" + me.settings.formats[i].queryParam();//string or function
+                        } else totalString += "&" + me.settings.formats[i].queryParam(); //string or function
                     }
                     url.search = totalString;
                     window.location.href = url.toString();
@@ -156,7 +176,7 @@ function _filescreen(userSettings) {
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
         if (!recents) recents = [];
         let seenbefore = false;
-        url=url.toString();
+        url = url.toString();
         recents.forEach((v) => {
             if (v == url) {
                 seenbefore = true;
