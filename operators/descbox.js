@@ -55,6 +55,7 @@ core.registerOperator("descbox", function (operator) {
 
     me.updateSettings = function () {
         if (me.settings.operationMode == 'static') {
+            let staticItem=me.settings.staticItem;
             me.settings.currentID = me.settings.staticItem;
             if (!core.items[staticItem]) {
                 let it = new _item();
@@ -89,7 +90,7 @@ core.registerOperator("descbox", function (operator) {
         me.updateItem(me.settings.currentID);
     }
 
-    let upc = new capacitor(300, 40, (id,data) => {
+    let upc = new capacitor(300, 40, (id, data) => {
         core.items[id][me.settings.property] = data;
         core.fire("updateItem", {
             id: id,
@@ -99,7 +100,7 @@ core.registerOperator("descbox", function (operator) {
     //Register changes with core
     me.somethingwaschanged = function () {
         if (me.settings.operationMode != "putter") {
-            upc.submit(me.settings.currentID,me.textarea.value);
+            upc.submit(me.settings.currentID, me.textarea.value);
         }
     }
 
