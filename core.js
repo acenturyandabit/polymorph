@@ -32,6 +32,9 @@ function _core() {
   //call the dialog manager
   dialogSystemManager(this);
 
+  //Service worker bridge
+  //startApplyServiceWorker(this);
+
   let me = this;
   readyTutorial(me);
 
@@ -85,7 +88,8 @@ function _core() {
     headprompt: htmlwrap(`
     <h1>Welcome to Polymorph!</h1>
     <h2>Organise your work, your way.</h2>
-    `,"div"),
+    <button class="gstd"><h1>Get started!</h1></button>
+    `, "div"),
     formats: [{
         prompt: "Make a new local (offline) document"
       },
@@ -100,6 +104,10 @@ function _core() {
     savePrefix: "polymorph"
   });
 
+  this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
+    // create a new workspace, then load it
+    window.location.href += "?doc=" + guid(7) + "&auto";
+  })
   //update settings from somewhere
   this.updateSettings = function () {
     document.body.querySelector(
@@ -158,11 +166,20 @@ function _core() {
 
     localforage.getItem("__polymorph_" + id).then(d => {
       if (!d) {
-        d = {
-          settings: {
-            displayName: id
-          }
-        };
+        if (params.has("auto")) {
+          d = {
+            settings: {
+              displayName: id
+            }
+          };
+        } else {
+          d = {
+            settings: {
+              displayName: "New Workspace"
+            }
+          };
+        }
+
         if (!tutorialStarted) {
           core.tutorial.start();
         }
@@ -210,7 +227,7 @@ function _core() {
   this.target = function () {
     // activate targeting
     me.baseRect.activateTargets();
-    if (me.dialog.div.style == "block") {
+    if (me.dialog.div.style.display == "block") {
       this.dialoghide = true;
       me.dialog.div.style.display = "none";
     }
@@ -656,7 +673,11 @@ function _core() {
     //get the target view and render it (first time)
     me.firebase.db.collection("polymorph").doc(docname).collection("views").doc(me.userCurrentDoc.currentView).get().then(doc => {
       if (doc.exists) {
-        me.views[me.userCurrentDoc.currentView] = doc.data();
+        let d = doc.data();
+        if (d.val) {
+          d = JSON.parse(d.val);
+        }
+        me.views[me.userCurrentDoc.currentView] = d;
         me.presentView(me.userCurrentDoc.currentView);
       } else {
         me.views[me.userCurrentDoc.currentView] = me.baseRect.toSaveData();
@@ -673,7 +694,11 @@ function _core() {
           switch (change.type) {
             case "added":
             case "modified":
-              me.views[change.doc.id] = change.doc.data();
+              let d = change.doc.data();
+              if (d.val) {
+                d = JSON.parse(d.val);
+              }
+              me.views[change.doc.id] = d;
               //force a rehash if the user is working in that space? Could be annoying. Maybe a viewOnly flag?
               //if (me.userCurrentDocs[me.uuid].currentView=change.doc.id)
               break;
@@ -796,10 +821,12 @@ function _core() {
 
   //firebase view saving
   me.requestCapacitor = new capacitor(500, 10, (uuid) => {
-    scrubbedData = JSON.parse(JSON.stringify(me.baseRect.toSaveData()));
+    scrubbedData = JSON.stringify(me.baseRect.toSaveData());
     me.firebase.viewRoot
       .doc(uuid)
-      .set(scrubbedData);
+      .set({
+        val: scrubbedData
+      });
   });
   me.on("viewUpdate", function () {
     me.views[me.userCurrentDoc.currentView] = me.baseRect.toSaveData();

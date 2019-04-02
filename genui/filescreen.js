@@ -1,5 +1,5 @@
-//V2.2.3 Filescreen: Loading screen for files
-//headprompt can now be a DOM element.
+//V2.2.4 Filescreen: Loading screen for files
+//Expose more before document load
 
 /*
 TODO:
@@ -19,10 +19,12 @@ let f = new _filescreen({
     ]
 })
 
-
 Methods:
-showSplash();
-saveRecentDocument(id,offline=true);
+f.showSplash();
+f.saveRecentDocument(id,offline=true);
+
+Properties:
+Use f.baseDiv to access the underlying div, for any event handlers you may need.
 */
 
 
@@ -41,39 +43,30 @@ function _filescreen(userSettings) {
     Object.assign(this.settings, userSettings);
     let me = this;
     //NON-DOM-DEPENDENT INITALISATION
-
-    //DOM-DEPENDENT INITIALIZATION
-    this._init = function () {
-        //inject new content
-        let sstyle = document.createElement("style");
-        sstyle.innerHTML = `.filescreen_recentDocDiv em{
-            padding: 3px;
-            font-style: normal;
-            font-family: sans-serif;
-            cursor: pointer;
-            color: red;
-        }
-        .filescreen_recentDocDiv{
-            overflow-y: auto;
-            max-height: 40vh;
-        }
-        `
-        document.head.appendChild(sstyle);
-
-        me.baseDiv = document.createElement("div");
-        //on phone, change up the style a little
-
-        me.baseDiv.style.cssText = `display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width:100%;
-            height:100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index:100;`;
-
-
-        let outerDiv;
+    this.baseDiv = document.createElement("div");
+    let sstyle = document.createElement("style");
+    sstyle.innerHTML = `.filescreen_recentDocDiv em{
+        padding: 3px;
+        font-style: normal;
+        font-family: sans-serif;
+        cursor: pointer;
+        color: red;
+    }
+    .filescreen_recentDocDiv{
+        overflow-y: auto;
+        max-height: 40vh;
+    }
+    `
+    this.baseDiv.appendChild(sstyle);
+    me.baseDiv.style.cssText = `display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width:100%;
+    height:100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index:100;`;
+    let outerDiv;
         outerDiv = document.createElement("div");
         outerDiv.style.cssText = "display: table; position: absolute; top: 0; left: 0; height: 100%; width: 100%;";
         me.baseDiv.appendChild(outerDiv);
@@ -142,10 +135,9 @@ function _filescreen(userSettings) {
             newa.href = me.settings.tutorialURL;
             innerDiv.appendChild(newa);
         }
-        document.body.appendChild(me.baseDiv);
-    }
-    if (document.readyState != "loading") this._init();
-    else document.addEventListener("DOMContentLoaded", this._init);
+    //DOM-DEPENDENT INITIALIZATION
+    if (document.readyState != "loading") document.body.appendChild(me.baseDiv);
+    else document.addEventListener("DOMContentLoaded", ()=>{document.body.appendChild(me.baseDiv);});
 
 
     ///functions to call

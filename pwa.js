@@ -1,6 +1,17 @@
-// V3.3: added setTimeout to allow fast loading from cache before content download
+// V4.0: Added cutpoints for reducing codesize, and increasd modularity (i will try es6 imports in a bit)
 
 /*
+CUTPOINTS:
+Search for these comments and remove everything between them if the feature specified is not required.
+//broadcast
+A cross-client messaging service. Accepts messages of the type:
+{
+  type:"broadcast"
+  data:{whatever}
+}
+//broadcast
+
+
 Installation is easy! Just follow these three steps:
 1. Add this script to your root directory with your index.html.
 2. Also add the sample manifest.json at the bottom of this file.
@@ -103,7 +114,7 @@ function _pwaManager(userSettings) {
   });
   window.addEventListener("appinstalled", evt => {});
 
-  this.firePrompt = function () {
+  this.firePrompt = function() {
     function tryFirePrompt() {
       if (me.deferredPrompt) {
         me.deferredPrompt.prompt();
@@ -116,22 +127,22 @@ function _pwaManager(userSettings) {
   };
   //DOM initalisation
 
-  this._init = function () {
+  this._init = function() {
     if ("serviceWorker" in navigator) {
       let link = document.createElement("link");
       link.rel = "manifest";
       link.href = this.settings.manifestURL;
       document.head.appendChild(link);
-      window.addEventListener("load", function () {
+      window.addEventListener("load", function() {
         navigator.serviceWorker.register(me.settings.serviceWorkerURL).then(
-          function (registration) {
+          function(registration) {
             // Registration was successful
             dbglog(
               "ServiceWorker registration successful with scope: ",
               registration.scope
             );
           },
-          function (err) {
+          function(err) {
             // registration failed :(
             dbglog("ServiceWorker registration failed: ", err);
           }
@@ -148,11 +159,11 @@ try {
   window.title = window.title;
 } catch (err) {
   //Ok we are a service worker so act like one!!11
-  self.addEventListener("install", function (event) {
+  self.addEventListener("install", function(event) {
     self.skipWaiting();
     // Perform install steps
     event.waitUntil(
-      caches.open(serviceWorkerSettings.CACHE_NAME).then(function (cache) {
+      caches.open(serviceWorkerSettings.CACHE_NAME).then(function(cache) {
         dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
         return cache.addAll(serviceWorkerSettings.urlsToCache);
       })
@@ -165,8 +176,8 @@ try {
   setup();
 
   function updateCache(event) {
-    return new Promise(async function (resolve) {
-      setTimeout(async function (){
+    return new Promise(async function(resolve) {
+      setTimeout(async function() {
         try {
           networkResponsePromise = fetch(event.request);
           const networkResponse = await networkResponsePromise;
@@ -178,7 +189,6 @@ try {
           dbglog("fetch error: " + event.request.url);
           dbglog(e);
           resolve(404);
-
         }
       }, 1000); //deliver content to user asap
     });
@@ -186,7 +196,6 @@ try {
   self.addEventListener("fetch", event => {
     switch (serviceWorkerSettings.RETRIEVAL_METHOD) {
       case "cacheOnly":
-
         //cache only speed test
         if (event.request.method == "GET") {
           event.respondWith(caches.match(event.request));
@@ -198,7 +207,7 @@ try {
         if (event.request.url.startsWith(self.location.origin)) {
           if (event.request.method == "GET") {
             event.respondWith(
-              (async function () {
+              (async function() {
                 let cachedResponse = undefined;
                 if (cache) {
                   cachedResponse = await cache.match(event.request);
@@ -223,7 +232,8 @@ try {
                     return updateCache(event);
                   }
                 }
-              })());
+              })()
+            );
           } else {
             dbglog("non-get: " + event.request.url);
             event.respondWith(fetch(event.request));
@@ -239,6 +249,19 @@ try {
         break;
     }
   });
+  //broadcast
+  //Credits to here: http://craig-russell.co.uk/2016/01/29/service-worker-messaging.html#.XKKtSVUzZFQ
+  self.addEventListener("message", function(event) {
+    if (event.data && event.data.type == "broadcast") {
+      clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          let msgchan = new MessageChannel();
+          client.postMessage(event.data, [msgchan.port2]);
+        });
+      });
+    }
+  });
+  //broadcast
 }
 /*
 A sample web app manifest. Put this in a file in your home directory!

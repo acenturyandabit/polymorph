@@ -10,6 +10,16 @@ function addEventAPI(itm) {
                 }
             });
         }
+        //clip out this bit if you don't need it
+        if (itm.events["*"]) {
+            itm.events["*"].forEach((f, i) => {
+                try {
+                    f(e, args)
+                } catch (e) {
+                    console.log(e);
+                }
+            })
+        }
     };
     itm.on = function (e, f) {
         _e = e.split(',');

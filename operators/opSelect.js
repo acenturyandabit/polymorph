@@ -435,11 +435,224 @@
                     "pos": 0.15520833333333334
                 }]
             }
-        },leancanvas:{
-            options:{
+        },
+        leancanvas: {
+            options: {
                 displayName: "Lean Canvas",
                 description: "A Lean Canvas business model.",
-            },rect:{"XorY":0,"firstOrSecond":1,"pos":0,"children":[{"XorY":1,"firstOrSecond":0,"pos":0.6796116504854369,"children":[{"XorY":0,"firstOrSecond":0,"pos":0.8286458333333333,"children":[{"XorY":0,"firstOrSecond":0,"pos":0.7548711502199874,"children":[{"XorY":0,"firstOrSecond":0,"pos":0.6561199000832639,"children":[{"operators":[{"name":"Problem","opdata":{"type":"descbox","uuid":"hl31kc","data":{"property":"description","operationMode":"static","staticItem":"pro","focusOperatorID":"","currentID":"pro"}}}],"selectedOperator":0,"XorY":0,"firstOrSecond":0,"pos":0.5241116751269036},{"XorY":0,"firstOrSecond":1,"pos":0.5241116751269036,"children":[{"operators":[{"name":"Solution","opdata":{"type":"descbox","uuid":"wkcxei","data":{"property":"description","operationMode":"static","staticItem":"soln","focusOperatorID":"","currentID":"soln"}}}],"selectedOperator":0,"XorY":1,"firstOrSecond":0,"pos":0.5253968253968254},{"operators":[{"name":"Key metrics","opdata":{"type":"descbox","uuid":"tv7vpi","data":{"property":"description","operationMode":"static","staticItem":"kmet","focusOperatorID":"","currentID":"kmet"}}}],"selectedOperator":0,"XorY":1,"firstOrSecond":1,"pos":0.5253968253968254}]}]},{"operators":[{"name":"Unique value proposition","opdata":{"type":"descbox","uuid":"95kpdf","data":{"property":"description","operationMode":"static","staticItem":"valprop","focusOperatorID":"","currentID":"valprop"}}}],"selectedOperator":0,"XorY":0,"firstOrSecond":1,"pos":0.6561199000832639}]},{"XorY":0,"firstOrSecond":1,"pos":0.7548711502199874,"children":[{"operators":[{"name":"Unfair advantage","opdata":{"type":"descbox","uuid":"sv32zn","data":{"property":"description","operationMode":"static","staticItem":"advantage","focusOperatorID":"","currentID":"advantage"}}}],"selectedOperator":0,"XorY":1,"firstOrSecond":0,"pos":0.5095238095238095},{"operators":[{"name":"Channels","opdata":{"type":"descbox","uuid":"ywwad4","data":{"property":"description","operationMode":"static","staticItem":"chnl","focusOperatorID":"","currentID":"chnl"}}}],"selectedOperator":0,"XorY":1,"firstOrSecond":1,"pos":0.5095238095238095}]}]},{"operators":[{"name":"Customer segments","opdata":{"type":"descbox","uuid":"xqrvvj","data":{"property":"description","operationMode":"static","staticItem":"cusseg","focusOperatorID":"","currentID":"cusseg"}}}],"selectedOperator":0,"XorY":0,"firstOrSecond":1,"pos":0.8286458333333333}]},{"XorY":1,"firstOrSecond":1,"pos":0.6796116504854369,"children":[{"operators":[{"name":"Cost structure","opdata":{"type":"descbox","uuid":"u9f9we","data":{"property":"description","operationMode":"static","staticItem":"costr","focusOperatorID":"","currentID":"costr"}}}],"selectedOperator":0,"XorY":0,"firstOrSecond":0,"pos":0.4739583333333333},{"operators":[{"name":"Revenue streams","opdata":{"type":"descbox","uuid":"u85pis","data":{"property":"description","operationMode":"static","staticItem":"revn","focusOperatorID":"","currentID":"revn"}}}],"selectedOperator":0,"XorY":0,"firstOrSecond":1,"pos":0.4739583333333333}]}]}
+            },
+            rect: {
+                "XorY": 0,
+                "firstOrSecond": 1,
+                "pos": 0,
+                "children": [{
+                    "XorY": 1,
+                    "firstOrSecond": 0,
+                    "pos": 0.6796116504854369,
+                    "children": [{
+                        "XorY": 0,
+                        "firstOrSecond": 0,
+                        "pos": 0.8286458333333333,
+                        "children": [{
+                            "XorY": 0,
+                            "firstOrSecond": 0,
+                            "pos": 0.7548711502199874,
+                            "children": [{
+                                "XorY": 0,
+                                "firstOrSecond": 0,
+                                "pos": 0.6561199000832639,
+                                "children": [{
+                                    "operators": [{
+                                        "name": "Problem",
+                                        "opdata": {
+                                            "type": "descbox",
+                                            "uuid": "hl31kc",
+                                            "data": {
+                                                "property": "description",
+                                                "operationMode": "static",
+                                                "staticItem": "pro",
+                                                "focusOperatorID": "",
+                                                "currentID": "pro"
+                                            }
+                                        }
+                                    }],
+                                    "selectedOperator": 0,
+                                    "XorY": 0,
+                                    "firstOrSecond": 0,
+                                    "pos": 0.5241116751269036
+                                }, {
+                                    "XorY": 0,
+                                    "firstOrSecond": 1,
+                                    "pos": 0.5241116751269036,
+                                    "children": [{
+                                        "operators": [{
+                                            "name": "Solution",
+                                            "opdata": {
+                                                "type": "descbox",
+                                                "uuid": "wkcxei",
+                                                "data": {
+                                                    "property": "description",
+                                                    "operationMode": "static",
+                                                    "staticItem": "soln",
+                                                    "focusOperatorID": "",
+                                                    "currentID": "soln"
+                                                }
+                                            }
+                                        }],
+                                        "selectedOperator": 0,
+                                        "XorY": 1,
+                                        "firstOrSecond": 0,
+                                        "pos": 0.5253968253968254
+                                    }, {
+                                        "operators": [{
+                                            "name": "Key metrics",
+                                            "opdata": {
+                                                "type": "descbox",
+                                                "uuid": "tv7vpi",
+                                                "data": {
+                                                    "property": "description",
+                                                    "operationMode": "static",
+                                                    "staticItem": "kmet",
+                                                    "focusOperatorID": "",
+                                                    "currentID": "kmet"
+                                                }
+                                            }
+                                        }],
+                                        "selectedOperator": 0,
+                                        "XorY": 1,
+                                        "firstOrSecond": 1,
+                                        "pos": 0.5253968253968254
+                                    }]
+                                }]
+                            }, {
+                                "operators": [{
+                                    "name": "Unique value proposition",
+                                    "opdata": {
+                                        "type": "descbox",
+                                        "uuid": "95kpdf",
+                                        "data": {
+                                            "property": "description",
+                                            "operationMode": "static",
+                                            "staticItem": "valprop",
+                                            "focusOperatorID": "",
+                                            "currentID": "valprop"
+                                        }
+                                    }
+                                }],
+                                "selectedOperator": 0,
+                                "XorY": 0,
+                                "firstOrSecond": 1,
+                                "pos": 0.6561199000832639
+                            }]
+                        }, {
+                            "XorY": 0,
+                            "firstOrSecond": 1,
+                            "pos": 0.7548711502199874,
+                            "children": [{
+                                "operators": [{
+                                    "name": "Unfair advantage",
+                                    "opdata": {
+                                        "type": "descbox",
+                                        "uuid": "sv32zn",
+                                        "data": {
+                                            "property": "description",
+                                            "operationMode": "static",
+                                            "staticItem": "advantage",
+                                            "focusOperatorID": "",
+                                            "currentID": "advantage"
+                                        }
+                                    }
+                                }],
+                                "selectedOperator": 0,
+                                "XorY": 1,
+                                "firstOrSecond": 0,
+                                "pos": 0.5095238095238095
+                            }, {
+                                "operators": [{
+                                    "name": "Channels",
+                                    "opdata": {
+                                        "type": "descbox",
+                                        "uuid": "ywwad4",
+                                        "data": {
+                                            "property": "description",
+                                            "operationMode": "static",
+                                            "staticItem": "chnl",
+                                            "focusOperatorID": "",
+                                            "currentID": "chnl"
+                                        }
+                                    }
+                                }],
+                                "selectedOperator": 0,
+                                "XorY": 1,
+                                "firstOrSecond": 1,
+                                "pos": 0.5095238095238095
+                            }]
+                        }]
+                    }, {
+                        "operators": [{
+                            "name": "Customer segments",
+                            "opdata": {
+                                "type": "descbox",
+                                "uuid": "xqrvvj",
+                                "data": {
+                                    "property": "description",
+                                    "operationMode": "static",
+                                    "staticItem": "cusseg",
+                                    "focusOperatorID": "",
+                                    "currentID": "cusseg"
+                                }
+                            }
+                        }],
+                        "selectedOperator": 0,
+                        "XorY": 0,
+                        "firstOrSecond": 1,
+                        "pos": 0.8286458333333333
+                    }]
+                }, {
+                    "XorY": 1,
+                    "firstOrSecond": 1,
+                    "pos": 0.6796116504854369,
+                    "children": [{
+                        "operators": [{
+                            "name": "Cost structure",
+                            "opdata": {
+                                "type": "descbox",
+                                "uuid": "u9f9we",
+                                "data": {
+                                    "property": "description",
+                                    "operationMode": "static",
+                                    "staticItem": "costr",
+                                    "focusOperatorID": "",
+                                    "currentID": "costr"
+                                }
+                            }
+                        }],
+                        "selectedOperator": 0,
+                        "XorY": 0,
+                        "firstOrSecond": 0,
+                        "pos": 0.4739583333333333
+                    }, {
+                        "operators": [{
+                            "name": "Revenue streams",
+                            "opdata": {
+                                "type": "descbox",
+                                "uuid": "u85pis",
+                                "data": {
+                                    "property": "description",
+                                    "operationMode": "static",
+                                    "staticItem": "revn",
+                                    "focusOperatorID": "",
+                                    "currentID": "revn"
+                                }
+                            }
+                        }],
+                        "selectedOperator": 0,
+                        "XorY": 0,
+                        "firstOrSecond": 1,
+                        "pos": 0.4739583333333333
+                    }]
+                }]
+            }
         }
     }
 })()
