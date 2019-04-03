@@ -18,7 +18,7 @@ Want to host this at your organisation? Here's what you need to do.
 ### For developers
 Want to extend Polymorph?
 1. Clone template.js.
-1.1. Refer to reference.js and all the other operators for examples and documentation
+   1. Refer to reference.js and all the other operators for examples and documentation.
 2. Make your extension.
 3. Use the fantastic js.sh provided by @benjaminwy to compress your files into one single file.
 4. To use it immediately for yourself, change the index.html.
