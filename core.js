@@ -451,7 +451,7 @@ function _core() {
         this.readyFirebase();
         if (!this.userCurrentDoc.firebaseDocName){
           this.userCurrentDoc.firebaseDocName=guid(7);
-          forceFirebasePush(this.userCurrentDoc.firebaseDocName);
+          this.forceFirebasePush(this.userCurrentDoc.firebaseDocName);
         }
         this.saveUserData();
         //fill in the input
