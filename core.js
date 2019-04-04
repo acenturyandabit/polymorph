@@ -451,7 +451,7 @@ function _core() {
         this.readyFirebase();
         if (!this.userCurrentDoc.firebaseDocName){
           this.userCurrentDoc.firebaseDocName=guid(7);
-          this.firebaseSync(this.userCurrentDoc.firebaseDocName);
+          forceFirebasePush(this.userCurrentDoc.firebaseDocName);
         }
         this.saveUserData();
         //fill in the input
@@ -572,6 +572,18 @@ function _core() {
     return window.location.hostname+window.location.pathname+"?doc="+me.userCurrentDoc.firebaseDocName+"&f="+me.userCurrentDoc.firebaseDocName;
   }
 
+  this.forceFirebasePush=function(docname){
+    this.readyFirebase();
+    this.firebaseSync(docname);
+    for (let i in this.items){
+      this.firebase.itemRoot.doc(i).set(this.items[i].toSaveData());
+    }
+    this.views[me.userCurrentDoc.currentView]=this.baseRect.toSaveData();
+    for (let i in this.views){
+      this.firebase.viewRoot.doc(i).set({val:JSON.stringify(this.views[i])});
+    }
+  }
+  
   this.readyFirebase = function () {
     if (me.firebase) return;
     me.firebase = {};
