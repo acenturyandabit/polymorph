@@ -455,7 +455,7 @@ function _core() {
         }
         this.saveUserData();
         //fill in the input
-        loadInnerDialog.querySelector(".slink").innerText=generateSelfURL();
+        loadInnerDialog.querySelector(".slink").value=generateSelfURL();
         loadInnerDialog.querySelector(".slink").disabled=false;
         loadInnerDialog.querySelector(".slink").select();
         document.execCommand("copy");
