@@ -6,7 +6,7 @@ this.settings: shared, saved
 this.userData: not shared, locally saved.
 this.userCurrentDoc: not shared, locally saved.
 me.saveUserData() to save.
-
+*/
 
 
 function _item() {
@@ -453,6 +453,7 @@ function _core() {
           this.userCurrentDoc.firebaseDocName=guid(7);
           this.firebaseSync(this.userCurrentDoc.firebaseDocName);
         }
+        this.saveUserData();
         //fill in the input
         loadInnerDialog.querySelector("slink").innerText=generateSelfURL();
         loadInnerDialog.querySelector("slink").select();
