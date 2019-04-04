@@ -8,7 +8,6 @@ this.userCurrentDoc: not shared, locally saved.
 me.saveUserData() to save.
 
 
-*/
 
 function _item() {
   this.title = "";
@@ -399,13 +398,18 @@ function _core() {
     let loadInnerDialog = document.createElement("div");
     loadDialog.querySelector(".innerDialog").appendChild(loadInnerDialog);
     loadInnerDialog.innerHTML = `
-        <h1>Select data sources:</h1>
+        <h1>Sharing</h1>
+        <p class="shareNow">
+            Share this document now!
+            <input class="slink" placeholder="shareable link" disabled/>
+            <button class="snow">Share now!</button>
+        </p>
         <p class="firebase">
             Firebase
             <label><input class="enableSync" type="checkbox">Enable sync</label>
             <input class="ref" placeholder="Enter Reference..."/>
             <input disabled class="pswd" placeholder="Enter Password..."/>
-            <button disabled class="pswdbtn" placeholder="Set password"></button>
+            <button disabled class="pswdbtn">Set password</button>
         </p>
         <p class="server">
             Server
@@ -443,6 +447,17 @@ function _core() {
           loadDialog.querySelector(".local input.autosave").checked = true;
         loadDialog.style.display = "block";
       });
+      document.querySelector(".snow").addEventListener("click",()=>{
+        this.readyFirebase();
+        if (!this.userCurrentDoc.firebaseDocName){
+          this.userCurrentDoc.firebaseDocName=guid(7);
+          this.firebaseSync(this.userCurrentDoc.firebaseDocName);
+        }
+        //fill in the input
+        loadInnerDialog.querySelector("slink").innerText=generateSelfURL();
+        loadInnerDialog.querySelector("slink").select();
+        document.execCommand("copy");
+      })
     });
 
     loadInnerDialog
@@ -549,6 +564,11 @@ function _core() {
     xhr.open("GET", url + "/verify");
     xhr.send();
   };
+  //generate a URL which will allow another user to access the file, if it is registered to a firebase.
+  function generateSelfURL(){
+    if (!me.firebase)return "";
+    return window.location.hostname+window.location.pathname+"?doc="+me.userCurrentDoc.firebaseDocName+"&f="+me.userCurrentDoc.firebaseDocName;
+  }
 
   this.readyFirebase = function () {
     if (me.firebase) return;
