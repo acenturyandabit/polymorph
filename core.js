@@ -168,7 +168,7 @@ function _core() {
 
     localforage.getItem("__polymorph_" + id).then(d => {
       if (!d) {
-        if (params.has("auto")) {
+        if (!params.has("auto")) {
           d = {
             settings: {
               displayName: id
