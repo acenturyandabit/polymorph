@@ -1,5 +1,5 @@
 # Polymorph
-Extensible project management tool. Made specifically so you can extend it with your own extensions; and port others' extensions into your workflow as well!
+Extensible project management/idea organisation/scheduling/whatever you want really tool. Made specifically so you can extend it with your own extensions; and port others' extensions into your workflow as well!
 
 Because the best things in life are shared.
 
@@ -25,5 +25,5 @@ Want to extend Polymorph?
 6. To share it with us all, submit a pull request with all your source code in the extensions/ directory...
 7. ...or drop us a link where we can find your extension's minified .js file!
 
-For instructions on how to make an extension, check out the template, and you can use any of the existing extensions as a guide.
+For instructions on how to make an extension, check out the template. For a full list of what you can do, check out `reference.js`. and you can use any of the existing extensions as a guide.
 Happy creating!
