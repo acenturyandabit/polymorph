@@ -28,6 +28,9 @@ core.registerOperator("descbox", function (operator) {
                 if (core.items[id].style) {
                     me.textarea.style.background = core.items[id].style.background;
                     me.textarea.style.color = core.items[id].style.color;
+                }else{
+                    me.textarea.style.background="";
+                    me.textarea.style.color="";
                 }
             } else {
                 if (!me.settings.currentID) {
@@ -38,6 +41,13 @@ core.registerOperator("descbox", function (operator) {
         } else {
             me.textarea.disabled = false;
         }
+        //do i control this item?
+        if (me.settings.operationMode=='static'){
+            if (id==me.settings.currentID){
+                return true;
+            }
+        }
+        return false;
     }
 
     core.on("updateItem", function (d) {
@@ -46,7 +56,7 @@ core.registerOperator("descbox", function (operator) {
         if (sender == me) return;
         //Check if item is shown
         //Update item if relevant
-        me.updateItem(id);
+        return me.updateItem(id);
     });
 
     //First time load

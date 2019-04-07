@@ -1,3 +1,16 @@
+/*
+synergist{
+  viewData[view]:{
+    x:,
+    y:
+  }
+  links:[target]:true,
+  viewName:
+  type:
+}
+
+arrangeItem is at 672 or thereabouts.
+*/
 (function () {
   core.registerOperator("itemCluster", function (operator) {
     let me = this;
@@ -58,7 +71,7 @@
       let id = d.id;
       let sender = d.sender;
       if (sender == me) return;
-      if (me.arrangeItem) me.arrangeItem(id, true);
+      if (me.arrangeItem) return me.arrangeItem(id, true);
       //Check if item is shown
       //Update item if relevant
       //This will be called for all items when the items are loaded.
@@ -79,6 +92,13 @@
     this.switchView = function (ln, assert) {
       me.settings.currentViewName = ln;
       if (!me.settings.currentViewName) {
+        for (let i in core.items){
+          if (core.items[i].synergist && core.items[i].synergist.viewName){
+            this.switchView(i);
+          }else{
+            this.switchView(guid(4),true);
+          }
+        }
         //Show blank
       } else {
         if (!core.items[me.settings.currentViewName]) return;
@@ -131,11 +151,9 @@
       itm.title = "New view";
       itm.synergist = {
         type: "blank",
-        viewName: "New View"
+        viewName:"Copy of"+core.items[me.settings.currentViewName].synergist.viewName
       };
       itm.title = core.items[me.settings.currentViewName].synergist.viewName;
-      itm.synergist.viewName =
-        core.items[me.settings.currentViewName].synergist.viewName;
       //register a change
       core.fire("create", {
         sender: this,
@@ -150,7 +168,7 @@
 
     this.destroyView = function (viewName, auto) {
       // Destroy the synergist property of the item but otherwise leave it alone
-      delete core.items[viewName].synergist;
+      delete core.items[viewName].synergist.viewName;
       this.switchView();
     };
 
@@ -250,23 +268,26 @@
       );
       me.viewDeleteButton.addEventListener("click", e => {
         //delete the view
-        me.destroyView(synergist.currentView);
+        me.destroyView(me.settings.currentViewName);
         me.viewContextMenu.style.display = "none";
       });
 
       me.viewCloneButton = me.viewContextMenu.querySelector(".viewCloneButton");
       me.viewCloneButton.addEventListener("click", e => {
         //delete the view
-        me.cloneView(synergist.currentView);
+        me.cloneView(me.settings.currentViewName);
         me.viewContextMenu.style.display = "none";
       });
       me.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cpybtn">Copy (between views)</li>
         <li class="subview">Open Subview</li>
-        <li>Edit style</li>
-        <li><input class="background" placeholder="Background"></li>
-        <li><input class="color" placeholder="Color"></li>
+        <li>Edit style
+        <ul class="submenu">
+          <li><input class="background" placeholder="Background"></li>
+          <li><input class="color" placeholder="Color"></li>
+        </ul>
+        </li>
         <li class="orientation">Reorient subitems</li>
         `,
         me.rootdiv,
@@ -275,6 +296,10 @@
           let cte = e.target;
           while (!cte.matches(".floatingItem")) cte = cte.parentElement;
           me.contextedElement = cte;
+          if (core.items[cte.dataset.id].style) {
+            me.itemContextMenu.querySelector(".background").value = core.items[cte.dataset.id].style.background || "";
+            me.itemContextMenu.querySelector(".color").value = core.items[cte.dataset.id].style.color || "";
+          }
           return true;
         }
       );
@@ -474,7 +499,7 @@
         let rect2 = me.itemSpace.getBoundingClientRect();
         me.linkingLine.plot(
           rect.left + rect.width / 2 - rect2.left,
-          rect.top + rect.height/2 - rect2.top,
+          rect.top + rect.height / 2 - rect2.top,
           e.clientX - rect2.left,
           e.clientY - rect2.top
         );
@@ -658,14 +683,14 @@
         me.waitingChildren = {};
         me.arrangeItem = function (id, extern) {
           if (!core.items[id].synergist || !core.items[id].synergist.viewData)
-            return;
+            return false;
           if (!core.items[id].synergist.viewData[me.settings.currentViewName]) {
             //if an item of it exists, hide the item
             let it = me.rootdiv.querySelector(
               ".floatingItem[data-id='" + id + "']"
             );
             if (it) it.style.display = "none";
-            return; //dont care about things i dont care about
+            return true; //dont care about things i dont care about
           }
           //visual aspect of updating position.
           //Check if the item actually exists yet
@@ -682,6 +707,14 @@
             it.appendChild(dchilds);
             let dqiv = document.createElement("div");
             it.appendChild(dqiv);
+            let icobar = document.createElement("div");
+            icobar.classList.add("icobar");
+            icobar.style.cssText = `
+            display: flex;
+            padding: 0 1em 0.5em 1em;
+            flex-direction: row;
+            `;
+            it.appendChild(icobar);
             me.itemSpace.appendChild(it);
             me.deltas[id] = new Quill(dqiv, {
               theme: "bubble"
@@ -756,6 +789,40 @@
               me.arrangeItem(childid);
             }
           }
+          //add icons if necessary
+          if (core.items[id].synergist.viewName) {
+            //this has a subview, make it known!.
+            let subviewItemCount;
+            if (it.children[2].querySelector(".subviewItemCount")) {
+              subviewItemCount = it.children[2].querySelector(".subviewItemCount");
+            } else {
+              subviewItemCount = document.createElement("p");
+              subviewItemCount.style.cssText = `
+              display: block;
+              width: 1em;
+              height: 1em;
+              font-size: 0.7em;
+              margin: 0px;
+              text-align: center;
+              background: orange;
+              `;
+              subviewItemCount.classList.add("subviewItemCount");
+              it.children[2].appendChild(subviewItemCount);
+              //also count all the items in my subview and report.
+            }
+            let count = 0;
+            for (let i in core.items) {
+              try {
+                if (core.items[i].synergist.viewData[id]) count++;
+              } catch (e) {}
+            }
+            subviewItemCount.innerText = count;
+          }else{
+            if (it.children[2].querySelector(".subviewItemCount")){
+              it.children[2].querySelector(".subviewItemCount").remove();
+            }
+          }
+          return true;
         };
         me.switchView(me.settings.currentViewName, true);
         // arrange all items on startup

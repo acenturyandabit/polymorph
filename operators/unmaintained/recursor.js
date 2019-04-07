@@ -1,14 +1,21 @@
 core.registerOperator("template", {
-    displayName: "Template",
-    description: "A quickstart template. Very minimal."
+    displayName: "Recursor",
+    description: "Recursively store information, like how your brain does."
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {};
-
+    this.settings = {corel:guid(7)};
+    core.items[this.settings.corel]=new _item();
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
-    this.rootdiv.innerHTML = ``;
+    this.rootdiv.innerHTML = `
+    <div style="width:100%; height:100%; display:flex; flex-direction:column">
+        <button class="rootbutton">Up a level (<span></span>)</button>
+        <div style="flex: 1 0 auto">
+
+        </div>
+    </div>
+    `;
 
     container.div.appendChild(this.rootdiv);
 
@@ -18,10 +25,6 @@ core.registerOperator("template", {
     core.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
-
-        //return true or false based on whether we can or cannot edit the item from this operator.
-        //otherwise your items _may_ be deleted by the core garbage collector :/
-        return false;
     });
 
     this.resize = function () {

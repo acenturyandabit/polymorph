@@ -86,12 +86,26 @@ function _contextMenuManager(root) {
             z-index:1000;
         }
         .contextMenu li {
+            position:relative;
             padding: 2px;
             display: block;
         }
         .contextMenu li:hover {
             background:pink;
-        }`;
+        }
+        .contextMenu li .submenu {
+            display:none;
+        }
+        .contextMenu li:hover .submenu {
+            display: block;
+            position: absolute;
+            left: 100%;
+            margin: 0;
+            top: 0;
+            padding: 0;
+            background: white;
+        }
+        `;
     root.appendChild(s);
 }
 contextMenuManager = new _contextMenuManager(document.body);

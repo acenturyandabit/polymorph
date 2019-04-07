@@ -27,41 +27,54 @@ Place those scripts in the 'urlsToCache' property and you'll be ready to go.
 */
 let serviceWorkerSettings = {
   urlsToCache: [
-    "index.html",
-    "",
-    "3pt/localforage.min.js",
     "3pt/firebase-app.js",
     "3pt/firebase-firestore.js",
     "genui/useful.js",
+    "genui/capacitor.js",
+    "genui/contextMenu.js",
     "genui/bind.js",
     "genui/filescreen.js",
     "genui/queryLoader.js",
     "genui/scriptassert.js",
     "genui/eventAPI.js",
+    "genui/options.js",
     "genui/topbar.js",
-    "rect.js",
-    "operator.js",
-    "core.js",
+    "genui/swint.js",
     "genui/dialog.js",
+    "genui/tutorial.js",
+    "genui/dateparser.js",
+    "rect.js",
+    "core.dialog.js",
+    "core.tutorial.js",
+    "core.js",
+    "operator.js",
+    "index.html",
+    "",
     "operators/opSelect.js",
     "operators/itemList.js",
     "operators/descbox.js",
     "operators/calendar.js",
     "operators/iframe.js",
     "operators/synergist.js",
+    "operators/quillbox.js",
+    "operators/stack.js",
+    "operators/terminal.js",
+    "operators/timeline.js",
+    "operators/canvas.js",
     "operators/subframe.js",
     "operators/httree.js",
-    "genui/dateparser.js",
+    "assets/jason.css",
     "3pt/jquery.min.js",
     "3pt/x-frame-bypass.js",
-    "genui/contextMenu.js",
+    
     "3pt/quill.min.js",
     "3pt/svg.min.js",
     "3pt/moment.min.js",
     "3pt/fullcalendar.min.js",
+    "3pt/localforage.min.js",
     "manifest.json"
   ],
-  CACHE_NAME: "version 7x",
+  CACHE_NAME: "version 8x",
   RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
   debug: false
 };
@@ -114,7 +127,7 @@ function _pwaManager(userSettings) {
   });
   window.addEventListener("appinstalled", evt => {});
 
-  this.firePrompt = function() {
+  this.firePrompt = function () {
     function tryFirePrompt() {
       if (me.deferredPrompt) {
         me.deferredPrompt.prompt();
@@ -127,22 +140,22 @@ function _pwaManager(userSettings) {
   };
   //DOM initalisation
 
-  this._init = function() {
+  this._init = function () {
     if ("serviceWorker" in navigator) {
       let link = document.createElement("link");
       link.rel = "manifest";
       link.href = this.settings.manifestURL;
       document.head.appendChild(link);
-      window.addEventListener("load", function() {
+      window.addEventListener("load", function () {
         navigator.serviceWorker.register(me.settings.serviceWorkerURL).then(
-          function(registration) {
+          function (registration) {
             // Registration was successful
             dbglog(
               "ServiceWorker registration successful with scope: ",
               registration.scope
             );
           },
-          function(err) {
+          function (err) {
             // registration failed :(
             dbglog("ServiceWorker registration failed: ", err);
           }
@@ -159,11 +172,11 @@ try {
   window.title = window.title;
 } catch (err) {
   //Ok we are a service worker so act like one!!11
-  self.addEventListener("install", function(event) {
+  self.addEventListener("install", function (event) {
     self.skipWaiting();
     // Perform install steps
     event.waitUntil(
-      caches.open(serviceWorkerSettings.CACHE_NAME).then(function(cache) {
+      caches.open(serviceWorkerSettings.CACHE_NAME).then(function (cache) {
         dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
         return cache.addAll(serviceWorkerSettings.urlsToCache);
       })
@@ -176,8 +189,8 @@ try {
   setup();
 
   function updateCache(event) {
-    return new Promise(async function(resolve) {
-      setTimeout(async function() {
+    return new Promise(async function (resolve) {
+      setTimeout(async function () {
         try {
           networkResponsePromise = fetch(event.request);
           const networkResponse = await networkResponsePromise;
@@ -207,7 +220,7 @@ try {
         if (event.request.url.startsWith(self.location.origin)) {
           if (event.request.method == "GET") {
             event.respondWith(
-              (async function() {
+              (async function () {
                 let cachedResponse = undefined;
                 if (cache) {
                   cachedResponse = await cache.match(event.request);
@@ -251,7 +264,7 @@ try {
   });
   //broadcast
   //Credits to here: http://craig-russell.co.uk/2016/01/29/service-worker-messaging.html#.XKKtSVUzZFQ
-  self.addEventListener("message", function(event) {
+  self.addEventListener("message", function (event) {
     if (event.data && event.data.type == "broadcast") {
       clients.matchAll().then(clients => {
         clients.forEach(client => {

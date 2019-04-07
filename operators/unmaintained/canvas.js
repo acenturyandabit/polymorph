@@ -34,6 +34,7 @@ core.registerOperator("canvas", {
     core.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
+        return false;
     });
 
     this.resize = function () {

@@ -278,11 +278,13 @@ core.registerOperator(
           }
           me.nudge(cdiv.children[1]);
         }
+        return true;
       }
+      return false;
     };
 
     core.on("updateItem", d => {
-      this.drawItem(d.id);
+      return this.drawItem(d.id);
     });
 
     //Update item if relevant

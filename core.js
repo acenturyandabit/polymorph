@@ -125,6 +125,8 @@ function _core() {
       if (this.firebase && this.firebase.unsub) {
         docNameEditCapacitor.submit();
       }
+      document.querySelector("title").innerHTML =
+      this.settings.displayName + " - Polymorph";
     })
   })
 

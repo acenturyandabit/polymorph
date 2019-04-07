@@ -13,7 +13,7 @@ core.registerOperator("calendar", {
 
         this.rootdiv = document.createElement("div");
         this.rootdiv.innerHTML = ``;
-        this.rootdiv.style.cssText='height:100%; overflow-y: scroll';
+        this.rootdiv.style.cssText = 'height:100%; overflow-y: scroll';
         this.cstyle = document.createElement("link");
         this.cstyle.rel = "stylesheet";
         this.cstyle.type = "text/css";
@@ -76,17 +76,17 @@ core.registerOperator("calendar", {
                                         else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
                                         isostring = isostring.toISOString();
                                         eisostring = eisostring.toISOString();
-                                        let col="";
-                                        let bak="";
-                                        if (core.items[i].style){
-                                            bak=core.items[i].style.background;
-                                            col=core.items[i].style.color;
+                                        let col = "";
+                                        let bak = "";
+                                        if (core.items[i].style) {
+                                            bak = core.items[i].style.background;
+                                            col = core.items[i].style.color;
                                         }
                                         allList.push({
                                             id: i,
                                             title: core.items[i][me.settings.titleproperty],
-                                            backgroundColor:bak,
-                                            textColor:col,
+                                            backgroundColor: bak,
+                                            textColor: col,
                                             start: isostring,
                                             end: eisostring
                                         });
@@ -105,10 +105,10 @@ core.registerOperator("calendar", {
                         sender: me
                     })
                 },
-                header:{
-                    left:   'title',
+                header: {
+                    left: 'title',
                     center: '',
-                    right:  'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
+                    right: 'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
                 },
                 defaultView: "agendaWeek",
                 height: "parent"
@@ -124,10 +124,13 @@ core.registerOperator("calendar", {
                 console.log("JQUERY not ready yet :/");
             }
             //Check if item is shown
-            //Update item if relevant
+            //return true or false based on whether we can or cannot edit the item from this operator
+            return false;
         }
         core.on("dateUpdate", this.updateItem);
-        core.on("updateItem", (d)=>{this.updateItem(d.id,d.sender)});
+        core.on("updateItem", (d) => {
+            this.updateItem(d.id, d.sender)
+        });
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
             try {
@@ -184,11 +187,13 @@ core.registerOperator("calendar", {
         })
 
         this.resize = function () {
-            try {
-                $(me.rootdiv).fullCalendar('render');
-            } catch (err) {
-                console.log("jquery not ready yet :/");
-            }
+            setTimeout(() => {
+                try {
+                    $(me.rootdiv).fullCalendar('render');
+                } catch (err) {
+                    console.log("jquery not ready yet :/");
+                }
+            }, 1000);
         }
 
     });
