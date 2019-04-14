@@ -13,11 +13,7 @@ const RECT_BORDER_WIDTH = 10;
 function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Putting all the variables here for quick reference.
     this.parent = parent; // parent is either a DOM element or another rect.
-    if (typeof XorY == 'object') {
-        this.XorY = XorY.XorY; // XorY determines whether the split is in the X or the Y direction. 
-        this.pos = XorY.pos; //if first, the size; otherwise position (and size);
-        this.firstOrSecond = XorY.firstOrSecond;
-    } else {
+    if (typeof XorY != 'object') {
         this.XorY = XorY; // XorY determines whether the split is in the X or the Y direction. 
         this.pos = pos; //if first, the size; otherwise position (and size);
         this.firstOrSecond = firstOrSecond;
@@ -104,7 +100,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.operators.push(operator);
             //Create a button for it
             this.tabspans.push(this.createTypeName());
-            this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.type;
+            if (operator.tabbarName){
+                this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.tabbarName;
+            }else{
+                this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.type;
+            }
+            
             this.tabbar.insertBefore(this.tabspans[this.tabspans.length - 1], this.plus);
             //Create a tab for it
             this.innerDivs.push(this.createInnerDiv());
@@ -116,7 +117,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             //just refresh the tabspan.
         }
         operator.rect = this;
-        if (operator.baseOperator.resize) operator.baseOperator.resize();
+        if (operator.baseOperator && operator.baseOperator.resize) operator.baseOperator.resize();
     }
 
     //Callback for tab clicks to switch between operators.
@@ -126,7 +127,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.innerDivs[i].style.display = "none";
         }
         if (this.innerDivs[index]) this.innerDivs[index].style.display = "block";
-        if (this.operators[index] && this.operators[index].baseOperator.resize) this.operators[index].baseOperator.resize();
+        if (this.operators[index] && this.operators[index].baseOperator && this.operators[index].baseOperator.resize) this.operators[index].baseOperator.resize();
         // hide buttons on previous operator
         for (let i = 0; i < this.tabspans.length; i++) {
             this.tabspans[i].children[1].style.display = "none";
@@ -202,7 +203,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     })
 
     this.submitDialog = function (d) {
-        this.tabspans[this.settingOperator].children[0].innerText = d.querySelector("input.tabDisplayName").value;
+        this.operators[this.settingOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
+        this.tabspans[this.settingOperator].children[0].innerText = this.operators[this.settingOperator].tabbarName;
     }
     this.outerDiv.appendChild(this.tabbar);
 
@@ -247,7 +249,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         } else {
             if (this.operators) {
                 for (let i = 0; i < this.operators.length; i++) {
-                    if (this.operators[i].baseOperator.resize) this.operators[i].baseOperator.resize();
+                    if (this.operators[i].baseOperator && this.operators[i].baseOperator.resize) this.operators[i].baseOperator.resize();
                 }
             }
             me.tabbar.style.display = "block";
@@ -426,11 +428,30 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         if (this.children.length) {
             obj.children = [this.children[0].toSaveData(), this.children[1].toSaveData()];
         }
+        obj=transcopy(obj,{remap:{
+            "XorY":"x",
+            "firstOrSecond":"f",
+            "operators":"o",
+            "pos":"p",
+            "selectedOperator":"s",
+            "children":"c"
+        }})
         return obj;
     }
     this.fromSaveData = function (obj) {
         //children first!
         if (!obj) return;
+        obj=transcopy(obj,{remap:{
+            "XorY":"x",
+            "firstOrSecond":"f",
+            "operators":"o",
+            "pos":"p",
+            "selectedOperator":"s",
+            "children":"c"
+        },reverse:true});
+        this.XorY = obj.XorY; // XorY determines whether the split is in the X or the Y direction. 
+        this.pos = obj.pos; //if first, the size; otherwise position (and size);
+        this.firstOrSecond = obj.firstOrSecond;
         if (obj.children) {
             me.outerDiv.style.border = "none";
             me.tabbar.style.display = "none";

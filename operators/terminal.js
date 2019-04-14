@@ -4,7 +4,9 @@ core.registerOperator("terminal", {
 }, function (container) {
     let me = this;
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {};
+    this.settings = {
+        opmode:"console"
+    };
 
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
@@ -38,7 +40,7 @@ core.registerOperator("terminal", {
     let operatorRegexes = {
         echo: {
             help: "Type echo $1 to echo something.",
-            regex: /echo (.+)/ig,
+            regex: /^echo (.+)$/ig,
             operate: function (regres, state) {
                 state.output(regres[1]);
             }
@@ -162,6 +164,46 @@ core.registerOperator("terminal", {
                 state.clearScreen();
             }
         },
+        query: {
+            regex: /^query "(.+?)" "(.+?)"$/ig,
+            name: "query",
+            help: "Query data from a webpage. (requires websocket connection to a backend)",
+            operate: function (regres, state) {
+                state.wsquery({requestType:"query",url:regres[1],selector:regres[2]});
+            }
+        },
+        mkii: {
+            regex: /^mkii (.+?)$/ig,
+            name: "mkii",
+            help: "Make an item from JSON.",
+            operate: function (regres, state) {
+                let itm = new _item();
+                let _itm=JSON.parse(regres[1]);
+                if (typeof _itm=="string"){
+                    itm.title=_itm;
+                }else{
+                    Object.assign(itm,_itm);
+                }
+                id=core.insertItem(itm);
+                state.output("Item created with id "+id);
+                //query "https://www.ycombinator.com/companies/" "tr"
+            }
+        },
+        cron: {
+            regex: /^cron "(.+?)" (.+?)$/ig,
+            name: "cron",
+            help: "Schedule a commasnd to run.",
+            operate: function (regres, state) {
+                scriptassert([["dateparser","genui/dateparser.js"]],()=>{
+                    let dp = new _dateParser();
+                    let tm=dp.extractTime(regres[2]);
+                    state.future(()=>{
+                        state.process(regres[1]);
+                    },tm.getTime());
+                })
+                
+            }
+        },
         call: {
             name: "call",
             help: "Call a callable function on the current operator.",
@@ -211,6 +253,22 @@ core.registerOperator("terminal", {
         },
         clearScreen: function () {
             me.textarea.value = "";
+        },
+        wsquery:function(data){
+            if (typeof data != "string"){
+                data=JSON.stringify(data);
+            }
+            if (me.ws){
+                me.ws.send(data);
+            }else{
+                me.state.output("Websocket not connected - operation aborted.");
+            }
+        },
+        future:function(f,t){
+            setTimeout(f,t-Date.now());
+        },
+        process: function (command){
+            processQuery(command);
         }
     }
 
@@ -227,7 +285,7 @@ core.registerOperator("terminal", {
     this.textarea = this.rootdiv.querySelector("textarea");
     this.querybox = this.rootdiv.querySelector("input");
     this.querybox.addEventListener("keyup", (e) => {
-        if (e.key == "Enter") {
+        if (e.key == "Enter" && me.settings.opmode=="console") {
             if (me.settings.echoOn) {
                 me.state.output(me.querybox.value);
             }
@@ -237,24 +295,60 @@ core.registerOperator("terminal", {
     })
     this.button = this.rootdiv.querySelector("button");
     this.button.addEventListener("click", () => {
-        processQuery(me.querybox.value);
-        me.querybox.value = "";
+        if (me.settings.opmode=="console"){
+            processQuery(me.querybox.value);
+            me.querybox.value = "";
+        }else{
+            me.settings.scriptEnabled=!me.settings.scriptEnabled;
+            if (me.settings.scriptEnabled){
+                if (me.timerID)clearTimeout(me.timerID);
+                evalSelf();
+            }
+            
+        }
     })
     //////////////////Handle core item updates//////////////////
+    function evalSelf(){
+        if (me.settings.scriptEnabled){
+            try{
+                eval(me.textarea.value);
+            }catch (e){
+                console.log(e);
+            }
+        }
+        try{
+            me.timerID=setTimeout(evalSelf,me.querybox.value||1000);
+        }catch(err){
+            me.querybox.value="Please enter a number!";
+        }
+    }
 
     //Saving and loading
     this.toSaveData = function () {
-        this.settings.record = me.textarea.value;
+        if (this.settings.opmode=="console"){
+            this.settings.record = me.textarea.value;
+        }else{
+            this.settings.script = me.textarea.value;
+        }
+        
         return this.settings;
+    }
+
+    this.updateSettings=function(){
+        if (this.settings.opmode=="console"){
+            if (this.settings.record) me.textarea.value = this.settings.record;
+            this.tryEstablishWS();
+            this.state.state = this.settings.state;
+            if (!this.state.state) this.state.state = {};
+        }else{
+            me.textarea.value=this.settings.script||"";
+            me.querybox.value=this.settings.interval||"";
+        }
     }
 
     this.fromSaveData = function (d) {
         //this is called when your operator is started OR your operator loads for the first time
         Object.assign(this.settings, d);
-        if (this.settings.record) me.textarea.value = this.settings.record;
-        this.tryEstablishWS();
-        this.state.state = this.settings.state;
-        if (!this.state.state) this.state.state = {};
     }
 
     this.tryEstablishWS = function () {
@@ -275,9 +369,13 @@ core.registerOperator("terminal", {
         }
     }
 
+    
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `
+        <h2>Operation mode</h2>
+        <label><input type="radio" name="opmode" value="console">Console</label>
+        <label><input type="radio" name="opmode" value="script">Script</label>
         <h2>Websocket hook</h2>
         <p>Type an address for a websocket below for I/O to this terminal. </p>
         <input class="wshook" placeholder="Websocket URL (include prefix) - empty for none"></input>
@@ -290,6 +388,10 @@ core.registerOperator("terminal", {
         property: "echoOn",
         label: "Echo commands"
     });
+    this.dialogDiv.addEventListener("click",()=>{
+        this.settings.opmode=document.querySelector("[name='opmode']:checked").value;
+    })
+
     this.dialogDiv.querySelector(".wsset").addEventListener("click", () => {
         this.settings.wsurl = this.dialogDiv.querySelector(".wshook").value;
         this.tryEstablishWS();
@@ -300,6 +402,7 @@ core.registerOperator("terminal", {
         // update your dialog elements with your settings
     }
     this.dialogUpdateSettings = function () {
+        updateSettings();
         // pull settings and update when your dialog is closed.
     }
 

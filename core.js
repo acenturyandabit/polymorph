@@ -27,15 +27,18 @@ function _item() {
 function _core() {
   //Event API. pretty important, it turns out.
   addEventAPI(this);
-  this.tutorial = new _tutorial();
+
   //call the dialog manager
   dialogSystemManager(this);
+  
+  saveSources=[];
 
   //Service worker bridge
   //startApplyServiceWorker(this);
 
   let me = this;
-  readyTutorial(me);
+  this.tutorial = new _tutorial();
+  readyTutorial(this);
 
   //Item handling. Very basic stuff.
   //Handling delete item.
@@ -114,6 +117,7 @@ function _core() {
     ).innerText = this.settings.displayName;
     document.querySelector("title").innerHTML =
       this.settings.displayName + " - Polymorph";
+      me.filescreen.saveRecentDocument(me.docName,undefined,me.settings.displayName);
   };
   let docNameEditCapacitor = new capacitor(300, 1000, () => {
     me.firebase.root.set(me.settings);
@@ -125,7 +129,7 @@ function _core() {
         docNameEditCapacitor.submit();
       }
       document.querySelector("title").innerHTML =
-      this.settings.displayName + " - Polymorph";
+        this.settings.displayName + " - Polymorph";
     })
   })
 
@@ -135,8 +139,6 @@ function _core() {
   //Also handles userdata.
 
   function localLoad(id) {
-    me.filescreen.saveRecentDocument(id);
-
     me.docName = id; // for all user save data. that got real important real quick :/
 
     //new doc,create a new entry
@@ -180,11 +182,11 @@ function _core() {
             }
           };
         }
-
         if (!tutorialStarted) {
           core.tutorial.start();
         }
       }
+      me.filescreen.saveRecentDocument(id,undefined,d.settings.displayName);
       me.fromSaveData(d);
     });
   }
@@ -449,16 +451,16 @@ function _core() {
           loadDialog.querySelector(".local input.autosave").checked = true;
         loadDialog.style.display = "block";
       });
-      document.querySelector(".snow").addEventListener("click",()=>{
+      document.querySelector(".snow").addEventListener("click", () => {
         this.readyFirebase();
-        if (!this.userCurrentDoc.firebaseDocName){
-          this.userCurrentDoc.firebaseDocName=guid(7);
+        if (!this.userCurrentDoc.firebaseDocName) {
+          this.userCurrentDoc.firebaseDocName = guid(7);
           this.forceFirebasePush(this.userCurrentDoc.firebaseDocName);
         }
         this.saveUserData();
         //fill in the input
-        loadInnerDialog.querySelector(".slink").value=generateSelfURL();
-        loadInnerDialog.querySelector(".slink").disabled=false;
+        loadInnerDialog.querySelector(".slink").value = generateSelfURL();
+        loadInnerDialog.querySelector(".slink").disabled = false;
         loadInnerDialog.querySelector(".slink").select();
         document.execCommand("copy");
       })
@@ -508,12 +510,8 @@ function _core() {
       .querySelector(".server>button.save")
       .addEventListener("click", function () {
         let url = loadInnerDialog.querySelector(".server>input.url").value;
-        if (url) {
-          me.lockServer(url, () => {
-            me.saveToServer(me.userCurrentDoc.saveAddress);
-            me.saveUserData();
-          });
-        }
+        me.saveToServer(me.userCurrentDoc.saveAddress);
+        me.saveUserData();
       });
     //local save
     loadInnerDialog
@@ -526,16 +524,9 @@ function _core() {
       .querySelector(".server>button.load")
       .addEventListener("click", function () {
         let url = loadInnerDialog.querySelector(".server>input.url").value;
-        if (url) {
-          me.lockServer(url, () => {
-            me.loadFromServer(me.userCurrentDoc.saveAddress, () => {
-              alert("Ack! Something happened and we couldn't load from there.");
-            });
-          });
-        } else {
-          me.userCurrentDoc.saveAddress = "";
-          me.saveUserData();
-        }
+        me.userCurrentDoc.saveAddress = url;
+        core.loadFromServer(url);
+        me.saveUserData();
       });
     //local load
     loadInnerDialog
@@ -555,37 +546,26 @@ function _core() {
       autosaveCapacitor.submit();
     }
   });
-  this.lockServer = function (url, success) {
-    //send a request to get json from the server
-    let xhr = new XMLHttpRequest();
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        me.userCurrentDoc.saveAddress = url;
-        me.saveUserData();
-        if (success) success();
-      }
-    };
-    xhr.open("GET", url + "/verify");
-    xhr.send();
-  };
   //generate a URL which will allow another user to access the file, if it is registered to a firebase.
-  function generateSelfURL(){
-    if (!me.firebase)return "";
-    return window.location.hostname+window.location.pathname+"?doc="+me.userCurrentDoc.firebaseDocName+"&f="+me.userCurrentDoc.firebaseDocName;
+  function generateSelfURL() {
+    if (!me.firebase) return "";
+    return window.location.hostname + window.location.pathname + "?doc=" + me.userCurrentDoc.firebaseDocName + "&f=" + me.userCurrentDoc.firebaseDocName;
   }
 
-  this.forceFirebasePush=function(docname){
+  this.forceFirebasePush = function (docname) {
     this.readyFirebase();
     this.firebaseSync(docname);
-    for (let i in this.items){
+    for (let i in this.items) {
       this.firebase.itemRoot.doc(i).set(this.items[i].toSaveData());
     }
-    this.views[me.userCurrentDoc.currentView]=this.baseRect.toSaveData();
-    for (let i in this.views){
-      this.firebase.viewRoot.doc(i).set({val:JSON.stringify(this.views[i])});
+    this.views[me.userCurrentDoc.currentView] = this.baseRect.toSaveData();
+    for (let i in this.views) {
+      this.firebase.viewRoot.doc(i).set({
+        val: JSON.stringify(this.views[i])
+      });
     }
   }
-  
+
   this.readyFirebase = function () {
     if (me.firebase) return;
     me.firebase = {};
@@ -764,35 +744,6 @@ function _core() {
     return true; //return success
   };
 
-  this.loadFromServer = function (url, fail) {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        let obj = JSON.parse(this.responseText);
-        me.directLoadFromSaveData(obj);
-        //hide the load window in case it's open
-        if (me.loadDialog) me.loadDialog.style.display = "none";
-      } else if (this.readyState == 4) {
-        //failure; direct load or backup!
-        if (fail) fail();
-      }
-    };
-    xmlhttp.open("GET", url + "/latest/" + me.docName, true);
-    xmlhttp.send();
-  };
-
-  this.saveToServer = function (url) {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        alert("Save success!");
-      }
-    };
-    xmlhttp.open("POST", url + "/" + me.docName + "-" + Date.now(), true);
-    xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    xmlhttp.send(JSON.stringify(this.toSaveData()));
-  };
-
   /*
       press views dialog to open views dialog
       list all available views
@@ -896,4 +847,7 @@ document.addEventListener("DOMContentLoaded", e => {
       //also do the server save
     }
   });
+  document.querySelector(".topbar .new").addEventListener("click", () => {
+    window.open(window.location.pathname);
+  })
 });

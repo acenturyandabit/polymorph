@@ -59,6 +59,7 @@ core.operator = function operator(_type, _rect) {
         } else {
             this.type = __type.type;
             this.uuid = __type.uuid;
+            this.tabbarName = __type.tabbarName;
             if (!this.uuid) this.uuid = guid(6); //upgrade older versions.
             data = __type.data;
         }
@@ -91,8 +92,9 @@ core.operator = function operator(_type, _rect) {
     this.waitOperatorReady = function (__type) {
         let h1 = document.createElement("h1");
         h1.innerHTML = "Loading operator...";
-        this.div.appendChild(h1);
-        this.operatorLoadCallbacks[__type].push({
+        this.innerdiv.appendChild(h1);
+        if (!core.operatorLoadCallbacks[__type])core.operatorLoadCallbacks[__type]=[];
+        core.operatorLoadCallbacks[__type].push({
             op: me,
             data: __type
         });
@@ -102,7 +104,9 @@ core.operator = function operator(_type, _rect) {
         let obj = {};
         obj.type = this.type;
         obj.uuid = this.uuid;
-        obj.data = this.baseOperator.toSaveData();
+        obj.tabbarName=this.tabbarName;
+        if (this.baseOperator)obj.data = this.baseOperator.toSaveData();
+        else obj.data={};
         return obj;
     };
     this.activateTargets = function () {

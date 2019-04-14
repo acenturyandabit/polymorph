@@ -28,6 +28,9 @@ core.registerOperator("calendar", {
             $(this.rootdiv).fullCalendar({
                 events: (start, end, timezone, callback) => {
                     let allList = [];
+                    if (me.settings.pushnotifs) {
+                        me.notifstack = [];
+                    }
                     let tzd = new Date();
                     for (let i in core.items) {
                         if (core.items[i][me.settings.dateproperty] && core.items[i][me.settings.dateproperty].date) {
@@ -70,10 +73,17 @@ core.registerOperator("calendar", {
                                 try {
                                     let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, start, end);
                                     for (let j = 0; j < result.length; j++) {
+                                        if (me.settings.pushnotifs) {
+                                            me.notifstack.push({
+                                                txt: core.items[i][me.settings.titleproperty],
+                                                time: result[j].date
+                                            });
+                                        }
                                         let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
                                         let eisostring;
                                         if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
                                         else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
+
                                         isostring = isostring.toISOString();
                                         eisostring = eisostring.toISOString();
                                         let col = "";
@@ -118,6 +128,7 @@ core.registerOperator("calendar", {
         //Handle item updates
         this.updateItem = function (id, sender) {
             if (sender == this) return;
+            if (!core.items[id][me.settings.dateproperty]) return;
             try {
                 $(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
@@ -127,7 +138,13 @@ core.registerOperator("calendar", {
             //return true or false based on whether we can or cannot edit the item from this operator
             return false;
         }
-        core.on("dateUpdate", this.updateItem);
+        core.on("dateUpdate", () => {
+            try {
+                $(me.rootdiv).fullCalendar('refetchEvents');
+            } catch (e) {
+                console.log("JQUERY not ready yet :/");
+            }
+        });
         core.on("updateItem", (d) => {
             this.updateItem(d.id, d.sender)
         });
@@ -138,6 +155,74 @@ core.registerOperator("calendar", {
                 me.fire("viewUpdate");
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
+            }
+            // pull settings and update when your dialog is closed.
+            if (this.settings.pushnotifs) {
+                this.notify("Notifications enabled!", true);
+            }
+            if (this.settings.wsOn) {
+                this.tryEstablishWS();
+            }
+        }
+        //every 10 s, check for new notifs!
+        this.notifstack = [];
+        setInterval(() => {
+            for (let i = 0; i < this.notifstack.length; i++) {
+                if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000) {
+                    this.notify(this.notifstack[i].txt);
+                    this.wsnotify(this.notifstack[i].txt);
+                    this.notifstack.splice(i, 1);
+                    i--;
+                }
+            }
+        }, 10000);
+
+
+        this.tryEstablishWS = function () {
+            //close previous ws if open
+            if (this.ws) this.ws.close();
+            if (this.settings.wsurl) {
+                try {
+                    this.ws = new WebSocket(this.settings.wsurl);
+                    this.ws.onmessage = function (e) {
+                        if (me.settings.echoOn) {
+                            me.state.output(e.data);
+                        }
+                        processQuery(e.data);
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }
+
+        this.wsnotify = function (data) {
+            if (this.ws) this.ws.send(data);
+        }
+
+        this.notify = function (txt, ask) {
+            try {
+                // Let's check whether notification permissions have already been granted
+                if (Notification.permission === "granted") {
+                    // If it's okay let's create a notification
+                    var notification = new Notification(txt);
+                }
+
+                // Otherwise, we need to ask the user for permission
+                else if (Notification.permission !== "denied" || ask == true) {
+                    Notification.requestPermission().then(function (permission) {
+                        // If the user accepts, let's create a notification
+                        if (permission === "granted") {
+                            var notification = new Notification(txt);
+                        } else {
+                            console.log("The browser does not support notifications, or notifications were denied. Notifications disabled!");
+                            me.settings.pushnotifs = false;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log("The browser does not support notifications, or notifications were denied. Notifications disabled!");
+                this.settings.pushnotifs = false;
             }
         }
 
@@ -159,15 +244,39 @@ core.registerOperator("calendar", {
         <input data-role='titleproperty' placeholder="Enter the property for calendar item names.">
         `;
 
+        let ops = [new _option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "pushnotifs",
+                label: "Show push notifications?"
+            }),
+            new _option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "wsOn",
+                label: "Send events to a websocket?"
+            }),
+            new _option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "wsurl",
+                label: "Websocket address"
+            })
+        ];
+
         this.dialogDiv.addEventListener("input", function (e) {
             me.settings[e.target.dataset.role] = e.target.value;
         })
 
         this.showDialog = function () {
             // update your dialog elements with your settings
+            ops.forEach((i) => i.load());
         }
         this.dialogUpdateSettings = function () {
-            // pull settings and update when your dialog is closed.
+            this.processSettings();
         }
 
         core.on("createItem", (d) => {
@@ -190,6 +299,7 @@ core.registerOperator("calendar", {
             setTimeout(() => {
                 try {
                     $(me.rootdiv).fullCalendar('render');
+                    $(me.rootdiv).fullCalendar('refetchEvents');
                 } catch (err) {
                     console.log("jquery not ready yet :/");
                 }

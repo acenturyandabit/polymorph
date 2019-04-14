@@ -85,3 +85,68 @@ function htmlwrap(html,el="div"){
     d.innerHTML=html;
     return d;
 }
+
+
+/*
+transcopy(obj, {
+    remap: {
+        "a":"b",
+        "c":"d"
+    },
+    reverse: true || false
+})
+
+*/
+function transcopy(obj,options){
+    let obj2={};
+    let _remap = {};
+    if (options.reverse){
+        for(let i in options.remap){
+            _remap[options.remap[i]]=i;
+        }
+    }else{
+        _remap=options.remap;
+    }
+    for (let i in obj){
+        if (_remap[i])obj2[_remap[i]]=obj[i];
+        else obj2[i]=obj[i];
+    }
+    return obj2;
+}
+
+/*
+solve((n)=>{return n[1]-n[2]},[1,2,3],0,0.001,1000)
+set cmax to -1 to run indefinitely.
+*/
+function solve(f,v,p,eps=0.01,inc=0.01,cmax=1000){
+    // solves for a parameter given other parameters, using newton's method.
+    let devn=Math.abs(eps)+1;
+    while (Math.abs(devn)>Math.abs(eps) && cmax !=0){
+        let dv=[];
+        v.forEach((i)=>dv.push(i));
+        let fx=f(v);
+        dv[p]+=inc;
+        let dx=(f(dv)-fx)/inc;
+        devn=fx/dx;
+        v[p]-=devn;
+        cmax--;
+    }
+    if(cmax==0)console.log("Cycle count exceeded!");
+    return v[p];
+}
+//console.log(solve((x)=>{return Math.cos(x[0])-Math.pow(Math.E,x[0])},[0.5],0));
+
+function mf(obj,args){
+    let _obj=obj;
+    try{
+    if (typeof obj=="string")obj=eval(obj);//danger zoonee
+    } catch (e){
+        obj=_obj;
+    }
+    if (!obj && _obj)obj=_obj;
+    if (typeof obj == "function"){
+        return obj(args);
+    }else{
+        return args[obj];
+    }
+}

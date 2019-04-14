@@ -87,9 +87,7 @@ core.registerOperator("itemList", function (operator) {
     this.updateItem = function (id, sender) {
         let it = core.items[id];
         //First check if we should show the item
-        if (!it[me.settings.filterProp]) {
-            return false;
-        }
+        if (!mf(me.settings.filterProp,it))return false;
         //Then check if the item already exists; if so then update it
         let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
         if (!currentItemSpan) {
@@ -98,6 +96,7 @@ core.registerOperator("itemList", function (operator) {
             currentItemSpan.dataset.id = id;
             currentItemSpan.querySelector("button").innerHTML = "X";
         }
+        currentItemSpan.querySelector("[data-role='id']").innerText = id;
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
                 case "text":
@@ -293,7 +292,7 @@ core.registerOperator("itemList", function (operator) {
     scriptassert([
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
-        let ctm = new _contextMenuManager(me.taskList);
+        let ctm = new _contextMenuManager(operator.div);
         let contextedItem;
         let menu;
         function filter(e) {
@@ -402,7 +401,7 @@ core.registerOperator("itemList", function (operator) {
                 <option value="date">Date</option>
                 <option value="tag">Tag</option>
                 <option value="number">Number</option>
-            </select>`
+            </select>`+`<button data-krole=`+prop+`>X</button>`
             pspan.querySelector("select").value = me.settings.properties[prop];
             me.proplist.appendChild(pspan);
         }
@@ -423,23 +422,40 @@ core.registerOperator("itemList", function (operator) {
         core.fire("viewUpdate");
     }
 
+    //adding new buttons
     d.querySelector(".adbt").addEventListener("click",
         function () {
             if (d.querySelector(".adpt").value != "") {
                 me.settings.properties[d.querySelector(".adpt").value] = 'text';
+                d.querySelector(".adpt").value="";
             } else {
                 me.settings.properties[d.querySelector("select._prop").value] = 'text';
             }
-            me.showSettings();
+            me.showDialog();
         }
     )
+
+    //the filter property.
     d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
         me.settings.filterProp = e.target.value;
+        try{
+            me.filter=eval(me.settings.filterProp);
+        }catch(e){
+            me.filter=(itm)=>{return itm[me.settings.filterProp]};
+        }
     })
+
     me.proplist = me.dialogDiv.querySelector(".proplist");
+    
     //Handle select's in proplist
     me.proplist.addEventListener('change', function (e) {
         me.settings.properties[e.target.dataset.role] = e.target.value;
+    })
+    me.proplist.addEventListener('click', function (e) {
+        if (e.target.matches("[data-krole]")){
+            delete me.settings.properties[e.target.dataset.krole];
+        }
+        me.showDialog();
     })
     me.opList = me.dialogDiv.querySelector("select._prop");
     //retrieve stuff

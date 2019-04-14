@@ -21,7 +21,7 @@ let f = new _filescreen({
 
 Methods:
 f.showSplash();
-f.saveRecentDocument(id,offline=true);
+f.saveRecentDocument(id,url,displayName);
 
 Properties:
 Use f.baseDiv to access the underlying div, for any event handlers you may need.
@@ -146,8 +146,8 @@ function _filescreen(userSettings) {
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
         let newInnerHTML = "";
         if (recents) {
-            for (i = 0; i < recents.length; i++) {
-                newInnerHTML += `<p><a href=` + recents[i] + `>` + recents[i] + `</a><em>x</em></p>`;
+            for (let i in recents) {
+                newInnerHTML += `<p><a href=` + recents[i].url + `>` + recents[i].displayName + `</a><em>x</em></p>`;
             }
             me.recentDocDiv.innerHTML = newInnerHTML;
         }
@@ -163,20 +163,11 @@ function _filescreen(userSettings) {
         });
     }
 
-    this.saveRecentDocument = function () {
-        let url = new URL(window.location);
+    this.saveRecentDocument = function (id,url,displayName) {
+        if (!url) url = window.location.href;
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
-        if (!recents) recents = [];
-        let seenbefore = false;
-        url = url.toString();
-        recents.forEach((v) => {
-            if (v == url) {
-                seenbefore = true;
-            }
-        });
-        if (!seenbefore) {
-            recents.push(url);
-            localStorage.setItem("__" + me.settings.savePrefix + "_recent_docs", JSON.stringify(recents));
-        }
+        if (!recents) recents = {};
+        recents[id]={url:url,displayName:displayName||id};
+        localStorage.setItem("__" + me.settings.savePrefix + "_recent_docs", JSON.stringify(recents));
     }
 }

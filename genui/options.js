@@ -2,39 +2,74 @@
 
 //Usage:
 /*
+//general: 
+To load the option e.g. when a dialog or menu is shown:
+op.load();
+
+//checkbox
 let op=new _option({
-        div:parent element,
-        type:"bool",
-        object:Object (an object to retrieve settings at),
-        property:String (the name of the property value in the object. e.g. if object=cabbage and property='tastiness', you could retrieve the option value at cabbage.tastiness.),
-        label:String (the label associated with the input.)
-    });
+    div:parent element,
+    type:"bool",
+    object:Object (an object to retrieve settings at),
+    property:String (the name of the property value in the object. e.g. if object=cabbage and property='tastiness', you could retrieve the option value at cabbage.tastiness.),
+    label:String (the label associated with the input.)
+});
+
+//select
+let op=new _option({
+    div:parent element,
+    type:"select",
+    object:Object (an object to retrieve settings at),
+    property:String (the name of the property value in the object. e.g. if object=cabbage and property='tastiness', you could retrieve the option value at cabbage.tastiness.),
+    source: Array / object to get objects from.
+    label:String (the label associated with the input.)
+});
+
+//List (Advanced form of select with multiple options)
+
+
 */
 
-function _option(settings){
+function _option(settings) {
     let appendedElement;
-    switch (settings.type){
+    switch (settings.type) {
         case "bool":
-            appendedElement=document.createElement("input");
-            appendedElement.type="checkbox";
-            appendedElement.addEventListener("input",()=>{
-                settings["object"][settings["property"]]=appendedElement.checked;
+            appendedElement = document.createElement("input");
+            appendedElement.type = "checkbox";
+            appendedElement.addEventListener("input", () => {
+                settings["object"][settings["property"]] = appendedElement.checked;
+            })
+            break;
+        case "text":
+            appendedElement = document.createElement("input");
+            appendedElement.addEventListener("input", () => {
+                settings["object"][settings["property"]] = appendedElement.value;
+            })
+            break;
+        case "select":
+            appendedElement = document.createElement("select");
+            appendedElement.addEventListener("changed", () => {
+                settings["object"][settings["property"]] = appendedElement.checked;
             })
     }
-    if (settings.label){
-        let lb=document.createElement("label");
-        lb.innerHTML=settings.label;
+    if (settings.label) {
+        let lb = document.createElement("label");
+        lb.innerHTML = settings.label;
         lb.appendChild(appendedElement);
-        lb.style.display="block";
+        lb.style.display = "block";
         settings.div.appendChild(lb);
-    }else{
+    } else {
         settings.div.appendChild(appendedElement);
     }
     //initially load the property value.
-    this.load=function(){
-        switch(settings.type){
+    this.load = function () {
+        switch (settings.type) {
             case "bool":
-                appendedElement.checked=settings["object"][settings["property"]];
+                appendedElement.checked = settings["object"][settings["property"]];
+                break;
+            case "text":
+                appendedElement.value = settings["object"][settings["property"]];
+                break;
         }
     }
 }
