@@ -92,11 +92,11 @@ arrangeItem is at 672 or thereabouts.
     this.switchView = function (ln, assert) {
       me.settings.currentViewName = ln;
       if (!me.settings.currentViewName) {
-        for (let i in core.items){
-          if (core.items[i].synergist && core.items[i].synergist.viewName){
+        for (let i in core.items) {
+          if (core.items[i].synergist && core.items[i].synergist.viewName) {
             this.switchView(i);
-          }else{
-            this.switchView(guid(4),true);
+          } else {
+            this.switchView(guid(4), true);
           }
         }
         //Show blank
@@ -151,7 +151,7 @@ arrangeItem is at 672 or thereabouts.
       itm.title = "New view";
       itm.synergist = {
         type: "blank",
-        viewName:"Copy of"+core.items[me.settings.currentViewName].synergist.viewName
+        viewName: "Copy of" + core.items[me.settings.currentViewName].synergist.viewName
       };
       itm.title = core.items[me.settings.currentViewName].synergist.viewName;
       //register a change
@@ -682,8 +682,9 @@ arrangeItem is at 672 or thereabouts.
         });
         me.waitingChildren = {};
         me.arrangeItem = function (id, extern) {
-          if (!core.items[id].synergist || !core.items[id].synergist.viewData)
+          if (!core.items[id].synergist || (!core.items[id].synergist.viewData && !core.items[id].synergist.viewName))
             return false;
+          if (!core.items[id].synergist.viewData)return true;// this is not an item - its a view, but we still care about it
           if (!core.items[id].synergist.viewData[me.settings.currentViewName]) {
             //if an item of it exists, hide the item
             let it = me.rootdiv.querySelector(
@@ -817,8 +818,8 @@ arrangeItem is at 672 or thereabouts.
               } catch (e) {}
             }
             subviewItemCount.innerText = count;
-          }else{
-            if (it.children[2].querySelector(".subviewItemCount")){
+          } else {
+            if (it.children[2].querySelector(".subviewItemCount")) {
               it.children[2].querySelector(".subviewItemCount").remove();
             }
           }

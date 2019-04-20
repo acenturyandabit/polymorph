@@ -10,6 +10,7 @@ core.registerOperator(
     this.style = document.createElement("style");
     this.style.innerHTML = `
         textarea{
+            transition: width 0.5s;
             min-width: 5em;
             width:100%;
             height:5em;
@@ -28,23 +29,29 @@ core.registerOperator(
             flex-direction: column;
             align-items: center;
         }
+        
+        .smoothHide{
+          display:none;
+        }
+
         .bar{
             width: 100%;
-            display: flex;
-            flex-direction: row;
+            height: 1em;
+            background: white;
             border-top: 1px solid black;
-        }
-        .bar>span{
-            flex:1 1 70%;
-            background:white;
-        }
-        .bar>img{
-            flex: 0 0 auto;
-            height:1.5em;
+            position:relative;
         }
         .bar>button{
-            flex:0 0 20%;
+            position:absolute;
+            width: 1em;
+            height:100%;
+            display:none;
+            right:0;
+            padding:0;
         }
+        .bar:hover>button{
+          display:block;
+      }
     `;
 
 
@@ -76,7 +83,7 @@ core.registerOperator(
         ["OK!"]
       ]
     });
-    this.startTutorial=function(){
+    this.startTutorial = function () {
       tu.start("hello").end(() => {
         core.userData.introductions.httree = true;
         core.saveUserData();
@@ -85,6 +92,7 @@ core.registerOperator(
     if (!core.userData.introductions.httree) {
       this.startTutorial();
     }
+
     function select(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (cdiv) {
@@ -120,7 +128,7 @@ core.registerOperator(
     this.template = document.createElement("div");
     this.template.draggable = true;
     this.template.innerHTML = `
-    <span class="bar"><img src="assets/draghandler.jpg" draggable="false" user-select:"none"/><span></span><button>x</button></span>
+    <span class="bar"><button>x</button></span>
     <textarea></textarea>
     <button>+</button>
     <div class="containerDiv"></div>
@@ -133,6 +141,16 @@ core.registerOperator(
     this.rootdiv.addEventListener("click", function (e) {
       if (e.target.tagName.toLowerCase() == "button") {
         if (e.target.innerText == "+") {
+          // if items hidden, just show and return
+          if (e.target.style.border){
+            core.items[e.target.parentElement.dataset.id].httree.collapsed=false;
+            hide(e.target.parentElement.dataset.id);
+            core.fire("updateItem", {
+              sender: me,
+              id: id
+            });
+            return;
+          }
           //Create a new item
           let it = new _item();
           it.links = {};
@@ -142,11 +160,6 @@ core.registerOperator(
           if (me.settings.filter && !it[me.settings.filter]) {
             it[me.settings.filter] = true;
           }
-          //register a change
-          core.fire("create", {
-            sender: me,
-            id: id
-          });
           core.fire("updateItem", {
             sender: me,
             id: id
@@ -230,8 +243,25 @@ core.registerOperator(
     this.cachedUpdateRequests = {};
     //these are optional but can be used as a reference.
 
+    function barfill(id) {
+      let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
+      if (me.settings.attr && core.items[id][me.settings.attr]) cdiv.children[0].style.background = "linear-gradient(to right,red," + core.items[id][me.settings.attr] + "%,red," + core.items[id][me.settings.attr] + "%, white," + core.items[id][me.settings.attr] + "%,white)";
+    }
+
+    function hide(id){
+      let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
+      if (core.items[id].httree && core.items[id].httree.collapsed) {
+        cdiv.children[3].classList.add("smoothHide");//style.display = "none";
+        cdiv.children[2].style.border="3px dashed red";
+      }else{
+        cdiv.children[2].style.border="";
+        cdiv.children[3].classList.remove("smoothHide");//style.display = "flex";
+      }
+    }
+
     this.drawItem = function (id) {
       //Check if item is shown
+      //internal function for making a div
       function mkdiv(id) {
         let cdiv = me.template.cloneNode(true);
         cdiv.ondragover = e => {
@@ -241,6 +271,7 @@ core.registerOperator(
         cdiv.dataset.id = id;
         return cdiv;
       }
+      //check if item is shown
       if (
         core.items[id].links &&
         (!me.settings.filter || core.items[id][me.settings.filter])
@@ -277,6 +308,10 @@ core.registerOperator(
             cdiv.children[1].style.color = core.items[id].style.color;
           }
           me.nudge(cdiv.children[1]);
+          //also hide children if that applies
+          hide(id);
+          //also show attribute progressbar if that applies
+          barfill(id);
         }
         return true;
       }
@@ -415,13 +450,24 @@ core.registerOperator(
           tgt = tgt.parentElement;
         }
         contextedElement = tgt.dataset.id;
+        if (me.settings.attr) {
+          me.viewContextMenu.querySelector(".attribute").disabled = false;
+          me.viewContextMenu.querySelector(".attribute").value = core.items[contextedElement][me.settings.attr] || "";
+        } else me.viewContextMenu.querySelector(".attribute").disabled = true;
         return true;
       }
       me.viewContextMenu = contextMenuManager.registerContextMenu(
-        `<li><span>Edit style</span></li>
+        `
+        <li><span>Edit style</span>
+          <ul class="submenu">
             <li><input class="background" placeholder="Background"></li>
             <li><input class="color" placeholder="Color"></li>
-            `,
+          </ul>
+        </li>
+        <li><input class="attribute" placeholder='Attribute value...'></li>
+        <li class="reatt">Refresh attribute value</li>
+        <li class="collapsechildren">Toggle child visibility</li>
+        `,
         me.rootdiv,
         ".bar",
         ctxhook
@@ -436,12 +482,75 @@ core.registerOperator(
           id: contextedElement
         });
       }
+
+      function refreshAttribute(id) {
+        let mediv = me.rootdiv.querySelector("[data-id='" + id + "']");
+        if (mediv.children[3].children.length) {
+          let ta = 0;
+          for (let i = 0; i < mediv.children[3].children.length; i++) {
+            if (core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
+              ta += refreshAttribute(mediv.children[3].children[i].dataset.id);
+            }
+          }
+          ta = ta / mediv.children[3].children.length;
+          core.items[id][me.settings.attr] = ta;
+        }
+        //update display
+        barfill(id)
+        return core.items[id][me.settings.attr];
+      }
+
+      function validateAttribute(id, state, val) {
+        let mediv = me.rootdiv.querySelector("[data-id='" + id + "']");
+        switch (state) {
+          case 0: // initial set, propagate both ways
+            core.items[id][me.settings.attr] = val;
+            //validate attr of parent
+            if (mediv.parentElement.parentElement.dataset.id) {
+              validateAttribute(mediv.parentElement.parentElement.dataset.id, 1);
+            }
+            //validate attr of children
+            for (let i = 0; i < mediv.children[3].children.length; i++) {
+              validateAttribute(mediv.children[3].children[i].dataset.id, 2, val);
+            }
+            break;
+          case 1: // calls to parents (aggregate)
+            let ta = 0;
+            for (let i = 0; i < mediv.children[3].children.length; i++) {
+              if (core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
+                ta += core.items[mediv.children[3].children[i].dataset.id][me.settings.attr];
+              }
+            }
+            core.items[id][me.settings.attr] = ta / mediv.children[3].children.length;
+            //validate attr of parent
+            if (mediv.parentElement.parentElement.dataset.id) {
+              validateAttribute(mediv.parentElement.parentElement.dataset.id, 1);
+            }
+            break;
+          case 2: // calls to children (set)
+            core.items[id][me.settings.attr] = val;
+            //validate attr of children
+            for (let i = 0; i < mediv.children[3].children.length; i++) {
+              validateAttribute(mediv.children[3].children[i].dataset.id, 2, val);
+            }
+            break;
+        }
+        //update display
+        barfill(id);
+      }
       me.viewContextMenu
         .querySelector(".background")
         .addEventListener("input", updateStyle);
       me.viewContextMenu
         .querySelector(".color")
         .addEventListener("input", updateStyle);
+      me.viewContextMenu.querySelector('.attribute').addEventListener("input", (e) => validateAttribute(contextedElement, 0, Number(e.target.value)));
+      me.viewContextMenu.querySelector('.reatt').addEventListener("click", (e) => me.viewContextMenu.querySelector(".attribute").value = refreshAttribute(contextedElement));
+      me.viewContextMenu.querySelector('.collapsechildren').addEventListener("click", (e) => {
+        if (!core.items[contextedElement].httree) core.items[contextedElement].httree = {};
+        core.items[contextedElement].httree.collapsed = !core.items[contextedElement].httree.collapsed;
+        hide(contextedElement);
+      });
     });
 
     //Handle the settings dialog click!
@@ -450,12 +559,20 @@ core.registerOperator(
     <p>Only show items with the following property:</p>
     <input class="filterclass"></input>
     `;
+    let attr = new _option({
+      div: me.dialogDiv,
+      type: "text",
+      object: me.settings,
+      property: "attr",
+      label: "Attribute to use for totalling."
+    })
     this.showDialog = () => {
       if (this.settings.filter)
         this.dialogDiv.querySelector(
           ".filterclass"
         ).value = this.settings.filter;
       // update your dialog elements with your settings
+      attr.load();
     };
     this.dialogUpdateSettings = () => {
       this.settings.filter = this.dialogDiv.querySelector(".filterclass").value;

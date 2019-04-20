@@ -19,6 +19,15 @@ let html=`
         <li class="option1">Option1</li>
         <li class="option2">Option2</li>`;
 
+For submenus:
+    let html=`
+        <li class="option1">Option1
+            <ul>
+                <li>Suboption 1</li>
+                <li>Suboption 2</li>
+            </ul>
+        </li>
+        <li class="option2">Option2</li>`;
 3. Add a context menu!
 menu=c.registerContextMenu(html,context_element, '.delegate_class'(optional), filter)
 

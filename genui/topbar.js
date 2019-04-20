@@ -41,16 +41,19 @@ function _topbarManager(userSettings) {
             background-color: black;
             overflow: auto;
             font-size: 1em;
+            z-index: 1000;
         }
         
         ul.topbar li>a {
             user-select: none;
             cursor: pointer;
             display: inline-block;
+            z-index: 1000;
         }
 
         ul.topbar li:hover{
             background-color: lightskyblue;
+            z-index: 1000;
         }
 
         /*Top level specific styling*/
@@ -59,15 +62,18 @@ function _topbarManager(userSettings) {
             text-align: center;
             text-decoration: none;
             padding: 0.5em 16px;
+            z-index: 1000;
         }
         
         ul.topbar>li{
             float:left;
             background:black;
+            z-index: 1000;
         }
 
         ul.topbar>li>ul {
             font-size: 1em;
+            z-index: 1000;
         }
         /*sublist specific styling*/
         ul.topbar ul {
@@ -78,15 +84,18 @@ function _topbarManager(userSettings) {
             background-color: #f9f9f9;
             z-index: 1;
             list-style: none;
+            z-index: 1000;
         }
         
         ul.topbar>li:hover>ul {
             display: block;
+            z-index: 1000;
         }
 
         ul.topbar ul>li>a{
             display:block;
             padding: 0.5em;
+            z-index: 1000;
         }
         `
     }

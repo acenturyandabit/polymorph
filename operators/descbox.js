@@ -21,7 +21,7 @@ core.registerOperator("descbox", function (operator) {
     //Handle item updates
     me.updateItem = function (id) {
         if (me.settings.operationMode != "putter") {
-            if (id == me.settings.currentID && id) {
+            if (id == me.settings.currentID && id && core.items[id]) {
                 if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
                 else me.textarea.value = "";
                 me.textarea.disabled = false;

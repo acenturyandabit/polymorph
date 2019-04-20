@@ -2,19 +2,19 @@
 //eventapi.js: A quick event handler add-on for anything that requires an event system.
 
 /*
-ketch function: f(arg,status)
+cetch function: f(arg,status)
 called once at the start of event fire with arg=passed arguments,status=TRUE;
 called for each handler with arg=return value,status=undefined;
 called once at the end of every fire with arg=passed arguments,status=FALSE;
 return false at any point to interrupt the event.
 
-A sample ketch function similar to e.stopPropagation:
+A sample cetch function similar to e.stopPropagation:
 
-function ketchInterrupt(arg,stat){
+function cetchInterrupt(arg,stat){
     if (arg.interrupt){
         return false;
     }
-    return true;
+    return true; // or don't return at all - anything but an actual false is fine (undefined is ok)
 }
 
 And a corresponding event handler:
@@ -27,38 +27,43 @@ itm.on('event', ()=>{
 function addEventAPI(itm) {
     itm.events = {};
     itm.fire = function (e, args) {
-        let _e=e.split(",");
+        let _e = e.split(",");
         _e.push("*"); // a wildcard event listener
-        _e.forEach((i)=>{
-            if (!itm.events[i])return;
+        _e.forEach((i) => {
+            if (!itm.events[i]) return;
             //prime the ketching function with a starter object to prime it.
-            let cnt=true;
-            if (itm.events[i].ketch)cnt=itm.events[i].ketch(args,true);
+            let cnt = true;
+            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
+                if (cnt != false) cnt = f(args, true)
+            });
             if (itm.events[i].events) {
                 itm.events[i].events.forEach((f) => {
-                    if (!cnt)return;
+                    if (cnt == false) return;
                     try {
-                        result=f(args)
+                        result = f(args)
                     } catch (er) {
                         console.log(er);
                     }
-                    if (itm.events[i].ketch)cnt=itm.events[i].ketch(result);
+                    if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
+                        if (cnt != false) cnt = f(result)
+                    });
                 });
             }
-            if (itm.events[i].ketch)itm.events[i].ketch(args,true);
+            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, true)));
         })
     };
     itm.on = function (e, f) {
         let _e = e.split(',');
         _e.forEach((i) => {
-            if (!itm.events[i])itm.events[i]={};
+            if (!itm.events[i]) itm.events[i] = {};
             if (!itm.events[i].events) itm.events[i].events = [];
             itm.events[i].events.push(f);
         })
     };
-    itm.cetch=function(e,f){
-        if (!itm.events[i])itm.events[i]={};
-        itm.events[e].ketch=f;
+    itm.cetch = function (i, f) {
+        if (!itm.events[i]) itm.events[i] = {};
+        if (!itm.events[i].cetches) itm.events[i].cetches = [];
+        itm.events[i].cetches.push(f);
     }
 }
 

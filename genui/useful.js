@@ -88,6 +88,7 @@ function htmlwrap(html,el="div"){
 
 
 /*
+Transcopy: transcribes from one set of properties to another.
 transcopy(obj, {
     remap: {
         "a":"b",
@@ -116,7 +117,7 @@ function transcopy(obj,options){
 
 /*
 solve((n)=>{return n[1]-n[2]},[1,2,3],0,0.001,1000)
-set cmax to -1 to run indefinitely.
+set cmax to -1 to run until bounds are met. (dangerous)
 */
 function solve(f,v,p,eps=0.01,inc=0.01,cmax=1000){
     // solves for a parameter given other parameters, using newton's method.
@@ -136,6 +137,7 @@ function solve(f,v,p,eps=0.01,inc=0.01,cmax=1000){
 }
 //console.log(solve((x)=>{return Math.cos(x[0])-Math.pow(Math.E,x[0])},[0.5],0));
 
+//maybe function: Either return a function call on an object, or a given property of an object.
 function mf(obj,args){
     let _obj=obj;
     try{
@@ -149,4 +151,14 @@ function mf(obj,args){
     }else{
         return args[obj];
     }
+}
+
+function delta(O1,O2){
+    //added + changed
+    //removed
+    //output
+}
+
+function applyDelta(O1,d,undo){
+
 }
