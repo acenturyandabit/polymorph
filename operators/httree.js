@@ -14,7 +14,6 @@ core.registerOperator(
             min-width: 5em;
             width:100%;
             height:5em;
-            resize:none; 
         }
         button{
             width: 100%;
@@ -302,12 +301,12 @@ core.registerOperator(
           }
         }
         if (cdiv) {
-          cdiv.children[1].value = core.items[id].title;
+          cdiv.children[1].value = core.items[id].title||"";
           if (core.items[id].style) {
             cdiv.children[1].style.background = core.items[id].style.background;
             cdiv.children[1].style.color = core.items[id].style.color;
           }
-          me.nudge(cdiv.children[1]);
+          //me.nudge(cdiv.children[1]);
           //also hide children if that applies
           hide(id);
           //also show attribute progressbar if that applies
@@ -345,7 +344,7 @@ core.registerOperator(
       }
       // An item was deleted.
     });
-
+    /*
     this.nudge = function (elem) {
       if (elem.scrollHeight > elem.offsetHeight) {
         if (elem.offsetWidth < 500) {
@@ -356,7 +355,7 @@ core.registerOperator(
         }
       }
     };
-
+    */
     this.resize = function () {
       // This is called when my parent rect is resized.
       let tas = this.rootdiv.querySelectorAll("textarea");
@@ -364,14 +363,14 @@ core.registerOperator(
         this.nudge(tas[i]);
       }
     };
-
+    /*
     setInterval(() => {
       let tas = this.rootdiv.querySelectorAll("textarea");
       for (let i = 0; i < tas.length; i++) {
         this.nudge(tas[i]);
       }
     }, 5000);
-
+  */
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
     //////////////////Handling local changes to push to core//////////////////

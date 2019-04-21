@@ -1313,10 +1313,5 @@ arrangeItem is at 672 or thereabouts.
             </section>
         </div>
     </div>
-</div>
-<div class="floatingSetupMenu" style="display:none; position:absolute;">
-    <span>Background:<input class="jscolor backcolor" onchange="fireman.thing.backColorUpdateReceived(this.jscolor)"
-            value="ffffff"></span>
-    <span>Text:<input class="jscolor forecolor" onchange="fireman.thing.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
 </div>`;
 })();

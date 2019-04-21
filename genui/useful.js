@@ -162,3 +162,11 @@ function delta(O1,O2){
 function applyDelta(O1,d,undo){
 
 }
+
+function autoReturn(inputTag,submitTag){
+    document.addEventListener("DOMContentLoaded", (e)=>{
+        if (e.target.classList.contains(inputTag)){
+            e.target.parentElement.getElementsByClassName(submitTag)[0].click();
+        }
+    });
+}
