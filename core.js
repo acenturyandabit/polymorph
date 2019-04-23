@@ -96,15 +96,21 @@ function _core() {
         resetDocument();
         if (me.saveSources[source]) {
             me.currentDocName = id;
+            //put up a wall
+            document.querySelector(".wall").style.display="block";
+
+
             //load from loadsource
             me.saveSources[source].pullAll(id).then((d) => {
+                document.querySelector(".wall").style.display="none";
                 let params = new URLSearchParams(window.location.search);
                 if (!d) {
                     d = {
                         displayName: id,
                         saveSources: {},
                         currentView: "default",
-                        views: {}
+                        views: {},
+                        items:{}
                     }
                     if (!params.has("auto")) {
                         d.displayName = id;
@@ -216,12 +222,13 @@ function _core() {
         me.fire("updateSettings");
     };
 
+    let tc=new capacitor(1000,10,()=>{
+        core.fire("updateDoc");
+    })
     documentReady(() => {
         document.querySelector(".docName").addEventListener("keyup", () => {
             me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
-            /*if (this.firebase && this.firebase.unsub) {
-              docNameEditCapacitor.submit();
-            }*/
+            tc.submit();
             document.querySelector("title").innerHTML =
                 me.currentDoc.displayName + " - Polymorph";
         })

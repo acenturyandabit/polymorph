@@ -19,11 +19,6 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
   }
   this.pushAll = async function (id, data) {
     //dont actually do anything here... this is a ctrl s by the user.
-    if (success) {
-      return true;
-    } else {
-      return false;
-    }
   }
   this.pullAll = async function (id) {
     if (!this.db) return;
@@ -124,7 +119,7 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
       me.viewcapacitor.submit(d.id);
     });
     //meta
-    core.on("updateView", () => {
+    core.on("updateDoc", () => {
       if (me.localChange) me.localChange = false;
       else {
         let copyobj = Object.assign({}, core.currentDoc);
