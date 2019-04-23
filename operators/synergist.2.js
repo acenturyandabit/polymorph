@@ -24,10 +24,13 @@ core.registerOperator("itemcluster2", {
         display:block;
         background:lavender;
     }
+    .itemcluster-container{
+        height:100%;
+    }
     </style>
 <div>
-    <div class="synergist-container">
-        <div class="synergist-banner">
+    <div class="itemcluster-container">
+        <div class="itemcluster-banner">
             <span class="topbar">
                 <a>View:</a>
                 <span>
@@ -39,7 +42,7 @@ core.registerOperator("itemcluster2", {
                 </span>
             </span>
         </div>
-        <div class="synergist"  style="flex: 1 1 100%;position: relative;">
+        <div class="itemcluster"  style="flex: 1 1 100%;position: relative;">
         </div>
     </div>
 </div>`;
@@ -49,7 +52,7 @@ core.registerOperator("itemcluster2", {
     this.viewDropdownContainer = this.rootdiv.querySelector(
         ".viewNameContainer"
     );
-    this.itemSpace = this.rootdiv.querySelector(".synergist");
+    this.itemSpace = this.rootdiv.querySelector(".itemcluster");
     container.div.appendChild(this.rootdiv);
 
 
@@ -57,7 +60,7 @@ core.registerOperator("itemcluster2", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Tutorial
 
-    if (!core.userData.introductions.synergist) {
+    if (!core.userData.introductions.itemcluster) {
         let tu = new _tutorial({
             root: me.rootdiv
         });
@@ -72,7 +75,7 @@ core.registerOperator("itemcluster2", {
             ]
         });
         tu.start("hello").end(() => {
-            core.userData.introductions.synergist = true;
+            core.userData.introductions.itemcluster = true;
             core.saveUserData();
         });
     }
@@ -92,7 +95,7 @@ core.registerOperator("itemcluster2", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views
     this.viewName.addEventListener("keyup", function (e) {
-        core.items[me.settings.currentViewName].synergist.viewName =
+        core.items[me.settings.currentViewName].itemcluster.viewName =
             e.currentTarget.innerText;
         core.fire("updateItem", {
             id: me.settings.currentViewName,
@@ -138,13 +141,13 @@ core.registerOperator("itemcluster2", {
     this.viewDropdownButton.addEventListener("click", function () {
         me.viewDropdown.innerHTML = "";
         for (i in core.items) {
-            if (core.items[i].synergist && core.items[i].synergist.viewName) {
+            if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
-                aa.innerHTML = core.items[i].synergist.viewName;
+                aa.innerHTML = core.items[i].itemcluster.viewName;
                 me.viewDropdown.appendChild(aa);
             }
-            //v = synergist.views[i].name;
+            //v = itemcluster.views[i].name;
         }
         let aa = document.createElement("a");
         aa.dataset.isnew = "yes";
@@ -166,7 +169,7 @@ core.registerOperator("itemcluster2", {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
             for (let i in core.items) {
-                if (core.items[i].synergist && core.items[i].synergist.viewName) {
+                if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
                     this.switchView(i);
                     switched = true;
                     break;
@@ -182,9 +185,9 @@ core.registerOperator("itemcluster2", {
                 me.switchView();
                 return;
             }
-            if (!core.items[me.settings.currentViewName].synergist) {
+            if (!core.items[me.settings.currentViewName].itemcluster) {
                 if (assert) {
-                    core.items[me.settings.currentViewName].synergist = {
+                    core.items[me.settings.currentViewName].itemcluster = {
                         viewName: core.items[ln].title
                     };
                     core.fire("updateItem", {
@@ -196,9 +199,9 @@ core.registerOperator("itemcluster2", {
                 }
             }
             this.viewName.innerText =
-                core.items[me.settings.currentViewName].synergist.viewName;
+                core.items[me.settings.currentViewName].itemcluster.viewName;
             for (i in core.items) {
-                if (core.items[i].synergist && core.items[i].synergist.viewData) {
+                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //position the item appropriately.
                 }
@@ -211,7 +214,7 @@ core.registerOperator("itemcluster2", {
         let itm = {};
         let id = core.insertItem(itm);
         itm.title = "New view";
-        itm.synergist = {
+        itm.itemcluster = {
             viewName: "New View"
         };
         //register a change
@@ -228,10 +231,10 @@ core.registerOperator("itemcluster2", {
         let itm = {};
         let id = core.insertItem(itm);
         itm.title = "New view";
-        itm.synergist = {
-            viewName: "Copy of" + core.items[me.settings.currentViewName].synergist.viewName
+        itm.itemcluster = {
+            viewName: "Copy of" + core.items[me.settings.currentViewName].itemcluster.viewName
         };
-        itm.title = core.items[me.settings.currentViewName].synergist.viewName;
+        itm.title = core.items[me.settings.currentViewName].itemcluster.viewName;
         core.fire("updateItem", {
             sender: this,
             id: id
@@ -239,8 +242,8 @@ core.registerOperator("itemcluster2", {
         this.switchView(id);
     };
     this.destroyView = function (viewName, auto) {
-        // Destroy the synergist property of the item but otherwise leave it alone
-        delete core.items[viewName].synergist.viewName;
+        // Destroy the itemcluster property of the item but otherwise leave it alone
+        delete core.items[viewName].itemcluster.viewName;
         core.fire("deleteItem", {
             id: viewName
         });
@@ -264,16 +267,18 @@ core.registerOperator("itemcluster2", {
         let contextMenuManager = new _contextMenuManager(me.rootdiv);
 
         me.rootcontextMenu = contextMenuManager.registerContextMenu(`
-        <li class="pastebtn">Paste</li>`, me.rootdiv);
+        <li class="pastebtn">Paste</li>
+        <li class="collect">Collect items here</li>
+        `, me.rootdiv);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
             if (me.cpyelem) {
                 let rect = me.itemSpace.getBoundingClientRect();
                 let rect2 = me.rootcontextMenu.getBoundingClientRect();
-                core.items[me.cpyelem].synergist.viewData[me.settings.currentViewName] = {
+                core.items[me.cpyelem].itemcluster.viewData[me.settings.currentViewName] = {
                     x: (rect2.left - rect.left) / me.itemSpace.clientWidth +
-                        (core.items[me.settings.currentViewName].synergist.cx || 0),
+                        (core.items[me.settings.currentViewName].itemcluster.cx || 0),
                     y: (rect2.top - rect.top) / me.itemSpace.clientHeight +
-                        (core.items[me.settings.currentViewName].synergist.cy || 0),
+                        (core.items[me.settings.currentViewName].itemcluster.cy || 0),
                 }
                 me.rootcontextMenu.style.display = "none";
                 me.arrangeItem(me.cpyelem);
@@ -281,6 +286,16 @@ core.registerOperator("itemcluster2", {
                     id: me.cpyelem,
                     sender: me
                 });
+            }
+        })
+        me.rootcontextMenu.querySelector(".collect").addEventListener("click", () => {
+            for (let i in core.items){
+                if (core.items[i].synergist && core.items[i].synergist.viewData && core.items[i].synergist.viewData[me.settings.currentViewName]){
+                    core.items[i].synergist.viewData[me.settings.currentViewName].x=(rect2.left - rect.left) / me.itemSpace.clientWidth +
+                    (core.items[me.settings.currentViewName].itemcluster.cx || 0);
+                    core.items[i].synergist.viewData[me.settings.currentViewName].y=(rect2.top - rect.top) / me.itemSpace.clientHeight +
+                    (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+                }
             }
         })
         me.viewContextMenu = contextMenuManager.registerContextMenu(
@@ -362,8 +377,8 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".orientation")
             .addEventListener("click", e => {
-                //toggle the synergist orientation
-                core.items[me.contextedElement.dataset.id].synergist.subitemOrientation = !core.items[me.contextedElement.dataset.id].synergist.subitemOrientation;
+                //toggle the itemcluster orientation
+                core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation = !core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation;
                 //reupdate
                 me.arrangeItem(me.contextedElement.dataset.id);
                 me.itemContextMenu.style.display = "none";
@@ -375,7 +390,7 @@ core.registerOperator("itemcluster2", {
                 //delete the div and delete its corresponding item
                 core.items[
                         me.contextedElement.dataset.id
-                    ].synergist.viewName = me.deltas[me.contextedElement.dataset.id]
+                    ].itemcluster.viewName = me.deltas[me.contextedElement.dataset.id]
                     .getText()
                     .split("\n")[0];
                 me.switchView(me.contextedElement.dataset.id);
@@ -391,12 +406,12 @@ core.registerOperator("itemcluster2", {
         ["svg", "3pt/svg.min.js"],
         ["foreignobject", "3pt/svg.foreignobject.js"]
     ], () => {
-        me.svg = SVG(me.rootdiv.querySelector(".synergist"));
+        me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
         me.arrangeItem = function (id) {
-            if (!core.items[id].synergist || (!core.items[id].synergist.viewData && !core.items[id].synergist.viewName))
+            if (!core.items[id].itemcluster || (!core.items[id].itemcluster.viewData && !core.items[id].itemcluster.viewName))
                 return false;
-            if (!core.items[id].synergist.viewData) return true; // this is not an item - its a view, but we still care about it
-            if (!core.items[id].synergist.viewData[me.settings.currentViewName]) {
+            if (!core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
+            if (!core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                 //if an item of it exists, hide the item
                 let rect = me.svg.select("[data-id='" + id + "']").members[0];
                 if (rect) {
@@ -416,8 +431,8 @@ core.registerOperator("itemcluster2", {
                 let _fobj = rect.foreignObject(100, 50);
                 _fobj.appendChild("textarea");
             }
-            if (core.items[id].synergist.viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id].synergist.viewData[me.settings.currentViewName].x, core.items[id].synergist.viewData[me.settings.currentViewName].y);
+            if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
             me.rootdiv.querySelector("[data-id='"+id+"']>foreignObject>textarea").value=core.items[id].title || "";
@@ -534,8 +549,8 @@ core.registerOperator("itemcluster2", {
                 me.globalDrag = true;
                 me.dragDX = e.pageX;
                 me.dragDY = e.pageY;
-                me.ocx = core.items[me.settings.currentViewName].synergist.cx || 0;
-                me.ocy = core.items[me.settings.currentViewName].synergist.cy || 0;
+                me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
+                me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
             }
         }
     });
@@ -585,9 +600,9 @@ core.registerOperator("itemcluster2", {
             );
         } else if (me.globalDrag) {
             // shift the view by delta
-            core.items[me.settings.currentViewName].synergist.cx =
+            core.items[me.settings.currentViewName].itemcluster.cx =
                 me.ocx - (e.pageX - me.dragDX) / me.itemSpace.clientWidth;
-            core.items[me.settings.currentViewName].synergist.cy =
+            core.items[me.settings.currentViewName].itemcluster.cy =
                 me.ocy - (e.pageY - me.dragDY) / me.itemSpace.clientHeight;
             //arrange all items
             c.submit();
@@ -680,9 +695,9 @@ core.registerOperator("itemcluster2", {
             let rect = me.itemSpace.getBoundingClientRect();
             me.createItem(
                 (e.pageX - rect.left) +
-                (core.items[me.settings.currentViewName].synergist.cx || 0),
+                (core.items[me.settings.currentViewName].itemcluster.cx || 0),
                 (e.pageY - rect.top) +
-                (core.items[me.settings.currentViewName].synergist.cy || 0)
+                (core.items[me.settings.currentViewName].itemcluster.cy || 0)
             );
             // Make a new item
         }
@@ -691,14 +706,14 @@ core.registerOperator("itemcluster2", {
     //----------item functions----------//
     this.updatePosition = function (id) {
         let it = me.rootdiv.querySelector(".floatingItem[data-id='" + id + "']");
-        core.items[id].synergist.viewData[this.settings.currentViewName].x =
+        core.items[id].itemcluster.viewData[this.settings.currentViewName].x =
             (it.getBoundingClientRect().left -
                 me.itemSpace.getBoundingClientRect().left) +
-            (core.items[me.settings.currentViewName].synergist.cx || 0);
-        core.items[id].synergist.viewData[this.settings.currentViewName].y =
+            (core.items[me.settings.currentViewName].itemcluster.cx || 0);
+        core.items[id].itemcluster.viewData[this.settings.currentViewName].y =
             (it.getBoundingClientRect().top -
                 me.itemSpace.getBoundingClientRect().top) +
-            (core.items[me.settings.currentViewName].synergist.cy || 0);
+            (core.items[me.settings.currentViewName].itemcluster.cy || 0);
         core.fire("updateItem", {
             id: id
         });
@@ -729,11 +744,11 @@ core.registerOperator("itemcluster2", {
         //register it with the core
         let id = core.insertItem(itm);
         itm.title = "";
-        itm.synergist = {
+        itm.itemcluster = {
             viewData: {},
             description: ""
         };
-        itm.synergist.viewData[me.settings.currentViewName] = {
+        itm.itemcluster.viewData[me.settings.currentViewName] = {
             x: x,
             y: y
         };
@@ -750,8 +765,8 @@ core.registerOperator("itemcluster2", {
     };
 
     this.removeItem = function (id) {
-        delete core.items[id].synergist.viewData[me.settings.currentViewName];
-        delete core.items[id].synergist.links;
+        delete core.items[id].itemcluster.viewData[me.settings.currentViewName];
+        delete core.items[id].itemcluster.links;
         me.arrangeItem(id);
 
         core.fire("deleteItem", {
@@ -781,15 +796,15 @@ core.registerOperator("itemcluster2", {
         me.activeLines = {};
         me.toggleLine = function (start, end) {
             //check if linked; if linked, remove link
-            if (!core.items[start].synergist.links)
-                core.items[start].synergist.links = {};
-            if (core.items[start].synergist.links[end]) {
-                delete core.items[start].synergist.links[end];
+            if (!core.items[start].itemcluster.links)
+                core.items[start].itemcluster.links = {};
+            if (core.items[start].itemcluster.links[end]) {
+                delete core.items[start].itemcluster.links[end];
                 if (me.activeLines[start]) me.activeLines[start][end].remove();
                 delete me.activeLines[(start, end)];
             } else {
                 //otherwise create link
-                core.items[start].synergist.links[end] = true;
+                core.items[start].itemcluster.links[end] = true;
                 me.enforceLine(start, end);
             }
         };
@@ -851,8 +866,8 @@ core.registerOperator("itemcluster2", {
             delete me.toDrawLineCache[id];
             //for all my lines, if other element exists, draw line to it
             if (core.items[id]) {
-                if (core.items[id].synergist && core.items[id].synergist.links) {
-                    for (let i in core.items[id].synergist.links) {
+                if (core.items[id].itemcluster && core.items[id].itemcluster.links) {
+                    for (let i in core.items[id].itemcluster.links) {
                         if (me.rootdiv.querySelector("[data-id='" + i + "']")) {
                             me.enforceLine(id, i);
                         } else {
@@ -892,7 +907,7 @@ core.registerOperator("itemcluster2", {
     //Core interactions
 
     this.resize = function () {
-        if (me.svg) me.svg.size(container.clientWidth.container.clientHeight);
+        if (me.svg) me.svg.size(me.rootdiv.clientWidth,me.rootdiv.clientHeight);
         me.switchView(me.settings.currentViewName, true);
     };
     //Saving and loading
@@ -937,7 +952,7 @@ core.registerOperator("itemcluster2", {
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
-        core.fire("viewUpdate");
+        core.fire("updateView");
         // pull settings and update when your dialog is closed.
     }
 });

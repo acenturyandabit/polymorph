@@ -89,30 +89,63 @@ arrangeItem is at 672 or thereabouts.
       });
     });
 
-    this.switchView = function (ln, assert) {
+    this.switchView = function (ln, assert, subview) {
+      let preview = me.settings.currentViewName;
       me.settings.currentViewName = ln;
+      // if we are switching to nothing
       if (!me.settings.currentViewName) {
         for (let i in core.items) {
+          //switch to an available view
           if (core.items[i].synergist && core.items[i].synergist.viewName) {
             this.switchView(i);
-          } else {
-            this.switchView(guid(4), true);
+            return;
           }
         }
+        //if there are no available views, make one!
+        this.switchView(guid(4), true);
+        return;
         //Show blank
       } else {
-        if (!core.items[me.settings.currentViewName]) return;
+        //if not currently an item, make an item
+        if (!core.items[me.settings.currentViewName])
+          if (assert) {
+            core.items[me.settings.currentViewName] = {};
+          } else return;
+        //if not currently a synergist, make it a synergist
         if (!core.items[me.settings.currentViewName].synergist) {
           if (assert) {
             core.items[me.settings.currentViewName].synergist = {
               viewName: core.items[ln].title
             };
+            core.fire('updateItem', {
+              id: me.settings.currentViewName
+            });
           } else {
             return;
           }
         }
+
         this.viewName.innerText =
           core.items[me.settings.currentViewName].synergist.viewName;
+        //if this is a subview, add a button on the back; otherwise remove all buttons
+        if (subview) {
+          let b = document.createElement("button");
+          b.dataset.ref = preview;
+          b.innerText = core.items[preview].synergist.viewName;
+          b.addEventListener("click", () => {
+            me.switchView(b.dataset.ref, true, false);
+            while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
+            b.remove();
+          })
+          this.viewName.parentElement.insertBefore(b, this.viewName);
+        } else if (subview != false) {
+          //subview is undefined; hard switch (killall buttons)
+          let bs = this.viewName.parentElement.querySelectorAll("button");
+          for (let i = 0; i < bs.length; i++) {
+            bs[i].remove();
+          }
+        }
+
         for (i in core.items) {
           if (core.items[i].synergist && core.items[i].synergist.viewData) {
             if (me.arrangeItem) me.arrangeItem(i);
@@ -237,9 +270,10 @@ arrangeItem is at 672 or thereabouts.
       ["contextmenu", "genui/contextMenu.js"]
     ], () => {
       let contextMenuManager = new _contextMenuManager(me.rootdiv);
-
       me.rootcontextMenu = contextMenuManager.registerContextMenu(`
-      <li class="pastebtn">Paste</li>`, me.rootdiv);
+      <li class="pastebtn">Paste</li>
+      <li class="collect">Collect items here</li>
+      `, me.rootdiv);
       me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
         if (me.cpyelem) {
           let rect = me.itemSpace.getBoundingClientRect();
@@ -257,6 +291,24 @@ arrangeItem is at 672 or thereabouts.
             sender: me
           });
         }
+      })
+      me.rootcontextMenu.querySelector(".collect").addEventListener("click", () => {
+        let rect = me.itemSpace.getBoundingClientRect();
+        let rect2 = me.rootcontextMenu.getBoundingClientRect();
+        for (let i in core.items) {
+          if (core.items[i].synergist && core.items[i].synergist.viewData && core.items[i].synergist.viewData[me.settings.currentViewName]) {
+            core.items[i].synergist.viewData[me.settings.currentViewName].x = (rect2.left - rect.left) / me.itemSpace.clientWidth +
+              (core.items[me.settings.currentViewName].synergist.cx || 0);
+            core.items[i].synergist.viewData[me.settings.currentViewName].y = (rect2.top - rect.top) / me.itemSpace.clientHeight +
+              (core.items[me.settings.currentViewName].synergist.cy || 0);
+            me.arrangeItem(i);
+            core.fire("updateItem", {
+              id: i,
+              sender: me
+            });
+          }
+        }
+        me.rootcontextMenu.style.display = "none";
       })
       me.viewContextMenu = contextMenuManager.registerContextMenu(
         `<li class="viewDeleteButton">Delete</li>
@@ -353,7 +405,7 @@ arrangeItem is at 672 or thereabouts.
             ].synergist.viewName = me.deltas[me.contextedElement.dataset.id]
             .getText()
             .split("\n")[0];
-          me.switchView(me.contextedElement.dataset.id);
+          me.switchView(me.contextedElement.dataset.id, true, true);
           me.itemContextMenu.style.display = "none";
         });
     });
@@ -414,6 +466,7 @@ arrangeItem is at 672 or thereabouts.
 
           if (it.classList.contains("anchored")) return;
           if (me.dragging) return;
+          if (!core.items[it.dataset.id].synergist.viewData[me.settings.currentViewName]) return;
           me.movingDiv = it;
           let relements = me.rootdiv.querySelectorAll(".floatingItem");
           let minzind = me.settings.maxZ;
@@ -682,16 +735,40 @@ arrangeItem is at 672 or thereabouts.
         });
         me.waitingChildren = {};
         me.arrangeItem = function (id, extern) {
+          let onioning = -1;
+          let relativeView = me.settings.currentViewName;
           if (!core.items[id].synergist || (!core.items[id].synergist.viewData && !core.items[id].synergist.viewName))
             return false;
-          if (!core.items[id].synergist.viewData)return true;// this is not an item - its a view, but we still care about it
+          if (!core.items[id].synergist.viewData) return true; // this is not an item - its a view, but we still care about it
           if (!core.items[id].synergist.viewData[me.settings.currentViewName]) {
-            //if an item of it exists, hide the item
-            let it = me.rootdiv.querySelector(
-              ".floatingItem[data-id='" + id + "']"
-            );
-            if (it) it.style.display = "none";
-            return true; //dont care about things i dont care about
+            if (me.settings.onionMode) {
+              // continue to position
+              //scour all views to check whether or not they exist in the target operator
+              if (core.getOperator(me.settings.focusOperatorID).baseOperator.indexOf) {
+                let op = core.getOperator(me.settings.focusOperatorID).baseOperator; //optimisation
+                if (op.indexOf(me.settings.currentViewName) != -1) { // dont onion if we are in a subview
+                  for (let i in core.items[id].synergist.viewData) {
+                    onioning = op.indexOf(i);
+                    relativeView = i;
+                    if (onioning >= 0) {
+                      break;
+                    }
+                  }
+                  if (onioning != -1) onioning = Math.abs(onioning - op.indexOf(me.settings.currentViewName));
+                  if (onioning > 3) onioning = -1; //3 is a bit much, at that point were just wasitng processor power
+                }
+              }
+            }
+            if (onioning == -1) {
+              //if an item of it exists, hide the item
+              let it = me.rootdiv.querySelector(
+                ".floatingItem[data-id='" + id + "']"
+              );
+              if (it) it.style.display = "none";
+              return true; //dont care about things i dont care about
+            } else {
+
+            }
           }
           //visual aspect of updating position.
           //Check if the item actually exists yet
@@ -733,28 +810,29 @@ arrangeItem is at 672 or thereabouts.
             me.deltas[id].setContents(core.items[id].synergist.description);
           }
           //if in this view, position it
-          if (core.items[id].synergist.viewData[me.settings.currentViewName]) {
+          if (core.items[id].synergist.viewData[relativeView]) {
             //position it
             it.style.display = "block";
             it.children[0].style.flexDirection = (core.items[id].synergist.subitemOrientation) ? "row" : "column";
             it.style.left =
               Math.floor(
-                (core.items[id].synergist.viewData[me.settings.currentViewName]
+                (core.items[id].synergist.viewData[relativeView]
                   .x -
-                  (core.items[me.settings.currentViewName].synergist.cx || 0)) *
+                  (core.items[relativeView].synergist.cx || 0)) *
                 me.itemSpace.clientWidth
               ) + "px";
             it.style.top =
               Math.floor(
-                (core.items[id].synergist.viewData[me.settings.currentViewName]
+                (core.items[id].synergist.viewData[relativeView]
                   .y -
-                  (core.items[me.settings.currentViewName].synergist.cy || 0)) *
+                  (core.items[relativeView].synergist.cy || 0)) *
                 me.itemSpace.clientHeight
               ) + "px";
             if (core.items[id].style) {
               it.style.color = core.items[id].style.color;
               it.style.background = core.items[id].style.background;
             }
+            it.style.opacity = Math.exp(-onioning);
           } else {
             //otherwise hide it
             it.style.display = "none";
@@ -969,7 +1047,9 @@ arrangeItem is at 672 or thereabouts.
           r1.top + r1.height / 2 - rb.top,
           r2.left + r2.width / 2 - rb.left,
           r2.top + r2.height / 2 - rb.top
-        );
+        ).attr({
+          'stroke-opacity': (Number(sd.style.opacity) + Number(ed.style.opacity)) / 2
+        });
       };
       me.toDrawLineCache = {};
       me.updateLines = function (id) {
@@ -1068,6 +1148,14 @@ arrangeItem is at 672 or thereabouts.
     <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
     <button class="targeter">Select operator</button>
     `;
+    let onionopt = new _option({
+      div: this.dialogDiv,
+      type: "bool",
+      object: me.settings,
+      property: "onionMode",
+      label: "Enable onion skinning"
+    });
+
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
       core.target().then((id) => {
@@ -1075,12 +1163,13 @@ arrangeItem is at 672 or thereabouts.
         me.settings['focusOperatorID'] = id
         me.focusOperatorID = me.settings['focusOperatorID'];
       })
-    })
+    });
     this.showDialog = function () {
       for (i in me.settings) {
         let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
         if (it) it.value = me.settings[i];
       }
+      onionopt.load();
       // update your dialog elements with your settings
     }
     this.dialogUpdateSettings = function () {
@@ -1089,7 +1178,7 @@ arrangeItem is at 672 or thereabouts.
         me.settings[its[i].dataset.role] = its[i].value;
       }
       me.updateSettings();
-      core.fire("viewUpdate");
+      core.fire("updateView");
       // pull settings and update when your dialog is closed.
     }
 

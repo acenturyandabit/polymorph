@@ -152,7 +152,7 @@ core.registerOperator("calendar", {
         this.processSettings = function () {
             try {
                 $(this.rootdiv).fullCalendar('refetchEvents');
-                me.fire("viewUpdate");
+                me.fire("updateView");
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }

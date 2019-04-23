@@ -75,10 +75,12 @@ function _core() {
         }
     });
 
-    this.dataSources = [];
+    this.saveSources = [];
 
     this.registerSaveSource = function (id, f) {
-        me.dataSources[id] = new f();
+        me.saveSources[id] = new f(core);
+        //also register its settings in the save dialog
+        if (me.saveSources[id].dialog) me.loadInnerDialog.appendChild(me.saveSources[id].dialog);
     }
 
     function loadFromURL() { // very first load
@@ -92,30 +94,32 @@ function _core() {
     function userLoad(source, id, initial = false) { // direct from URL
         //reset
         resetDocument();
-        if (me.dataSources[source]) {
+        if (me.saveSources[source]) {
             me.currentDocName = id;
             //load from loadsource
-            me.dataSources[source].pullAll(id).then((d) => {
+            me.saveSources[source].pullAll(id).then((d) => {
                 let params = new URLSearchParams(window.location.search);
                 if (!d) {
                     d = {
-                        settings: {
-                            displayName: id,
-                            saveSources: [source]
-                        },
+                        displayName: id,
+                        saveSources: {},
                         currentView: "default",
                         views: {}
                     }
                     if (!params.has("auto")) {
-                        d.settings.displayName = id;
+                        d.displayName = id;
                     } else {
-                        d.settings.displayName = "New Workspace"
+                        d.displayName = "New Workspace"
                     }
+                    d.saveSources[source]=id;
                     /*if (!tutorialStarted) {
                         core.tutorial.start();
                     }*/
                 }
-                me.filescreen.saveRecentDocument(id, undefined, d.settings.displayName);
+                //reconcile that particular save source within the copy of the document
+                d.saveSources = d.saveSources || {}; //neat instadeclare!
+                d.saveSources[source] = id;
+                me.filescreen.saveRecentDocument(id, undefined, d.displayName);
                 me.fromSaveData(d);
 
                 let tutorialStarted = false;
@@ -126,8 +130,14 @@ function _core() {
                     core.tutorial.start(params.get("t"));
                     tutorialStarted = true;
                 }
-
-
+                for (let i in d.saveSources) {
+                    if (me.saveSources[i]) {
+                        if (me.saveSources[i].hook)me.saveSources[i].hook(d.saveSources[i]);
+                    } else {
+                        console.log("Warning - The save source " + i + " is not available on this computer. Some saving functions may be disabled.");
+                    }
+                }
+                //ensure that other save sources are appropriately registered.
             });
 
         } else if (initial) {
@@ -136,9 +146,11 @@ function _core() {
             return;
         }
     }
+    this.userLoad=userLoad;
 
     this.fromSaveData = function (data) {
         //load metadata, including views
+        resetDocument();
         this.currentDoc = data;
         this.items = data.items;
         if (!this.currentDoc.currentView) this.currentDoc.currentView = Object.keys(this.currentDoc.views)[0];
@@ -149,10 +161,10 @@ function _core() {
                 id: i
             });
         }
+        this.updateSettings();
     }
 
-    this.userSave = function () {
-        // just save the damn doc
+    this.toSaveData=function(){
         //patch current doc
         me.currentDoc.views[me.currentDoc.currentView] = me.baseRect.toSaveData();
         //clean up
@@ -169,12 +181,19 @@ function _core() {
         me.currentDoc.items = me.items;
         //save to all sources
         //upgrade older save systems
-        if (!me.currentDoc.settings.saveSources){
-            me.currentDoc.settings.saveSources=['lf'];
+        return me.currentDoc;
+    }
+
+    this.userSave = function () {
+        //save to all sources
+        //upgrade older save systems
+        let d = me.toSaveData();
+        if (!me.currentDoc.saveSources) {
+            me.currentDoc.saveSources = {lf:me.currentDocName};
         }
-        me.currentDoc.settings.saveSources.forEach(e => {
-            me.dataSources[e].pushAll(me.currentDocName, me.currentDoc);
-        });
+        for (let i in me.currentDoc.saveSources) {
+            me.saveSources[i].pushAll(me.currentDoc.saveSources[i],d);
+        }
     }
 
     /*
@@ -190,20 +209,21 @@ function _core() {
     this.updateSettings = function () {
         document.body.querySelector(
             ".docName"
-        ).innerText = this.currentDoc.settings.displayName;
+        ).innerText = this.currentDoc.displayName;
         document.querySelector("title").innerHTML =
-            this.currentDoc.settings.displayName + " - Polymorph";
-        me.filescreen.saveRecentDocument(me.docName, undefined, me.settings.currentDoc.displayName);
+            this.currentDoc.displayName + " - Polymorph";
+        me.filescreen.saveRecentDocument(me.docName, undefined, me.currentDoc.displayName);
+        me.fire("updateSettings");
     };
 
     documentReady(() => {
         document.querySelector(".docName").addEventListener("keyup", () => {
-            this.settings.currentDoc.displayName = document.body.querySelector(".docName").innerText;
+            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
             /*if (this.firebase && this.firebase.unsub) {
               docNameEditCapacitor.submit();
             }*/
             document.querySelector("title").innerHTML =
-                this.settings.currentDoc.displayName + " - Polymorph";
+                me.currentDoc.displayName + " - Polymorph";
         })
     })
 
@@ -341,7 +361,7 @@ function _core() {
             {
                 prompt: "Make a new shared (online) document",
                 queryParam: (id) => {
-                    return "&src=fb";
+                    return "src=fb";
                 }
             }
         ],
@@ -365,147 +385,35 @@ function _core() {
     });
     tbman.checkTopbars();
 
-    scriptassert([
-        ["dialog", "genui/dialog.js"]
-    ], () => {
-        let loadDialog = document.createElement("div");
-        loadDialog.classList.add("dialog");
-        loadDialog = dialogManager.checkDialogs(loadDialog)[0];
-        let loadInnerDialog = document.createElement("div");
-        loadDialog.querySelector(".innerDialog").appendChild(loadInnerDialog);
-        loadInnerDialog.innerHTML = `
-          <h1>Sharing</h1>
-          <p class="shareNow">
-              Share this document now!
-              <input class="slink" placeholder="shareable link" disabled/>
-              <button class="snow">Share now!</button>
-          </p>
-          <p class="firebase">
-              Firebase
-              <label><input class="enableSync" type="checkbox">Enable sync</label>
-              <input class="ref" placeholder="Enter Reference..."/>
-              <input disabled class="pswd" placeholder="Enter Password..."/>
-              <button disabled class="pswdbtn">Set password</button>
-          </p>
-          <p class="server">
-              Server
-              <input class="url" placeholder="Enter URL...">
-              <input class="docid" placeholder="Enter Document ID...">
-              <input class="srv_pass" placeholder="Enter Password...">
-              <button class="save">Save to source</button>
-              <button class="load">Load from source</button>
-          </p>
-          <p class="local">
-              Local
-              <label><input type="checkbox" class="autosave">Enable autosave</label>
-              <button class="save">Save to source</button>
-              <button class="load">Load from source</button>
-          </p>
-          <button class="setting">Save settings</button>
-          `;
-        documentReady(() => {
-            document.body.appendChild(loadDialog);
-            document.querySelector(".dataSources").addEventListener("click", () => {
-                //fill in the apporpriate datasources
-                //firebase name
-                if (me.currentDoc.firebaseDocName)
-                    loadDialog.querySelector(".firebase input.ref").value =
-                    me.currentDoc.firebaseDocName;
-                //firebase sync enabled?
-                if (me.currentDoc.firebaseSync)
-                    loadDialog.querySelector(".firebase input.enableSync").checked = true;
-                //server url
-                if (me.currentDoc.saveAddress)
-                    loadDialog.querySelector(".server input.url").value =
-                    me.currentDoc.saveAddress;
-                //autosave
-                if (me.currentDoc.autosave)
-                    loadDialog.querySelector(".local input.autosave").checked = true;
-                loadDialog.style.display = "block";
-            });
-            document.querySelector(".snow").addEventListener("click", () => {
-                this.readyFirebase();
-                if (!this.currentDoc.firebaseDocName) {
-                    this.currentDoc.firebaseDocName = guid(7);
-                    this.forceFirebasePush(this.currentDoc.firebaseDocName);
-                }
-                this.saveUserData();
-                //fill in the input
-                loadInnerDialog.querySelector(".slink").value = generateSelfURL();
-                loadInnerDialog.querySelector(".slink").disabled = false;
-                loadInnerDialog.querySelector(".slink").select();
-                document.execCommand("copy");
-            })
-        });
+    loadDialog = document.createElement("div");
+    loadDialog.classList.add("dialog");
+    loadDialog = dialogManager.checkDialogs(loadDialog)[0];
 
-        loadInnerDialog
-            .querySelector("button.setting")
-            .addEventListener("click", function () {
-                //"save changes"
-                //TODO: ID validation
-                //firebase
-                let name = loadInnerDialog.querySelector(".firebase>input.ref").value;
-                if (
-                    !(
-                        name &&
-                        loadInnerDialog.querySelector(".firebase input[type='checkbox']")
-                        .checked
-                    )
-                ) {
-                    if (me.firebase && me.firebase.unsub) {
-                        for (let i in me.firebase.unsub) me.firebase.unsub[i]();
-                        delete me.firebase.unsub;
-                    }
-                    me.currentDoc.firebaseDocName = "";
-                    me.currentDoc.firebaseSync = false;
-                } else {
-                    me.currentDoc.firebaseDocName = name;
-                    me.currentDoc.firebaseSync = true;
-                    //unsub first
-                    if (me.firebase && me.firebase.unsub) {
-                        for (let i in me.firebase.unsub) me.firebase.unsub[i]();
-                        delete me.firebase.unsub;
-                    }
-                    //and resub
-                    me.firebaseSync(name);
-                }
-                //server
-                me.currentDoc.saveAddress = loadInnerDialog.querySelector(".server>input.url").value;
-                //autosave
-                if (loadInnerDialog.querySelector(".local input.autosave").checked) {
-                    me.currentDoc.autosave = true;
-                }
-                me.saveUserData();
-            });
-        //handle the save buttons
-        loadInnerDialog
-            .querySelector(".server>button.save")
-            .addEventListener("click", function () {
-                let url = loadInnerDialog.querySelector(".server>input.url").value;
-                me.saveToServer(me.currentDoc.saveAddress);
-                me.saveUserData();
-            });
-        //local save
-        loadInnerDialog
-            .querySelector(".local>button.save")
-            .addEventListener("click", function () {
-                me.saveToLocal();
-            });
-        //handle the load buttons
-        loadInnerDialog
-            .querySelector(".server>button.load")
-            .addEventListener("click", function () {
-                let url = loadInnerDialog.querySelector(".server>input.url").value;
-                me.currentDoc.saveAddress = url;
-                core.loadFromServer(url);
-                me.saveUserData();
-            });
-        //local load
-        loadInnerDialog
-            .querySelector(".local>button.load")
-            .addEventListener("click", function () {
-                me.directLoadFromSaveData(obj);
-            });
+    this.loadInnerDialog = document.createElement("div");
+    loadDialog.querySelector(".innerDialog").appendChild(this.loadInnerDialog);
+    this.loadInnerDialog.innerHTML = `
+          <h1>Load/Save settings</h1>
+          `;
+    let autosaveOp = new _option({
+        div: this.loadInnerDialog,
+        type: "bool",
+        object: ()=>{return me.currentDoc},
+        property: "autosave",
+        label: "Autosave all changes"
+    });
+    documentReady(() => {
+        document.body.appendChild(loadDialog);
+        document.querySelector(".saveSources").addEventListener("click", () => {
+            autosaveOp.load();
+            loadDialog.style.display="block";
+        });
+    });
+    //----------Autosave----------//
+    let autosaveCapacitor = new capacitor(200, 20, me.userSave);
+    this.on("updateItem", function (d) {
+        if (me.currentDoc.autosave) {
+            autosaveCapacitor.submit();
+        }
     });
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views dialog
@@ -604,18 +512,7 @@ function _core() {
     core.target().then(senderID){
   
     }
-  
     */
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    //----------Autosave----------//
-    let autosaveCapacitor = new capacitor(200, 20, me.saveToLocal);
-    this.on("updateItem", function (d) {
-        if (me.currentDoc.autosave) {
-            autosaveCapacitor.submit();
-        }
-    });
 
 
 

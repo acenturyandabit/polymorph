@@ -200,7 +200,7 @@ core.registerOperator("descbox", function (operator) {
                     }
                 }
             }
-            core.fire("viewUpdate");
+            core.fire("updateView");
         } else if (me.settings.operationMode == "putter") {
             if (!me.settings.focusOperatorID) {
                 me.focusOperatorID = d.sender.container.uuid;

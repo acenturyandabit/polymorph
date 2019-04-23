@@ -185,7 +185,7 @@ core.registerOperator("quillbox", {
                 }
             }
         }
-        core.fire("viewUpdate");
+        core.fire("updateView");
     });
     core.on("deleteItem", function (d) {
         let id = d.id;

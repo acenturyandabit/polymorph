@@ -84,6 +84,14 @@ core.registerOperator("itemList", function (operator) {
         return me.updateItem(id, s);
     });
 
+    this.indexOf=function(id){
+        let childs=this.taskList.children;
+        for (let i=0;i<childs.length;i++){
+            if (childs[i].dataset.id==id)return i;
+        }
+        return -1;
+    }
+
     this.updateItem = function (id, sender) {
         let it = core.items[id];
         //First check if we should show the item
@@ -134,6 +142,7 @@ core.registerOperator("itemList", function (operator) {
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
+            delete core.items[e.target.parentElement.dataset.id][me.settings.filterProp];
             core.fire("deleteItem", {
                 id: e.target.parentElement.dataset.id,
                 sender: this
@@ -419,7 +428,7 @@ core.registerOperator("itemList", function (operator) {
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
         me.updateSettings();
-        core.fire("viewUpdate");
+        core.fire("updateView");
     }
 
     //adding new buttons

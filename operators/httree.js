@@ -1,3 +1,7 @@
+//if only there was a program that could quickly create indexes of long files?
+
+
+
 core.registerOperator(
   "httree", {
     outerScroll: true
@@ -10,7 +14,6 @@ core.registerOperator(
     this.style = document.createElement("style");
     this.style.innerHTML = `
         textarea{
-            transition: width 0.5s;
             min-width: 5em;
             width:100%;
             height:5em;
@@ -67,6 +70,7 @@ core.registerOperator(
     this.secondaryDiv.classList.add("containerDiv");
     this.rootdiv.appendChild(this.secondaryDiv);
     this.settings.selected = undefined;
+    operator.div.appendChild(this.rootdiv);
     ///////////////////////////////////////////////////////////////////////////////////////
     //tutorial
     let tu = new _tutorial({
@@ -92,6 +96,8 @@ core.registerOperator(
       this.startTutorial();
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Selecting and deselecting.
     function select(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (cdiv) {
@@ -101,7 +107,7 @@ core.registerOperator(
       }
       me.settings.selected = id;
     }
-
+    // deselection for buttons
     function deselect() {
       btns = me.rootdiv.querySelectorAll("button");
       for (let i = 0; i < btns.length; i++) {
@@ -109,6 +115,7 @@ core.registerOperator(
       }
     }
 
+    //selecting and deselecting
     this.secondaryDiv.addEventListener("click", function (e) {
       if (e.target.tagName.toLowerCase() == "textarea") {
         deselect();
@@ -124,6 +131,9 @@ core.registerOperator(
       }
     });
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Item creation
     this.template = document.createElement("div");
     this.template.draggable = true;
     this.template.innerHTML = `
@@ -132,6 +142,7 @@ core.registerOperator(
     <button>+</button>
     <div class="containerDiv"></div>
     `;
+
     //this.template.querySelector("img").draggable.true;
     this.template.ondragover = e => {
       e.preventDefault();
@@ -141,12 +152,12 @@ core.registerOperator(
       if (e.target.tagName.toLowerCase() == "button") {
         if (e.target.innerText == "+") {
           // if items hidden, just show and return
-          if (e.target.style.border){
-            core.items[e.target.parentElement.dataset.id].httree.collapsed=false;
+          if (e.target.style.border) {
+            core.items[e.target.parentElement.dataset.id].httree.collapsed = false;
             hide(e.target.parentElement.dataset.id);
             core.fire("updateItem", {
               sender: me,
-              id: id
+              id: e.target.parentElement.dataset.id
             });
             return;
           }
@@ -165,6 +176,9 @@ core.registerOperator(
           });
         } else if (e.target.innerText == "x") {
           //remove the current item
+          let id=e.target.parentElement.parentElement.dataset.id;
+          if (me.settings.filter)delete core.items[id][me.settings.filter];
+          else delete core.items[id].links;
           core.fire("deleteItem", {
             id: e.target.parentElement.parentElement.dataset.id,
             sender: me
@@ -172,8 +186,74 @@ core.registerOperator(
         }
       }
     });
-    operator.div.appendChild(this.rootdiv);
 
+    this.drawItem = function (id) {
+      //Check if item is shown
+      //internal function for making a div
+      function mkdiv(id) {
+        let cdiv = me.template.cloneNode(true);
+        cdiv.ondragover = e => {
+          e.preventDefault();
+        };
+        cdiv.addEventListener("drop", me.drophandle);
+        cdiv.dataset.id = id;
+        return cdiv;
+      }
+      //check if item is shown
+      if (
+        (core.items[id].links) &&
+        (!me.settings.filter || core.items[id][me.settings.filter])
+      ) {
+        let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
+        if (!cdiv) {
+          if (core.items[id].links.parent) {
+            let pdiv = me.rootdiv.querySelector(
+              "[data-id='" + core.items[id].links.parent + "']"
+            );
+            if (!pdiv) {
+              if (!this.cachedUpdateRequests[core.items[id].links.parent])
+                this.cachedUpdateRequests[core.items[id].links.parent] = [];
+              this.cachedUpdateRequests[core.items[id].links.parent].push(id);
+            } else {
+              cdiv = mkdiv(id);
+              pdiv.children[3].appendChild(cdiv);
+              if (this.cachedUpdateRequests[id])
+                for (let i = 0; i < this.cachedUpdateRequests[id].length; i++)
+                  this.drawItem(this.cachedUpdateRequests[id][i]);
+            }
+          } else {
+            cdiv = mkdiv(id);
+            me.secondaryDiv.appendChild(cdiv);
+            if (this.cachedUpdateRequests[id])
+              for (let i = 0; i < this.cachedUpdateRequests[id].length; i++)
+                this.drawItem(this.cachedUpdateRequests[id][i]);
+          }
+        }
+        if (cdiv) {
+          if (core.items[id].boxsize) {
+            cdiv.children[1].style.minWidth = core.items[id].boxsize.w;
+            cdiv.children[1].style.height = core.items[id].boxsize.h;
+          }
+          cdiv.children[1].value = core.items[id].title || "";
+          if (core.items[id].style) {
+            cdiv.children[1].style.background = core.items[id].style.background;
+            cdiv.children[1].style.color = core.items[id].style.color;
+          }
+          //also hide children if that applies
+          hide(id);
+          //also show attribute progressbar if that applies
+          barfill(id);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    core.on("updateItem", d => {
+      return this.drawItem(d.id);
+    });
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Drag and drop
     //delegated drag event handler
     let draggingNode;
     let preventDrag;
@@ -247,79 +327,17 @@ core.registerOperator(
       if (me.settings.attr && core.items[id][me.settings.attr]) cdiv.children[0].style.background = "linear-gradient(to right,red," + core.items[id][me.settings.attr] + "%,red," + core.items[id][me.settings.attr] + "%, white," + core.items[id][me.settings.attr] + "%,white)";
     }
 
-    function hide(id){
+    function hide(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (core.items[id].httree && core.items[id].httree.collapsed) {
-        cdiv.children[3].classList.add("smoothHide");//style.display = "none";
-        cdiv.children[2].style.border="3px dashed red";
-      }else{
-        cdiv.children[2].style.border="";
-        cdiv.children[3].classList.remove("smoothHide");//style.display = "flex";
+        cdiv.children[3].classList.add("smoothHide"); //style.display = "none";
+        cdiv.children[2].style.border = "3px dashed red";
+      } else {
+        cdiv.children[2].style.border = "";
+        cdiv.children[3].classList.remove("smoothHide"); //style.display = "flex";
       }
     }
 
-    this.drawItem = function (id) {
-      //Check if item is shown
-      //internal function for making a div
-      function mkdiv(id) {
-        let cdiv = me.template.cloneNode(true);
-        cdiv.ondragover = e => {
-          e.preventDefault();
-        };
-        cdiv.addEventListener("drop", me.drophandle);
-        cdiv.dataset.id = id;
-        return cdiv;
-      }
-      //check if item is shown
-      if (
-        core.items[id].links &&
-        (!me.settings.filter || core.items[id][me.settings.filter])
-      ) {
-        let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
-        if (!cdiv) {
-          if (core.items[id].links.parent) {
-            let pdiv = me.rootdiv.querySelector(
-              "[data-id='" + core.items[id].links.parent + "']"
-            );
-            if (!pdiv) {
-              if (!this.cachedUpdateRequests[core.items[id].links.parent])
-                this.cachedUpdateRequests[core.items[id].links.parent] = [];
-              this.cachedUpdateRequests[core.items[id].links.parent].push(id);
-            } else {
-              cdiv = mkdiv(id);
-              pdiv.children[3].appendChild(cdiv);
-              if (this.cachedUpdateRequests[id])
-                for (let i = 0; i < this.cachedUpdateRequests[id].length; i++)
-                  this.drawItem(this.cachedUpdateRequests[id][i]);
-            }
-          } else {
-            cdiv = mkdiv(id);
-            me.secondaryDiv.appendChild(cdiv);
-            if (this.cachedUpdateRequests[id])
-              for (let i = 0; i < this.cachedUpdateRequests[id].length; i++)
-                this.drawItem(this.cachedUpdateRequests[id][i]);
-          }
-        }
-        if (cdiv) {
-          cdiv.children[1].value = core.items[id].title||"";
-          if (core.items[id].style) {
-            cdiv.children[1].style.background = core.items[id].style.background;
-            cdiv.children[1].style.color = core.items[id].style.color;
-          }
-          //me.nudge(cdiv.children[1]);
-          //also hide children if that applies
-          hide(id);
-          //also show attribute progressbar if that applies
-          barfill(id);
-        }
-        return true;
-      }
-      return false;
-    };
-
-    core.on("updateItem", d => {
-      return this.drawItem(d.id);
-    });
 
     //Update item if relevant
     //This will be called for all items when the items are loaded.
@@ -344,33 +362,9 @@ core.registerOperator(
       }
       // An item was deleted.
     });
-    /*
-    this.nudge = function (elem) {
-      if (elem.scrollHeight > elem.offsetHeight) {
-        if (elem.offsetWidth < 500) {
-          elem.style.minWidth = elem.offsetWidth + 10 + "px";
-          setTimeout(() => {
-            this.nudge(elem);
-          }, 100);
-        }
-      }
-    };
-    */
     this.resize = function () {
       // This is called when my parent rect is resized.
-      let tas = this.rootdiv.querySelectorAll("textarea");
-      for (let i = 0; i < tas.length; i++) {
-        this.nudge(tas[i]);
-      }
     };
-    /*
-    setInterval(() => {
-      let tas = this.rootdiv.querySelectorAll("textarea");
-      for (let i = 0; i < tas.length; i++) {
-        this.nudge(tas[i]);
-      }
-    }, 5000);
-  */
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
     //////////////////Handling local changes to push to core//////////////////
@@ -380,13 +374,22 @@ core.registerOperator(
     this.rootdiv.addEventListener("input", e => {
       if (!e.target.parentElement.matches("[data-id]")) return;
       core.items[e.target.parentElement.dataset.id].title = e.target.value;
-      this.nudge(e.target);
       let itemID = e.target.parentElement.dataset.id;
       core.fire("updateItem", {
         id: itemID,
         sender: this
       });
     });
+
+    this.rootdiv.addEventListener("mouseup", (e) => {
+      if (e.target.tagName == "TEXTAREA") {
+        let id = e.target.parentElement.dataset.id;
+        core.items[id].boxsize = {
+          w: e.target.style.minWidth,
+          h: e.target.style.height
+        };
+      }
+    })
 
     //Register focus with core
     this.somethingwasfocused = function () {
@@ -576,7 +579,7 @@ core.registerOperator(
     this.dialogUpdateSettings = () => {
       this.settings.filter = this.dialogDiv.querySelector(".filterclass").value;
       // pull settings and update when your dialog is closed.
-      core.fire("viewUpdate");
+      core.fire("updateView");
       for (let i = 0; i < this.secondaryDiv.children.length; i++) {
         this.secondaryDiv.children[i].remove();
       }

@@ -100,7 +100,7 @@ core.registerOperator("stack", {
                 me.rects.splice(i,1);
             }
         }
-        core.fire("viewUpdate",{sender:this});
+        core.fire("updateView",{sender:this});
     }
     this.more.addEventListener("click", this.addStack);
     //////////////////Handle core item updates//////////////////

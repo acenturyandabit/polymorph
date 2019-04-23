@@ -43,7 +43,7 @@ function dialogSystemManager(core) {
             core.dialog.callingRect.submitDialog(core.dialog.innerDialog);
             //also forward close event to the baseOperator
             core.dialog.currentBaseOperator.dialogUpdateSettings();
-            core.fire("viewUpdate")
+            core.fire("updateView")
         })
     })
 }

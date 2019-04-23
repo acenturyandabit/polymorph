@@ -41,12 +41,13 @@ function addEventAPI(itm) {
                     if (cnt == false) return;
                     try {
                         result = f(args)
+                        if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
+                            if (cnt != false) cnt = f(result)
+                        });
                     } catch (er) {
                         console.log(er);
                     }
-                    if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
-                        if (cnt != false) cnt = f(result)
-                    });
+
                 });
             }
             if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, true)));

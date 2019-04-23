@@ -196,7 +196,7 @@ core.registerOperator("inspector", {
                     }
                 }
             }
-            core.fire("viewUpdate");
+            core.fire("updateView");
         }
     });
     core.on("deleteItem", function (d) {

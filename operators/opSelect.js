@@ -44,7 +44,7 @@
                 b.dataset.underOperatorName = i;
                 b.addEventListener("click", () => {
                     operator.reload(b.dataset.underOperatorName);
-                    core.fire("viewUpdate", {
+                    core.fire("updateView", {
                         sender: this
                     });
                     operator.rect.tieOperator(operator);
@@ -82,7 +82,7 @@
                 b.dataset.id = i;
                 b.addEventListener("click", () => {
                     operator.rect.fromSaveData(v[b.dataset.id].rect);
-                    core.fire("viewUpdate", {
+                    core.fire("updateView", {
                         sender: this
                     });
                     //operator.rect.tieOperator(operator);

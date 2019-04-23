@@ -1,5 +1,12 @@
 core.registerSaveSource("template",function(){ // a sample save source, implementing a number of functions.
-    this.pushAll=async function(id){
+
+    //initialise here
+
+
+
+
+    this.pushAll=async function(id,data){
+        //push to the source (force save)
         if (success){
             return true;
         }else{
@@ -9,20 +16,6 @@ core.registerSaveSource("template",function(){ // a sample save source, implemen
     this.pullAll=async function(id){
         if (success){
             return object_with_data;
-        }else{
-            return;
-        }
-    }
-    this.newDoc=async function(id){
-        if (success){
-            return id;
-        }else{
-            return;
-        }
-    }
-    this.wipeDoc=async function(id){
-        if (success){
-            return id;
         }else{
             return;
         }

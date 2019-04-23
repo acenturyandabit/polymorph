@@ -375,7 +375,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             me.children[1].mouseUpHandler(e);
         }
         if (rectChanged) {
-            core.fire("viewUpdate", {
+            core.fire("updateView", {
                 sender: me
             });
             rectChanged = false;
@@ -530,7 +530,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         if (this.parentRect) this.parentRect._remove(me.firstOrSecond, this);
     }
     this._remove = function (_firstOrSecond) {
-        core.fire("viewUpdate", {
+        core.fire("updateView", {
             sender: me
         });
         //if remaining innerDiv has an operator, adopt it

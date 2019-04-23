@@ -68,7 +68,7 @@ core.registerOperator("timeline", {
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
             try {
-                me.fire("viewUpdate");
+                me.fire("updateView");
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }

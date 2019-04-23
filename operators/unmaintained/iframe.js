@@ -32,7 +32,7 @@ core.registerOperator("miniBrowser", function (operator) {
         }
         me.settings.url =tryURL;
         me.processSettings();
-        me.fire("viewUpdate");
+        me.fire("updateView");
     });
 
     //////////////////Handling local changes to push to core//////////////////
@@ -84,7 +84,7 @@ core.registerOperator("miniBrowser", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.updateSettings();
-            me.fire("viewUpdate");
+            me.fire("updateView");
         })
 
         me.showSettings = function () {

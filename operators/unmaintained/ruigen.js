@@ -162,7 +162,7 @@ core.registerOperator("ruigen", function (operator) {
         //When the dialog is closed, update the settings.
         me.dialog.querySelector(".cb").addEventListener("click", function () {
             me.processSettings();
-            me.fire("viewUpdate");
+            me.fire("updateView");
         })
 
         me.showSettings = function () {
