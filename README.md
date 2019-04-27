@@ -5,7 +5,7 @@ Because the best things in life are shared.
 
 ## Usage
 ### For end users
-Just wanna use it because you've heard it's useful? Go to acenturyandabit.github.com/polymorph/ and get started!
+Just wanna use it because you've heard it's useful? Go to acenturyandabit.github.io/polymorph/ and get started!
 
 ### For webmasters
 Want to host this at your organisation? Here's what you need to do.
