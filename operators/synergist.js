@@ -989,6 +989,20 @@ arrangeItem is at 672 or thereabouts.
       });
       me.activeLines = {};
       me.toggleLine = function (start, end) {
+        //enforce start is start end is end
+        let _start = start;
+        let _end = end;
+        start = 0;
+        end = 0;
+        for (i in _start) start = start + _start.charCodeAt(i)
+        for (i in _end) end = end + _end.charCodeAt(i)
+        if (start > end) {
+          start = _start;
+          end = _end;
+        } else {
+          start = _end;
+          end = _start;
+        }
         //check if linked; if linked, remove link
         if (!core.items[start].synergist.links)
           core.items[start].synergist.links = {};

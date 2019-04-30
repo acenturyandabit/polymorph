@@ -84,10 +84,10 @@ core.registerOperator("itemList", function (operator) {
         return me.updateItem(id, s);
     });
 
-    this.indexOf=function(id){
-        let childs=this.taskList.children;
-        for (let i=0;i<childs.length;i++){
-            if (childs[i].dataset.id==id)return i;
+    this.indexOf = function (id) {
+        let childs = this.taskList.children;
+        for (let i = 0; i < childs.length; i++) {
+            if (childs[i].dataset.id == id) return i;
         }
         return -1;
     }
@@ -95,7 +95,7 @@ core.registerOperator("itemList", function (operator) {
     this.updateItem = function (id, sender) {
         let it = core.items[id];
         //First check if we should show the item
-        if (!mf(me.settings.filterProp,it))return false;
+        if (!mf(me.settings.filterProp, it)) return false;
         //Then check if the item already exists; if so then update it
         let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
         if (!currentItemSpan) {
@@ -132,12 +132,30 @@ core.registerOperator("itemList", function (operator) {
                     break;
             }
         }
-        if (it.style){
-            currentItemSpan.style.background=it.style.background;
-            currentItemSpan.style.color=it.style.color;
+        if (it.style) {
+            currentItemSpan.style.background = it.style.background;
+            currentItemSpan.style.color = it.style.color;
         }
         return true;
     }
+
+    //auto
+    setInterval(() => {
+        let worried = false;
+        for (let i in me.settings.properties) {
+            if (me.settings.properties[i] == 'date') {
+                worried = i;
+            }
+        }
+        if (worried) {
+            let listofitems = me.taskList.querySelectorAll("[data-role='"+worried+"']");
+            for (let i =0;i<listofitems.length;i++){
+                if (listofitems[i].value.indexOf("auto")!=-1){
+                    if(me.datereparse)me.datereparse(listofitems[i].parentElement.parentElement.dataset.id);
+                }
+            }
+        }
+    }, 10000)
 
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
@@ -304,12 +322,13 @@ core.registerOperator("itemList", function (operator) {
         let ctm = new _contextMenuManager(operator.div);
         let contextedItem;
         let menu;
+
         function filter(e) {
             contextedItem = e.target;
             if (me.settings.properties[e.target.dataset.role] == "date") {
-                menu.querySelector(".fixed").style.display="block";
-            }else{
-                menu.querySelector(".fixed").style.display="none";
+                menu.querySelector(".fixed").style.display = "block";
+            } else {
+                menu.querySelector(".fixed").style.display = "none";
             }
             return true;
         }
@@ -326,7 +345,7 @@ core.registerOperator("itemList", function (operator) {
             contextedItem.value = new Date(core.items[id][contextedItem.dataset.role].date[0].date).toLocaleString();
             core.items[id][contextedItem.dataset.role].datestring = contextedItem.value;
             me.datereparse(id);
-            menu.style.display="none";
+            menu.style.display = "none";
         })
 
         function updateStyle(e) {
@@ -338,18 +357,17 @@ core.registerOperator("itemList", function (operator) {
             if (!core.items[cid].style) core.items[cid].style = {};
             core.items[cid].style[e.target.className] = e.target.value;
             core.fire("updateItem", {
-              sender: this,
-              id: cid
+                sender: this,
+                id: cid
             });
-          }
-          menu
+        }
+        menu
             .querySelector(".back input")
             .addEventListener("input", updateStyle);
-          menu
+        menu
             .querySelector(".fore input")
             .addEventListener("input", updateStyle);
     })
-
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
@@ -368,6 +386,7 @@ core.registerOperator("itemList", function (operator) {
     <select data-role="operationMode">
     <option value="static">Display static list</option>
     <option value="focus">Display focused list</option>
+    <option value="iface">Link to another operator...</option>
     </select>
     <p>View items with the following property:</p> 
     <input data-role='filterProp' placeholder = 'Property name'></input>
@@ -410,7 +429,7 @@ core.registerOperator("itemList", function (operator) {
                 <option value="date">Date</option>
                 <option value="tag">Tag</option>
                 <option value="number">Number</option>
-            </select>`+`<button data-krole=`+prop+`>X</button>`
+            </select>` + `<button data-krole=` + prop + `>X</button>`
             pspan.querySelector("select").value = me.settings.properties[prop];
             me.proplist.appendChild(pspan);
         }
@@ -418,11 +437,23 @@ core.registerOperator("itemList", function (operator) {
 
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
-            me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            me.settings['focusOperatorID'] = id
-            me.focusOperatorID=me.settings['focusOperatorID'];
-        })
+        if(me.settings.operationMode=="iface"){
+            core.target("itemList").then((id) => {
+                me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+                me.settings['focusOperatorID'] = id
+                me.focusOperatorID = me.settings['focusOperatorID'];
+                me.detach=core.queryOnIface(id,()=>{
+                    // this will return a list of items
+                })
+            })
+        }else{
+            core.target().then((id) => {
+                me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+                me.settings['focusOperatorID'] = id
+                me.focusOperatorID = me.settings['focusOperatorID'];
+            })
+        }
+        
     })
 
     this.dialogUpdateSettings = function () {
@@ -436,7 +467,7 @@ core.registerOperator("itemList", function (operator) {
         function () {
             if (d.querySelector(".adpt").value != "") {
                 me.settings.properties[d.querySelector(".adpt").value] = 'text';
-                d.querySelector(".adpt").value="";
+                d.querySelector(".adpt").value = "";
             } else {
                 me.settings.properties[d.querySelector("select._prop").value] = 'text';
             }
@@ -447,21 +478,23 @@ core.registerOperator("itemList", function (operator) {
     //the filter property.
     d.querySelector("input[data-role='filterProp']").addEventListener("input", function (e) {
         me.settings.filterProp = e.target.value;
-        try{
-            me.filter=eval(me.settings.filterProp);
-        }catch(e){
-            me.filter=(itm)=>{return itm[me.settings.filterProp]};
+        try {
+            me.filter = eval(me.settings.filterProp);
+        } catch (e) {
+            me.filter = (itm) => {
+                return itm[me.settings.filterProp]
+            };
         }
     })
 
     me.proplist = me.dialogDiv.querySelector(".proplist");
-    
+
     //Handle select's in proplist
     me.proplist.addEventListener('change', function (e) {
         me.settings.properties[e.target.dataset.role] = e.target.value;
     })
     me.proplist.addEventListener('click', function (e) {
-        if (e.target.matches("[data-krole]")){
+        if (e.target.matches("[data-krole]")) {
             delete me.settings.properties[e.target.dataset.krole];
         }
         me.showDialog();
@@ -472,9 +505,9 @@ core.registerOperator("itemList", function (operator) {
     //Style tags button
 
     core.on("focus", function (data) {
-        if (me.settings.operationMode=="focus"){
-            if (data.sender.container.container.uuid==me.settings.focusOperatorID){
-                me.settings.filterProp=data.id;
+        if (me.settings.operationMode == "focus") {
+            if (data.sender.container.container.uuid == me.settings.focusOperatorID) {
+                me.settings.filterProp = data.id;
             }
         }
         me.focusItem(data.id);

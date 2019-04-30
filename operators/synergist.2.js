@@ -3,6 +3,7 @@ core.registerOperator("itemcluster2", {
     description: "Another version of itemcluster. Will eventually replace 1... be ready!"
 }, function (container) {
     let me = this;
+    addEventAPI(this);
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {};
     this.rootdiv = document.createElement("div");
@@ -182,13 +183,17 @@ core.registerOperator("itemcluster2", {
             //Show blank
         } else {
             if (!core.items[me.settings.currentViewName]) {
-                me.switchView();
-                return;
+                if (assert) {
+                    core.items[me.settings.currentViewName] = {};
+                } else {
+                    me.switchView();
+                    return;
+                }
             }
             if (!core.items[me.settings.currentViewName].itemcluster) {
                 if (assert) {
                     core.items[me.settings.currentViewName].itemcluster = {
-                        viewName: core.items[ln].title
+                        viewName: core.items[ln].title || ln
                     };
                     core.fire("updateItem", {
                         id: me.settings.currentViewName
@@ -289,12 +294,12 @@ core.registerOperator("itemcluster2", {
             }
         })
         me.rootcontextMenu.querySelector(".collect").addEventListener("click", () => {
-            for (let i in core.items){
-                if (core.items[i].synergist && core.items[i].synergist.viewData && core.items[i].synergist.viewData[me.settings.currentViewName]){
-                    core.items[i].synergist.viewData[me.settings.currentViewName].x=(rect2.left - rect.left) / me.itemSpace.clientWidth +
-                    (core.items[me.settings.currentViewName].itemcluster.cx || 0);
-                    core.items[i].synergist.viewData[me.settings.currentViewName].y=(rect2.top - rect.top) / me.itemSpace.clientHeight +
-                    (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+            for (let i in core.items) {
+                if (core.items[i].synergist && core.items[i].synergist.viewData && core.items[i].synergist.viewData[me.settings.currentViewName]) {
+                    core.items[i].synergist.viewData[me.settings.currentViewName].x = (rect2.left - rect.left) / me.itemSpace.clientWidth +
+                        (core.items[me.settings.currentViewName].itemcluster.cx || 0);
+                    core.items[i].synergist.viewData[me.settings.currentViewName].y = (rect2.top - rect.top) / me.itemSpace.clientHeight +
+                        (core.items[me.settings.currentViewName].itemcluster.cy || 0);
                 }
             }
         })
@@ -423,19 +428,34 @@ core.registerOperator("itemcluster2", {
             let rect = me.svg.select("[data-id='" + id + "']").members[0];
             if (!rect) {
                 //need to make a new rectangle
-                rect = me.svg.nested().attr({
+                //let _rect = rect.rect(100, 50);
+                rect = me.svg.foreignObject(100, 50).attr({
                     "data-id": id,
                     class: "floatingItem"
                 });
-                //let _rect = rect.rect(100, 50);
-                let _fobj = rect.foreignObject(100, 50);
-                _fobj.appendChild("textarea");
+                rect.appendChild("textarea");
             }
             if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                 rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
-            me.rootdiv.querySelector("[data-id='"+id+"']>foreignObject>textarea").value=core.items[id].title || "";
+            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").value = core.items[id].title || "";
+            if (!core.items[id].boxsize) {
+                core.items[id].boxsize = {
+                    w: "200px",
+                    h: "100px"
+                };
+            }
+            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.width = core.items[id].boxsize.w || "";
+            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.height = core.items[id].boxsize.h || "";
+            rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
+
+            //draw its lines
+            if (core.items[id].itemcluster && core.items[id].itemcluster.links) {
+                for (let i in core.items[id].itemcluster.links) {
+                    me.enforceLine(i, id);
+                }
+            }
 
             /*
             .fill('#0044dd')
@@ -445,15 +465,117 @@ core.registerOperator("itemcluster2", {
             .click(selectThis);
             */
             //also delete lines associated with it
+
+            //send an updated item list to everyone who is listening to me
+            let existingItems=me.rootdiv.querySelectorAll("[data-id='" + id + "']");
+            let eis=[];
+            for (let i=0;i<existingItems.length;i++)eis.push(existingItems[i].dataset.id);
+            me.fire('updateItemList',eis);
+
             return true;
         }
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //Lines api
+
+
+        me.linkingLine = me.svg.line(0, 0, 0, 0).stroke({
+            width: 5
+        }).back();
+        me.activeLines = {};
+        me.toggleLine = function (start, end) {
+            //enforce start is start end is end
+            let _start = start;
+            let _end = end;
+            start = 0;
+            end = 0;
+            for (i in _start) start = start + _start.charCodeAt(i)
+            for (i in _end) end = end + _end.charCodeAt(i)
+            if (start > end) {
+                start = _start;
+                end = _end;
+            } else {
+                start = _end;
+                end = _start;
+            }
+            //check if linked; if linked, remove link
+            if (!core.items[start].itemcluster.links)
+                core.items[start].itemcluster.links = {};
+            if (!core.items[end].itemcluster.links)
+                core.items[end].itemcluster.links = {};
+            if (core.items[start].itemcluster.links[end]) {
+                delete core.items[start].itemcluster.links[end];
+                delete core.items[end].itemcluster.links[start];
+                if (me.activeLines[start]) me.activeLines[start][end].remove();
+                delete me.activeLines[start][end];
+            } else {
+                //otherwise create link
+                core.items[start].itemcluster.links[end] = true;
+                core.items[end].itemcluster.links[start] = true;
+                me.enforceLine(start, end);
+            }
+        };
+
+
+        me.enforceLine = function (start, end) {
+            let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
+            let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
+            if (!sd || !ed) {
+                return;
+            }
+            //ordering  
+            let _start = start;
+            let _end = end;
+            start = 0;
+            end = 0;
+            for (i in _start) start = start + _start.charCodeAt(i)
+            for (i in _end) end = end + _end.charCodeAt(i)
+            if (start > end) {
+                start = _start;
+                end = _end;
+            } else {
+                start = _end;
+                end = _start;
+            }
+            //check if line already exists
+            if (me.activeLines[start] && me.activeLines[start][end]) {
+                l = me.activeLines[start][end];
+            } else {
+                l = me.svg.line(0, 0, 0, 0).stroke({
+                    width: 3
+                });
+                if (!me.activeLines[start]) me.activeLines[start] = {};
+                me.activeLines[start][end] = l;
+            }
+            let r1 = sd.getBoundingClientRect();
+            let r2 = ed.getBoundingClientRect();
+            let rb = me.itemSpace.getBoundingClientRect();
+            //if either is not visible, then dont draw
+            if (sd.style.display == "none" || ed.style.display == "none") {
+                l.hide();
+                return;
+            }
+            l.show();
+            l.plot(
+                r1.left + r1.width / 2 - rb.left,
+                r1.top + r1.height / 2 - rb.top,
+                r2.left + r2.width / 2 - rb.left,
+                r2.top + r2.height / 2 - rb.top
+            );
+            try {
+                l.back();
+            } catch (e) {}
+        };
+
+        //arrange items 
+        for (let i in core.items) {
+            me.arrangeItem(i);
+        }
+        //twice for lines
         for (let i in core.items) {
             me.arrangeItem(i);
         }
     });
-
-    this.itemSpace.addEventListener("resize",(e)=>{console.log(e)});
-
     this.itemSpace.addEventListener("click", function (e) {
         if (me.preselected) {
             me.preselected.classList.remove("selected");
@@ -586,8 +708,10 @@ core.registerOperator("itemcluster2", {
             }
             //if we are moving something ensure it wont be twice-click selected.
             me.preselected = undefined;
-
-
+            //redraw all lines
+            for (let i in me.activeLines) {
+                for (let j in me.activeLines[i]) me.enforceLine(i, j);
+            }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
             let rect = me.linkingDiv.getBoundingClientRect();
@@ -664,13 +788,13 @@ core.registerOperator("itemcluster2", {
             me.linking = false;
             //change the data
             let linkedTo;
-            let elements = operator.div.elementsFromPoint(e.clientX, e.clientY);
+            let elements = container.div.elementsFromPoint(e.clientX, e.clientY);
             for (let i = 0; i < elements.length; i++) {
                 if (
-                    elements[i].matches(".floatingItem") &&
-                    elements[i] != me.linkingDiv
+                    elements[i].matches("textarea") &&
+                    elements[i].parentElement.dataset.id != me.linkingDiv.dataset.id
                 ) {
-                    linkedTo = elements[i];
+                    linkedTo = elements[i].parentElement;
                     break;
                 }
             }
@@ -687,6 +811,12 @@ core.registerOperator("itemcluster2", {
                     id: linkedTo.dataset.id
                 });
             }
+        } else if (me.preselected) {
+            if (!core.items[me.preselected.dataset.id].boxsize) core.items[me.preselected.dataset.id].boxsize = {};
+            bs = core.items[me.preselected.dataset.id].boxsize;
+            bs.w = me.preselected.children[0].style.width;
+            bs.h = me.preselected.children[0].style.height;
+            me.arrangeItem(me.preselected.dataset.id); // handle resizes
         }
     };
 
@@ -774,17 +904,22 @@ core.registerOperator("itemcluster2", {
         });
     };
 
-    this.rootdiv.addEventListener("input",(e)=>{
-        if (e.target.parentElement.parentElement.matches("[data-id]")){
-            let id=e.target.parentElement.parentElement.dataset.id;
-            core.items[id].title=e.target.value;
-            core.fire("updateItem",{id:id,sender:this});
+    this.rootdiv.addEventListener("input", (e) => {
+        if (e.target.parentElement.matches("[data-id]")) {
+            let id = e.target.parentElement.dataset.id;
+            core.items[id].title = e.target.value;
+            core.fire("updateItem", {
+                id: id,
+                sender: this
+            });
         }
     })
     ///////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////Lines API//////////////////
     //
+
+
     /*
     scriptassert([
         ["svg", "3pt/svg.min.js"]
@@ -794,67 +929,6 @@ core.registerOperator("itemcluster2", {
             width: 5
         });
         me.activeLines = {};
-        me.toggleLine = function (start, end) {
-            //check if linked; if linked, remove link
-            if (!core.items[start].itemcluster.links)
-                core.items[start].itemcluster.links = {};
-            if (core.items[start].itemcluster.links[end]) {
-                delete core.items[start].itemcluster.links[end];
-                if (me.activeLines[start]) me.activeLines[start][end].remove();
-                delete me.activeLines[(start, end)];
-            } else {
-                //otherwise create link
-                core.items[start].itemcluster.links[end] = true;
-                me.enforceLine(start, end);
-            }
-        };
-
-        me.enforceLine = function (start, end) {
-            //check if line already exists
-            if (me.activeLines[start] && me.activeLines[start][end]) {
-                l = me.activeLines[start][end];
-            } else {
-                l = me.svg.line(0, 0, 0, 0).stroke({
-                    width: 3
-                });
-                if (!me.activeLines[start]) me.activeLines[start] = {};
-                me.activeLines[start][end] = l;
-            }
-            let _start = start;
-            let _end = end;
-            start = 0;
-            end = 0;
-            for (i in _start) start = start + _start.charCodeAt(i)
-            for (i in _end) end = end + _end.charCodeAt(i)
-            if (start > end) {
-                start = _start;
-                end = _end;
-            } else {
-                start = _end;
-                end = _start;
-            }
-            let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
-            let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
-            if (!sd || !ed) {
-                l.remove();
-                return;
-            }
-            let r1 = sd.getBoundingClientRect();
-            let r2 = ed.getBoundingClientRect();
-            let rb = me.itemSpace.getBoundingClientRect();
-            //if either is not visible, then dont draw
-            if (sd.style.display == "none" || ed.style.display == "none") {
-                l.hide();
-                return;
-            }
-            l.show();
-            l.plot(
-                r1.left + r1.width / 2 - rb.left,
-                r1.top + r1.height / 2 - rb.top,
-                r2.left + r2.width / 2 - rb.left,
-                r2.top + r2.height / 2 - rb.top
-            );
-        };
         me.toDrawLineCache = {};
         me.updateLines = function (id) {
             //check cache to see if any lines need to be drawn to me
@@ -907,7 +981,7 @@ core.registerOperator("itemcluster2", {
     //Core interactions
 
     this.resize = function () {
-        if (me.svg) me.svg.size(me.rootdiv.clientWidth,me.rootdiv.clientHeight);
+        if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
         me.switchView(me.settings.currentViewName, true);
     };
     //Saving and loading

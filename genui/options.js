@@ -55,20 +55,23 @@ var _option=(function(){
                 appendedElement = document.createElement("input");
                 appendedElement.type = "checkbox";
                 appendedElement.addEventListener("input", () => {
-                    settings["object"][settings["property"]] = appendedElement.checked;
+                    let actualObject=iff(settings.object);
+                    actualObject[settings["property"]] = appendedElement.checked;
                 })
                 break;
             case "text":
                 appendedElement = document.createElement("input");
                 appendedElement.style.display="block";
                 appendedElement.addEventListener("input", () => {
-                    settings["object"][settings["property"]] = appendedElement.value;
+                    let actualObject=iff(settings.object);
+                    actualObject[settings["property"]] = appendedElement.value;
                 })
                 break;
             case "select":
                 appendedElement = document.createElement("select");
                 appendedElement.addEventListener("changed", () => {
-                    settings["object"][settings["property"]] = appendedElement.value;
+                    let actualObject=iff(settings.object);
+                    actualObject[settings["property"]] = appendedElement.value;
                 })
                 break;
         }
@@ -83,13 +86,14 @@ var _option=(function(){
         }
         //initially load the property value.
         this.load = function () {
+            let actualObject=iff(settings.object);
             switch (settings.type) {
                 case "bool":
-                    if (settings["object"][settings["property"]])appendedElement.checked = settings["object"][settings["property"]];
+                    if (actualObject[settings["property"]])appendedElement.checked = actualObject[settings["property"]];
                     else appendedElement.checked = false;
                     break;
                 case "text":
-                    if (settings["object"][settings["property"]])appendedElement.value = settings["object"][settings["property"]];
+                    if (actualObject[settings["property"]])appendedElement.value = actualObject[settings["property"]] || "";
                     else appendedElement.value ="";
                     break;
                 case "select":

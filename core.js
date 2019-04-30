@@ -64,16 +64,21 @@ function _core() {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Accept loading sources; default is local saving.
 
-    this.queryLoader = new _queryLoader({
-        loaders: [{
-            f: function (id) {
-                loadFromURL();
-            }
-        }],
-        blank: function () {
+    //bye queryloaderrr you basically do nothing cry
+    document.addEventListener("DOMContentLoaded", () => {
+        let params = new URLSearchParams(window.location.search);
+        if (params.has("doc")) {
+            loadFromURL(params);
+        } else if (params.has("state")) {
+            //hello google drive!
+            //convert from state to GD
+            window.location.href=window.location.origin+window.location.pathname+"?doc="+JSON.parse(params.get("state")).ids[0] + "&src=gd";
+            //check oauth status and then redirect and convert into a form that we understand
+        } else {
             me.filescreen.showSplash();
         }
-    });
+    })
+
 
     this.saveSources = [];
 
@@ -83,9 +88,9 @@ function _core() {
         if (me.saveSources[id].dialog) me.loadInnerDialog.appendChild(me.saveSources[id].dialog);
     }
 
-    function loadFromURL() { // very first load
+    function loadFromURL(params) { // very first load
         //screw the id, we just gonna use urlparams straight up
-        let params = new URLSearchParams(window.location.search);
+
         let source = params.get("src") || 'lf';
         let id = params.get("doc");
         userLoad(source, id, true);
@@ -97,12 +102,12 @@ function _core() {
         if (me.saveSources[source]) {
             me.currentDocName = id;
             //put up a wall
-            document.querySelector(".wall").style.display="block";
+            document.querySelector(".wall").style.display = "block";
 
 
             //load from loadsource
             me.saveSources[source].pullAll(id).then((d) => {
-                document.querySelector(".wall").style.display="none";
+                document.querySelector(".wall").style.display = "none";
                 let params = new URLSearchParams(window.location.search);
                 if (!d) {
                     d = {
@@ -110,14 +115,14 @@ function _core() {
                         saveSources: {},
                         currentView: "default",
                         views: {},
-                        items:{}
+                        items: {}
                     }
                     if (!params.has("auto")) {
                         d.displayName = id;
                     } else {
                         d.displayName = "New Workspace"
                     }
-                    d.saveSources[source]=id;
+                    d.saveSources[source] = id;
                     /*if (!tutorialStarted) {
                         core.tutorial.start();
                     }*/
@@ -138,7 +143,7 @@ function _core() {
                 }
                 for (let i in d.saveSources) {
                     if (me.saveSources[i]) {
-                        if (me.saveSources[i].hook)me.saveSources[i].hook(d.saveSources[i]);
+                        if (me.saveSources[i].hook) me.saveSources[i].hook(d.saveSources[i]);
                     } else {
                         console.log("Warning - The save source " + i + " is not available on this computer. Some saving functions may be disabled.");
                     }
@@ -152,7 +157,7 @@ function _core() {
             return;
         }
     }
-    this.userLoad=userLoad;
+    this.userLoad = userLoad;
 
     this.fromSaveData = function (data) {
         //load metadata, including views
@@ -168,9 +173,10 @@ function _core() {
             });
         }
         this.updateSettings();
+        me.unsaved = false;
     }
 
-    this.toSaveData=function(){
+    this.toSaveData = function () {
         //patch current doc
         me.currentDoc.views[me.currentDoc.currentView] = me.baseRect.toSaveData();
         //clean up
@@ -195,10 +201,12 @@ function _core() {
         //upgrade older save systems
         let d = me.toSaveData();
         if (!me.currentDoc.saveSources) {
-            me.currentDoc.saveSources = {lf:me.currentDocName};
+            me.currentDoc.saveSources = {
+                lf: me.currentDocName
+            };
         }
         for (let i in me.currentDoc.saveSources) {
-            me.saveSources[i].pushAll(me.currentDoc.saveSources[i],d);
+            me.saveSources[i].pushAll(me.currentDoc.saveSources[i], d);
         }
     }
 
@@ -222,7 +230,7 @@ function _core() {
         me.fire("updateSettings");
     };
 
-    let tc=new capacitor(1000,10,()=>{
+    let tc = new capacitor(1000, 10, () => {
         core.fire("updateDoc");
     })
     documentReady(() => {
@@ -249,6 +257,8 @@ function _core() {
             1
         );
         this.baseRect.fromSaveData(me.currentDoc.views[view]);
+        this.baseRect.pos = 0;
+        this.baseRect.firstOrSecond = 1;
         //set user's current view
         me.currentDoc.currentView = view;
         me.saveUserData();
@@ -289,19 +299,6 @@ function _core() {
         }
     };
     //live operators
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
-            document.body.querySelector(".rectspace").innerHTML = "";
-            me.baseRect = new _rect(
-                me,
-                document.body.querySelector(".rectspace"),
-                RECT_ORIENTATION_X,
-                0,
-                1
-            )
-        }
-    );
     this.getOperator = function (id) {
         return me.baseRect.getOperator(id);
     }
@@ -404,15 +401,19 @@ function _core() {
     let autosaveOp = new _option({
         div: this.loadInnerDialog,
         type: "bool",
-        object: ()=>{return me.currentDoc},
+        object: () => {
+            return me.currentDoc
+        },
         property: "autosave",
         label: "Autosave all changes"
     });
     documentReady(() => {
         document.body.appendChild(loadDialog);
         document.querySelector(".saveSources").addEventListener("click", () => {
+            for (let i in me.saveSources)
+                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
             autosaveOp.load();
-            loadDialog.style.display="block";
+            loadDialog.style.display = "block";
         });
     });
     //----------Autosave----------//
@@ -520,8 +521,17 @@ function _core() {
   
     }
     */
-
-
+    //a little nicety to warn user of unsaved items.
+    this.unsaved = false;
+    me.on("updateView,updateItem", (e) => {
+        me.unsaved = true;
+    })
+    window.addEventListener("beforeunload", (e) => {
+        if (me.unsaved) {
+            e.preventDefault();
+            e.returnValue = "Hold up, you seem to have some unsaved changes. Are you sure you want to close this window?";
+        }
+    })
 
 
 
@@ -539,6 +549,7 @@ document.addEventListener("DOMContentLoaded", e => {
         if (e.ctrlKey && e.key == "s") {
             core.userSave();
             e.preventDefault();
+            core.unsaved = false;
             //also do the server save
         }
     });

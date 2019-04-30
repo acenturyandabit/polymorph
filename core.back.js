@@ -322,6 +322,12 @@ function _core() {
       0,
       1
     );
+    //enforce some basics re: the view
+    me.views[view].s=0;
+    me.views[view].x=0;
+    me.views[view].f=0;
+    me.views[view].p=1;
+    
     this.baseRect.fromSaveData(me.views[view]);
     //set user's current view
     me.userCurrentDoc.currentView = view;

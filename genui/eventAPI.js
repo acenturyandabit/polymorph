@@ -1,4 +1,4 @@
-//v1.1: added ketching
+//v1.1
 //eventapi.js: A quick event handler add-on for anything that requires an event system.
 
 /*
@@ -36,6 +36,7 @@ function addEventAPI(itm) {
             if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
                 if (cnt != false) cnt = f(args, true)
             });
+            //fire each event
             if (itm.events[i].events) {
                 itm.events[i].events.forEach((f) => {
                     if (cnt == false) return;

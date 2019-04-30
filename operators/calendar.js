@@ -126,14 +126,17 @@ core.registerOperator("calendar", {
         });
         operator.div.appendChild(this.rootdiv);
         //Handle item updates
-        this.updateItem = function (id, sender) {
-            if (sender == this) return;
-            if (!core.items[id][me.settings.dateproperty]) return;
+        let updateItemCapacitor=new capacitor(1000,1000,()=>{
             try {
                 $(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }
+        },true);
+        this.updateItem = function (id, sender) {
+            if (sender == this) return;
+            if (!core.items[id][me.settings.dateproperty]) return;
+            updateItemCapacitor.submit();
             //Check if item is shown
             //return true or false based on whether we can or cannot edit the item from this operator
             return false;
@@ -145,8 +148,9 @@ core.registerOperator("calendar", {
                 console.log("JQUERY not ready yet :/");
             }
         });
+        
         core.on("updateItem", (d) => {
-            this.updateItem(d.id, d.sender)
+            this.updateItem(d.id, d.sender);
         });
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {

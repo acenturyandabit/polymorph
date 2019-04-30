@@ -25,7 +25,7 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
 
     this.dialog=document.createElement("div");
     this.dialog.innerHTML=`
-    <h1>Localforage (offline storage)</h1>
+    <h2>Localforage (offline storage)</h2>
     <span>
     <input>Save id</input>
     <button class="snow">Save now</button>
@@ -34,6 +34,7 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
     `;
     this.dialog.querySelector(".snow").addEventListener("click",()=>{
         this.pushAll(this.id,core.toSaveData());
+        core.filescreen.saveRecentDocument(core.docName, undefined, core.currentDoc.displayName);
     })
     this.dialog.querySelector(".lfs").addEventListener("click",()=>{
         core.userLoad("lf",this.id);
