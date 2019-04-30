@@ -824,9 +824,9 @@ core.registerOperator("itemcluster2", {
         if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
             let rect = me.itemSpace.getBoundingClientRect();
             me.createItem(
-                (e.pageX - rect.left) +
+                (e.pageX - rect.left) -
                 (core.items[me.settings.currentViewName].itemcluster.cx || 0),
-                (e.pageY - rect.top) +
+                (e.pageY - rect.top) -
                 (core.items[me.settings.currentViewName].itemcluster.cy || 0)
             );
             // Make a new item
