@@ -838,11 +838,11 @@ core.registerOperator("itemcluster2", {
         let it = me.rootdiv.querySelector(".floatingItem[data-id='" + id + "']");
         core.items[id].itemcluster.viewData[this.settings.currentViewName].x =
             (it.getBoundingClientRect().left -
-                me.itemSpace.getBoundingClientRect().left) +
+                me.itemSpace.getBoundingClientRect().left) -
             (core.items[me.settings.currentViewName].itemcluster.cx || 0);
         core.items[id].itemcluster.viewData[this.settings.currentViewName].y =
             (it.getBoundingClientRect().top -
-                me.itemSpace.getBoundingClientRect().top) +
+                me.itemSpace.getBoundingClientRect().top) -
             (core.items[me.settings.currentViewName].itemcluster.cy || 0);
         core.fire("updateItem", {
             id: id
