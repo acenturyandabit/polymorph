@@ -436,7 +436,7 @@ core.registerOperator("itemcluster2", {
                 rect.appendChild("textarea");
             }
             if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x + (core.items[me.settings.currentViewName].itemcluster.cx || 0), core.items[id].itemcluster.viewData[me.settings.currentViewName].y + (core.items[me.settings.currentViewName].itemcluster.cy || 0));
             }
             //fill in the textarea inside
             me.rootdiv.querySelector("[data-id='" + id + "']>textarea").value = core.items[id].title || "";
@@ -467,10 +467,10 @@ core.registerOperator("itemcluster2", {
             //also delete lines associated with it
 
             //send an updated item list to everyone who is listening to me
-            let existingItems=me.rootdiv.querySelectorAll("[data-id='" + id + "']");
-            let eis=[];
-            for (let i=0;i<existingItems.length;i++)eis.push(existingItems[i].dataset.id);
-            me.fire('updateItemList',eis);
+            let existingItems = me.rootdiv.querySelectorAll("[data-id='" + id + "']");
+            let eis = [];
+            for (let i = 0; i < existingItems.length; i++) eis.push(existingItems[i].dataset.id);
+            me.fire('updateItemList', eis);
 
             return true;
         }
@@ -677,7 +677,7 @@ core.registerOperator("itemcluster2", {
         }
     });
 
-    let c = new capacitor(300, 100, () => {
+    let c = new capacitor(100, 100, () => {
         me.switchView(me.settings.currentViewName);
     });
 
@@ -725,9 +725,9 @@ core.registerOperator("itemcluster2", {
         } else if (me.globalDrag) {
             // shift the view by delta
             core.items[me.settings.currentViewName].itemcluster.cx =
-                me.ocx - (e.pageX - me.dragDX) / me.itemSpace.clientWidth;
+                me.ocx + (e.pageX - me.dragDX);
             core.items[me.settings.currentViewName].itemcluster.cy =
-                me.ocy - (e.pageY - me.dragDY) / me.itemSpace.clientHeight;
+                me.ocy + (e.pageY - me.dragDY);
             //arrange all items
             c.submit();
         }
@@ -1013,7 +1013,7 @@ core.registerOperator("itemcluster2", {
             me.settings['focusOperatorID'] = id
             me.focusOperatorID = me.settings['focusOperatorID'];
         })
-    })
+    });
     this.showDialog = function () {
         for (i in me.settings) {
             let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
