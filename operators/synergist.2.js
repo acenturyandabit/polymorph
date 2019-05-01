@@ -400,7 +400,8 @@ core.registerOperator("itemcluster2", {
             //calculate X and Y positions
             for (let j = 0; j < visibleItems.length; j++) {
                 let i = visibleItems[j].id;
-                core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0) + visibleItems[j].iddx * 300 - counts[visibleItems[j].idx]*150;
+                let xfactor=200+100/counts[visibleItems[j].idx];
+                core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0) + visibleItems[j].iddx * xfactor - counts[visibleItems[j].idx]*xfactor/2;
                 core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0) + visibleItems[j].idx * 200;
                 me.arrangeItem(i);
             }
