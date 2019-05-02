@@ -116,21 +116,6 @@ function _pwaManager(userSettings) {
     manifestURL: "manifest.json"
   };
   Object.assign(this.settings, userSettings);
-  //NON-DOM initialisation
-  this.deferredPrompt = undefined;
-  window.addEventListener("beforeinstallprompt", e => {
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    if (this.deferredPrompt == "autofire") {
-      waitDOMExecute(() => {
-        e.prompt();
-      });
-    } else {
-      this.deferredPrompt = e;
-    }
-  });
-  window.addEventListener("appinstalled", evt => {});
 
   this.firePrompt = function () {
     function tryFirePrompt() {
