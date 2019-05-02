@@ -130,9 +130,8 @@ function _core() {
                 //reconcile that particular save source within the copy of the document
                 d.saveSources = d.saveSources || {}; //neat instadeclare!
                 d.saveSources[source] = id;
-                me.filescreen.saveRecentDocument(id, undefined, d.displayName);
                 me.fromSaveData(d);
-
+                me.filescreen.saveRecentDocument(id, undefined, me.currentDoc.displayName);
                 let tutorialStarted = false;
                 if (params.has("view")) {
                     me.currentDoc.currentView = params.get("view");
@@ -200,6 +199,7 @@ function _core() {
         //save to all sources
         //upgrade older save systems
         let d = me.toSaveData();
+        me.filescreen.saveRecentDocument(me.docName, undefined, me.currentDoc.displayName);
         if (!me.currentDoc.saveSources) {
             me.currentDoc.saveSources = {
                 lf: me.currentDocName
