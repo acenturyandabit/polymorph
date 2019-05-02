@@ -2,15 +2,22 @@
 
 
 function _dateParser() {
-    let me=this;
-    this.dateParserRegexes = [
-        {
+    let me = this;
+    this.dateParserRegexes = [{
             name: "repetition",
             regex: /\((\d+)*\)/ig,
             operate: function (regres, d, data) {
-                if (regres[1]){
+                if (regres[1]) {
                     data.repetition = Number(regres[1]);
-                }else data.repetition = -1;
+                } else data.repetition = -1;
+            }
+        },
+        {
+            name: "pmtime",
+            regex: /(\d+)(am|pm)/g,
+            operate: function (regres, d, data) {
+                d.setHours(Number(regres[1]));
+                if (regres[2] == 'pm') d.setHours(Number(regres[1]) + 12);
             }
         },
         {
@@ -57,7 +64,7 @@ function _dateParser() {
         {
             name: "dayofweek",
             regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
-            operate: function (regres, d, data,refdate) {
+            operate: function (regres, d, data, refdate) {
                 data.nextDay = 0;
                 for (i = 0; i < regres.length; i++) {
                     if (regres[i] != undefined) {
@@ -142,13 +149,13 @@ function _dateParser() {
         }
     ];
     this.reverse = false;
-    this.extractTime = function (str,refdate) {
+    this.extractTime = function (str, refdate) {
         let d;
-        if (!refdate){
+        if (!refdate) {
             d = new Date();
-            refdate=new Date();
-        }else{
-            d=new Date(refdate.getTime());
+            refdate = new Date();
+        } else {
+            d = new Date(refdate.getTime());
         }
         me.tempdata = {
             hr: 9,
@@ -159,7 +166,7 @@ function _dateParser() {
         for (let z = 0; z < this.dateParserRegexes.length; z++) {
             this.dateParserRegexes[z].regex.lastIndex = 0; //force reset regexes
             while ((regres = this.dateParserRegexes[z].regex.exec(str)) != null) {
-                this.dateParserRegexes[z].operate(regres, d, me.tempdata,refdate);
+                this.dateParserRegexes[z].operate(regres, d, me.tempdata, refdate);
                 seen = true;
             }
         }
@@ -169,7 +176,7 @@ function _dateParser() {
         //returns a Date() object, or undefined.
     }
 
-    this.richExtractTime=function(str, refdate){
+    this.richExtractTime = function (str, refdate) {
         //returns an array of the form:
         /*
         refdate is a Date().
@@ -178,53 +185,61 @@ function _dateParser() {
         part: substring that resulted in this date
         endDate: end date (integer)}
         */
-        let orefdate=refdate;
-        let dvchain=str.split("&");
-        let result=[];//see below.
+        let orefdate = refdate;
+        let dvchain = str.split("&");
+        let result = []; //see below.
         for (let k = 0; k < dvchain.length; k++) {
             //Check for repetition structure.
-            let rsplit=/\((?:([^\)\|]*?)\|)?([^\|\)]+?)(\|((?:[^\|\)]*?)*))?\)/g.exec(dvchain[k]);
+            let rsplit = /\((?:([^\)\|]*?)\|)?([^\|\)]+?)(\|((?:[^\|\)]*?)*))?\)/g.exec(dvchain[k]);
             let toParse;
-            let reps=1;
-            let part=dvchain[k];
-            refdate=undefined;
-            if (rsplit){
-                if (rsplit[3]){
-                    if (!refdate)refdate=this.extractTime(rsplit[1]);
-                    part = "("+refdate.toLocaleString()+"|"+rsplit[2]+"|"+rsplit[4]+")";
-                    reps=Number(rsplit[4]);
-                    if (isNaN(reps))reps=-1;
-                }else if (rsplit[1]){
-                    if (!refdate)refdate=new Date();
-                    part = "("+refdate.toLocaleString()+"|"+rsplit[1]+"|"+rsplit[2]+")";
-                    reps=Number(rsplit[2]);
-                    if (isNaN(reps))reps=-1;
-                    rsplit[2]=rsplit[1];
-                }else{
-                    if (!refdate)refdate=new Date();
-                    part = "("+refdate.toLocaleString()+"|"+rsplit[2]+"|)";
-                    reps=-1;
+            let reps = 1;
+            let part = dvchain[k];
+            refdate = undefined;
+            if (rsplit) {
+                if (rsplit[3]) {
+                    if (!refdate) refdate = this.extractTime(rsplit[1]);
+                    part = "(" + refdate.toLocaleString() + "|" + rsplit[2] + "|" + rsplit[4] + ")";
+                    reps = Number(rsplit[4]);
+                    if (isNaN(reps)) reps = -1;
+                } else if (rsplit[1]) {
+                    if (!refdate) refdate = new Date();
+                    part = "(" + refdate.toLocaleString() + "|" + rsplit[1] + "|" + rsplit[2] + ")";
+                    reps = Number(rsplit[2]);
+                    if (isNaN(reps)) reps = -1;
+                    rsplit[2] = rsplit[1];
+                } else {
+                    if (!refdate) refdate = new Date();
+                    part = "(" + refdate.toLocaleString() + "|" + rsplit[2] + "|)";
+                    reps = -1;
                 }
-                toParse=rsplit[2];
-            }else{
-                toParse=dvchain[k];//the whole thing
+                toParse = rsplit[2];
+            } else {
+                toParse = dvchain[k]; //the whole thing
             }
-            if (!orefdate && !refdate)refdate=new Date();
-            else if (orefdate)refdate=orefdate;
-            let db=toParse.split(">");
-            let subj=undefined;    
-            let begin=this.extractTime(db[0],refdate);
-            if (begin){
-                subj={date:begin.getTime(),part:part,opart:dvchain[k],refdate:refdate.getTime(),reps:reps};
-                if (db[1]){
-                    let endDate=me.extractTime(db[1],begin);
-                    if (endDate)subj.endDate=endDate.getTime();
-                    else subj.endDate=begin.getTime()+1000*60*60;// add one hour (will change to some standard time parameter in the future)
-                }else subj.endDate=begin.getTime()+1000*60*60;
+            if (!orefdate && !refdate) refdate = new Date();
+            else if (orefdate) refdate = orefdate;
+            let db = toParse.split(">");
+            let subj = undefined;
+            let begin = this.extractTime(db[0], refdate);
+            if (begin) {
+                subj = {
+                    date: begin.getTime(),
+                    part: part,
+                    opart: dvchain[k],
+                    refdate: refdate.getTime(),
+                    reps: reps
+                };
+                if (db[1]) {
+                    let endDate = me.extractTime(db[1], begin);
+                    if (endDate) subj.endDate = endDate.getTime();
+                    else subj.endDate = begin.getTime() + 1000 * 60 * 60; // add one hour (will change to some standard time parameter in the future)
+                } else subj.endDate = begin.getTime() + 1000 * 60 * 60;
                 result.push(subj);
             }
         }
-        result.sort((a,b)=>{return a.date-b.date});
+        result.sort((a, b) => {
+            return a.date - b.date
+        });
         return result;
         //returns an array of objects of the form:
         /*
@@ -239,28 +254,28 @@ function _dateParser() {
 
         */
     }
-    
+
     //Create calendar items for fullcalendar.io and other similar things.
-    this.getCalendarTimes=function(dateArray, start, end){
+    this.getCalendarTimes = function (dateArray, start, end) {
         // Param: dateArray: as specified above. start: date.getTime() of the starting date. end: date.getTime() of the ending date.
         //Get the date once
         let output;
-        let results=[];
-        for (let i=0;i<dateArray.length;i++){
-            let refstart=new Date(dateArray[i].refdate);
-            let recurCount=dateArray[i].reps;
-            do{
-                output=this.richExtractTime(dateArray[i].part,refstart)[0];
-                if (!output)break;
-                results.push(output);//um it's an array?
+        let results = [];
+        for (let i = 0; i < dateArray.length; i++) {
+            let refstart = new Date(dateArray[i].refdate);
+            let recurCount = dateArray[i].reps;
+            do {
+                output = this.richExtractTime(dateArray[i].part, refstart)[0];
+                if (!output) break;
+                results.push(output); //um it's an array?
                 recurCount--;
-                refstart=new Date(output.endDate);
-            }while (output.date<end && recurCount!=0);
+                refstart = new Date(output.endDate);
+            } while (output.date < end && recurCount != 0);
         }
         return results;
         //Return an array of objects like the ones above.
         /*
-        */
+         */
     }
 
     // quarterMaster.itemComparer = function (a, b) {end
@@ -314,4 +329,4 @@ function _dateParser() {
     // });
 }
 
-var dateParser= new _dateParser();
+var dateParser = new _dateParser();

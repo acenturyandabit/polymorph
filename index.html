@@ -35,8 +35,8 @@
         //ok now the PWA manager
         var pwaManager = new _pwaManager({
             prompt: (e) => {
-                document.querySelector("installPrompt").style.display="block";
-                document.querySelector("installPrompt button").addEventListener("click",()=>{
+                document.querySelector(".installPrompt").style.display="block";
+                document.querySelector(".installPrompt button").addEventListener("click",()=>{
                     e.prompt();
                 })
             }
