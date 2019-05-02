@@ -168,7 +168,7 @@ function _filescreen(userSettings) {
     this.saveRecentDocument = function (id, url, displayName) {
         if (!url) url = window.location.href;
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
-        if (!recents) recents = {};
+        if (!recents || recents.constructor.name!="Object") recents = {}; //upgrade older versions
         recents[id] = {
             url: url,
             displayName: displayName || id

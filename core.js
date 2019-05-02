@@ -199,7 +199,7 @@ function _core() {
         //save to all sources
         //upgrade older save systems
         let d = me.toSaveData();
-        me.filescreen.saveRecentDocument(me.docName, undefined, me.currentDoc.displayName);
+        me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
         if (!me.currentDoc.saveSources) {
             me.currentDoc.saveSources = {
                 lf: me.currentDocName
@@ -226,7 +226,7 @@ function _core() {
         ).innerText = this.currentDoc.displayName;
         document.querySelector("title").innerHTML =
             this.currentDoc.displayName + " - Polymorph";
-        me.filescreen.saveRecentDocument(me.docName, undefined, me.currentDoc.displayName);
+        me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
         me.fire("updateSettings");
     };
 
