@@ -1,4 +1,4 @@
-// V4.0: Added cutpoints for reducing codesize, and increasd modularity (i will try es6 imports in a bit)
+// V5.0: Closure! and also beforeunload management!
 
 /*
 CUTPOINTS:
@@ -9,8 +9,6 @@ A cross-client messaging service. Accepts messages of the type:
   type:"broadcast"
   data:{whatever}
 }
-//broadcast
-
 
 Installation is easy! Just follow these three steps:
 1. Add this script to your root directory with your index.html.
@@ -19,12 +17,19 @@ Installation is easy! Just follow these three steps:
 <script>
 var pwaManager = new _pwaManager();
 </script>
-
 And you're done!
+
+If you want to handle the beforeinstallprompt function, specify it in the options:
+var pwaManager = new _pwaManager({
+  prompt:(e)=>{
+    e.prompt();
+  }
+});
 
 Call pwaExtract() from a developer console to find a list of active scripts and links on your page for caching. 
 Place those scripts in the 'urlsToCache' property and you'll be ready to go.
 */
+var _pwaManager=(()=>{
 let serviceWorkerSettings = {
   urlsToCache: [
     "3pt/firebase-app.js",
@@ -166,6 +171,12 @@ function _pwaManager(userSettings) {
 
   if (document.readyState != "loading") this._init();
   else document.addEventListener("DOMContentLoaded", () => this._init());
+
+  //beforeunload event
+  if (this.settings.prompt){
+    document.addEventListener("beforeinstallprompt",this.settings.prompt);
+  }
+
 }
 
 try {
@@ -276,6 +287,8 @@ try {
   });
   //broadcast
 }
+return _pwaManager;
+})();
 /*
 A sample web app manifest. Put this in a file in your home directory!
 (you may have to add or remove icons - this template has them as a reference.)
