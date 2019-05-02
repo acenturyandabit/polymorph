@@ -59,9 +59,9 @@ let serviceWorkerSettings = {
     "operators/itemList.js",
     "operators/descbox.js",
     "operators/calendar.js",
-    "operators/iframe.js",
+    //"operators/iframe.js",
     "operators/synergist.js",
-    "operators/quillbox.js",
+    //"operators/quillbox.js",
     "operators/stack.js",
     "operators/terminal.js",
     "operators/timeline.js",
@@ -159,7 +159,7 @@ function _pwaManager(userSettings) {
 
   //beforeunload event
   if (this.settings.prompt){
-    document.addEventListener("beforeinstallprompt",this.settings.prompt);
+    window.addEventListener("beforeinstallprompt",this.settings.prompt);
   }
 
 }
