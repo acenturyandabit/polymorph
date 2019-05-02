@@ -95,7 +95,12 @@ core.registerOperator("itemList", function (operator) {
     this.updateItem = function (id, sender) {
         let it = core.items[id];
         //First check if we should show the item
-        if (!mf(me.settings.filterProp, it)) return false;
+        if (!mf(me.settings.filterProp, it)) {
+            //if existent, remove
+            let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
+            if (currentItemSpan)currentItemSpan.remove();
+            return false;
+        }
         //Then check if the item already exists; if so then update it
         let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
         if (!currentItemSpan) {
@@ -175,8 +180,8 @@ core.registerOperator("itemList", function (operator) {
         }
     }
 
-    core.on("deleteItem", (d) => {
-        me.deleteItem(d.id)
+    core.on("deletedItem", (d) => {
+        me.deleteItem(d.id);
     });
 
     this.updateSettings = function () {

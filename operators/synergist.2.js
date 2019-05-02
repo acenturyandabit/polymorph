@@ -336,7 +336,8 @@ core.registerOperator("itemcluster2", {
                     visibleItems.push({
                         id: i,
                         x: core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
-                        y: core.items[i].itemcluster.viewData[me.settings.currentViewName].y
+                        y: core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
+                        children: []
                     });
                 }
             }
@@ -351,10 +352,12 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < visibleItems.length; i++) {
                 if (core.items[visibleItems[i].id].itemcluster.links) {
                     for (let j in core.items[visibleItems[i].id].itemcluster.links) {
-                        links.push({
-                            a: visibleItems[i].id,
-                            b: j
-                        });
+                        if (indexedOrder.indexOf(visibleItems[i].id) > -1 && indexedOrder.indexOf(j) > -1) {
+                            links.push({
+                                a: visibleItems[i].id,
+                                b: j
+                            });
+                        }
                     }
                 }
             }
@@ -390,21 +393,68 @@ core.registerOperator("itemcluster2", {
             visibleItems.sort((a, b) => {
                 return (a.idx - b.idx) + !(a.idx - b.idx) * (a.x - b.x);
             })
-            //for each layer, get the count
-            let counts = [];
+
+            //update indexedorder to reflect new sort
+            indexedOrder = visibleItems.map((i) => {
+                return i.id
+            });
+
+            //for each item, give it a direct parent
+            for (let l = 0; l < links.length; l++) {
+                visibleItems[indexedOrder.indexOf(links[l].a)].parent = links[l].b;
+
+            }
+            //get all children of all items
             for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].idx + 1 > counts.length) counts.push(0);
-                visibleItems[i].iddx = counts[visibleItems[i].idx];
-                counts[visibleItems[i].idx]++;
+                if (visibleItems[i].parent) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
             }
-            //calculate X and Y positions
-            for (let j = 0; j < visibleItems.length; j++) {
-                let i = visibleItems[j].id;
-                let xfactor=200+100/counts[visibleItems[j].idx];
-                core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0) + visibleItems[j].iddx * xfactor - counts[visibleItems[j].idx]*xfactor/2;
-                core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0) + visibleItems[j].idx * 200;
-                me.arrangeItem(i);
+
+            //calculate widths
+            function getWidth(id) {
+                let c = visibleItems[indexedOrder.indexOf(id)].children;
+                if (!c.length) {
+                    return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                } else {
+                    let sum = 0;
+                    for (let i = 0; i < c.length; i++) {
+                        sum = sum + getWidth(c[i]);
+                    }
+                    let alt = Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    if (sum < alt) sum = alt;
+                    return sum;
+                }
             }
+            for (let i = 0; i < visibleItems.length; i++) {
+                //this needs to be optimised with caching.
+                visibleItems[i].width = getWidth(visibleItems[i].id);
+            }
+
+            // calculate total width
+            let tw = 0;
+            for (let i = 0; i < visibleItems.length; i++) {
+                if (!visibleItems[i].parent) tw += visibleItems[i].width;
+                else break;
+            }
+
+            //Start rendering!
+            let currentx = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0) - tw / 2;
+            let currenty = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+
+            function render(itm, tx, ty) { // itm is a visibleItem
+                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width-Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
+                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
+                let ctx = tx;
+                for (let i = 0; i < itm.children.length; i++) {
+                    ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
+                }
+                me.arrangeItem(itm.id);
+                return itm.width;
+            }
+
+            for (let i = 0; i < visibleItems.length; i++) {
+                if (!visibleItems[i].parent) currentx += render(visibleItems[i], currentx, currenty);
+            }
+
             for (let i in core.items) {
                 //second update to fix lines; also alert everyone of changes.
                 core.fire("updateItem", {
@@ -551,6 +601,10 @@ core.registerOperator("itemcluster2", {
             }
             //fill in the textarea inside
             me.rootdiv.querySelector("[data-id='" + id + "']>textarea").value = core.items[id].title || "";
+            if (core.items[id].style) {
+                me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.background = core.items[id].style.background || "";
+                me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.color = core.items[id].style.color || "";
+            }
             if (!core.items[id].boxsize) {
                 core.items[id].boxsize = {
                     w: "200px",

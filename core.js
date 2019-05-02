@@ -323,6 +323,7 @@ function _core() {
         });
         if (me.itemShouldBeDeleted) {
             delete core.items[d.id];
+            me.fire("deletedItem",{id:d.id});
         }
     });
 
