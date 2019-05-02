@@ -375,7 +375,9 @@ core.registerOperator("itemcluster2", {
             links.sort((a, b) => {
                 let ina = indexedOrder.indexOf(a.a);
                 let inb = indexedOrder.indexOf(b.a);
-                return ina - inb; //enforce ones with higher targets are higher.
+                let oua = indexedOrder.indexOf(a.b);
+                let oub = indexedOrder.indexOf(b.b);
+                return (ina - inb)+!(ina-inb)*(oua-oub); //enforce ones with higher targets are higher.
             })
             //remove duplicate links (i cbs because we just need to divide by a factor of 2 later, no worries)
             //give each of them an order
