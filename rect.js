@@ -332,18 +332,22 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 }
                 rectChanged = true;
                 me.operators = undefined;
-                me.children[_firstOrSecond].resizing = me.split;
+                me.children[_firstOrSecond].resizing = me.split^1;
                 me.split = -1;
                 //move the operator into the new box; create a blank box; set this box to a nonprimary box
             }
             //for resizing
             if (me.resizing != -1) {
-                if (!(e.buttons % 2)) {
+                //cancel on mouseup
+                if (!(e.buttons % 2) || me.resizing!=me.XorY*2+!(me.firstOrSecond)) {
                     me.resizing = -1;
                     e.preventDefault();
                     //reset and return
                     return;
                 }
+                //don't resize if not appropriate border
+                
+
                 e.preventDefault();
                 //calculate the pos parameter (it can be fed to both siblings)
                 if (me.XorY) me.pos = (e.clientY - me.outerDiv.parentElement.getClientRects()[0].top) / me.outerDiv.parentElement.getClientRects()[0].height;
