@@ -8,7 +8,7 @@ Because the best things in life are shared.
 Just wanna use it because you've heard it's useful? Go to [acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/) and get started!
 
 ### For webmasters
-Want to host this at your organisation? Here's what you need to do.
+Want to host this at your organization? Here's what you need to do.
 
 1. Download these files.
 2. Add or remove the operators you want, in index.html
