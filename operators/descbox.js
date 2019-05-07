@@ -28,9 +28,9 @@ core.registerOperator("descbox", function (operator) {
                 if (core.items[id].style) {
                     me.textarea.style.background = core.items[id].style.background;
                     me.textarea.style.color = core.items[id].style.color;
-                }else{
-                    me.textarea.style.background="";
-                    me.textarea.style.color="";
+                } else {
+                    me.textarea.style.background = "";
+                    me.textarea.style.color = "";
                 }
             } else {
                 if (!me.settings.currentID) {
@@ -42,8 +42,8 @@ core.registerOperator("descbox", function (operator) {
             me.textarea.disabled = false;
         }
         //do i control this item?
-        if (me.settings.operationMode=='static'){
-            if (id==me.settings.currentID){
+        if (me.settings.operationMode == 'static') {
+            if (id == me.settings.currentID) {
                 return true;
             }
         }
@@ -65,7 +65,7 @@ core.registerOperator("descbox", function (operator) {
 
     me.updateSettings = function () {
         if (me.settings.operationMode == 'static') {
-            let staticItem=me.settings.staticItem;
+            let staticItem = me.settings.staticItem;
             me.settings.currentID = me.settings.staticItem;
             if (!core.items[staticItem]) {
                 let it = new _item();
@@ -100,7 +100,7 @@ core.registerOperator("descbox", function (operator) {
         me.updateItem(me.settings.currentID);
     }
 
-    let upc = new capacitor(300, 40, (id, data) => {
+    let upc = new capacitor(100, 40, (id, data) => {
         core.items[id][me.settings.property] = data;
         core.fire("updateItem", {
             id: id,
@@ -186,17 +186,19 @@ core.registerOperator("descbox", function (operator) {
                     me.updateItem(id);
                 }
             } else {
-                //calculate the base rect of the sender
-                let baserectSender = sender.operator.rect;
-                while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
-                //calculate my base rect
-                let myBaseRect = me.operator.rect;
-                while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
-                //if they're the same, then update.
-                if (myBaseRect == baserectSender) {
-                    if (me.settings.operationMode == 'focus') {
-                        me.settings.currentID = id;
-                        me.updateItem(id);
+                if (sender) {
+                    //calculate the base rect of the sender
+                    let baserectSender = sender.operator.rect;
+                    while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
+                    //calculate my base rect
+                    let myBaseRect = me.operator.rect;
+                    while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
+                    //if they're the same, then update.
+                    if (myBaseRect == baserectSender) {
+                        if (me.settings.operationMode == 'focus') {
+                            me.settings.currentID = id;
+                            me.updateItem(id);
+                        }
                     }
                 }
             }

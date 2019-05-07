@@ -833,8 +833,7 @@ core.registerOperator("itemcluster2", {
             }
         } else {
             //shift to pan
-            if (e.which != 1) return;
-            if (e.getModifierState("Shift")) {
+            if (e.getModifierState("Shift") || e.which==2) {
                 me.globalDrag = true;
                 me.dragDX = e.pageX;
                 me.dragDY = e.pageY;

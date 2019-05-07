@@ -23,6 +23,18 @@ core.registerOperator("itemList", function (operator) {
     this.taskList = document.createElement("div");
     this.taskList.style.cssText = "height:100%; overflow-y:auto";
     this.taskListBar.appendChild(this.taskList);
+    operator.div.appendChild(htmlwrap(
+        `<style>
+        input{
+            background: inherit;
+            color:inherit;
+        }
+        span[data-id]{
+            background:white;
+        }
+        </style>`
+    ));
+
     operator.div.appendChild(this.taskListBar);
 
     //Handle item creation
@@ -54,7 +66,6 @@ core.registerOperator("itemList", function (operator) {
         //ensure the filter property exists
         if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = true;
         let id = core.insertItem(it);
-        currentItemSpan.querySelector("[data-role='id']").innerText = id;
         currentItemSpan.dataset.id = id;
         //clear the template
         core.fire("create", {
@@ -98,7 +109,7 @@ core.registerOperator("itemList", function (operator) {
         if (!mf(me.settings.filterProp, it)) {
             //if existent, remove
             let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
-            if (currentItemSpan)currentItemSpan.remove();
+            if (currentItemSpan) currentItemSpan.remove();
             return false;
         }
         //Then check if the item already exists; if so then update it
@@ -109,7 +120,6 @@ core.registerOperator("itemList", function (operator) {
             currentItemSpan.dataset.id = id;
             currentItemSpan.querySelector("button").innerHTML = "X";
         }
-        currentItemSpan.querySelector("[data-role='id']").innerText = id;
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
                 case "text":
@@ -139,7 +149,7 @@ core.registerOperator("itemList", function (operator) {
         }
         if (it.style) {
             currentItemSpan.style.background = it.style.background;
-            currentItemSpan.style.color = it.style.color;
+            currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]);//stuff error handling
         }
         return true;
     }
@@ -153,10 +163,10 @@ core.registerOperator("itemList", function (operator) {
             }
         }
         if (worried) {
-            let listofitems = me.taskList.querySelectorAll("[data-role='"+worried+"']");
-            for (let i =0;i<listofitems.length;i++){
-                if (listofitems[i].value.indexOf("auto")!=-1){
-                    if(me.datereparse)me.datereparse(listofitems[i].parentElement.parentElement.dataset.id);
+            let listofitems = me.taskList.querySelectorAll("[data-role='" + worried + "']");
+            for (let i = 0; i < listofitems.length; i++) {
+                if (listofitems[i].value.indexOf("auto") != -1) {
+                    if (me.datereparse) me.datereparse(listofitems[i].parentElement.parentElement.dataset.id);
                 }
             }
         }
@@ -186,7 +196,7 @@ core.registerOperator("itemList", function (operator) {
 
     this.updateSettings = function () {
         //Look at the settings and apply any relevant changes
-        let htmlstring = `<span class="ids" style="display: inline-block;width: 60px;">ID:<span data-role='id'>none</span></span>`
+        let htmlstring = ``
         for (i in this.settings.properties) {
             switch (this.settings.properties[i]) {
                 case "text":
@@ -330,10 +340,22 @@ core.registerOperator("itemList", function (operator) {
 
         function filter(e) {
             contextedItem = e.target;
+            let id = contextedItem;
+            while (!id.dataset.id) {
+                id = id.parentElement;
+            }
+            contextedItem = id.dataset.id;
             if (me.settings.properties[e.target.dataset.role] == "date") {
                 menu.querySelector(".fixed").style.display = "block";
             } else {
                 menu.querySelector(".fixed").style.display = "none";
+            }
+            if (core.items[contextedItem].style){
+                menu.querySelector(".background").value=core.items[contextedItem].style.background || "";
+                menu.querySelector(".color").value=core.items[contextedItem].style.color || "";
+            }else{
+                menu.querySelector(".background").value="";
+                menu.querySelector(".color").value="";
             }
             return true;
         }
@@ -342,11 +364,7 @@ core.registerOperator("itemList", function (operator) {
         <li class="fore"><input class="color" placeholder="Foreground color"></input></li>
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
-            let id = contextedItem;
-            while (!id.dataset.id) {
-                id = id.parentElement;
-            }
-            id = id.dataset.id;
+            let id=contextedItem;
             contextedItem.value = new Date(core.items[id][contextedItem.dataset.role].date[0].date).toLocaleString();
             core.items[id][contextedItem.dataset.role].datestring = contextedItem.value;
             me.datereparse(id);
@@ -354,11 +372,8 @@ core.registerOperator("itemList", function (operator) {
         })
 
         function updateStyle(e) {
-            let id = contextedItem;
-            while (!id.dataset.id) {
-                id = id.parentElement;
-            }
-            let cid = id.dataset.id;
+            let cid = contextedItem;
+    
             if (!core.items[cid].style) core.items[cid].style = {};
             core.items[cid].style[e.target.className] = e.target.value;
             core.fire("updateItem", {
@@ -442,23 +457,23 @@ core.registerOperator("itemList", function (operator) {
 
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        if(me.settings.operationMode=="iface"){
+        if (me.settings.operationMode == "iface") {
             core.target("itemList").then((id) => {
                 me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
                 me.settings['focusOperatorID'] = id
                 me.focusOperatorID = me.settings['focusOperatorID'];
-                me.detach=core.queryOnIface(id,()=>{
+                me.detach = core.queryOnIface(id, () => {
                     // this will return a list of items
                 })
             })
-        }else{
+        } else {
             core.target().then((id) => {
                 me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
                 me.settings['focusOperatorID'] = id
                 me.focusOperatorID = me.settings['focusOperatorID'];
             })
         }
-        
+
     })
 
     this.dialogUpdateSettings = function () {

@@ -61,14 +61,14 @@ function matchContrast(col){
     //returns either black or white from either a #COLOR or a rgb(color)
     cols=/\#(..)(..)(..)/i.exec(col)
     if (!cols){
-        cols=/rgba?\s*\((\d+),(\d+),(\d+)/i.exec(col);
+        cols=/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(col);
     }else{
         cols=[cols[0],cols[1],cols[2],cols[3]];
         cols[1]=parseInt(cols[1],16);
         cols[2]=parseInt(cols[2],16);
         cols[3]=parseInt(cols[3],16);
     }
-    if (!cols) throw "Invalid color";
+    if (!cols) throw "Invalid color: "+col;
     let value=Math.round(((parseInt(cols[1]) * 299) +
                       (parseInt(cols[2]) * 587) +
                       (parseInt(cols[3]) * 114)) / 1000);

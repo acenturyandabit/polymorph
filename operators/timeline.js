@@ -1,3 +1,10 @@
+//// ISSUE: KEYWORD "core" IN TIMELINE.JS INTERFERES WITH CORE OPERATIONS.
+//// FIX: PUT timeline.js IN CLOSURE
+
+
+///// BIGGER ISSUE: WHY IS TIMELINE.JS 38,000 lines of code?
+///// FIX: Don't use timeline.js.
+
 core.registerOperator("timeline", {
         displayName: "Timeline",
         description: "A timeline based on vis.js. Pretty clean, for the most part."
@@ -17,32 +24,32 @@ core.registerOperator("timeline", {
         this.cstyle = document.createElement("link");
         this.cstyle.rel = "stylesheet";
         this.cstyle.type = "text/css";
-        this.cstyle.href = "3pt/vis.min.css";
+        this.cstyle.href = "3pt/timeline.css";
         this.rootdiv.appendChild(this.cstyle);
         this.timediv=document.createElement("div");
         this.rootdiv.appendChild(this.timediv);
         operator.div.appendChild(this.rootdiv);
         //Add div HTML here
         scriptassert([
-            ['vis', '3pt/vis.min.js'],
-        ], () => {
-            console.log("got here");
-            this.dataset = new vis.DataSet();
+            ['timeline', '3pt/timeline.js'],
+        ], function () {
+            //manually add the css
+            me.dataset = new timeline.DataSet();
             me.updateItem = function (i) {
                 if (core.items[i][me.settings.dateproperty]) {
-                    let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, start, end);
+                    let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, Date.now()-1000,Date.now()+1000);
                     for (let j = 0; j < result.length; j++) {
-                        let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
+                        let isostring = new Date(result[j].date + 1000);
                         let eisostring;
-                        if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
+                        if (result[j].endDate) eisostring = new Date(result[j].endDate -  1000);
                         else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
                         isostring = isostring.toISOString();
                         eisostring = eisostring.toISOString();
-                        this.dataset.update({
-                            id: id,
-                            start: new Date(isostring),
+                        me.dataset.update({
+                            id: i,
+                            start: isostring,
                             content: core.items[i][me.settings.titleproperty],
-                            end: new Date(eisostring)
+                            end: eisostring
                         });
                     }
                 }
@@ -50,9 +57,7 @@ core.registerOperator("timeline", {
             core.on("updateItem", (d) => {
                 me.updateItem(d.id);
             })
-            let timeline = new vis.Timeline(this.timediv, this.dataset, {
-                height: 300
-            });
+            let timeline = new timeline.Timeline(me.timediv, me.dataset,{});
             for (let i in core.items) me.updateItem(i);
             
             timeline.on('select', (e) => {
@@ -62,9 +67,10 @@ core.registerOperator("timeline", {
                     sender: me
                 });
             })
+            core.on("dateUpdate", me.updateItem);
         });
 
-        core.on("dateUpdate", this.updateItem);
+        
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
             try {

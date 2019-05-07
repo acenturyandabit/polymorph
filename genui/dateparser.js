@@ -16,6 +16,8 @@ function _dateParser() {
             name: "pmtime",
             regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
             operate: function (regres, d, data) {
+                d.setMinutes(0);
+                d.setSeconds(0);
                 d.setHours(Number(regres[1]));
                 if (regres[2] == 'pm') d.setHours(Number(regres[1]) + 12);
             }
