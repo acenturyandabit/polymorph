@@ -4,7 +4,7 @@ Todo: checkDialogs takes styling information and additional parameters.
 Todo: move entirely to shadow DOM.
 
 Use case 1: Upgrade an existing dialog
-1. upgrade the dialog (pass as DOM element - can either be already attached or not.): 
+1. upgrade the dialog (pass as DOM element - can either be already attached or not.):
     dialog=document.getElementById("somedialog");// or whatever
     dialog=dialogManager.checkDialogs(dialog)[0];
     that's it, really
@@ -37,7 +37,7 @@ Use case 2: Create new dialog:
 function _dialogManager(userSettings) {
     let me = this;
     this.settings = {
-        //set to true to allow the dialog manager to automatically detect new dialogs. May result in diminished performance. 
+        //set to true to allow the dialog manager to automatically detect new dialogs. May result in diminished performance.
         autoDialogUpgrade: false,
 
         //if true, will add a close button (a big X) next to the innermost level
@@ -146,15 +146,22 @@ function _dialogManager(userSettings) {
                     closeButton.innerText = "X";
                     closeButton.style.cssText = me.settings.closeButtonStyle;
                     closeButton.classList.add(me.settings.closeButtonClass);
-                    closeButton.addEventListener("click", () => {
+                    let closeDialogHandler = () => {
                         prediv.style.display = "none";
-                    })
+                    }
+                    closeButton.addEventListener("click", closeDialogHandler);
                     e.parentElement.appendChild(closeButton);
+                    //only bind escape close to dialogs that have a closeButton
+                    window.addEventListener("keydown", (e) => {
+                        if (e.key == "Escape") {
+                            closeDialogHandler();
+                        }
+                    });
                 }
                 while (e.classList.length) e.classList.remove(e.classList[e.classList.length - 1]);
 
                 if (parent) {
-                    //add the stack to the parent                
+                    //add the stack to the parent
                     parent.appendChild(prediv);
                 }
                 //Block events to lower levels from dialogs: mostly doubleclick and click
