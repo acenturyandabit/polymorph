@@ -90,7 +90,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
 
 
           }, function (error) {
-            reject("User did not authenticate");
+            reject(JSON.stringify(error));
           });
         });
       });
