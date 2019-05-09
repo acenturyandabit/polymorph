@@ -69,7 +69,7 @@ function _core() {
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
             loadFromURL(params);
-        }else if (p.entries.length){
+        }else if (params.entries.length){
             //try each save source to see if it can handle this kind of request
             for (let i in me.saveSources){
                 if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)){
