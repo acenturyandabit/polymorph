@@ -33,6 +33,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
     return new Promise(function (resolve, reject) {
       function continueLoad(success) {
         //if not successful, alert user, and abort
+        console.log(success);
         if (!success){
           alert("Hey, turns out we need you to verify your Google account so we can use Google Drive. Mind if you close this window and try again?");
           //TODO: Better error message
@@ -42,7 +43,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
         if (stateinfo.action=="create"){
           let fileMetadata = {
             'name' : 'New Polymorph Document',
-            'mimeType' : 'application/polymorph.doc',
+            'mimeType' : 'application/vnd.google-apps.drive-sdk',
             'parents': [stateinfo.folderId]
           };
           gapi.client.drive.files.create({
@@ -51,15 +52,16 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
             switch(response.status){
               case 200:
                 //creation ok, redirect
-                window.location.href=window.location.hostname+window.location.pathname+"?doc="+stateinfo.userId+guid(15)+"src=fb";
+                window.location.href=window.location.hostname+window.location.pathname+"?doc="+file.id+"&src=fb";
                 //todo: uid base?
                 break;
               default:
-                alert("Ack, something seems to have happened between us and Google and we were'nt able to make your file. Maybe try again and it'll work? Otherwise do let us know 3: thx");
+                alert("Ack, something seems to have happened between us and Google and we weren't able to make your file. Maybe try again and it'll work? Otherwise do let us know 3: thx");
                 break;
               }
           });
-        }else{
+        }else if (stateinfo.action=='open'){
+          window.location.href=window.location.hostname+window.location.pathname+"?doc="+stateinfo.ids[0]+"&src=fb";
           //redirect to firebase url.
           resolve(result);
         }
