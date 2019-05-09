@@ -1152,8 +1152,8 @@ core.registerOperator("itemcluster2", {
     };
 
     this.rootdiv.addEventListener("input", (e) => {
-        if (e.target.parentElement.matches("[data-id]")) {
-            let id = e.target.parentElement.dataset.id;
+        if (e.target.parentElement.parentElement.matches("[data-id]")) {
+            let id = e.target.parentElement.parentElement.dataset.id;
             core.items[id].title = e.target.value;
             core.fire("updateItem", {
                 id: id,
