@@ -69,7 +69,7 @@ function _core() {
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
             loadFromURL(params);
-        }else if (params.entries.length){
+        }else if (window.location.search){
             //try each save source to see if it can handle this kind of request
             for (let i in me.saveSources){
                 if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)){
@@ -78,6 +78,9 @@ function _core() {
                     break;
                 }
             }
+            //otherwise just show filescreen as if nothing happened
+            //TODO: add convenient error message
+            me.filescreen.showSplash();
         } else {
             me.filescreen.showSplash();
         }
