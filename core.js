@@ -69,11 +69,15 @@ function _core() {
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
             loadFromURL(params);
-        } else if (params.has("state")) {
-            //hello google drive!
-            //convert from state to GD
-            window.location.href=window.location.origin+window.location.pathname+"?doc="+JSON.parse(params.get("state")).ids[0] + "&src=gd";
-            //check oauth status and then redirect and convert into a form that we understand
+        }else if (p.entries.length){
+            //try each save source to see if it can handle this kind of request
+            for (let i in me.saveSources){
+                if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)){
+                    //TODO: put a try catch around here.
+                    userLoad(i,params);
+                    break;
+                }
+            }
         } else {
             me.filescreen.showSplash();
         }

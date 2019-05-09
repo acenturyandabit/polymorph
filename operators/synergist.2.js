@@ -29,8 +29,21 @@ core.registerOperator("itemcluster2", {
         height:100%;
     }
 
-    .anchored>textarea{
+    .anchored>div>textarea{
         border: 3px dashed blue;
+    }
+
+    .floatingItem>div>textarea{
+        resize:none;
+        width: 100%;
+        height: calc(100% - 15px);
+    }
+
+    .floatingItem>div{
+        resize:both;
+        overflow: auto;
+        border: 1px solid black;
+        box-sizing: border-box;
     }
     </style>
 <div>
@@ -168,7 +181,8 @@ core.registerOperator("itemcluster2", {
         }
         me.viewDropdown.style.display = "none";
     });
-    this.switchView = function (ln, assert) {
+    this.switchView = function (ln, assert, subview) {
+        let preview = me.settings.currentViewName;
         me.settings.currentViewName = ln;
         if (!me.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
@@ -196,9 +210,15 @@ core.registerOperator("itemcluster2", {
             }
             if (!core.items[me.settings.currentViewName].itemcluster) {
                 if (assert) {
-                    core.items[me.settings.currentViewName].itemcluster = {
-                        viewName: core.items[ln].title || ln
-                    };
+                    core.items[me.settings.currentViewName].itemcluster = {};
+                } else {
+                    me.switchView();
+                    return;
+                }
+            }
+            if (!core.items[me.settings.currentViewName].itemcluster.viewName) {
+                if (assert) {
+                    core.items[me.settings.currentViewName].itemcluster.viewName = core.items[ln].title || ln
                     core.fire("updateItem", {
                         id: me.settings.currentViewName
                     });
@@ -207,8 +227,28 @@ core.registerOperator("itemcluster2", {
                     return;
                 }
             }
+
+
             this.viewName.innerText =
                 core.items[me.settings.currentViewName].itemcluster.viewName;
+            //if this is a subview, add a button on the back; otherwise remove all buttons
+            if (subview) {
+                let b = document.createElement("button");
+                b.dataset.ref = preview;
+                b.innerText = core.items[preview].itemcluster.viewName;
+                b.addEventListener("click", () => {
+                    me.switchView(b.dataset.ref, true, false);
+                    while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
+                    b.remove();
+                })
+                this.viewName.parentElement.insertBefore(b, this.viewName);
+            } else if (subview != false) {
+                //subview is undefined; hard switch (killall buttons)
+                let bs = this.viewName.parentElement.querySelectorAll("button");
+                for (let i = 0; i < bs.length; i++) {
+                    bs[i].remove();
+                }
+            }
             //kill all lines
             for (let i in me.activeLines) {
                 for (let j in me.activeLines[i]) {
@@ -377,7 +417,7 @@ core.registerOperator("itemcluster2", {
                 let inb = indexedOrder.indexOf(b.a);
                 let oua = indexedOrder.indexOf(a.b);
                 let oub = indexedOrder.indexOf(b.b);
-                return (ina - inb)+!(ina-inb)*(oua-oub); //enforce ones with higher targets are higher.
+                return (ina - inb) + !(ina - inb) * (oua - oub); //enforce ones with higher targets are higher.
             })
             //remove duplicate links (i cbs because we just need to divide by a factor of 2 later, no worries)
             //give each of them an order
@@ -443,7 +483,7 @@ core.registerOperator("itemcluster2", {
             let currenty = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0);
 
             function render(itm, tx, ty) { // itm is a visibleItem
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width-Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
+                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
                 core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
                 let ctx = tx;
                 for (let i = 0; i < itm.children.length; i++) {
@@ -537,7 +577,6 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                //delete the div and delete its corresponding item
                 me.cpyelem = me.contextedElement.dataset.id;
                 me.itemContextMenu.style.display = "none";
             });
@@ -554,13 +593,12 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".subView")
             .addEventListener("click", e => {
-                //delete the div and delete its corresponding item
                 core.items[
                     me.contextedElement.dataset.id
                 ].itemcluster.viewName = core.items[
                     me.contextedElement.dataset.id
                 ].title;
-                me.switchView(me.contextedElement.dataset.id);
+                me.switchView(me.contextedElement.dataset.id, true, true);
                 me.itemContextMenu.style.display = "none";
             });
     });
@@ -595,17 +633,18 @@ core.registerOperator("itemcluster2", {
                     "data-id": id,
                     class: "floatingItem"
                 });
-                rect.appendChild("textarea");
+                rect.appendChild("div");
+                rect.node.querySelector("div").appendChild(document.createElement("textarea"));
             }
             rect.show();
             if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                 rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x + (core.items[me.settings.currentViewName].itemcluster.cx || 0), core.items[id].itemcluster.viewData[me.settings.currentViewName].y + (core.items[me.settings.currentViewName].itemcluster.cy || 0));
             }
             //fill in the textarea inside
-            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").value = core.items[id].title || "";
+            me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").value = core.items[id].title || "";
             if (core.items[id].style) {
-                me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.background = core.items[id].style.background || "";
-                me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.color = core.items[id].style.color || "";
+                me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").style.background = core.items[id].style.background || "";
+                me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").style.color = core.items[id].style.color || "";
             }
             if (!core.items[id].boxsize) {
                 core.items[id].boxsize = {
@@ -613,10 +652,41 @@ core.registerOperator("itemcluster2", {
                     h: "100px"
                 };
             }
-            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.width = core.items[id].boxsize.w || "";
-            me.rootdiv.querySelector("[data-id='" + id + "']>textarea").style.height = core.items[id].boxsize.h || "";
+            me.rootdiv.querySelector("[data-id='" + id + "']>div").style.width = core.items[id].boxsize.w || "";
+            me.rootdiv.querySelector("[data-id='" + id + "']>div").style.height = core.items[id].boxsize.h || "";
             rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
 
+            //add icons if necessary
+            if (core.items[id].itemcluster.viewName) {
+                //this has a subview, make it known!.
+                let subviewItemCount;
+                if (rect.node.querySelector(".subviewItemCount")) {
+                    subviewItemCount = rect.node.querySelector(".subviewItemCount");
+                } else {
+                    subviewItemCount = document.createElement("p");
+                    subviewItemCount.style.cssText = `
+      display: block;
+      width: 1em;
+      height: 1em;
+      font-size: 0.7em;
+      margin: 0px;
+      text-align: center;
+      background: orange;
+      `;
+                    subviewItemCount.classList.add("subviewItemCount");
+                    rect.node.children[0].appendChild(subviewItemCount);
+                    //also count all the items in my subview and report.
+                }
+                let count = 0;
+                for (let i in core.items) {
+                    if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[id]) count++;
+                }
+                subviewItemCount.innerText = count;
+            } else {
+                if (rect.node.children[0].querySelector(".subviewItemCount")) {
+                    rect.node.children[0].querySelector(".subviewItemCount").remove();
+                }
+            }
             //draw its lines
             if (core.items[id].itemcluster && core.items[id].itemcluster.links) {
                 for (let i in core.items[id].itemcluster.links) {
@@ -833,7 +903,7 @@ core.registerOperator("itemcluster2", {
             }
         } else {
             //shift to pan
-            if (e.getModifierState("Shift") || e.which==2) {
+            if (e.getModifierState("Shift") || e.which == 2) {
                 me.globalDrag = true;
                 me.dragDX = e.pageX;
                 me.dragDY = e.pageY;
@@ -848,6 +918,8 @@ core.registerOperator("itemcluster2", {
     });
 
     this.itemSpace.addEventListener("mousemove", function (e) {
+        //stop from creating an item if we are resizing another item
+        me.possibleResize = true;
         if (me.dragging) {
             /*if (me.movingDiv.parentElement.parentElement.matches(".floatingItem")) {
                 //nested items
@@ -866,7 +938,7 @@ core.registerOperator("itemcluster2", {
                 fi[i].style.border = "";
             }
             for (let i = 0; i < elements.length; i++) {
-                if (elements[i].matches(".floatingItem") && elements[i] != me.movingDiv) {
+                if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.movingDiv.attr("data-id")) {
                     elements[i].style.border = "3px dotted red";
                     break;
                 }
@@ -915,7 +987,6 @@ core.registerOperator("itemcluster2", {
             //disengage drag
             me.dragging = false;
             //me.movingDiv.classList.remove("moving");
-
             let fi = me.rootdiv.querySelectorAll(".floatingItem");
 
             for (let i = 0; i < fi.length; i++) {
@@ -925,7 +996,7 @@ core.registerOperator("itemcluster2", {
 
             //define some stuff
             let thing = me.movingDiv.attr("data-id");
-            /*
+
             let elements = me.rootdiv
                 .getRootNode()
                 .elementsFromPoint(e.clientX, e.clientY);
@@ -933,16 +1004,20 @@ core.registerOperator("itemcluster2", {
                       case 1: hidden
                       case 2: dragged into another object
                       case 3: dragged to a position
-                    
+            */
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches(".floatingItem") &&
-                    elements[i] != me.movingDiv
+                    elements[i].dataset.id != thing
                 ) {
-                    me.setParent(thing, elements[i].dataset.id);
+                    core.items[thing].itemcluster.viewData[elements[i].dataset.id] = {
+                        x: 0,
+                        y: 0
+                    };
+                    me.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
-            }*/
+            }
             me.updatePosition(thing);
             core.fire("updateItem", {
                 sender: me,
@@ -958,9 +1033,9 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches("textarea") &&
-                    elements[i].parentElement.dataset.id != me.linkingDiv.dataset.id
+                    elements[i].parentElement.parentElement.dataset.id != me.linkingDiv.dataset.id
                 ) {
-                    linkedTo = elements[i].parentElement;
+                    linkedTo = elements[i].parentElement.parentElement;
                     break;
                 }
             }
@@ -985,8 +1060,14 @@ core.registerOperator("itemcluster2", {
             me.arrangeItem(me.preselected.dataset.id); // handle resizes
         }
     };
-
+    this.itemSpace.addEventListener("click", function (e) {
+        me.possibleResize = false;
+    });
     this.itemSpace.addEventListener("dblclick", function (e) {
+        if (me.possibleResize) {
+            me.possibleResize = false;
+            return;
+        }
         if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
             let rect = me.itemSpace.getBoundingClientRect();
             me.createItem(

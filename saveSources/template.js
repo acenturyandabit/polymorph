@@ -2,9 +2,14 @@ core.registerSaveSource("template", function () { // a sample save source, imple
 
     //initialise here
 
+    
 
 
-
+    //optional function: given a set of urlparams, can you handle opening the file? If no, return false, do not implement, or delete.
+    this.canHandle=function(params){
+        //if you return true, be prepared to handle id as a set of urlparams instead.
+        //at which point, please do what you need to do to initialise, then change it to a url of the format ?doc=""&src=savesourcename
+    }
     this.pushAll = async function (id, data) {
         //push to the source (force save)
     }
