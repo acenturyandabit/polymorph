@@ -52,7 +52,8 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
             switch(response.status){
               case 200:
                 //creation ok, redirect
-                window.location.href=window.location.hostname+window.location.pathname+"?doc="+file.id+"&src=fb";
+                let file = response.result;
+                window.location.href=window.location.pathname+"?doc="+file.id+"&src=fb";
                 //todo: uid base?
                 break;
               default:
@@ -61,7 +62,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
               }
           });
         }else if (stateinfo.action=='open'){
-          window.location.href=window.location.hostname+window.location.pathname+"?doc="+stateinfo.ids[0]+"&src=fb";
+          window.location.href=window.location.pathname+"?doc="+stateinfo.ids[0]+"&src=fb";
           //redirect to firebase url.
           resolve(result);
         }
