@@ -1062,7 +1062,7 @@ core.registerOperator("itemcluster2", {
             me.arrangeItem(me.preselected.dataset.id); // handle resizes
         }
     };
-    this.itemSpace.addEventListener("click", function (e) {
+    this.itemSpace.addEventListener("mousedown", function (e) {
         me.possibleResize = false;
     });
     this.itemSpace.addEventListener("dblclick", function (e) {
