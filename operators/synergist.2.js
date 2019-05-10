@@ -232,21 +232,23 @@ core.registerOperator("itemcluster2", {
             this.viewName.innerText =
                 core.items[me.settings.currentViewName].itemcluster.viewName;
             //if this is a subview, add a button on the back; otherwise remove all buttons
-            if (subview) {
-                let b = document.createElement("button");
-                b.dataset.ref = preview;
-                b.innerText = core.items[preview].itemcluster.viewName;
-                b.addEventListener("click", () => {
-                    me.switchView(b.dataset.ref, true, false);
-                    while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
-                    b.remove();
-                })
-                this.viewName.parentElement.insertBefore(b, this.viewName);
-            } else if (subview != false) {
-                //subview is undefined; hard switch (killall buttons)
-                let bs = this.viewName.parentElement.querySelectorAll("button");
-                for (let i = 0; i < bs.length; i++) {
-                    bs[i].remove();
+            if (preview != ln) {
+                if (subview) {
+                    let b = document.createElement("button");
+                    b.dataset.ref = preview;
+                    b.innerText = core.items[preview].itemcluster.viewName;
+                    b.addEventListener("click", () => {
+                        me.switchView(b.dataset.ref, true, false);
+                        while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
+                        b.remove();
+                    })
+                    this.viewName.parentElement.insertBefore(b, this.viewName);
+                } else if (subview != false) {
+                    //subview is undefined; hard switch (killall buttons)
+                    let bs = this.viewName.parentElement.querySelectorAll("button");
+                    for (let i = 0; i < bs.length; i++) {
+                        bs[i].remove();
+                    }
                 }
             }
             //kill all lines
