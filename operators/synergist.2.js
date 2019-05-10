@@ -228,9 +228,9 @@ core.registerOperator("itemcluster2", {
                 }
             }
 
-
+            
             this.viewName.innerText =
-                core.items[me.settings.currentViewName].itemcluster.viewName;
+                core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig,"");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (preview != ln) {
                 if (subview) {
