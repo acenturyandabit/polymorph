@@ -6,7 +6,34 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
 
   // Array of API discovery doc URLs for APIs used by the quickstart
   var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-  var SCOPES = 'https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.file';
+  var SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+  documentReady(() => {
+    document.querySelector(".gdrivePrompt").style.display = "block";
+    document.querySelector(".gdrivePrompt").addEventListener("click",()=>{
+      //request install scope
+      scriptassert([
+        ["googledriveapi", "https://apis.google.com/js/api.js"]
+      ], () => {
+        gapi.load('client:auth2', () => {
+          gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: DISCOVERY_DOCS,
+            scope: 'https://www.googleapis.com/auth/drive.install'
+          }).then(function () {
+            // Handle the initial sign-in state.
+            if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+              //start the signin process!
+              gapi.auth2.getAuthInstance().signIn();
+            }
+          }, function (error) {
+            reject(JSON.stringify(error));
+          });
+        });
+      });
+    })
+  });
 
   this.canHandle = function (params) {
     if (params.has("state")) {
@@ -28,41 +55,41 @@ core.registerSaveSource("gd", function () { // Google drive save source - just t
       alert('Please open Google Drive files from Google Drive! ');
       return;
     }
-    let stateinfo=JSON.parse(id.get("state"));
+    let stateinfo = JSON.parse(id.get("state"));
     //create a promise that never resolves but redirects the user once authenticated.
     return new Promise(function (resolve, reject) {
       function continueLoad(success) {
         //if not successful, alert user, and abort
         console.log(success);
-        if (!success){
+        if (!success) {
           alert("Hey, turns out we need you to verify your Google account so we can use Google Drive. Mind if you close this window and try again?");
           //TODO: Better error message
           resolve(undefined);
         }
         //create if necessary
-        if (stateinfo.action=="create"){
+        if (stateinfo.action == "create") {
           let fileMetadata = {
-            'name' : 'New Polymorph Document',
-            'mimeType' : 'application/vnd.google-apps.drive-sdk',
+            'name': 'New Polymorph Document',
+            'mimeType': 'application/vnd.google-apps.drive-sdk',
             'parents': [stateinfo.folderId]
           };
           gapi.client.drive.files.create({
             resource: fileMetadata,
-          }).then(function(response) {
-            switch(response.status){
+          }).then(function (response) {
+            switch (response.status) {
               case 200:
                 //creation ok, redirect
                 let file = response.result;
-                window.location.href=window.location.pathname+"?doc="+file.id+"&src=fb";
+                window.location.href = window.location.pathname + "?doc=" + file.id + "&src=fb";
                 //todo: uid base?
                 break;
               default:
                 alert("Ack, something seems to have happened between us and Google and we weren't able to make your file. Maybe try again and it'll work? Otherwise do let us know 3: thx");
                 break;
-              }
+            }
           });
-        }else if (stateinfo.action=='open'){
-          window.location.href=window.location.pathname+"?doc="+stateinfo.ids[0]+"&src=fb";
+        } else if (stateinfo.action == 'open') {
+          window.location.href = window.location.pathname + "?doc=" + stateinfo.ids[0] + "&src=fb";
           //redirect to firebase url.
           resolve(result);
         }
