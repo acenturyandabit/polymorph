@@ -54,7 +54,6 @@ let serviceWorkerSettings = {
     "core.js",
     "operator.js",
     "index.html",
-    "",
     "operators/opSelect.js",
     "operators/itemList.js",
     "operators/descbox.js",
@@ -71,7 +70,6 @@ let serviceWorkerSettings = {
     "assets/jason.css",
     "3pt/jquery.min.js",
     "3pt/x-frame-bypass.js",
-    
     "3pt/quill.min.js",
     "3pt/svg.min.js",
     "3pt/moment.min.js",

@@ -77,9 +77,9 @@ function _filescreen(userSettings) {
     let innerDiv;
     innerDiv = document.createElement("div");
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;";
+        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;";
     } else {
-        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; width: 40vw; background-color: white; border-radius: 30px; padding: 30px;";
+        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 40vw; background-color: white; border-radius: 30px; padding: 30px;";
     }
 
     midDiv.appendChild(innerDiv);
@@ -91,36 +91,38 @@ function _filescreen(userSettings) {
         innerDiv.appendChild(me.settings.headprompt);
     }
     //ddi of h2
-    let newDocHeading = document.createElement("h2");
-    newDocHeading.innerText = "Make a new document";
-    innerDiv.appendChild(newDocHeading);
-    me.newDocInput = document.createElement("input");
-    me.newDocInput.placeholder = "Enter Name...";
-    innerDiv.appendChild(me.newDocInput);
-    //create a button for each format specifier
-    for (let i = 0; i < me.settings.formats.length; i++) {
-        let b = document.createElement("button");
-        b.innerText = me.settings.formats[i].prompt;
-        b.dataset.index = i;
-        //if (me.settings.formats[i].queryParam) b.dataset.queryParam = me.settings.formats[i].queryParam;
-        b.addEventListener("click", (e) => {
-            if (me.newDocInput.value.length) {
-                let url = new URL(window.location);
-                let totalString = "?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value;
-                let index = Number(e.target.dataset.index);
-                if (me.settings.formats[i].queryParam) {
-                    if (typeof me.settings.formats[i].queryParam == "string") {
-                        totalString += "&" + me.settings.formats[i].queryParam;
-                    } else totalString += "&" + me.settings.formats[i].queryParam(); //string or function
+    if (me.settings.formats) {
+        let newDocHeading = document.createElement("h2");
+        newDocHeading.innerText = "Make a new document";
+        innerDiv.appendChild(newDocHeading);
+        me.newDocInput = document.createElement("input");
+        me.newDocInput.placeholder = "Enter Name...";
+        innerDiv.appendChild(me.newDocInput);
+        //create a button for each format specifier
+        for (let i = 0; i < me.settings.formats.length; i++) {
+            let b = document.createElement("button");
+            b.innerText = me.settings.formats[i].prompt;
+            b.dataset.index = i;
+            //if (me.settings.formats[i].queryParam) b.dataset.queryParam = me.settings.formats[i].queryParam;
+            b.addEventListener("click", (e) => {
+                if (me.newDocInput.value.length) {
+                    let url = new URL(window.location);
+                    let totalString = "?" + me.settings.documentQueryKeyword + "=" + me.newDocInput.value;
+                    let index = Number(e.target.dataset.index);
+                    if (me.settings.formats[i].queryParam) {
+                        if (typeof me.settings.formats[i].queryParam == "string") {
+                            totalString += "&" + me.settings.formats[i].queryParam;
+                        } else totalString += "&" + me.settings.formats[i].queryParam(); //string or function
+                    }
+                    url.search = totalString;
+                    window.location.href = url.toString();
                 }
-                url.search = totalString;
-                window.location.href = url.toString();
-            }
-        })
-        innerDiv.appendChild(b);
+            })
+            innerDiv.appendChild(b);
+        }
     }
     let recentHeading = document.createElement("h2");
-    recentHeading.innerText = "Open a recent document:";
+    recentHeading.innerText = "Or, open a recent document:";
     innerDiv.appendChild(recentHeading);
     me.recentDocDiv = document.createElement("div");
     me.recentDocDiv.classList.add("filescreen_recentDocDiv");
@@ -168,7 +170,7 @@ function _filescreen(userSettings) {
     this.saveRecentDocument = function (id, url, displayName) {
         if (!url) url = window.location.href;
         let recents = JSON.parse(localStorage.getItem("__" + me.settings.savePrefix + "_recent_docs"));
-        if (!recents || recents.constructor.name!="Object") recents = {}; //upgrade older versions
+        if (!recents || recents.constructor.name != "Object") recents = {}; //upgrade older versions
         recents[id] = {
             url: url,
             displayName: displayName || id

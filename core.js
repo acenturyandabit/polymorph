@@ -63,18 +63,16 @@ function _core() {
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     //Accept loading sources; default is local saving.
-
-    //bye queryloaderrr you basically do nothing cry
     document.addEventListener("DOMContentLoaded", () => {
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
             loadFromURL(params);
-        }else if (window.location.search){
+        } else if (window.location.search) {
             //try each save source to see if it can handle this kind of request
-            for (let i in me.saveSources){
-                if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)){
+            for (let i in me.saveSources) {
+                if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)) {
                     //TODO: put a try catch around here.
-                    userLoad(i,params);
+                    userLoad(i, params);
                     break;
                 }
             }
@@ -100,10 +98,19 @@ function _core() {
 
         let source = params.get("src") || 'lf';
         let id = params.get("doc");
-        userLoad(source, id, true);
+        //if there is a template, knock off the template from the url and remember it (discreetly)
+        let template;
+        if (params.has("tmp")){
+            template=params.get("tmp");
+            let loc=window.location.href
+            loc=loc.replace(/&tmp=[^&]+/,"");
+            history.pushState({},"",loc);
+            console.log(window.location.href);
+        }
+        userLoad(source, id, true,template);
     }
 
-    function userLoad(source, id, initial = false) { // direct from URL
+    function userLoad(source, id, initial = false,template) { // direct from URL
         //reset
         resetDocument();
         if (me.saveSources[source]) {
@@ -118,26 +125,25 @@ function _core() {
                 let params = new URLSearchParams(window.location.search);
                 if (!d) {
                     d = {
-                        displayName: id,
+                        displayName: "New Workspace",
                         saveSources: {},
                         currentView: "default",
                         views: {},
                         items: {}
                     }
-                    if (!params.has("auto")) {
-                        d.displayName = id;
-                    } else {
-                        d.displayName = "New Workspace"
-                    }
                     d.saveSources[source] = id;
                     /*if (!tutorialStarted) {
                         core.tutorial.start();
                     }*/
+
                 }
                 //reconcile that particular save source within the copy of the document
                 d.saveSources = d.saveSources || {}; //neat instadeclare!
                 d.saveSources[source] = id;
                 me.fromSaveData(d);
+                if(template){
+                    core.baseRect.fromSaveData(polymorphTemplates[template]);
+                }
                 me.filescreen.saveRecentDocument(id, undefined, me.currentDoc.displayName);
                 let tutorialStarted = false;
                 if (params.has("view")) {
@@ -277,9 +283,6 @@ function _core() {
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    //rect level functions
-
-    ///////////////////////////////////////////////////////////////////////////////////////
     //Operator conveinence functions
     //items
     this.operators = {};
@@ -330,7 +333,9 @@ function _core() {
         });
         if (me.itemShouldBeDeleted) {
             delete core.items[d.id];
-            me.fire("deletedItem",{id:d.id});
+            me.fire("deletedItem", {
+                id: d.id
+            });
         }
     });
 
@@ -363,28 +368,71 @@ function _core() {
     //Instantiate filemanager
     this.filescreen = new _filescreen({
         headprompt: htmlwrap(`
-    <h1>Welcome to Polymorph!</h1>
-    <h2>Organise your work, your way.</h2>
-    <button class="gstd"><h1>Get started!</h1></button>
+    <h1>Welcome to Polymorph: Effective Organisation app</h1>
+    <h2>Select an option below to get started!</h2>
+    
+    <style>
+    .buttons>button{
+        flex: 0 0 25%;
+    }
+    button:disabled{
+        background: repeating-linear-gradient(-60deg, #333333 0px,#333333 10px,#0000ee 10px, #0000ee 20px);
+    }
+    button:disabled>*{
+        background: rgba(100,100,100,0.7);
+        color: white;
+    }
+    .olol>button{
+        flex: 1 0 auto;
+        background: darkgrey;
+    }
+    .olol>button.selected{
+        background: blue;
+        color: white;
+    }
+    </style>
+    <div style="display:flex;flex-direction:row;" class="olol"><button class="selected" data-source="lf">Work offline</button><button data-source="fb">Collaborate in real time</button></div>
+    <div style="display:flex;flex-direction:row;overflow-x:scroll" class="buttons">
+        <button data-template="brainstorm"><h1>Brainstorm</h1><p>Brainstorm and lay out ideas with others!</p></button>
+        <button ><h1>Custom</h1><p>Use Polymorph's customisability to build your own user interface.</p></button>
+        <button disabled><h1>Coming soon...</h1></button>
+        <button data-template="chatmode" disabled><h1>Chat mode</h1><p>Have a chat with yourself or a friend, and let Polymorph build the structure for you!</p></button>
+        <button data-template="kanban" disabled><h1>Kanban board</h1><p>Simple, ticket based project management.</p></button>
+        <button data-template="calendar" disabled><h1>Calendar</h1><p>A text-based calendar / tasklist combination.</p></button>
+        
+    </div>
     `, "div"),
-        formats: [{
-                prompt: "Make a new local (offline) document"
-            },
-            {
-                prompt: "Make a new shared (online) document",
-                queryParam: (id) => {
-                    return "src=fb";
-                }
-            }
-        ],
+        formats: false,
         tutorialEnabled: false,
         savePrefix: "polymorph"
     });
 
-    this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
+    this.filescreen.baseDiv.querySelector(".buttons").addEventListener("click", (e) => {
+        let t=e.target;
+        while (t!=this.filescreen.baseDiv){
+            if (t.tagName=="BUTTON" && !t.disabled){
+                let url=window.location.pathname+"?doc=" + guid(7) + "&src="+this.filescreen.baseDiv.querySelector('.olol .selected').dataset.source;
+                if (t.dataset.template)url+="&tmp="+t.dataset.template;
+                window.location.href = url;
+                break;
+            }else{
+                t=t.parentElement;
+            }
+        }
+    })
+
+    this.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => {
+        if (e.target.tagName=="BUTTON"){
+            let btns=this.filescreen.baseDiv.querySelectorAll(".olol>button");
+            for (let i=0;i<btns.length;i++)btns[i].classList.remove("selected");
+            e.target.classList.add("selected");
+        }
+    })
+
+    /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
         // create a new workspace, then load it
         window.location.href += "?doc=" + guid(7) + "&src=lf";
-    })
+    })*/
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Top bar
@@ -553,10 +601,11 @@ document.addEventListener("DOMContentLoaded", e => {
     window.addEventListener("resize", () => {
         core.baseRect.resize();
     })
+    core.baseRect.resize();
     document.body.addEventListener("keydown", e => {
         if (e.ctrlKey && e.key == "s") {
-            core.userSave();
             e.preventDefault();
+            core.userSave();
             core.unsaved = false;
             //also do the server save
         }

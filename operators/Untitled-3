@@ -1,8 +1,0 @@
-View items with property:
-[op1]
-// when hiding, remove this property? 
-// or when hiding, do minimum amount in order to hide the item.
-
-//there should be a trash view :/
-
-then operator will filter and adopt all items with [op1]. shows and all things with [op1] show as well. 
