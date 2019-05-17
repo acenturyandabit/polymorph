@@ -5,6 +5,7 @@
 //general: 
 To load the option e.g. when a dialog or menu is shown:
 op.load();
+To retrieve a property: just access it as usual.
 
 //checkbox
 let op=new _option({

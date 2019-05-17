@@ -79,9 +79,18 @@ function _contextMenuManager(root) {
                 if (e.target.matches(delegate) || e.target.matches(delegate + " *")) f(e);
             } else f(e);
         })
-        element.addEventListener("click", function (e) {
-            if (!thisCTXM.contains(e.target)) thisCTXM.style.display = "none";
-        })
+        function hidemenu (e) {
+            let rt = thisCTXM.getRootNode();
+            try{
+                let el=rt.elementFromPoint(e.clientX,e.clientY);
+                if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
+            }catch (e){
+                console.log(e);
+                document.removeEventListener("click",hidemenu);
+            }
+        }
+
+        document.addEventListener("click", hidemenu);
         return thisCTXM;
     }
     //add styling
@@ -117,4 +126,4 @@ function _contextMenuManager(root) {
         `;
     root.appendChild(s);
 }
-contextMenuManager = new _contextMenuManager(document.body);
+//contextMenuManager = new _contextMenuManager(document.body);

@@ -2,7 +2,7 @@
 
 core.registerOperator("ruigen", function (operator) {
     let me = this;
-    me.operator=operator;
+    me.container=operator;
     this.settings = {};
     //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
     this.style = document.createElement("style");

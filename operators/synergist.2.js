@@ -1,6 +1,6 @@
 core.registerOperator("itemcluster2", {
     displayName: "Itemcluster 2",
-    description: "Another version of itemcluster. Will eventually replace 1... be ready!"
+    description: "A brainstorming board. Add items, arrange them, and connect them with lines."
 }, function (container) {
     let me = this;
     addEventAPI(this);
@@ -98,11 +98,22 @@ core.registerOperator("itemcluster2", {
         });
     }
     //////////////////Handle core item updates//////////////////
+    //lazily double up updates so that we can fix the lines
+    let acp=new capacitor(200,1000,()=>{
+        for (let i in core.items){
+            me.arrangeItem(i);//wasteful... but eh
+        }
+    })
+
     core.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
-        if (me.arrangeItem) return me.arrangeItem(id, true);
+        if (me.arrangeItem) {
+            let u=me.arrangeItem(id);
+            acp.submit();
+            return u;
+        }
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -329,12 +340,14 @@ core.registerOperator("itemcluster2", {
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
         let contextMenuManager = new _contextMenuManager(me.rootdiv);
-
+        function chk(e){
+            if (e.target.tagName.toLowerCase()=="svg")return true;//only activate on clicks to the background.
+        }
         me.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
-        `, me.rootdiv);
+        `, me.rootdiv,undefined,chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
             if (me.cpyelem) {
                 let rect = me.itemSpace.getBoundingClientRect();
@@ -755,7 +768,6 @@ core.registerOperator("itemcluster2", {
             }
         };
 
-
         me.enforceLine = function (start, end) {
             let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
             let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
@@ -1152,6 +1164,16 @@ core.registerOperator("itemcluster2", {
             id: id
         });
     };
+
+    this.rootdiv.addEventListener("focus", (e) => {
+        if (e.target.parentElement.parentElement.matches("[data-id]")) {
+            let id = e.target.parentElement.parentElement.dataset.id;
+            core.fire("focus", {
+                id: id,
+                sender: this
+            });
+        }
+    })
 
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {

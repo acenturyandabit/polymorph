@@ -2,7 +2,7 @@
     let viewsets;
     core.registerOperator("opSelect", function (operator) {
         let me = this;
-        me.operator = operator;
+        me.container = operator;
         this.settings = {};
         this.style = document.createElement("style");
         this.style.innerHTML = `

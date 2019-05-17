@@ -90,28 +90,39 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
 
     //Function for adding an operator to this rect. Operator must already exist.
-    this.tieOperator = function (operator) {
+    this.tieOperator = function (operator,index) {
         if (!operator){
             console.log("Ack!");
             return;
         }
         if (!this.operators) this.operators = [];
         if (!this.operators.includes(operator)) {
-            this.operators.push(operator);
-            //Create a button for it
-            this.tabspans.push(this.createTypeName());
-            if (operator.tabbarName){
-                this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.tabbarName;
+            if (index==undefined)this.operators.push(operator);
+            else this.operators[index]=operator;
+            let ts;
+            let innrd;
+            if (index==undefined){
+                this.tabspans.push(this.createTypeName());
+                ts=this.tabspans[this.tabspans.length - 1];
+                this.tabbar.insertBefore(ts, this.plus);
+                //Create a tab for it
+                this.innerDivs.push(this.createInnerDiv());
+                innrd=this.innerDivs[this.innerDivs.length - 1];
+                this.outerDiv.appendChild(innrd);
             }else{
-                this.tabspans[this.tabspans.length - 1].children[0].innerText = operator.type;
+                ts=this.tabspans[index];
+                innrd=this.innerDivs[index];
+                innrd.children[0].remove();
             }
+            //Create a button for it
             
-            this.tabbar.insertBefore(this.tabspans[this.tabspans.length - 1], this.plus);
-            //Create a tab for it
-            this.innerDivs.push(this.createInnerDiv());
+            if (operator.tabbarName){
+                ts.children[0].innerText = operator.tabbarName;
+            }else{
+                ts.children[0].innerText = operator.type;
+            }
             //Hook it up
-            this.innerDivs[this.innerDivs.length - 1].appendChild(operator.topdiv);
-            this.outerDiv.appendChild(this.innerDivs[this.innerDivs.length - 1]);
+            innrd.appendChild(operator.topdiv);
         } else {
             this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.type;
             //just refresh the tabspan.
@@ -184,6 +195,39 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
     })
 
+    this.outerDiv.appendChild(this.tabbar);
+
+    //Delegated context menu click on tabs
+    let c=new _contextMenuManager(this.outerDiv);
+    let contextedOperatorIndex=0;
+    function tabfilter(e){
+        contextedOperatorIndex=-1;
+        let t= e.target;
+        while (t!=this.tabbar){
+            if (t.tagName=="SPAN"){
+                break;
+            }else{
+                t=t.parentElement;
+            }
+        }
+        let tp=t.parentElement;
+        for (let i=0;i<tp.children.length;i++){
+            if (tp.children[i]==t)contextedOperatorIndex=i;
+        }
+        return true;
+    }
+    let tabmenu=c.registerContextMenu(`<li class="subframe">Subframe this</li>`,this.tabbar,undefined,tabfilter);
+    tabmenu.querySelector(".subframe").addEventListener("click",()=>{
+        // at the tab, create a new subframe operator
+        let sf=(new core.operator("subframe",this));
+        let oop=this.operators[contextedOperatorIndex];
+        sf.tabbarName=oop.tabbarName;
+        this.tieOperator(sf,contextedOperatorIndex);
+        sf.baseOperator.rect.tieOperator(oop,0);
+        core.fire("updateView",{sender:me});
+        tabmenu.style.display="none";
+    })
+
     this.selectedOperator = 0;
     //And a delegated settings button handler
     this.settingOperator = 0;
@@ -206,7 +250,6 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         this.operators[this.settingOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
         this.tabspans[this.settingOperator].children[0].innerText = this.operators[this.settingOperator].tabbarName;
     }
-    this.outerDiv.appendChild(this.tabbar);
 
     // Generate placeholder content if no content is provided.
     if (operators) {

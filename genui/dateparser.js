@@ -1,5 +1,9 @@
 //V4.0: now with repetition and calendar item generator
 
+/*HOW TO USE:
+-- todo lol
+
+*/
 
 function _dateParser() {
     let me = this;
@@ -95,7 +99,7 @@ function _dateParser() {
                 today = new Date();
                 d.setDate(today.getDate());
                 d.setMonth(today.getMonth());
-                noDateSpecific = false;
+                data.noDateSpecific = false;
             }
         },
         {

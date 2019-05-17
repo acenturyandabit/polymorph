@@ -1,6 +1,6 @@
 core.registerOperator("descbox", function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     me.settings = {
         property: "description",
         operationMode: "focus",
@@ -188,10 +188,10 @@ core.registerOperator("descbox", function (operator) {
             } else {
                 if (sender) {
                     //calculate the base rect of the sender
-                    let baserectSender = sender.operator.rect;
+                    let baserectSender = sender.container.rect;
                     while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
                     //calculate my base rect
-                    let myBaseRect = me.operator.rect;
+                    let myBaseRect = me.container.rect;
                     while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
                     //if they're the same, then update.
                     if (myBaseRect == baserectSender) {

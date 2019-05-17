@@ -4,7 +4,7 @@ core.registerOperator("stack", {
     targetForward:true
 }, function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     this.settings = {};
     this.style = document.createElement("style");
     this.style.innerHTML = `

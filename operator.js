@@ -1,4 +1,5 @@
 //operator. Wrapper around an actual base operator. base operator should not change typically.
+//child is this.baseOperator.
 core.operator = function operator(_type, _rect) {
     this.rect = _rect;
     let me = this;

@@ -1,6 +1,6 @@
 core.registerOperator("subframe", {targetForward:true},function (operator) {
     let me = this;
-    me.operator=operator;
+    me.container=operator;
     this.settings = {};
 
     this.rootdiv = document.createElement("div");

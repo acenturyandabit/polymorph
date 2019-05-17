@@ -8,7 +8,7 @@ core.registerOperator(
   },
   function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     this.settings = {};
 
     this.style = document.createElement("style");

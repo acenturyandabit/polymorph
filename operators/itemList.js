@@ -1,12 +1,13 @@
 core.registerOperator("itemList", function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     //Initialise with default settings
     this.settings = {
         properties: {
             title: "text"
         },
-        filterProp: guid()
+        filterProp: guid(),
+        enableEntry:true
     };
 
     this.settingsBar = document.createElement('div');
@@ -116,6 +117,7 @@ core.registerOperator("itemList", function (operator) {
         let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
         if (!currentItemSpan) {
             currentItemSpan = me.template.cloneNode(true);
+            currentItemSpan.style.display="block";
             me.taskList.appendChild(currentItemSpan);
             currentItemSpan.dataset.id = id;
             currentItemSpan.querySelector("button").innerHTML = "X";
@@ -214,6 +216,10 @@ core.registerOperator("itemList", function (operator) {
         this.taskList.innerHTML = "";
         for (let i in core.items) {
             this.updateItem(i);
+        }
+        //hide or show based on entry enabled
+        if (this.settings.enableEntry == false){
+            this.template.style.display="none";
         }
     }
 
@@ -323,8 +329,18 @@ core.registerOperator("itemList", function (operator) {
             its.sort((a, b) => {
                 return a.date - b.date
             });
+            //remember focused item
+            let fi=me.taskList.querySelector(":focus");
+            let cp;
+            if (fi)cp=fi.selectionStart || 0;
+            //rearrange items
             for (let i = 0; i < its.length; i++) {
                 me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
+            }
+            //return focused item
+            if (fi){
+                fi.focus();
+                fi.selectionStart=cp;
             }
             core.fire("dateUpdate");
         }
@@ -336,10 +352,12 @@ core.registerOperator("itemList", function (operator) {
     ], () => {
         let ctm = new _contextMenuManager(operator.div);
         let contextedItem;
+        let contextedProp;
         let menu;
 
         function filter(e) {
             contextedItem = e.target;
+            contextedProp=contextedItem.dataset.role;
             let id = contextedItem;
             while (!id.dataset.id) {
                 id = id.parentElement;
@@ -365,8 +383,8 @@ core.registerOperator("itemList", function (operator) {
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id=contextedItem;
-            contextedItem.value = new Date(core.items[id][contextedItem.dataset.role].date[0].date).toLocaleString();
-            core.items[id][contextedItem.dataset.role].datestring = contextedItem.value;
+            contextedItem.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
+            core.items[id][contextedProp].datestring = contextedItem.value;
             me.datereparse(id);
             menu.style.display = "none";
         })
@@ -414,6 +432,13 @@ core.registerOperator("itemList", function (operator) {
     <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
     <button class="targeter">Select operator</button>
     `;
+    let entryok=new _option({
+        div:this.dialogDiv,
+        type:"bool",
+        object:this.settings,
+        property:"enableEntry",
+        label:"Enable adding new items"
+    }) 
     let d = this.dialogDiv;
     this.showDialog = function () {
         // update your dialog elements with your settings
@@ -439,6 +464,7 @@ core.registerOperator("itemList", function (operator) {
                 me.opList.appendChild(opt);
             }
         }
+        entryok.load();
         // Now fill in the ones which we're currently monitoring.
         me.proplist.innerHTML = "";
         for (let prop in me.settings.properties) {

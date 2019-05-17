@@ -14,7 +14,7 @@ arrangeItem is at 672 or thereabouts.
 (function () {
   core.registerOperator("itemCluster", function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     this.settings = {
       currentViewName: undefined,
       maxZ: 1

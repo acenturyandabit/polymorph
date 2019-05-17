@@ -3,7 +3,7 @@ core.registerOperator("reference", {
     description: "Here we list all the different features that Polymorph supports for you. If you're looking to get started quick, check out template.js instead!"
 }, function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     this.settings = {};
     //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
     this.style = document.createElement("style");

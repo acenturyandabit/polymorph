@@ -4,7 +4,7 @@ core.registerOperator("calendar", {
     },
     function (operator) {
         let me = this;
-        me.operator = operator;
+        me.container = operator;
         this.settings = {
             dateproperty: "datestring",
             dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.

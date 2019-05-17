@@ -4,7 +4,7 @@ core.registerOperator("inspector", {
     description: "Inspect all properties of a given element."
 }, function (operator) {
     let me = this;
-    me.operator = operator;
+    me.container = operator;
     me.settings = {
         operationMode: "focus",
         currentItem: ""
