@@ -512,10 +512,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 this[toSaveProperties[i]] = obj[toSaveProperties[i]];
             }
         } else if (obj.operators) {
-            for (let i = 0; i < this.outerDiv.children.length; i++) {
-                if (this.outerDiv.children[i] != this.tabbar) {
-                    this.outerDiv.children[i].remove();
-                }
+            for (let i = 0; i < this.innerDivs.length; i++) {
+                this.innerDivs[i].remove();
             }
             this.innerDivs = [];
             for (let i = 0; i < this.tabbar.children.length; i++) {

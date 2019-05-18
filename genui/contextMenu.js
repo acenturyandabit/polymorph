@@ -47,11 +47,12 @@ function _contextMenuManager(root) {
         let re = element;
         while (re.parentElement) re = re.parentElement;
         re.appendChild(thisCTXM);
+
         function intellishow(e) {
-            let mbr=thisCTXM.getBoundingClientRect();
-            let pbr=thisCTXM.parentElement.getBoundingClientRect();
-            let _left=e.pageX - pbr.x;
-            let _top= e.pageY - pbr.y;
+            let mbr = thisCTXM.getBoundingClientRect();
+            let pbr = thisCTXM.parentElement.getBoundingClientRect();
+            let _left = e.pageX - pbr.x;
+            let _top = e.pageY - pbr.y;
             //adjust for out of the page scenarios.
             /*if (((pbr.x+pbr.w)-(mbr.x+mbr.w))>0)_left =_left-((pbr.x+pbr.w)-(mbr.x+mbr.w));
             if (((pbr.y+pbr.h)-(mbr.y+mbr.h))>0)_top =_top-((pbr.y+pbr.h)-(mbr.y+mbr.h));
@@ -79,23 +80,23 @@ function _contextMenuManager(root) {
                 if (e.target.matches(delegate) || e.target.matches(delegate + " *")) f(e);
             } else f(e);
         })
-        function hidemenu (e) {
+
+        function hidemenu(e) {
             let rt = thisCTXM.getRootNode();
-            try{
-                let el=rt.elementFromPoint(e.clientX,e.clientY);
+            try {
+                let el = rt.elementFromPoint(e.clientX, e.clientY);
                 if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
-            }catch (e){
+            } catch (e) {
                 console.log(e);
-                document.removeEventListener("click",hidemenu);
+                document.removeEventListener("click", hidemenu);
             }
         }
 
         document.addEventListener("click", hidemenu);
-        return thisCTXM;
-    }
-    //add styling
-    let s = document.createElement("style");
-    s.innerHTML = `.contextMenu {
+
+        //add styling along with element for safety 
+        let s = document.createElement("style");
+        s.innerHTML = `.contextMenu {
             list-style: none;
             background: white;
             box-shadow: 0px 0px 5px black;
@@ -124,6 +125,8 @@ function _contextMenuManager(root) {
             background: white;
         }
         `;
-    root.appendChild(s);
+        thisCTXM.appendChild(s);
+        return thisCTXM;
+    }
 }
 //contextMenuManager = new _contextMenuManager(document.body);
