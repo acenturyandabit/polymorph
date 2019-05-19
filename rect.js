@@ -115,16 +115,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 innrd.children[0].remove();
             }
             //Create a button for it
-            
-            if (operator.tabbarName){
-                ts.children[0].innerText = operator.tabbarName;
-            }else{
-                ts.children[0].innerText = operator.type;
-            }
+            ts.children[0].innerText = operator.tabbarName || operator.type;
             //Hook it up
             innrd.appendChild(operator.topdiv);
         } else {
-            this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.type;
+            this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.tabbarName || operator.type;
             //just refresh the tabspan.
         }
         operator.rect = this;
@@ -216,7 +211,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
         return true;
     }
-    let tabmenu=c.registerContextMenu(`<li class="subframe">Subframe this</li>`,this.tabbar,undefined,tabfilter);
+    let tabmenu=c.registerContextMenu(`
+    <li class="subframe">Subframe this</li>
+    <li class="cpfr">Copy frame settings</li>
+    <li class="psfr">Paste frame settings</li>`,this.tabbar,undefined,tabfilter);
     tabmenu.querySelector(".subframe").addEventListener("click",()=>{
         // at the tab, create a new subframe operator
         let sf=(new core.operator("subframe",this));
@@ -224,6 +222,21 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         sf.tabbarName=oop.tabbarName;
         this.tieOperator(sf,contextedOperatorIndex);
         sf.baseOperator.rect.tieOperator(oop,0);
+        core.fire("updateView",{sender:me});
+        tabmenu.style.display="none";
+    })
+
+    tabmenu.querySelector(".cpfr").addEventListener("click",()=>{
+        // at the tab, create a new subframe operator
+        core.copiedFrameData=this.operators[contextedOperatorIndex].toSaveData();
+        core.fire("updateView",{sender:me});
+        tabmenu.style.display="none";
+    })
+
+    tabmenu.querySelector(".psfr").addEventListener("click",()=>{
+        // at the tab, create a new subframe operator
+        this.operators[contextedOperatorIndex].fromSaveData(core.copiedFrameData);
+        this.tieOperator(this.operators[contextedOperatorIndex],contextedOperatorIndex);
         core.fire("updateView",{sender:me});
         tabmenu.style.display="none";
     })

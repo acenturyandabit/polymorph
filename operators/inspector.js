@@ -132,8 +132,15 @@ core.registerOperator("inspector", {
             div: this.dialogDiv,
             type: "text",
             object: me.settings,
-            property: "focusOperatorID", //up to here
+            property: "focusOperatorID", 
             label: "Set operator UID to focus from:"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: me.settings,
+            property: "orientation",
+            label: "Horizontal orientation"
         })
     ]
     let more = document.createElement('div');

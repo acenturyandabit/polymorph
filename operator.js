@@ -26,7 +26,7 @@ core.operator = function operator(_type, _rect) {
     this.bulkhead=document.createElement("div");
     this.bulkhead.style.display="none";
     this.bulkhead.style.background="rgba(0,0,0,0.5)";
-    //fill in some innerHTML
+    //bulkhead styling
     this.bulkhead.innerHTML=`<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white">Click to select this operator.</p></div>`
     this.bulkhead.style.width="100%";
     this.bulkhead.style.height="100%";
@@ -104,11 +104,16 @@ core.operator = function operator(_type, _rect) {
     this.toSaveData = function () {
         let obj = {};
         obj.type = this.type;
-        obj.uuid = this.uuid;
         obj.tabbarName=this.tabbarName;
         if (this.baseOperator)obj.data = this.baseOperator.toSaveData();
         else obj.data={};
         return obj;
+    };
+    this.fromSaveData = function (obj) {
+        this.type = obj.type;
+        this.tabbarName=obj.tabbarName;
+        this.reload(this.type);
+        this.baseOperator.fromSaveData(obj.data);
     };
     this.activateTargets = function () {
         // put a grey disabled div on me of the basediv.
