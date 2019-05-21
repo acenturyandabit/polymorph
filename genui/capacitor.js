@@ -31,6 +31,7 @@ function capacitor(t, limit, send, fireFirst=false,checkInterval = 100) {
             me.forceSend();
         } else {
             if (rqcount==0 && fireFirst){
+                lastUID=UID;
                 me.forceSend();
                 prefire=true;
             }else{
