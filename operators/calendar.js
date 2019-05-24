@@ -128,7 +128,7 @@ core.registerOperator("calendar", {
         //Handle item updates
         let updateItemCapacitor=new capacitor(1000,1000,()=>{
             try {
-                $(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }
@@ -143,7 +143,7 @@ core.registerOperator("calendar", {
         }
         core.on("dateUpdate", () => {
             try {
-                $(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }

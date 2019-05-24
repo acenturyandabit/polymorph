@@ -62,7 +62,7 @@ core.registerOperator("itemList", function (operator) {
             }
             me.template.querySelector("[data-role='" + i + "']").value = "";
         }
-        currentItemSpan.querySelector("button").innerHTML = "X";
+        currentItemSpan.children[1].innerHTML = "X";
         it.itemList = true;
         //ensure the filter property exists
         if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = true;
@@ -164,6 +164,7 @@ core.registerOperator("itemList", function (operator) {
                 worried = i;
             }
         }
+        if (!me.container.visible())return;//if not shown then dont worryy
         if (worried) {
             let listofitems = me.taskList.querySelectorAll("[data-role='" + worried + "']");
             for (let i = 0; i < listofitems.length; i++) {

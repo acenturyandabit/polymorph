@@ -142,4 +142,7 @@ core.operator = function operator(_type, _rect) {
             this.baseOperator.listOperators(list);
         }
     }
+    this.visible=function(){
+        return this.topdiv.offsetHeight!=0;
+    }
 };

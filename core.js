@@ -610,7 +610,7 @@ document.addEventListener("DOMContentLoaded", e => {
             core.unsaved = false;
             //also do the server save
         }
-    });
+    }); 
     document.querySelector(".topbar .new").addEventListener("click", () => {
         window.open(window.location.pathname);
     })
