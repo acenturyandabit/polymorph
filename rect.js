@@ -573,12 +573,13 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 if (obj.operators[i].opdata) {
                     let op;
                     try {
-                        op = new me.core.operator(obj.operators[i].opdata, me)
+                        op = new me.core.operator(obj.operators[i].opdata, me);
+                        this.tieOperator(op);
+                    this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
                     } catch (e) {
                         console.log(e);
+                        //aborttt
                     }
-                    this.tieOperator(op);
-                    this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
                 } else {
                     let op = new me.core.operator(obj.operators[i], me)
                     this.tieOperator(op);
