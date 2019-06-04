@@ -7,7 +7,7 @@ core.registerOperator("itemList", function (operator) {
             title: "text"
         },
         filterProp: guid(),
-        enableEntry:true
+        enableEntry: true
     };
 
     this.settingsBar = document.createElement('div');
@@ -93,6 +93,7 @@ core.registerOperator("itemList", function (operator) {
         let id = d.id;
         let s = d.sender;
         me.settings.currentID = id;
+        me.sortItems();
         return me.updateItem(id, s);
     });
 
@@ -102,6 +103,68 @@ core.registerOperator("itemList", function (operator) {
             if (childs[i].dataset.id == id) return i;
         }
         return -1;
+    }
+
+    me.sortItems = function () {
+        //collect all items
+        let itms = me.taskList.querySelectorAll(`[data-id]`);
+        let its = [];
+        for (let i = 0; i < itms.length; i++) {
+            let cpp = Object.assign({}, core.items[itms[i].dataset.id]);
+            cpp = {
+                id: itms[i].dataset.id,
+                dt: cpp
+            };
+            its.push(cpp);
+        }
+        //sort everything based on the date.
+        switch (me.settings.properties[me.settings.sortby]) {
+            case "date":
+                let dateprop = me.settings.sortby;
+                for (let i = 0; i < its.length; i++) {
+                    let itm = its[i];
+                    //we are going to upgrade all dates that don't match protocol)
+                    if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
+                        if (typeof core.items[itm.id][dateprop].date == "number") {
+                            core.items[itm.id][dateprop].date = [{
+                                date: core.items[itm.id][dateprop].date
+                            }];
+                        }
+                        if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
+                        else itm.date = Date.now() * 10000;
+                    } else itm.date = Date.now() * 10000;
+                }
+                its.sort((a, b) => {
+                    return a.date - b.date;
+                });
+                break;
+            case "text":
+                for (let i = 0; i < its.length; i++) {
+                    if (!its[i].dt[me.settings.sortby])its[i].dt[me.settings.sortby]="";
+                }
+                its.sort((a, b) => {
+                    return a.dt[me.settings.sortby].localeCompare(b.dt[me.settings.sortby]);
+                });
+                break;
+            default:
+                its.sort((a, b) => {
+                    return a.dt[me.settings.sortby] - b.dt[me.settings.sortby];
+                });
+        }
+        //remember focused item
+        let fi = me.taskList.querySelector(":focus");
+        //also remember cursor position
+        let cp;
+        if (fi) cp = fi.selectionStart || 0;
+        //rearrange items
+        for (let i = 0; i < its.length; i++) {
+            me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
+        }
+        //return focused item
+        if (fi) {
+            fi.focus();
+            fi.selectionStart = cp;
+        }
     }
 
     this.updateItem = function (id, sender) {
@@ -117,7 +180,7 @@ core.registerOperator("itemList", function (operator) {
         let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
         if (!currentItemSpan) {
             currentItemSpan = me.template.cloneNode(true);
-            currentItemSpan.style.display="block";
+            currentItemSpan.style.display = "block";
             me.taskList.appendChild(currentItemSpan);
             currentItemSpan.dataset.id = id;
             currentItemSpan.querySelector("button").innerHTML = "X";
@@ -151,7 +214,7 @@ core.registerOperator("itemList", function (operator) {
         }
         if (it.style) {
             currentItemSpan.style.background = it.style.background;
-            currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]);//stuff error handling
+            currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
         }
         return true;
     }
@@ -164,7 +227,7 @@ core.registerOperator("itemList", function (operator) {
                 worried = i;
             }
         }
-        if (!me.container.visible())return;//if not shown then dont worryy
+        if (!me.container.visible()) return; //if not shown then dont worryy
         if (worried) {
             let listofitems = me.taskList.querySelectorAll("[data-role='" + worried + "']");
             for (let i = 0; i < listofitems.length; i++) {
@@ -219,8 +282,8 @@ core.registerOperator("itemList", function (operator) {
             this.updateItem(i);
         }
         //hide or show based on entry enabled
-        if (this.settings.enableEntry == false){
-            this.template.style.display="none";
+        if (this.settings.enableEntry == false) {
+            this.template.style.display = "none";
         }
     }
 
@@ -278,7 +341,9 @@ core.registerOperator("itemList", function (operator) {
             }
             _target.style.borderTop = "solid 3px purple";
             _target.style.borderBottom = "solid 3px purple";
-            _target.scrollIntoView({behavior:"smooth"});
+            _target.scrollIntoView({
+                behavior: "smooth"
+            });
         }
     }
 
@@ -327,23 +392,8 @@ core.registerOperator("itemList", function (operator) {
                 } else itm.date = Date.now() * 10000;
                 its.push(itm);
             });
-            //sort everything based on the date.
-            its.sort((a, b) => {
-                return a.date - b.date
-            });
-            //remember focused item
-            let fi=me.taskList.querySelector(":focus");
-            let cp;
-            if (fi)cp=fi.selectionStart || 0;
-            //rearrange items
-            for (let i = 0; i < its.length; i++) {
-                me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
-            }
-            //return focused item
-            if (fi){
-                fi.focus();
-                fi.selectionStart=cp;
-            }
+            //sort everything
+            me.sortItems();
             core.fire("dateUpdate");
         }
         me.datereparse();
@@ -359,7 +409,7 @@ core.registerOperator("itemList", function (operator) {
 
         function filter(e) {
             contextedItem = e.target;
-            contextedProp=contextedItem.dataset.role;
+            contextedProp = contextedItem.dataset.role;
             let id = contextedItem;
             while (!id.dataset.id) {
                 id = id.parentElement;
@@ -370,12 +420,12 @@ core.registerOperator("itemList", function (operator) {
             } else {
                 menu.querySelector(".fixed").style.display = "none";
             }
-            if (core.items[contextedItem].style){
-                menu.querySelector(".background").value=core.items[contextedItem].style.background || "";
-                menu.querySelector(".color").value=core.items[contextedItem].style.color || "";
-            }else{
-                menu.querySelector(".background").value="";
-                menu.querySelector(".color").value="";
+            if (core.items[contextedItem].style) {
+                menu.querySelector(".background").value = core.items[contextedItem].style.background || "";
+                menu.querySelector(".color").value = core.items[contextedItem].style.color || "";
+            } else {
+                menu.querySelector(".background").value = "";
+                menu.querySelector(".color").value = "";
             }
             return true;
         }
@@ -384,7 +434,7 @@ core.registerOperator("itemList", function (operator) {
         <li class="fore"><input class="color" placeholder="Foreground color"></input></li>
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
-            let id=contextedItem;
+            let id = contextedItem;
             contextedItem.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
             core.items[id][contextedProp].datestring = contextedItem.value;
             me.datereparse(id);
@@ -393,7 +443,7 @@ core.registerOperator("itemList", function (operator) {
 
         function updateStyle(e) {
             let cid = contextedItem;
-    
+
             if (!core.items[cid].style) core.items[cid].style = {};
             core.items[cid].style[e.target.className] = e.target.value;
             core.fire("updateItem", {
@@ -434,18 +484,18 @@ core.registerOperator("itemList", function (operator) {
     <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
     <button class="targeter">Select operator</button>
     `;
-    let entryok=new _option({
-        div:this.dialogDiv,
-        type:"bool",
-        object:this.settings,
-        property:"enableEntry",
-        label:"Enable adding new items"
-    }) 
+    let entryok = new _option({
+        div: this.dialogDiv,
+        type: "bool",
+        object: this.settings,
+        property: "enableEntry",
+        label: "Enable adding new items"
+    })
     let d = this.dialogDiv;
     this.showDialog = function () {
         // update your dialog elements with your settings
         //Fill in dialog information
-        //set the propertyname one
+        //set all property settings.
         for (i in me.settings) {
             let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
             if (it) it.value = me.settings[i];
@@ -466,6 +516,7 @@ core.registerOperator("itemList", function (operator) {
                 me.opList.appendChild(opt);
             }
         }
+        //enable adding new items checkbox
         entryok.load();
         // Now fill in the ones which we're currently monitoring.
         me.proplist.innerHTML = "";
@@ -477,11 +528,13 @@ core.registerOperator("itemList", function (operator) {
                 <option value="date">Date</option>
                 <option value="tag">Tag</option>
                 <option value="number">Number</option>
-            </select>` + `<button data-krole=` + prop + `>X</button>`
+            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole=` + prop + `>X</button>`
             pspan.querySelector("select").value = me.settings.properties[prop];
             me.proplist.appendChild(pspan);
         }
     }
+
+
 
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
@@ -507,6 +560,7 @@ core.registerOperator("itemList", function (operator) {
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
         me.updateSettings();
+        me.sortItems();
         core.fire("updateView");
     }
 
@@ -539,14 +593,20 @@ core.registerOperator("itemList", function (operator) {
 
     //Handle select's in proplist
     me.proplist.addEventListener('change', function (e) {
-        me.settings.properties[e.target.dataset.role] = e.target.value;
+        if (e.target.matches("select"))me.settings.properties[e.target.dataset.role] = e.target.value;
     })
     me.proplist.addEventListener('click', function (e) {
         if (e.target.matches("[data-krole]")) {
             delete me.settings.properties[e.target.dataset.krole];
+            me.showDialog();
         }
-        me.showDialog();
     })
+    me.proplist.addEventListener("input", (e) => {
+        if (e.target.matches("input[type='radio']")) {
+            me.settings.sortby = e.target.dataset.ssrole;
+        }
+    })
+
     me.opList = me.dialogDiv.querySelector("select._prop");
     //retrieve stuff
     //sort by date checkbox

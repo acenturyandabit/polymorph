@@ -107,6 +107,7 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
     //items
     me.itemcapacitor = new capacitor(500, 30, (id) => {
       root.collection('items').doc(id).set(JSON.parse(JSON.stringify(core.items[id])));
+      core.unsaved = false;
     })
     core.on("updateItem", (d) => {
       if (me.localChange) me.localChange = false;

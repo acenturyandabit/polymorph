@@ -17,7 +17,7 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
         core.userLoad("toText", this.id);
     })
     this.dialog.querySelector(".sfile").addEventListener("click", () => {
-        saveJSON(core.toSaveData(), core.currentDoc.settings.displayName + "_" + Date.now()+".json");
+        saveJSON(core.toSaveData(), core.currentDoc.displayName + "_" + Date.now()+".json");
     });
 
     this.pushAll = async function (id, data) {
