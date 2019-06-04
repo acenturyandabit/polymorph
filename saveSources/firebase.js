@@ -135,7 +135,7 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
     //keep as internal state because future extensions to hook api may cause issues.
     if (me.forcedTrigger){
       for (let i in core.items){
-        me.itemcapacitor.submit(d.id);
+        me.itemcapacitor.submit(i);
       }
       me.viewcapacitor.submit();
       let copyobj = Object.assign({}, core.currentDoc);
