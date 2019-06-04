@@ -104,6 +104,7 @@ core.operator = function operator(_type, _rect) {
     this.toSaveData = function () {
         let obj = {};
         obj.type = this.type;
+        obj.uuid=this.uuid;
         obj.tabbarName=this.tabbarName;
         if (this.baseOperator)obj.data = this.baseOperator.toSaveData();
         else obj.data={};

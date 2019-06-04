@@ -158,7 +158,7 @@ function _dialogManager(userSettings) {
                     e.parentElement.appendChild(closeButton);
                     //only bind escape close to dialogs that have a closeButton
                     window.addEventListener("keydown", (e) => {
-                        if (e.key == "Escape") {
+                        if (e.key == "Escape" && prediv.style.display!="none") {
                             closeDialogHandler();
                         }
                     });

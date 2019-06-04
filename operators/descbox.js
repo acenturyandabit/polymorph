@@ -168,6 +168,7 @@ core.registerOperator("descbox", function (operator) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
         me.updateSettings();
+        core.fire("updateView");
     }
     me.dialogDiv.addEventListener("input", function (e) {
         if (e.target.dataset.role) {
