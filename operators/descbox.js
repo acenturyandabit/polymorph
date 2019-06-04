@@ -27,7 +27,7 @@ core.registerOperator("descbox", function (operator) {
                 me.textarea.disabled = false;
                 if (core.items[id].style) {
                     me.textarea.style.background = core.items[id].style.background;
-                    me.textarea.style.color = core.items[id].style.color;
+                    me.textarea.style.color = core.items[id].style.color|| matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
                 } else {
                     me.textarea.style.background = "";
                     me.textarea.style.color = "";
