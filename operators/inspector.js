@@ -9,8 +9,39 @@ core.registerOperator("inspector", {
         operationMode: "focus",
         currentItem: ""
     };
-
+    me.internal = document.createElement("div");
     me.rootdiv = document.createElement("div");
+    me.rootdiv.appendChild(me.internal);
+    let ttypes = `<select>
+    <option>Text</option>
+    <option>Date</option>
+    </select>`;
+    me.rootdiv.appendChild(htmlwrap(`
+        <h4>Add a property:</h4>
+        <input type="text" placeholder="Name">
+        <label>Type:${ttypes}</label>
+    `));
+    me.rootdiv.querySelector("input[placeholder='Name']").addEventListener("keyup", (e) => {
+        if (e.key == "Enter") {
+            core.items[me.settings.currentItem][e.target.value] = " ";
+            if (me.settings.propsOn) me.settings.propsOn[e.target.value] = true;
+            me.renderItem(me.settings.currentItem);
+            e.target.value = "";
+            core.fire("updateItem", {
+                sender: me,
+                id: me.settings.currentItem
+            });
+        }
+    })
+    operator.div.appendChild(htmlwrap(
+        `
+        <style>
+        h4{
+            margin:0;
+        }
+        </style>
+    `
+    ));
     operator.div.appendChild(me.rootdiv);
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -22,36 +53,106 @@ core.registerOperator("inspector", {
         });
     })
 
+    me.internal.addEventListener("input", (e) => {
+        let it = core.items[me.settings.currentItem];
+        let i = e.target.parentElement.dataset.role;
+        switch (e.target.parentElement.dataset.type) {
+            case 'Text':
+                it[i] = e.target.value;
+                upc.submit(me.settings.currentItem);
+                break;
+            case 'Date':
+                if (!it[i]) it[i] = {};
+                if (typeof it[i] == "string") it[i] = {
+                    datestring: it[i]
+                };
+                it[i].datestring = e.target.value;
+                if (me.datereparse) me.datereparse(it, i);
+                break;
+        }
+    })
+
+    scriptassert([
+        ['dateparser', 'genui/dateparser.js']
+    ], () => {
+        me.datereparse = function (it, i) {
+            it[i].date = dateParser.richExtractTime(it[i].datestring);
+            if (!it[i].date.length) it[i].date = undefined;
+            core.fire("dateUpdate");
+        }
+    });
+
+    scriptassert([
+        ["contextmenu", "genui/contextMenu.js"]
+    ], () => {
+        let ctm = new _contextMenuManager(operator.div);
+        let contextedItem;
+        let menu;
+
+        function filter(e) {
+            contextedItem = e.target;
+            return true;
+        }
+        menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, me.rootdiv, "[data-type='Date'] input", filter)
+        menu.querySelector(".fixed").addEventListener("click", function (e) {
+            if (!core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date) me.datereparse(core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
+            contextedItem.value = new Date(core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date[0].date).toLocaleString();
+            core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].datestring = contextedItem.value;
+            me.datereparse(core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
+            menu.style.display = "none";
+        })
+    })
 
     //render an item on focus or on settings update.
     //must be able to handle null and "" in id
     me.renderItem = function (id, soft = false) {
-        //if changing id, wipe everything
-        if (!soft) me.rootdiv.innerHTML = "";
+        if (!soft) me.internal.innerHTML = "";
         //create a bunch of textareas for each different field.
-        for (let i = 0; i < me.rootdiv.children.length; i++) {
-            me.rootdiv.children.dataset.invalid = 1;
+        //invalidate old ones
+        for (let i = 0; i < me.internal.children.length; i++) {
+            me.internal.children[i].dataset.invalid = 1;
         }
         if (core.items[id]) {
+            //clean the object
             let clean_obj = JSON.parse(JSON.stringify(core.items[id]));
+            if (me.settings.showNonexistent){
+                for (let i in me.settings.propsOn){
+                    clean_obj[i]="";
+                }
+            }
             for (let i in clean_obj) {
-                let pdiv = me.rootdiv.querySelector("[data-role='" + i + "']");
-                if (!pdiv) {
+                if (me.settings.propsOn && !me.settings.propsOn[i]) continue; // skip properties we dont want
+                let pdiv = me.internal.querySelector("[data-role='" + i + "']");
+                if (!pdiv || pdiv.dataset.type != me.settings.propsOn[i]) {
+                    //regenerate it 
+                    if (pdiv) pdiv.remove();
                     pdiv = document.createElement("div");
                     pdiv.dataset.role = i;
-                    pdiv.innerHTML = `
-                <h2>` + i + `</h2> 
-                    <input>
-                `;
-                    me.rootdiv.appendChild(pdiv);
+                    pdiv.dataset.type = me.settings.propsOn[i];
+                    let ihtml = `<h4>` + i + `</h4>`;
+                    switch (me.settings.propsOn[i]) {
+                        case 'Text':
+                        case 'Date':
+                            ihtml += `<input>`;
+                    }
+                    pdiv.innerHTML = ihtml;
+                    me.internal.appendChild(pdiv);
                 }
                 pdiv.dataset.invalid = 0;
                 //change type if necessary
 
                 //display value
-                pdiv.querySelector("input").value = core.items[id][i];
+                switch (me.settings.propsOn[i]) {
+                    case 'Text':
+                        pdiv.querySelector("input").value = core.items[id][i];
+                        break;
+                    case 'Date':
+                        pdiv.querySelector("input").value = core.items[id][i].datestring;
+                        break;
+                }
+
             }
-            its = me.rootdiv.querySelectorAll("[data-invalid='1']");
+            its = me.internal.querySelectorAll("[data-invalid='1']");
             for (let i = 0; i < its.length; i++) {
                 its[i].remove();
             }
@@ -64,7 +165,7 @@ core.registerOperator("inspector", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //First time load
-    me.renderItem(me.settings.currentID);
+    me.renderItem(me.settings.currentItem);
 
     core.on("updateItem", function (d) {
         let id = d.id;
@@ -80,7 +181,6 @@ core.registerOperator("inspector", {
 
 
     //loading and saving
-
     me.updateSettings = function () {
         if (me.settings.operationMode == 'static') {
             //create if it does not exist
@@ -94,7 +194,7 @@ core.registerOperator("inspector", {
             }
         }
         //render the item
-        me.renderItem(me.settings.currentID);
+        me.renderItem(me.settings.currentItem);
     }
 
     //Saving and loading
@@ -132,7 +232,7 @@ core.registerOperator("inspector", {
             div: this.dialogDiv,
             type: "text",
             object: me.settings,
-            property: "focusOperatorID", 
+            property: "focusOperatorID",
             label: "Set operator UID to focus from:"
         }),
         new _option({
@@ -141,6 +241,13 @@ core.registerOperator("inspector", {
             object: me.settings,
             property: "orientation",
             label: "Horizontal orientation"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: me.settings,
+            property: "showNonexistent",
+            label: "Show enabled but not currently filled fields"
         })
     ]
     let more = document.createElement('div');
@@ -150,7 +257,13 @@ core.registerOperator("inspector", {
     <button class="targeter">Select operator</button>
     </br>
     `;
-    this.dialogDiv.appendChild(more)
+    this.dialogDiv.appendChild(more);
+    let fields = document.createElement('div');
+    fields.innerHTML = `
+    <h4> Select visible fields: </h4>
+    <div class="apropos"></div>
+    `;
+    this.dialogDiv.appendChild(fields);
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
         core.target().then((id) => {
@@ -161,6 +274,17 @@ core.registerOperator("inspector", {
     })
     this.showDialog = function () {
         // update your dialog elements with your settings
+        //get all available properties.
+        let app = fields.querySelector(".apropos");
+        app.innerHTML = "";
+        let props = {};
+        for (let i in core.items) {
+            for (let j in core.items[i]) props[j] = true;
+        }
+        if (!this.settings.propsOn) this.settings.propsOn = props;
+        for (let j in props) {
+            app.appendChild(htmlwrap(`<p data-pname="${j}">${j}<span style="display: block; float: right;"><input type="checkbox" ${(this.settings.propsOn[j])?"checked":""}> ${ttypes}</span></p>`));
+        }
         //fill out some details
         options.forEach((i) => i.load());
     }
@@ -169,6 +293,14 @@ core.registerOperator("inspector", {
         let its = me.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
+        }
+        //also update all properties
+        let ipns = me.dialogDiv.querySelectorAll("[data-pname]");
+        me.settings.propsOn = {};
+        for (let i = 0; i < ipns.length; i++) {
+            if (ipns[i].querySelector("input").checked) {
+                me.settings.propsOn[ipns[i].dataset.pname] = ipns[i].querySelector("select").value;
+            }
         }
         me.updateSettings();
     }
@@ -185,7 +317,7 @@ core.registerOperator("inspector", {
         if (me.settings.operationMode == "focus") {
             if (me.settings['focusOperatorID']) {
                 if (me.settings['focusOperatorID'] == sender.container.uuid) {
-                    me.settings.currentID = id;
+                    me.settings.currentItem = id;
                     me.renderItem(id);
                 }
             } else {
@@ -198,7 +330,7 @@ core.registerOperator("inspector", {
                 //if they're the same, then update.
                 if (myBaseRect == baserectSender) {
                     if (me.settings.operationMode == 'focus') {
-                        me.settings.currentID = id;
+                        me.settings.currentItem = id;
                         me.renderItem(id);
                     }
                 }
@@ -209,8 +341,8 @@ core.registerOperator("inspector", {
     core.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
-        if (me.settings.currentID == id) {
-            me.settings.currentID = undefined;
+        if (me.settings.currentItem == id) {
+            me.settings.currentItem = undefined;
         };
         me.updateItem(undefined);
     });

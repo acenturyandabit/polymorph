@@ -21,6 +21,7 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
     //dont actually do anything here... this is a ctrl s by the user.
   }
   this.pullAll = async function (id) {
+    this.dialog.querySelector("input[type='checkbox']").checked = true;
     if (!this.db) return;
     let root = this.db
       .collection("polymorph")
@@ -45,6 +46,8 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
   }
 
   this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
+    this.dialog.querySelector("input[type='checkbox']").checked = true;
+    this.dialog.querySelector("input[placeholder='Save ID']").value=id;
     let root = this.db
       .collection("polymorph")
       .doc(id);
@@ -128,10 +131,45 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
         root.set(copyobj);
       }
     });
+    //If forced trigger, fire initial push sequence.
+    //keep as internal state because future extensions to hook api may cause issues.
+    if (me.forcedTrigger){
+      for (let i in core.items){
+        me.itemcapacitor.submit(d.id);
+      }
+      me.viewcapacitor.submit();
+      let copyobj = Object.assign({}, core.currentDoc);
+      delete copyobj.items;
+      delete copyobj.views;
+      root.set(copyobj);
+      me.forcedTrigger=false;
+    }
+    
   }
   this.unhook = async function (id) { // just comment out if you can't subscribe to live updates.
+    this.dialog.querySelector("input[type='checkbox']").checked = false;
     for (i in me.unsub) {
       me.unsub[i]();
     }
   }
+
+  this.dialog = document.createElement("div");
+  this.dialog.innerHTML = `
+    <h2>Firebase (Real time collaboration) </h2>
+    <span>
+    <input placeholder="Save ID">
+    <label>Enable sharing <input type="checkbox"></label>
+    </span>
+    `;
+  this.dialog.querySelector("input[type='checkbox']").addEventListener("change", (e) => {
+    if (e.target.checked) {
+      this.forcedTrigger=true;
+      //change the document's URL to be a shareable one.
+      window.history.pushState("","","?doc="+this.dialog.querySelector("input[placeholder='Save ID']").value+"&src=fb");
+      this.hook(this.dialog.querySelector("input[placeholder='Save ID']").value);
+    } else {
+      this.unhook();
+    }
+
+  })
 })

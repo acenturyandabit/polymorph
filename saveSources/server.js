@@ -43,7 +43,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         label: "Full server address (include document name)"
     });
     let morebuttons = htmlwrap(`<button class="save">Save to source</button>
-    <button class="load">Load from source</button>`);
+    <button class="load">Load from source</button>`,"div");
     //<button class="vfy">Verify source</button>`);
     this.dialog.appendChild(morebuttons);
     this.dialog.querySelector(".save").addEventListener("click", () => {

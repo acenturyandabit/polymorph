@@ -122,7 +122,7 @@ core.registerOperator("stack", {
         for (let i=0;i<this.rects.length;i++){
             this.rects[i].rect.resize();
         }
-        this.parentRect=this.operator.rect;//enable forwarding for elements in the stack.
+        this.parentRect=this.container.rect;//enable forwarding for elements in the stack.
     }
 
     this.fromSaveData = function (d) {

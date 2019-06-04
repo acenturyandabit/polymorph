@@ -191,7 +191,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     })
 
     this.outerDiv.appendChild(this.tabbar);
-
+    let tabmenu;
     //Delegated context menu click on tabs
     let c=new _contextMenuManager(this.outerDiv);
     let contextedOperatorIndex=0;
@@ -209,12 +209,41 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         for (let i=0;i<tp.children.length;i++){
             if (tp.children[i]==t)contextedOperatorIndex=i;
         }
+        if (me.parent && me.parent.constructor.name=="_rect"){
+            //i have a prent, show subframe parent
+            tabmenu.querySelector(".subframePR").style.display="block";
+        }else{
+            tabmenu.querySelector(".subframePR").style.display="none";
+        }
         return true;
     }
-    let tabmenu=c.registerContextMenu(`
+    tabmenu=c.registerContextMenu(`
     <li class="subframe">Subframe this</li>
+    <li class="subframePR">Subframe parent rect</li>
     <li class="cpfr">Copy frame settings</li>
     <li class="psfr">Paste frame settings</li>`,this.tabbar,undefined,tabfilter);
+    tabmenu.querySelector(".subframePR").addEventListener("click",()=>{
+        // at the tab, create a new subframe operator
+        let sf=(new core.operator("subframe",this.parent));
+        let pcp=new _rect(core,sf.baseOperator.rootdiv,RECT_ORIENTATION_X,1,0);
+        sf.baseOperator.rect=pcp;
+        let oldParent=this.parent;
+        pcp.children=this.parent.children;
+        pcp.outerDiv.children[pcp.outerDiv.children.length-1].remove();//remove rect, just to clean up
+        pcp.outerDiv.appendChild(pcp.children[0].outerDiv);
+        pcp.outerDiv.appendChild(pcp.children[1].outerDiv);
+        pcp.children[0].parent=pcp;
+        pcp.children[1].parent=pcp;
+        oldParent.children=[];
+        oldParent.innerDivs = [];
+        oldParent.tabspans = [];
+        oldParent.tieOperator(sf);
+        oldParent.innerDivs[0].style.display="block";
+        oldParent.resize();
+        oldParent.resize();// could probably be more efficient than calling resize twice...
+        core.fire("updateView",{sender:me});
+        tabmenu.style.display="none";
+    })
     tabmenu.querySelector(".subframe").addEventListener("click",()=>{
         // at the tab, create a new subframe operator
         let sf=(new core.operator("subframe",this));
@@ -297,6 +326,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.outerDiv.style.left = 0;
         }
         if (this.children.length) {
+            //make sure children are attached to me.
             me.outerDiv.style.border = "none"; // verify border removal
             //hide other items
             me.tabbar.style.display = "none";

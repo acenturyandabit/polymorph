@@ -63,6 +63,7 @@ var _option=(function(){
             case "text":
                 appendedElement = document.createElement("input");
                 appendedElement.style.display="block";
+                appendedElement.style.float="right";
                 appendedElement.addEventListener("input", () => {
                     let actualObject=iff(settings.object);
                     actualObject[settings["property"]] = appendedElement.value;

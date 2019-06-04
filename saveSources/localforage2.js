@@ -27,7 +27,7 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
     this.dialog.innerHTML=`
     <h2>Localforage (offline storage)</h2>
     <span>
-    <input>Save id</input>
+    <input placeholder="Save ID">
     <button class="snow">Save now</button>
     <button class="lfs">Load from source</button>
     </span>

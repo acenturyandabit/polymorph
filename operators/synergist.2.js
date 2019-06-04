@@ -933,7 +933,9 @@ core.registerOperator("itemcluster2", {
 
     this.itemSpace.addEventListener("mousemove", function (e) {
         //stop from creating an item if we are resizing another item
-        me.possibleResize = true;
+        if (Math.abs(e.offsetX-me.mouseStoredX)>5 || Math.abs(e.offsetY-me.mouseStoredY)>5){
+            me.possibleResize = true;
+        }
         if (me.dragging) {
             /*if (me.movingDiv.parentElement.parentElement.matches(".floatingItem")) {
                 //nested items
@@ -1076,6 +1078,8 @@ core.registerOperator("itemcluster2", {
     };
     this.itemSpace.addEventListener("mousedown", function (e) {
         me.possibleResize = false;
+        me.mouseStoredX=e.offsetX;
+        me.mouseStoredY=e.offsetY;
     });
     this.itemSpace.addEventListener("dblclick", function (e) {
         if (me.possibleResize) {

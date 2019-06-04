@@ -104,6 +104,9 @@ function _dialogManager(userSettings) {
                 margin: auto;
                 min-height: 60%;
                 max-width: 80%;
+                max-height: 80%;
+                overflow-y: auto;
+                max-width: 80%;
                 background-color: white;
                 border-radius: 30px;
                 padding: 30px;
@@ -117,11 +120,11 @@ function _dialogManager(userSettings) {
         let returns = [];
         if (!root) root = document.body;
         let _toCheckDialogs = root.querySelectorAll("." + me.settings.dialogLayers[0].className);
-        let toCheckDialogs=[];
-        for (let i=0;i<_toCheckDialogs.length;i++){
+        let toCheckDialogs = [];
+        for (let i = 0; i < _toCheckDialogs.length; i++) {
             toCheckDialogs.push(_toCheckDialogs[i]);
         }
-        if (root.matches("." + me.settings.dialogLayers[0].className))toCheckDialogs.push(root);
+        if (root.matches("." + me.settings.dialogLayers[0].className)) toCheckDialogs.push(root);
         for (let i = 0; i < toCheckDialogs.length; i++) {
             let e = toCheckDialogs[i];
             if (!(e.children.length && e.children[0].classList.contains(me.settings.dialogLayers[1].className))) {
@@ -148,6 +151,8 @@ function _dialogManager(userSettings) {
                     closeButton.classList.add(me.settings.closeButtonClass);
                     let closeDialogHandler = () => {
                         prediv.style.display = "none";
+                        //act as if close button was clicked
+                        closeButton.click();
                     }
                     closeButton.addEventListener("click", closeDialogHandler);
                     e.parentElement.appendChild(closeButton);
