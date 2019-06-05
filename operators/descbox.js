@@ -144,6 +144,7 @@ core.registerOperator("descbox", function (operator) {
     <button class="targeter">Select operator</button>
     </br>
     <input data-role="property" placeholder="Enter the property to display...">
+    <input data-role="placeholder" placeholder="Enter a placeholder...">
     `;
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
@@ -167,6 +168,7 @@ core.registerOperator("descbox", function (operator) {
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
+        me.textarea.placeholder=me.settings.placeholder|| "";
         me.updateSettings();
         core.fire("updateView");
     }

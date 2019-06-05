@@ -46,7 +46,7 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
 
     //Handle the settings dialog click!
     this.dialogDiv=document.createElement("div");
-    this.dialogDiv.innerHTML=`Some html`;
+    this.dialogDiv.innerHTML=`Nothing to show yet :3`;
     this.showDialog=function(){
         // update your dialog elements with your settings
     }
@@ -60,5 +60,4 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     this.listOperators=function(list){
         this.rect.listOperators(list);
     }
-
 });

@@ -90,6 +90,7 @@ core.registerOperator("stack", {
     this.rootdiv.addEventListener("mouseup",function(e){
         resizingDiv=undefined;
         // if in correct direction, resize.
+        core.fire("updateView");
     })
 
     this._remove=function(burn,obj){
@@ -109,10 +110,11 @@ core.registerOperator("stack", {
         let obj = {};
         obj.settings = this.settings;
         obj.rects = [];
+        let scons=me.rootdiv.querySelectorAll(".stack_Container");
         for (let i = 0; i < this.rects.length; i++) {
             obj.rects.push({
                 rect: this.rects[i].rect.toSaveData(),
-                size:this.rects[i].size
+                size: scons[i].clientHeight
             });
         }
         return obj;
