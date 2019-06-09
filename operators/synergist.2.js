@@ -5,7 +5,13 @@ core.registerOperator("itemcluster2", {
     let me = this;
     addEventAPI(this);
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {};
+    this.settings = {
+        itemcluster: {
+            cx: 0,
+            cy: 0,
+            scale: 1
+        }
+    };
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
@@ -73,7 +79,14 @@ core.registerOperator("itemcluster2", {
     this.itemSpace = this.rootdiv.querySelector(".itemcluster");
     container.div.appendChild(this.rootdiv);
 
-
+    me.mapPageToSvgCoords=function(pageX,pageY,vb){
+        let rels=me.svg.node.getBoundingClientRect();
+        if (!vb)vb=me.svg.viewbox();
+        let ret={};
+        ret.x=(pageX-rels.x)/rels.width*vb.width+vb.x;
+        ret.y=(pageY-rels.y)/rels.height*vb.height+vb.y;
+        return ret;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Tutorial
@@ -99,8 +112,8 @@ core.registerOperator("itemcluster2", {
     }
     //////////////////Handle core item updates//////////////////
     //lazily double up updates so that we can fix the lines
-    let acp=new capacitor(200,1000,()=>{
-        for (let i in core.items){
+    let acp = new capacitor(200, 1000, () => {
+        for (let i in core.items) {
             me.arrangeItem(i);//wasteful... but eh
         }
     })
@@ -110,7 +123,7 @@ core.registerOperator("itemcluster2", {
         let sender = d.sender;
         if (sender == me) return;
         if (me.arrangeItem) {
-            let u=me.arrangeItem(id);
+            let u = me.arrangeItem(id);
             acp.submit();
             return u;
         }
@@ -123,6 +136,8 @@ core.registerOperator("itemcluster2", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views
+
+    //Editing the name of a view
     this.viewName.addEventListener("keyup", function (e) {
         core.items[me.settings.currentViewName].itemcluster.viewName =
             e.currentTarget.innerText;
@@ -239,9 +254,9 @@ core.registerOperator("itemcluster2", {
                 }
             }
 
-            
+            //buttons
             this.viewName.innerText =
-                core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig,"");
+                core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (preview != ln) {
                 if (subview) {
@@ -269,6 +284,7 @@ core.registerOperator("itemcluster2", {
                     delete me.activeLines[i][j];
                 }
             }
+            //reposition all items, also updating viewbox
             for (i in core.items) {
                 if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
@@ -281,6 +297,7 @@ core.registerOperator("itemcluster2", {
                     //twice so that all lines show up. How efficient.
                 }
             }
+            me.viewAdjust();
         }
     };
 
@@ -334,29 +351,27 @@ core.registerOperator("itemcluster2", {
     })
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    //Context menu
+    //Various context menus
 
     scriptassert([
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
         let contextMenuManager = new _contextMenuManager(me.rootdiv);
-        function chk(e){
-            if (e.target.tagName.toLowerCase()=="svg")return true;//only activate on clicks to the background.
+        function chk(e) {
+            if (e.target.tagName.toLowerCase() == "svg") return true;//only activate on clicks to the background.
         }
         me.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
-        `, me.rootdiv,undefined,chk);
+        `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
             if (me.cpyelem) {
                 let rect = me.itemSpace.getBoundingClientRect();
                 let rect2 = me.rootcontextMenu.getBoundingClientRect();
                 core.items[me.cpyelem].itemcluster.viewData[me.settings.currentViewName] = {
-                    x: (rect2.left - rect.left) / me.itemSpace.clientWidth +
-                        (core.items[me.settings.currentViewName].itemcluster.cx || 0),
-                    y: (rect2.top - rect.top) / me.itemSpace.clientHeight +
-                        (core.items[me.settings.currentViewName].itemcluster.cy || 0),
+                    x: (rect2.left - rect.left) / me.itemSpace.clientWidth,
+                    y: (rect2.top - rect.top) / me.itemSpace.clientHeight,
                 }
                 me.rootcontextMenu.style.display = "none";
                 me.arrangeItem(me.cpyelem);
@@ -370,8 +385,8 @@ core.registerOperator("itemcluster2", {
             let rect = me.itemSpace.getBoundingClientRect();
             for (let i in core.items) {
                 if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0);
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+                    core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left;
+                    core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top;
                     me.arrangeItem(i);
                 }
             }
@@ -494,8 +509,8 @@ core.registerOperator("itemcluster2", {
             }
 
             //Start rendering!
-            let currentx = e.clientX - rect.left - (core.items[me.settings.currentViewName].itemcluster.cx || 0) - tw / 2;
-            let currenty = e.clientY - rect.top - (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+            let currentx = e.clientX - rect.left - tw / 2;
+            let currenty = e.clientY - rect.top;
 
             function render(itm, tx, ty) { // itm is a visibleItem
                 core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
@@ -653,7 +668,7 @@ core.registerOperator("itemcluster2", {
             }
             rect.show();
             if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x + (core.items[me.settings.currentViewName].itemcluster.cx || 0), core.items[id].itemcluster.viewData[me.settings.currentViewName].y + (core.items[me.settings.currentViewName].itemcluster.cy || 0));
+                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
             me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").value = core.items[id].title || "";
@@ -728,7 +743,7 @@ core.registerOperator("itemcluster2", {
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
-        //Lines api
+        //Lines
 
 
         me.linkingLine = me.svg.line(0, 0, 0, 0).stroke({
@@ -797,10 +812,7 @@ core.registerOperator("itemcluster2", {
                 });
                 if (!me.activeLines[start]) me.activeLines[start] = {};
                 me.activeLines[start][end] = l;
-            }
-            let r1 = sd.getBoundingClientRect();
-            let r2 = ed.getBoundingClientRect();
-            let rb = me.itemSpace.getBoundingClientRect();
+            }            
             //if either is not visible, then dont draw
             if (sd.style.display == "none" || ed.style.display == "none") {
                 l.hide();
@@ -808,14 +820,14 @@ core.registerOperator("itemcluster2", {
             }
             l.show();
             l.plot(
-                r1.left + r1.width / 2 - rb.left,
-                r1.top + r1.height / 2 - rb.top,
-                r2.left + r2.width / 2 - rb.left,
-                r2.top + r2.height / 2 - rb.top
+                me.svg.select(`[data-id='${start}']`).first().cx(),
+                me.svg.select(`[data-id='${start}']`).first().cy(),
+                me.svg.select(`[data-id='${end}']`).first().cx(),
+                me.svg.select(`[data-id='${end}']`).first().cy()
             );
             try {
                 l.back();
-            } catch (e) {}
+            } catch (e) { }
         };
 
         //arrange items 
@@ -827,7 +839,11 @@ core.registerOperator("itemcluster2", {
             me.arrangeItem(i);
         }
     });
+
+    //More items shenanigans
+
     this.itemSpace.addEventListener("click", function (e) {
+        //click: anchor and deanchor.
         if (me.preselected) {
             me.preselected.classList.remove("selected");
             me.preselected.classList.remove("anchored");
@@ -875,14 +891,17 @@ core.registerOperator("itemcluster2", {
             e.target.matches(".floatingItem") ||
             e.target.matches(".floatingItem *")
         ) {
+            // If we are clicking on an item:
             if (e.which != 1) return;
             if (!e.getModifierState("Shift")) {
+                //if not lineing
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
 
                 if (it.classList.contains("anchored")) return;
                 if (me.dragging) return;
                 me.movingDiv = me.svg.select("[data-id='" + it.dataset.id + "']").members[0];
+                //adjust x indexes
                 let relements = me.rootdiv.querySelectorAll(".floatingItem");
                 let minzind = me.settings.maxZ;
                 for (let i = 0; i < relements.length; i++) {
@@ -903,40 +922,47 @@ core.registerOperator("itemcluster2", {
                 }
                 it.style["z-index"] = ++me.settings.maxZ;
                 me.dragging = true;
+                //set relative drag coordinates
+                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+                console.log("dragging start:");
+                console.log(coords);
+                me.dragDX = coords.x-me.movingDiv.x();
+                me.dragDY = coords.y-me.movingDiv.y();
+                console.log(me.movingDiv.attr());
+                /*
                 let rect = it.getBoundingClientRect();
                 me.dragDX = e.pageX - (rect.left + document.body.scrollLeft);
-                me.dragDY = e.pageY - (rect.top + document.body.scrollTop);
+                me.dragDY = e.pageY - (rect.top + document.body.scrollTop);*/
                 //e.preventDefault();
                 //return false;
             } else {
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
                 me.linkingDiv = it;
-                let rect = it.getBoundingClientRect();
                 me.linking = true;
             }
         } else {
             //shift to pan
             if (e.getModifierState("Shift") || e.which == 2) {
                 me.globalDrag = true;
-                me.dragDX = e.pageX;
-                me.dragDY = e.pageY;
+                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+                me.originalViewBox=me.svg.viewbox();
+                me.dragDX = coords.x;
+                me.dragDY = coords.y;
                 me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
                 me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
             }
         }
     });
 
-    let c = new capacitor(100, 100, () => {
-        me.switchView(me.settings.currentViewName);
-    });
-
     this.itemSpace.addEventListener("mousemove", function (e) {
         //stop from creating an item if we are resizing another item
-        if (Math.abs(e.offsetX-me.mouseStoredX)>5 || Math.abs(e.offsetY-me.mouseStoredY)>5){
+        if (Math.abs(e.offsetX - me.mouseStoredX) > 5 || Math.abs(e.offsetY - me.mouseStoredY) > 5) {
             me.possibleResize = true;
         }
         if (me.dragging) {
+            //dragging an item
+
             /*if (me.movingDiv.parentElement.parentElement.matches(".floatingItem")) {
                 //nested items
                 me.itemSpace.appendChild(me.movingDiv);
@@ -944,9 +970,13 @@ core.registerOperator("itemcluster2", {
                 //me.items[me.movingDiv.dataset.id].viewData[me.currentView].parent = undefined;
             }*/
             //me.movingDiv.classList.add("moving");
-            let rect = me.itemSpace.getBoundingClientRect();
-            me.movingDiv.x(e.clientX - me.dragDX - rect.left);
-            me.movingDiv.y(e.clientY - me.dragDY - rect.top);
+            //translate position of mouse to position of rectangle
+            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+            console.log(coords);
+            console.log(me.movingDiv.attr());
+            me.movingDiv.x(coords.x-me.dragDX);
+            me.movingDiv.y(coords.y-me.dragDY);
+            console.log(me.movingDiv.attr());
             let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
             //borders for the drag item in item
             let fi = me.rootdiv.querySelectorAll(".floatingItem");
@@ -968,24 +998,44 @@ core.registerOperator("itemcluster2", {
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = me.linkingDiv.getBoundingClientRect();
-            let rect2 = me.itemSpace.getBoundingClientRect();
+            let rect = me.svg.select(`[data-id=${me.linkingDiv.dataset.id}`).first();
+            let p=me.mapPageToSvgCoords(e.pageX,e.pageY)
             me.linkingLine.plot(
-                rect.left + rect.width / 2 - rect2.left,
-                rect.top + rect.height / 2 - rect2.top,
-                e.clientX - rect2.left,
-                e.clientY - rect2.top
+                rect.x()+rect.width()/2,
+                rect.y()+rect.height()/2,
+                p.x,
+                p.y
             );
         } else if (me.globalDrag) {
             // shift the view by delta
+            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY,me.originalViewBox);
+            
             core.items[me.settings.currentViewName].itemcluster.cx =
-                me.ocx + (e.pageX - me.dragDX);
+                me.ocx - (coords.x - me.dragDX);
             core.items[me.settings.currentViewName].itemcluster.cy =
-                me.ocy + (e.pageY - me.dragDY);
+                me.ocy - (coords.y - me.dragDY);
             //arrange all items
-            c.submit();
+            me.viewAdjust();
         }
     });
+
+    this.viewAdjust = function () {
+        let ww = me.itemSpace.clientWidth * me.settings.itemcluster.scale;
+        let hh = me.itemSpace.clientHeight * me.settings.itemcluster.scale;
+        if (me.svg){me.svg.viewbox((core.items[me.settings.currentViewName].itemcluster.cx || 0) - ww / 2, (core.items[me.settings.currentViewName].itemcluster.cy || 0) - hh / 2, ww, hh);
+        }else{
+            setTimeout(me.viewAdjust,200);
+        }
+    }
+
+    this.itemSpace.addEventListener("wheel", (e) => {
+        if (e.deltaY > 0) {
+            me.settings.itemcluster.scale += 0.1;
+        } else {
+            me.settings.itemcluster.scale -= 0.1;
+        }
+        me.viewAdjust();
+    })
 
     this.itemSpace.addEventListener("mouseup", e => {
         me.handleMoveEnd(e);
@@ -996,7 +1046,7 @@ core.registerOperator("itemcluster2", {
 
     me.handleMoveEnd = function (e, touch) {
         if (me.globalDrag) {
-            setTimeout(() => c.submit(), 500);
+            setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;
         }
         if (me.dragging) {
@@ -1078,8 +1128,8 @@ core.registerOperator("itemcluster2", {
     };
     this.itemSpace.addEventListener("mousedown", function (e) {
         me.possibleResize = false;
-        me.mouseStoredX=e.offsetX;
-        me.mouseStoredY=e.offsetY;
+        me.mouseStoredX = e.offsetX;
+        me.mouseStoredY = e.offsetY;
     });
     this.itemSpace.addEventListener("dblclick", function (e) {
         if (me.possibleResize) {
@@ -1087,12 +1137,10 @@ core.registerOperator("itemcluster2", {
             return;
         }
         if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
-            let rect = me.itemSpace.getBoundingClientRect();
+            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
             me.createItem(
-                (e.pageX - rect.left) -
-                (core.items[me.settings.currentViewName].itemcluster.cx || 0),
-                (e.pageY - rect.top) -
-                (core.items[me.settings.currentViewName].itemcluster.cy || 0)
+                coords.x,
+                coords.y
             );
             // Make a new item
         }
@@ -1100,15 +1148,9 @@ core.registerOperator("itemcluster2", {
 
     //----------item functions----------//
     this.updatePosition = function (id) {
-        let it = me.rootdiv.querySelector(".floatingItem[data-id='" + id + "']");
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].x =
-            (it.getBoundingClientRect().left -
-                me.itemSpace.getBoundingClientRect().left) -
-            (core.items[me.settings.currentViewName].itemcluster.cx || 0);
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].y =
-            (it.getBoundingClientRect().top -
-                me.itemSpace.getBoundingClientRect().top) -
-            (core.items[me.settings.currentViewName].itemcluster.cy || 0);
+        let it = me.svg.select(".floatingItem[data-id='" + id + "']").first();
+        core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
+        core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         core.fire("updateItem", {
             id: id
         });

@@ -16,33 +16,33 @@ core.operator = function operator(_type, _rect) {
     //inner div. for non shadow divs. has a uuid for an id.
     this.innerdiv = document.createElement("div");
     this.topdiv.appendChild(this.innerdiv);
-    this.innerdiv.id=guid(12);
+    this.innerdiv.id = guid(12);
 
     //uuid.
     this.uuid = guid(6);
-    this.options={};
+    this.options = {};
 
     //bulkhead for item selection.
-    this.bulkhead=document.createElement("div");
-    this.bulkhead.style.display="none";
-    this.bulkhead.style.background="rgba(0,0,0,0.5)";
+    this.bulkhead = document.createElement("div");
+    this.bulkhead.style.display = "none";
+    this.bulkhead.style.background = "rgba(0,0,0,0.5)";
     //bulkhead styling
-    this.bulkhead.innerHTML=`<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white">Click to select this operator.</p></div>`
-    this.bulkhead.style.width="100%";
-    this.bulkhead.style.height="100%";
-    this.bulkhead.style.position="absolute";
-    this.bulkhead.style.zIndex="100";
+    this.bulkhead.innerHTML = `<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white">Click to select this operator.</p></div>`
+    this.bulkhead.style.width = "100%";
+    this.bulkhead.style.height = "100%";
+    this.bulkhead.style.position = "absolute";
+    this.bulkhead.style.zIndex = "100";
     this.topdiv.appendChild(this.bulkhead);
-    this.bulkhead.addEventListener("click",function(e){
-        me.bulkhead.style.display="none";
+    this.bulkhead.addEventListener("click", function (e) {
+        me.bulkhead.style.display = "none";
         core.submitTarget(me.uuid);
         e.stopPropagation();
     })
 
     //shadow root.
-    this.shader=document.createElement("div");
-    this.shader.style.width="100%";
-    this.shader.style.height="100%";
+    this.shader = document.createElement("div");
+    this.shader.style.width = "100%";
+    this.shader.style.height = "100%";
     this.topdiv.appendChild(this.shader);
     this.shadow = this.shader.attachShadow({
         mode: "open"
@@ -77,14 +77,18 @@ core.operator = function operator(_type, _rect) {
             } else {
                 this.div = this.shadow;
             }
-            if (me.options.outerScroll){
-                this.topdiv.style.overflowY="auto";
-            }else{
-                this.topdiv.style.overflowY="hidden";
+            if (me.options.outerScroll) {
+                this.topdiv.style.overflowY = "auto";
+            } else {
+                this.topdiv.style.overflowY = "hidden";
             }
-            this.baseOperator = new core.operators[this.type].constructor(this);
-            this.baseOperator.fromSaveData(data);
-            this.baseOperator.container=this;
+            try {
+                this.baseOperator = new core.operators[this.type].constructor(this);
+                this.baseOperator.fromSaveData(data);
+                this.baseOperator.container = this;
+            } catch (e) {
+                console.log(e);
+            }
         } else {
             this.waitOperatorReady(this.type);
         }
@@ -94,7 +98,7 @@ core.operator = function operator(_type, _rect) {
         let h1 = document.createElement("h1");
         h1.innerHTML = "Loading operator...";
         this.innerdiv.appendChild(h1);
-        if (!core.operatorLoadCallbacks[__type])core.operatorLoadCallbacks[__type]=[];
+        if (!core.operatorLoadCallbacks[__type]) core.operatorLoadCallbacks[__type] = [];
         core.operatorLoadCallbacks[__type].push({
             op: me,
             data: __type
@@ -104,46 +108,46 @@ core.operator = function operator(_type, _rect) {
     this.toSaveData = function () {
         let obj = {};
         obj.type = this.type;
-        obj.uuid=this.uuid;
-        obj.tabbarName=this.tabbarName;
-        if (this.baseOperator)obj.data = this.baseOperator.toSaveData();
-        else obj.data={};
+        obj.uuid = this.uuid;
+        obj.tabbarName = this.tabbarName;
+        if (this.baseOperator) obj.data = this.baseOperator.toSaveData();
+        else obj.data = {};
         return obj;
     };
     this.fromSaveData = function (obj) {
         this.type = obj.type;
-        this.tabbarName=obj.tabbarName;
+        this.tabbarName = obj.tabbarName;
         this.reload(this.type);
         this.baseOperator.fromSaveData(obj.data);
     };
     this.activateTargets = function () {
         // put a grey disabled div on me of the basediv.
-        if (this.options.targetForward){
+        if (this.options.targetForward) {
             this.baseOperator.forwardTarget();
-        }else this.bulkhead.style.display="block";
+        } else this.bulkhead.style.display = "block";
     }
     this.deactivateTargets = function () {
         // put a grey disabled div on me of the basediv.
-        if (this.options.targetForward){
+        if (this.options.targetForward) {
             this.baseOperator.forwardUntarget();
-        }else this.bulkhead.style.display="none";
+        } else this.bulkhead.style.display = "none";
     }
-    this.getOperator=function(id){
-        if (this.uuid==id){
+    this.getOperator = function (id) {
+        if (this.uuid == id) {
             return this;
-        }else{
-            if (this.baseOperator.getOperator){
+        } else {
+            if (this.baseOperator.getOperator) {
                 return this.baseOperator.getOperator(id);
             }
         }
     }
-    this.listOperators=function(list){
-        list.push({id:me.uuid,type:me.type});
-        if (this.baseOperator.listOperators){
+    this.listOperators = function (list) {
+        list.push({ id: me.uuid, type: me.type });
+        if (this.baseOperator.listOperators) {
             this.baseOperator.listOperators(list);
         }
     }
-    this.visible=function(){
-        return this.topdiv.offsetHeight!=0;
+    this.visible = function () {
+        return this.topdiv.offsetHeight != 0;
     }
 };

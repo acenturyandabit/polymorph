@@ -1,5 +1,7 @@
 core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
   let me = this;
+
+  //initialise firebase
   me.unsub = {};
   try {
     firebase.initializeApp({

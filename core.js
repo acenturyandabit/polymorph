@@ -69,16 +69,19 @@ function _core() {
             loadFromURL(params);
         } else if (window.location.search) {
             //try each save source to see if it can handle this kind of request
+            let handled=false;
             for (let i in me.saveSources) {
                 if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)) {
                     //TODO: put a try catch around here.
+                    //show the splash.
+                    handled=true;
                     userLoad(i, params);
                     break;
                 }
             }
             //otherwise just show filescreen as if nothing happened
             //TODO: add convenient error message
-            me.filescreen.showSplash();
+            if (!handled)me.filescreen.showSplash();
         } else {
             me.filescreen.showSplash();
         }
