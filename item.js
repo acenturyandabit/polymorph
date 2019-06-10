@@ -18,10 +18,11 @@ Standards
 title: Must be a plaintext string
 links: Links. Various types of standard links:
 {
-    parent
-    children
-    previous
-    next
+    parent: an object with keys set to true.
+    children : an object with keys set to true.
+    previous: an object with keys set to true.
+    next: an object with keys set to true.
+    to: most generic link type. an object with keys set to true.
 }
 
 */

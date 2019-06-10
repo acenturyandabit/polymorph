@@ -1,6 +1,6 @@
 (function () {
     let viewsets;
-    core.registerOperator("opSelect", function (operator) {
+    core.registerOperator("opSelect",{hidden:true}, function (operator) {
         let me = this;
         me.container = operator;
         this.settings = {};
@@ -37,6 +37,7 @@
         core.on("operatorAdded", me.reloadContents);
         this.reloadContents = function () {
             for (let i in core.operators) {
+                if (core.operators[i].options.hidden)continue;
                 let b = document.createElement("button");
                 let displayText = i;
                 if (core.operators[i].options.displayName) displayText = core.operators[i].options.displayName;

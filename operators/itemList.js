@@ -88,15 +88,6 @@ core.registerOperator("itemList", function (operator) {
         }
     });
 
-
-    core.on("updateItem", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        me.settings.currentID = id;
-        me.sortItems();
-        return me.updateItem(id, s);
-    });
-
     this.indexOf = function (id) {
         let childs = this.taskList.children;
         for (let i = 0; i < childs.length; i++) {
@@ -110,10 +101,9 @@ core.registerOperator("itemList", function (operator) {
         let itms = me.taskList.querySelectorAll(`[data-id]`);
         let its = [];
         for (let i = 0; i < itms.length; i++) {
-            let cpp = Object.assign({}, core.items[itms[i].dataset.id]);
             cpp = {
                 id: itms[i].dataset.id,
-                dt: cpp
+                dt: core.items[itms[i].dataset.id][me.settings.sortby]
             };
             its.push(cpp);
         }
@@ -122,17 +112,16 @@ core.registerOperator("itemList", function (operator) {
             case "date":
                 let dateprop = me.settings.sortby;
                 for (let i = 0; i < its.length; i++) {
-                    let itm = its[i];
                     //we are going to upgrade all dates that don't match protocol)
-                    if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
-                        if (typeof core.items[itm.id][dateprop].date == "number") {
-                            core.items[itm.id][dateprop].date = [{
-                                date: core.items[itm.id][dateprop].date
+                    if (its[i].dt && its[i].dt.date) {
+                        if (typeof its[i].dt.date == "number") {
+                            core.items[its[i].id][dateprop].date = [{
+                                date: core.items[its[i].id][dateprop].date
                             }];
                         }
-                        if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
-                        else itm.date = Date.now() * 10000;
-                    } else itm.date = Date.now() * 10000;
+                        if (core.items[its[i].id][dateprop].date[0]) its[i].date = core.items[its[i].id][dateprop].date[0].date;
+                        else its[i].date = Date.now() * 10000;
+                    } else its[i].date = Date.now() * 10000;
                 }
                 its.sort((a, b) => {
                     return a.date - b.date;
@@ -140,15 +129,15 @@ core.registerOperator("itemList", function (operator) {
                 break;
             case "text":
                 for (let i = 0; i < its.length; i++) {
-                    if (!its[i].dt[me.settings.sortby])its[i].dt[me.settings.sortby]="";
+                    if (!its[i].dt) its[i].dt = "";
                 }
                 its.sort((a, b) => {
-                    return a.dt[me.settings.sortby].localeCompare(b.dt[me.settings.sortby]);
+                    return a.dt.localeCompare(b.dt);
                 });
                 break;
             default:
                 its.sort((a, b) => {
-                    return a.dt[me.settings.sortby] - b.dt[me.settings.sortby];
+                    return a.dt - b.dt;
                 });
         }
         //remember focused item
@@ -166,6 +155,16 @@ core.registerOperator("itemList", function (operator) {
             fi.selectionStart = cp;
         }
     }
+
+    let sortcap = new capacitor(100, 1000, me.sortItems);
+
+    core.on("updateItem", function (d) {
+        let id = d.id;
+        let s = d.sender;
+        me.settings.currentID = id;
+        sortcap.submit();
+        return me.updateItem(id, s);
+    });
 
     this.updateItem = function (id, sender) {
         let it = core.items[id];
@@ -404,13 +403,14 @@ core.registerOperator("itemList", function (operator) {
     ], () => {
         let ctm = new _contextMenuManager(operator.div);
         let contextedItem;
+        let contextedInput;
         let contextedProp;
         let menu;
 
         function filter(e) {
-            contextedItem = e.target;
-            contextedProp = contextedItem.dataset.role;
-            let id = contextedItem;
+            contextedInput=e.target;
+            contextedProp = contextedInput.dataset.role;
+            let id = contextedInput;
             while (!id.dataset.id) {
                 id = id.parentElement;
             }
@@ -435,8 +435,8 @@ core.registerOperator("itemList", function (operator) {
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
-            contextedItem.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
-            core.items[id][contextedProp].datestring = contextedItem.value;
+            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
+            core.items[id][contextedProp].datestring = contextedInputvalue;
             me.datereparse(id);
             menu.style.display = "none";
         })
@@ -593,7 +593,7 @@ core.registerOperator("itemList", function (operator) {
 
     //Handle select's in proplist
     me.proplist.addEventListener('change', function (e) {
-        if (e.target.matches("select"))me.settings.properties[e.target.dataset.role] = e.target.value;
+        if (e.target.matches("select")) me.settings.properties[e.target.dataset.role] = e.target.value;
     })
     me.proplist.addEventListener('click', function (e) {
         if (e.target.matches("[data-krole]")) {

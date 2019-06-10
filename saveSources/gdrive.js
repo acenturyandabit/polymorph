@@ -16,7 +16,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       timestampsInSnapshots: true
     });
   } catch (e) {
-    console.log(e);
+    //firebase is probably already loaded
     this.db = firebase.firestore();
   }
 

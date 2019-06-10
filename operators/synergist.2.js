@@ -79,12 +79,12 @@ core.registerOperator("itemcluster2", {
     this.itemSpace = this.rootdiv.querySelector(".itemcluster");
     container.div.appendChild(this.rootdiv);
 
-    me.mapPageToSvgCoords=function(pageX,pageY,vb){
-        let rels=me.svg.node.getBoundingClientRect();
-        if (!vb)vb=me.svg.viewbox();
-        let ret={};
-        ret.x=(pageX-rels.x)/rels.width*vb.width+vb.x;
-        ret.y=(pageY-rels.y)/rels.height*vb.height+vb.y;
+    me.mapPageToSvgCoords = function (pageX, pageY, vb) {
+        let rels = me.svg.node.getBoundingClientRect();
+        if (!vb) vb = me.svg.viewbox();
+        let ret = {};
+        ret.x = (pageX - rels.x) / rels.width * vb.width + vb.x;
+        ret.y = (pageY - rels.y) / rels.height * vb.height + vb.y;
         return ret;
     }
 
@@ -420,15 +420,11 @@ core.registerOperator("itemcluster2", {
             //make a list of links
             let links = [];
             for (let i = 0; i < visibleItems.length; i++) {
-                if (core.items[visibleItems[i].id].itemcluster.links) {
-                    for (let j in core.items[visibleItems[i].id].itemcluster.links) {
-                        if (indexedOrder.indexOf(visibleItems[i].id) > -1 && indexedOrder.indexOf(j) > -1) {
-                            links.push({
-                                a: visibleItems[i].id,
-                                b: j
-                            });
-                        }
-                    }
+                for (let j in core.items[visibleItems[i].id].links) {
+                    links.push({
+                        a: visibleItems[i].id,
+                        b: l
+                    });
                 }
             }
             //internally reverse sort links by order
@@ -671,10 +667,11 @@ core.registerOperator("itemcluster2", {
                 rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
-            me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").value = core.items[id].title || "";
+            let tta = me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea");
+            tta.value = core.items[id].title || "";
             if (core.items[id].style) {
-                me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").style.background = core.items[id].style.background || "";
-                me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea").style.color = core.items[id].style.color || "";
+                tta.style.background = core.items[id].style.background || "";
+                tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
             }
             if (!core.items[id].boxsize) {
                 core.items[id].boxsize = {
@@ -718,12 +715,11 @@ core.registerOperator("itemcluster2", {
                 }
             }
             //draw its lines
-            if (core.items[id].itemcluster && core.items[id].itemcluster.links) {
-                for (let i in core.items[id].itemcluster.links) {
+            if (core.items[id].links) {
+                for (let i in core.items[id].links) {
                     me.enforceLine(i, id);
                 }
             }
-
             /*
             .fill('#0044dd')
             .mousedown(startMove)
@@ -766,19 +762,19 @@ core.registerOperator("itemcluster2", {
                 end = _start;
             }
             //check if linked; if linked, remove link
-            if (!core.items[start].itemcluster.links)
-                core.items[start].itemcluster.links = {};
-            if (!core.items[end].itemcluster.links)
-                core.items[end].itemcluster.links = {};
-            if (core.items[start].itemcluster.links[end]) {
-                delete core.items[start].itemcluster.links[end];
-                delete core.items[end].itemcluster.links[start];
+            if (!core.items[start].links)
+                core.items[start].links = {};
+            if (!core.items[end].links)
+                core.items[end].links = {};
+            if (core.items[start].links[end]) {
+                delete core.items[start].links[end];
+                delete core.items[end].links[start];
                 if (me.activeLines[start]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
             } else {
                 //otherwise create link
-                core.items[start].itemcluster.links[end] = true;
-                core.items[end].itemcluster.links[start] = true;
+                core.items[start].links[end] = true;
+                core.items[end].links[start] = true;
                 me.enforceLine(start, end);
             }
         };
@@ -812,7 +808,7 @@ core.registerOperator("itemcluster2", {
                 });
                 if (!me.activeLines[start]) me.activeLines[start] = {};
                 me.activeLines[start][end] = l;
-            }            
+            }
             //if either is not visible, then dont draw
             if (sd.style.display == "none" || ed.style.display == "none") {
                 l.hide();
@@ -923,12 +919,9 @@ core.registerOperator("itemcluster2", {
                 it.style["z-index"] = ++me.settings.maxZ;
                 me.dragging = true;
                 //set relative drag coordinates
-                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
-                console.log("dragging start:");
-                console.log(coords);
-                me.dragDX = coords.x-me.movingDiv.x();
-                me.dragDY = coords.y-me.movingDiv.y();
-                console.log(me.movingDiv.attr());
+                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+                me.dragDX = coords.x - me.movingDiv.x();
+                me.dragDY = coords.y - me.movingDiv.y();
                 /*
                 let rect = it.getBoundingClientRect();
                 me.dragDX = e.pageX - (rect.left + document.body.scrollLeft);
@@ -945,8 +938,8 @@ core.registerOperator("itemcluster2", {
             //shift to pan
             if (e.getModifierState("Shift") || e.which == 2) {
                 me.globalDrag = true;
-                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
-                me.originalViewBox=me.svg.viewbox();
+                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+                me.originalViewBox = me.svg.viewbox();
                 me.dragDX = coords.x;
                 me.dragDY = coords.y;
                 me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
@@ -971,12 +964,9 @@ core.registerOperator("itemcluster2", {
             }*/
             //me.movingDiv.classList.add("moving");
             //translate position of mouse to position of rectangle
-            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
-            console.log(coords);
-            console.log(me.movingDiv.attr());
-            me.movingDiv.x(coords.x-me.dragDX);
-            me.movingDiv.y(coords.y-me.dragDY);
-            console.log(me.movingDiv.attr());
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            me.movingDiv.x(coords.x - me.dragDX);
+            me.movingDiv.y(coords.y - me.dragDY);
             let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
             //borders for the drag item in item
             let fi = me.rootdiv.querySelectorAll(".floatingItem");
@@ -999,17 +989,17 @@ core.registerOperator("itemcluster2", {
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
             let rect = me.svg.select(`[data-id=${me.linkingDiv.dataset.id}`).first();
-            let p=me.mapPageToSvgCoords(e.pageX,e.pageY)
+            let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
             me.linkingLine.plot(
-                rect.x()+rect.width()/2,
-                rect.y()+rect.height()/2,
+                rect.x() + rect.width() / 2,
+                rect.y() + rect.height() / 2,
                 p.x,
                 p.y
             );
         } else if (me.globalDrag) {
             // shift the view by delta
-            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY,me.originalViewBox);
-            
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
+
             core.items[me.settings.currentViewName].itemcluster.cx =
                 me.ocx - (coords.x - me.dragDX);
             core.items[me.settings.currentViewName].itemcluster.cy =
@@ -1022,13 +1012,18 @@ core.registerOperator("itemcluster2", {
     this.viewAdjust = function () {
         let ww = me.itemSpace.clientWidth * me.settings.itemcluster.scale;
         let hh = me.itemSpace.clientHeight * me.settings.itemcluster.scale;
-        if (me.svg){me.svg.viewbox((core.items[me.settings.currentViewName].itemcluster.cx || 0) - ww / 2, (core.items[me.settings.currentViewName].itemcluster.cy || 0) - hh / 2, ww, hh);
-        }else{
-            setTimeout(me.viewAdjust,200);
+        if (me.svg) {
+            me.svg.viewbox((core.items[me.settings.currentViewName].itemcluster.cx || 0) - ww / 2, (core.items[me.settings.currentViewName].itemcluster.cy || 0) - hh / 2, ww, hh);
+        } else {
+            setTimeout(me.viewAdjust, 200);
         }
     }
 
     this.itemSpace.addEventListener("wheel", (e) => {
+        if (e.target.matches(".floatingItem") ||
+            e.target.matches(".floatingItem *")) {
+            return;
+        }
         if (e.deltaY > 0) {
             me.settings.itemcluster.scale += 0.1;
         } else {
@@ -1137,7 +1132,7 @@ core.registerOperator("itemcluster2", {
             return;
         }
         if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
-            let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
             me.createItem(
                 coords.x,
                 coords.y
@@ -1203,9 +1198,7 @@ core.registerOperator("itemcluster2", {
 
     this.removeItem = function (id) {
         delete core.items[id].itemcluster.viewData[me.settings.currentViewName];
-        delete core.items[id].itemcluster.links;
         me.arrangeItem(id);
-
         core.fire("deleteItem", {
             id: id
         });
@@ -1245,6 +1238,15 @@ core.registerOperator("itemcluster2", {
 
     this.fromSaveData = function (d) {
         //this is called when your operator is started OR your operator loads for the first time
+        for (let i in core.items) {
+            if (core.items[i].itemcluster && core.items[i].itemcluster.links) {
+                //rehash into generic links
+                if (!core.items[i].links) core.items[i].links = {};
+                for (let j in core.items[i].itemcluster.links) {
+                    core.items[i].links[j] = true;
+                }
+            }
+        }
         Object.assign(this.settings, d);
         me.switchView(me.settings.currentViewName, true);
     }

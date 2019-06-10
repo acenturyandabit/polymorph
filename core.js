@@ -54,12 +54,15 @@ function _core() {
                 background: rc,
                 color: matchContrast(rc)
             },
-            alias: guid(10),
+            id: guid(10),
         };
         me.saveUserData();
     }
     if (!me.userData.introductions) {
         me.userData.introductions = {};
+    }
+    if (!me.userData.id) {
+        me.userData.id = me.userData.alias||guid(10);
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     //Accept loading sources; default is local saving.

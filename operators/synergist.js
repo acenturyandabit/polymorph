@@ -12,7 +12,7 @@ synergist{
 arrangeItem is at 672 or thereabouts.
 */
 (function () {
-  core.registerOperator("itemCluster", function (operator) {
+  core.registerOperator("itemCluster",{hidden:true}, function (operator) {
     let me = this;
     me.container = operator;
     this.settings = {
