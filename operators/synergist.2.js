@@ -368,18 +368,17 @@ core.registerOperator("itemcluster2", {
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
         `, me.rootdiv, undefined, chk);
-        me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", () => {
-            if (me.cpyelem) {
-                let rect = me.itemSpace.getBoundingClientRect();
-                let rect2 = me.rootcontextMenu.getBoundingClientRect();
-                core.items[me.cpyelem].itemcluster.viewData[me.settings.currentViewName] = {
-                    x: (rect2.left - rect.left) / me.itemSpace.clientWidth,
-                    y: (rect2.top - rect.top) / me.itemSpace.clientHeight,
+        me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
+            if (core.shared.synergistCopyElement) {
+                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+                core.items[core.shared.synergistCopyElement].itemcluster.viewData[me.settings.currentViewName] = {
+                    x: coords.x,
+                    y: coords.y,
                 }
                 me.rootcontextMenu.style.display = "none";
-                me.arrangeItem(me.cpyelem);
+                me.arrangeItem(core.shared.synergistCopyElement);
                 core.fire("updateItem", {
-                    id: me.cpyelem,
+                    id: core.shared.synergistCopyElement,
                     sender: me
                 });
             }
@@ -609,7 +608,7 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                me.cpyelem = me.contextedElement.dataset.id;
+                core.shared.synergistCopyElement=me.contextedElement.dataset.id;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu

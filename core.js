@@ -606,7 +606,11 @@ function _core() {
         }
     })
 
-
+    ///////////////////////////////////////////////////////////////
+    //More useful bits
+    
+    //A shared space for operators to access
+    this.shared={}
 
 
 
