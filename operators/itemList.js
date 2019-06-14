@@ -436,7 +436,7 @@ core.registerOperator("itemList", function (operator) {
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
             contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
-            core.items[id][contextedProp].datestring = contextedInputvalue;
+            core.items[id][contextedProp].datestring = contextedInput.value;
             me.datereparse(id);
             menu.style.display = "none";
         })

@@ -60,7 +60,7 @@ core.registerOperator("itemcluster2", {
                 <span>
                     <a class="viewNameContainer" style="background:rgb(132, 185, 218);"><span><span contenteditable class="viewName" data-listname='main' style="cursor:text"></span><span
                                 class="listDrop">&#x25BC</span>
-                        </span><img class="gears" src="resources/gear.png"></a>
+                        </span><img class="gears" src="assets/gear.png" style="height:1em"></a>
                     <div class="viewNameDrop" style="display:none">
                     </div>
                 </span>
@@ -258,7 +258,7 @@ core.registerOperator("itemcluster2", {
             this.viewName.innerText =
                 core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
-            if (preview != ln) {
+            if (preview != ln && preview) {
                 if (subview) {
                     let b = document.createElement("button");
                     b.dataset.ref = preview;
@@ -423,7 +423,7 @@ core.registerOperator("itemcluster2", {
                 for (let j in core.items[visibleItems[i].id].links) {
                     links.push({
                         a: visibleItems[i].id,
-                        b: l
+                        b: j
                     });
                 }
             }
@@ -451,7 +451,10 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < visibleItems.length; i++) {
                 visibleItems[i].idx = 0;
                 while (links[lin] && links[lin].a == visibleItems[i].id) {
-                    let nex = visibleItems[indexedOrder.indexOf(links[lin].b)].idx + 1;
+                    let nex=0;
+                    if (indexedOrder.indexOf(links[lin].b)!=-1){
+                        nex = visibleItems[indexedOrder.indexOf(links[lin].b)].idx + 1;
+                    }
                     visibleItems[i].idx = (nex > visibleItems[i].idx) ? nex : visibleItems[i].idx;
                     lin++;
                 }
@@ -474,7 +477,7 @@ core.registerOperator("itemcluster2", {
             }
             //get all children of all items
             for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
+                if (visibleItems[i].parent && indexedOrder.indexOf(visibleItems[i].parent)>=0) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
             }
 
             //calculate widths
@@ -988,7 +991,7 @@ core.registerOperator("itemcluster2", {
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = me.svg.select(`[data-id=${me.linkingDiv.dataset.id}`).first();
+            let rect = me.svg.select(`[data-id=${me.linkingDiv.dataset.id}]`).first();
             let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
             me.linkingLine.plot(
                 rect.x() + rect.width() / 2,
@@ -1010,10 +1013,11 @@ core.registerOperator("itemcluster2", {
     });
 
     this.viewAdjust = function () {
-        let ww = me.itemSpace.clientWidth * me.settings.itemcluster.scale;
-        let hh = me.itemSpace.clientHeight * me.settings.itemcluster.scale;
+        let ic=core.items[me.settings.currentViewName].itemcluster;
+        let ww = me.itemSpace.clientWidth * ic.scale;
+        let hh = me.itemSpace.clientHeight * ic.scale;
         if (me.svg) {
-            me.svg.viewbox((core.items[me.settings.currentViewName].itemcluster.cx || 0) - ww / 2, (core.items[me.settings.currentViewName].itemcluster.cy || 0) - hh / 2, ww, hh);
+            me.svg.viewbox((ic.cx || 0) - ww / 2, (ic.cy || 0) - hh / 2, ww, hh);
         } else {
             setTimeout(me.viewAdjust, 200);
         }
@@ -1024,11 +1028,24 @@ core.registerOperator("itemcluster2", {
             e.target.matches(".floatingItem *")) {
             return;
         }
+        //calculate old width constant
+        let ic=core.items[me.settings.currentViewName].itemcluster;
+        let br=me.itemSpace.getBoundingClientRect();
+        ic.scale=ic.scale||1;
+        let vw = me.itemSpace.clientWidth * ic.scale;
+        let vh = me.itemSpace.clientHeight * ic.scale;
+        let wc=ic.cx - vw/2+(e.clientX-br.x)/br.width*vw;
+        let hc=ic.cy - vh/2+(e.clientY-br.y)/br.height*vh;
         if (e.deltaY > 0) {
-            me.settings.itemcluster.scale += 0.1;
+            ic.scale += 0.1;
         } else {
-            me.settings.itemcluster.scale -= 0.1;
+            ic.scale -= 0.1;
         }
+        //correct the new view centre
+        vw = me.itemSpace.clientWidth * ic.scale;
+        vh = me.itemSpace.clientHeight * ic.scale;
+        ic.cx=wc-(e.clientX-br.x)/br.width*vw+vw/2;
+        ic.cy=hc-(e.clientY-br.y)/br.height*vh+vh/2;
         me.viewAdjust();
     })
 
@@ -1066,6 +1083,7 @@ core.registerOperator("itemcluster2", {
                       case 2: dragged into another object
                       case 3: dragged to a position
             */
+            //adding to another view
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches(".floatingItem") &&
@@ -1075,7 +1093,11 @@ core.registerOperator("itemcluster2", {
                         x: 0,
                         y: 0
                     };
-                    me.switchView(elements[i].dataset.id, true, true);
+                    if (!e.ctrlKey) {
+                        delete core.items[thing].itemcluster.viewData[me.settings.currentViewName];
+                        me.arrangeItem(thing);
+                    }
+                    //me.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
             }
@@ -1233,6 +1255,13 @@ core.registerOperator("itemcluster2", {
     };
     //Saving and loading
     this.toSaveData = function () {
+        //compile the current view path
+        this.settings.viewpath=[];
+        let bs = this.viewName.parentElement.querySelectorAll("button");
+        for (let i=0;i<bs.length;i++){
+            this.settings.viewpath.push(bs[i].dataset.ref);
+        }
+        this.settings.viewpath.push(this.settings.currentViewName);
         return this.settings;
     }
 
@@ -1248,7 +1277,14 @@ core.registerOperator("itemcluster2", {
             }
         }
         Object.assign(this.settings, d);
-        me.switchView(me.settings.currentViewName, true);
+        if (this.settings.viewpath){
+            this.settings.currentViewName=undefined;//clear preview buffer to prevent a>b>a
+            for (let i=0;i<this.settings.viewpath.length;i++){
+                me.switchView(this.settings.viewpath[i], true,true);
+            }
+        }else{//for older versions
+            me.switchView(me.settings.currentViewName, true,true);
+        }
     }
 
     //Handle the settings dialog click!

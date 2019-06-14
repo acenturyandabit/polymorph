@@ -11,6 +11,8 @@ core.registerOperator("inspector", {
     };
     me.internal = document.createElement("div");
     me.rootdiv = document.createElement("div");
+    me.rootdiv.style.overflow="auto";
+    me.rootdiv.style.height="100%";
     me.rootdiv.appendChild(me.internal);
     let ttypes = `<select>
     <option>Text</option>

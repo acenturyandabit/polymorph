@@ -61,6 +61,9 @@ function _core() {
     if (!me.userData.introductions) {
         me.userData.introductions = {};
     }
+    if (!me.userData.documents) {
+        me.userData.documents = {};
+    }
     if (!me.userData.id) {
         me.userData.id = me.userData.alias||guid(10);
     }
@@ -71,6 +74,7 @@ function _core() {
         if (params.has("doc")) {
             loadFromURL(params);
         } else if (window.location.search) {
+            //For non-polymorph links, like drive links
             //try each save source to see if it can handle this kind of request
             let handled=false;
             for (let i in me.saveSources) {
@@ -113,6 +117,8 @@ function _core() {
             history.pushState({},"",loc);
             console.log(window.location.href);
         }
+
+
         userLoad(source, id, true,template);
     }
 
@@ -159,6 +165,10 @@ function _core() {
                     core.tutorial.start(params.get("t"));
                     tutorialStarted = true;
                 }
+                // load / remember the save settings for this particular document on this particular device
+                me.userData.documents[id][source]=id;
+                d.saveSources=me.userData.documents[id];
+
                 for (let i in d.saveSources) {
                     if (me.saveSources[i]) {
                         if (me.saveSources[i].hook) me.saveSources[i].hook(d.saveSources[i]);
