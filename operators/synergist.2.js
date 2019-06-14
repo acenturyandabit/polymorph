@@ -112,9 +112,12 @@ core.registerOperator("itemcluster2", {
     }
     //////////////////Handle core item updates//////////////////
     //lazily double up updates so that we can fix the lines
+    // but only update items that are visible; and only update if we are visible
     let acp = new capacitor(200, 1000, () => {
         for (let i in core.items) {
-            me.arrangeItem(i);//wasteful... but eh
+            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                me.arrangeItem(i);
+            }
         }
     })
 
@@ -122,7 +125,7 @@ core.registerOperator("itemcluster2", {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
-        if (me.arrangeItem) {
+        if (me.arrangeItem && me.container.visible()) {
             let u = me.arrangeItem(id);
             acp.submit();
             return u;
@@ -451,8 +454,8 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < visibleItems.length; i++) {
                 visibleItems[i].idx = 0;
                 while (links[lin] && links[lin].a == visibleItems[i].id) {
-                    let nex=0;
-                    if (indexedOrder.indexOf(links[lin].b)!=-1){
+                    let nex = 0;
+                    if (indexedOrder.indexOf(links[lin].b) != -1) {
                         nex = visibleItems[indexedOrder.indexOf(links[lin].b)].idx + 1;
                     }
                     visibleItems[i].idx = (nex > visibleItems[i].idx) ? nex : visibleItems[i].idx;
@@ -477,7 +480,7 @@ core.registerOperator("itemcluster2", {
             }
             //get all children of all items
             for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent && indexedOrder.indexOf(visibleItems[i].parent)>=0) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
+                if (visibleItems[i].parent && indexedOrder.indexOf(visibleItems[i].parent) >= 0) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
             }
 
             //calculate widths
@@ -1013,7 +1016,7 @@ core.registerOperator("itemcluster2", {
     });
 
     this.viewAdjust = function () {
-        let ic=core.items[me.settings.currentViewName].itemcluster;
+        let ic = core.items[me.settings.currentViewName].itemcluster;
         let ww = me.itemSpace.clientWidth * ic.scale;
         let hh = me.itemSpace.clientHeight * ic.scale;
         if (me.svg) {
@@ -1029,13 +1032,13 @@ core.registerOperator("itemcluster2", {
             return;
         }
         //calculate old width constant
-        let ic=core.items[me.settings.currentViewName].itemcluster;
-        let br=me.itemSpace.getBoundingClientRect();
-        ic.scale=ic.scale||1;
+        let ic = core.items[me.settings.currentViewName].itemcluster;
+        let br = me.itemSpace.getBoundingClientRect();
+        ic.scale = ic.scale || 1;
         let vw = me.itemSpace.clientWidth * ic.scale;
         let vh = me.itemSpace.clientHeight * ic.scale;
-        let wc=ic.cx - vw/2+(e.clientX-br.x)/br.width*vw;
-        let hc=ic.cy - vh/2+(e.clientY-br.y)/br.height*vh;
+        let wc = ic.cx - vw / 2 + (e.clientX - br.x) / br.width * vw;
+        let hc = ic.cy - vh / 2 + (e.clientY - br.y) / br.height * vh;
         if (e.deltaY > 0) {
             ic.scale += 0.1;
         } else {
@@ -1044,8 +1047,8 @@ core.registerOperator("itemcluster2", {
         //correct the new view centre
         vw = me.itemSpace.clientWidth * ic.scale;
         vh = me.itemSpace.clientHeight * ic.scale;
-        ic.cx=wc-(e.clientX-br.x)/br.width*vw+vw/2;
-        ic.cy=hc-(e.clientY-br.y)/br.height*vh+vh/2;
+        ic.cx = wc - (e.clientX - br.x) / br.width * vw + vw / 2;
+        ic.cy = hc - (e.clientY - br.y) / br.height * vh + vh / 2;
         me.viewAdjust();
     })
 
@@ -1256,9 +1259,9 @@ core.registerOperator("itemcluster2", {
     //Saving and loading
     this.toSaveData = function () {
         //compile the current view path
-        this.settings.viewpath=[];
+        this.settings.viewpath = [];
         let bs = this.viewName.parentElement.querySelectorAll("button");
-        for (let i=0;i<bs.length;i++){
+        for (let i = 0; i < bs.length; i++) {
             this.settings.viewpath.push(bs[i].dataset.ref);
         }
         this.settings.viewpath.push(this.settings.currentViewName);
@@ -1277,13 +1280,13 @@ core.registerOperator("itemcluster2", {
             }
         }
         Object.assign(this.settings, d);
-        if (this.settings.viewpath){
-            this.settings.currentViewName=undefined;//clear preview buffer to prevent a>b>a
-            for (let i=0;i<this.settings.viewpath.length;i++){
-                me.switchView(this.settings.viewpath[i], true,true);
+        if (this.settings.viewpath) {
+            this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
+            for (let i = 0; i < this.settings.viewpath.length; i++) {
+                me.switchView(this.settings.viewpath[i], true, true);
             }
-        }else{//for older versions
-            me.switchView(me.settings.currentViewName, true,true);
+        } else {//for older versions
+            me.switchView(me.settings.currentViewName, true, true);
         }
     }
 
