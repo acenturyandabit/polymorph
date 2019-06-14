@@ -85,8 +85,16 @@ function _core() {
 
     this.registerSaveSource = function (id, f) {
         me.saveSources[id] = new f(core);
+        //create a wrapper for it in the loading dialog
+        let wrapper = htmlwrap(`
+        <div data-saveref='${id}'>
+            <h1>${me.saveSources[id].prettyName || id}</h1>
+            <span><label>Default save source<input type="radio" name="dflt"></input></label><label>Sync to this source<input data-role="tsync" type="checkbox"></input></label></span>
+        </div>
+        `);
         //also register its settings in the save dialog
-        if (me.saveSources[id].dialog) me.loadInnerDialog.appendChild(me.saveSources[id].dialog);
+        if (me.saveSources[id].dialog) wrapper.appendChild(me.saveSources[id].dialog);
+        me.loadInnerDialog.appendChild(wrapper);
     }
 
     function loadFromURL(params) { // very first load
@@ -449,6 +457,8 @@ function _core() {
     });
     tbman.checkTopbars();
 
+    //////////////////////////////////////////////////////////////////
+    //Loading dialogs
     loadDialog = document.createElement("div");
     loadDialog.classList.add("dialog");
     loadDialog = dialogManager.checkDialogs(loadDialog)[0];
@@ -456,14 +466,26 @@ function _core() {
     this.loadInnerDialog = document.createElement("div");
     //me.userData.documents[id]
     loadDialog.querySelector(".innerDialog").appendChild(this.loadInnerDialog);
+    this.loadInnerDialog.classList.add("loadInnerDialog")
     this.loadInnerDialog.innerHTML = `
+    <style>
+    .loadInnerDialog>div{
+        border: 1px solid;
+        position:relative;
+    }
+    .loadInnerDialog>div>span:nth-child(2){
+        position:absolute;
+        top: 0;
+        right: 0;
+    }
+    </style>
           <h1>Load/Save settings</h1>
           `;
     let autosaveOp = new _option({
         div: this.loadInnerDialog,
         type: "bool",
         object: () => {
-            return me.currentDoc
+            return me.userData.documents[me.currentDocName]
         },
         property: "autosave",
         label: "Autosave all changes"
@@ -473,6 +495,11 @@ function _core() {
         document.querySelector(".saveSources").addEventListener("click", () => {
             for (let i in me.saveSources)
                 if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
+            for (let i in me.userData.documents[me.currentDocName]){
+                me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked=true;
+            }
+            let params = new URLSearchParams(window.location.search);
+            if (params.get("src"))me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked=true;
             autosaveOp.load();
             loadDialog.style.display = "block";
         });
@@ -484,6 +511,32 @@ function _core() {
             autosaveCapacitor.submit();
         }
     });
+
+    //delegate toggle event handlers
+
+    this.loadInnerDialog.addEventListener("input", (e) => {
+        if (e.target.matches("[name='dflt']")) {
+            //'change' the default save source, by changing the url
+            window.history.pushState("", me.currentDoc.displayName, `?doc=${me.currentDocName}&src=${e.target.parentElement.parentElement.parentElement.dataset.saveref}`);
+            me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
+        } else if (e.target.matches("[data-role='tsync']")) {
+            let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
+            if (e.target.checked) {
+                me.userData.documents[me.currentDocName][csource] = me.currentDocName;
+                if (me.saveSources[csource].hook) me.saveSources[csource].hook(me.currentDocName);
+            }else{
+                if (me.saveSources[csource].unhook) me.saveSources[csource].unhook(me.currentDocName);
+                delete me.userData.documents[me.currentDocName][csource];
+            }
+        }
+    })
+
+
+
+
+
+
+
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views dialog
     /*

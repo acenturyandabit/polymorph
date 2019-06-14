@@ -26,7 +26,7 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
     this.pullAll = async function (id) {
         return JSON.parse(this.dialog.querySelector("textarea").value);
     }
-    this.hook=async function(){
-        
-    }
+    /*this.hook=async function(){
+
+    }*/
 })

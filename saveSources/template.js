@@ -1,7 +1,7 @@
 core.registerSaveSource("template", function () { // a sample save source, implementing a number of functions.
 
     //initialise here
-
+    this.prettyName="NAME_TO_DISPLAY_IN_DIALOG"
     
 
 
