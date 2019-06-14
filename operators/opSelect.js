@@ -34,7 +34,6 @@
         this.buttondiv = this.rootdiv.querySelector("div.operators>div.buttons");
         this.descInnerDiv = this.rootdiv.querySelector("div.descriptions");
         this.viewInnerDiv = this.rootdiv.querySelector("div.views");
-        core.on("operatorAdded", me.reloadContents);
         this.reloadContents = function () {
             for (let i in core.operators) {
                 if (core.operators[i].options.hidden)continue;
@@ -50,7 +49,7 @@
                     });
                     operator.rect.tieOperator(operator);
                 })
-                this.buttondiv.appendChild(b);
+                me.buttondiv.appendChild(b);
                 //generate the description
                 let descDiv = document.createElement("div");
                 if (core.operators[i].options.description) {
@@ -59,7 +58,7 @@
                     descDiv.innerHTML = `<p>No description provided :/</p>`;
                 }
                 descDiv.style.display = "none";
-                this.descInnerDiv.appendChild(descDiv);
+                me.descInnerDiv.appendChild(descDiv);
                 b.addEventListener("mouseover", () => {
                     for (let i = 0; i < me.descInnerDiv.children.length; i++) {
                         me.descInnerDiv.children[i].style.display = "none";
@@ -88,12 +87,12 @@
                     });
                     //operator.rect.tieOperator(operator);
                 })
-                this.viewInnerDiv.appendChild(b);
+                me.viewInnerDiv.appendChild(b);
             }
         }
         this.reloadContents();
         operator.div.appendChild(this.rootdiv);
-
+        core.on("operatorAdded", me.reloadContents);
         //////////////////Handle core item updates//////////////////
 
         //these are optional but can be used as a reference.

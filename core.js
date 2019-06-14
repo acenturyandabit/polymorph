@@ -26,21 +26,6 @@ function _core() {
     addEventAPI(this);
     //call the dialog manager
     dialogSystemManager(this);
-
-
-    function resetDocument() {
-        me.items = {};
-        documentReady(() => {
-            document.body.querySelector(".rectspace").innerHTML = "";
-            me.baseRect = new _rect(me,
-                document.body.querySelector(".rectspace"),
-                RECT_ORIENTATION_X,
-                0,
-                1);
-        });
-    }
-
-    resetDocument();
     ///////////////////////////////////////////////////////////////////////////////////////
     //Reallly low level user identification, etc.
     this.saveUserData = function () {
@@ -65,34 +50,35 @@ function _core() {
         me.userData.documents = {};
     }
     if (!me.userData.id) {
-        me.userData.id = me.userData.alias||guid(10);
+        me.userData.id = me.userData.alias || guid(10);
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     //Accept loading sources; default is local saving.
-    document.addEventListener("DOMContentLoaded", () => {
+    me.start = function () {
+        resetDocument();
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
             loadFromURL(params);
         } else if (window.location.search) {
             //For non-polymorph links, like drive links
             //try each save source to see if it can handle this kind of request
-            let handled=false;
+            let handled = false;
             for (let i in me.saveSources) {
                 if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)) {
                     //TODO: put a try catch around here.
                     //show the splash.
-                    handled=true;
+                    handled = true;
                     userLoad(i, params);
                     break;
                 }
             }
             //otherwise just show filescreen as if nothing happened
             //TODO: add convenient error message
-            if (!handled)me.filescreen.showSplash();
+            if (!handled) me.filescreen.showSplash();
         } else {
             me.filescreen.showSplash();
         }
-    })
+    }
 
 
     this.saveSources = [];
@@ -104,25 +90,25 @@ function _core() {
     }
 
     function loadFromURL(params) { // very first load
-        //screw the id, we just gonna use urlparams straight up
+        //screw the id, we just gonna use urlme.userDataparams straight up
 
         let source = params.get("src") || 'lf';
         let id = params.get("doc");
         //if there is a template, knock off the template from the url and remember it (discreetly)
         let template;
-        if (params.has("tmp")){
-            template=params.get("tmp");
-            let loc=window.location.href
-            loc=loc.replace(/&tmp=[^&]+/,"");
-            history.pushState({},"",loc);
+        if (params.has("tmp")) {
+            template = params.get("tmp");
+            let loc = window.location.href
+            loc = loc.replace(/&tmp=[^&]+/, "");
+            history.pushState({}, "", loc);
             console.log(window.location.href);
         }
 
 
-        userLoad(source, id, true,template);
+        userLoad(source, id, true, template);
     }
 
-    function userLoad(source, id, initial = false,template) { // direct from URL
+    function userLoad(source, id, initial = false, template) { // direct from URL
         //reset
         resetDocument();
         if (me.saveSources[source]) {
@@ -153,7 +139,7 @@ function _core() {
                 d.saveSources = d.saveSources || {}; //neat instadeclare!
                 d.saveSources[source] = id;
                 me.fromSaveData(d);
-                if(template){
+                if (template) {
                     core.baseRect.fromSaveData(polymorphTemplates[template]);
                 }
                 me.filescreen.saveRecentDocument(id, undefined, me.currentDoc.displayName);
@@ -166,8 +152,9 @@ function _core() {
                     tutorialStarted = true;
                 }
                 // load / remember the save settings for this particular document on this particular device
-                me.userData.documents[id][source]=id;
-                d.saveSources=me.userData.documents[id];
+                if (!me.userData.documents[id]) me.userData.documents[id] = {};
+                me.userData.documents[id][source] = id;
+                d.saveSources = me.userData.documents[id];
 
                 for (let i in d.saveSources) {
                     if (me.saveSources[i]) {
@@ -296,7 +283,7 @@ function _core() {
                 id: i
             });
         }
-        me.unsaved=false;
+        me.unsaved = false;
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -425,23 +412,23 @@ function _core() {
     });
 
     this.filescreen.baseDiv.querySelector(".buttons").addEventListener("click", (e) => {
-        let t=e.target;
-        while (t!=this.filescreen.baseDiv){
-            if (t.tagName=="BUTTON" && !t.disabled){
-                let url=window.location.pathname+"?doc=" + guid(7) + "&src="+this.filescreen.baseDiv.querySelector('.olol .selected').dataset.source;
-                if (t.dataset.template)url+="&tmp="+t.dataset.template;
+        let t = e.target;
+        while (t != this.filescreen.baseDiv) {
+            if (t.tagName == "BUTTON" && !t.disabled) {
+                let url = window.location.pathname + "?doc=" + guid(7) + "&src=" + this.filescreen.baseDiv.querySelector('.olol .selected').dataset.source;
+                if (t.dataset.template) url += "&tmp=" + t.dataset.template;
                 window.location.href = url;
                 break;
-            }else{
-                t=t.parentElement;
+            } else {
+                t = t.parentElement;
             }
         }
     })
 
     this.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => {
-        if (e.target.tagName=="BUTTON"){
-            let btns=this.filescreen.baseDiv.querySelectorAll(".olol>button");
-            for (let i=0;i<btns.length;i++)btns[i].classList.remove("selected");
+        if (e.target.tagName == "BUTTON") {
+            let btns = this.filescreen.baseDiv.querySelectorAll(".olol>button");
+            for (let i = 0; i < btns.length; i++)btns[i].classList.remove("selected");
             e.target.classList.add("selected");
         }
     })
@@ -467,6 +454,7 @@ function _core() {
     loadDialog = dialogManager.checkDialogs(loadDialog)[0];
 
     this.loadInnerDialog = document.createElement("div");
+    //me.userData.documents[id]
     loadDialog.querySelector(".innerDialog").appendChild(this.loadInnerDialog);
     this.loadInnerDialog.innerHTML = `
           <h1>Load/Save settings</h1>
@@ -608,33 +596,41 @@ function _core() {
 
     ///////////////////////////////////////////////////////////////
     //More useful bits
-    
+
     //A shared space for operators to access
-    this.shared={}
+    this.shared = {}
 
+    setTimeout(() => {
+        window.addEventListener("resize", () => {
+            me.baseRect.resize();
+        })
+        document.body.addEventListener("keydown", e => {
+            if (e.ctrlKey && e.key == "s") {
+                e.preventDefault();
+                core.userSave();
+                core.unsaved = false;
+                //also do the server save
+            }
+        });
+        document.querySelector(".topbar .new").addEventListener("click", () => {
+            window.open(window.location.pathname);
+        })
+    });
 
+    function resetDocument() {
+        me.items = {};
+        document.body.querySelector(".rectspace").innerHTML = "";
 
+        me.baseRect = new _rect(me,
+            document.body.querySelector(".rectspace"),
+            RECT_ORIENTATION_X,
+            0,
+            1);
+        me.baseRect.resize();
+    }
 }
 
 var core = new _core();
-
-document.addEventListener("DOMContentLoaded", e => {
-    window.addEventListener("resize", () => {
-        core.baseRect.resize();
-    })
-    core.baseRect.resize();
-    document.body.addEventListener("keydown", e => {
-        if (e.ctrlKey && e.key == "s") {
-            e.preventDefault();
-            core.userSave();
-            core.unsaved = false;
-            //also do the server save
-        }
-    }); 
-    document.querySelector(".topbar .new").addEventListener("click", () => {
-        window.open(window.location.pathname);
-    })
-});
 
 
 // save source example:

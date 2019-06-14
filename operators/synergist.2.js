@@ -1016,8 +1016,8 @@ core.registerOperator("itemcluster2", {
 
     this.viewAdjust = function () {
         let ic = core.items[me.settings.currentViewName].itemcluster;
-        let ww = me.itemSpace.clientWidth * ic.scale;
-        let hh = me.itemSpace.clientHeight * ic.scale;
+        let ww = me.itemSpace.clientWidth * (ic.scale || 1);
+        let hh = me.itemSpace.clientHeight * (ic.scale || 1);
         if (me.svg) {
             me.svg.viewbox((ic.cx || 0) - ww / 2, (ic.cy || 0) - hh / 2, ww, hh);
         } else {
