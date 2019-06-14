@@ -528,6 +528,7 @@ function _core() {
                 if (me.saveSources[csource].unhook) me.saveSources[csource].unhook(me.currentDocName);
                 delete me.userData.documents[me.currentDocName][csource];
             }
+            me.saveUserData();
         }
     })
 

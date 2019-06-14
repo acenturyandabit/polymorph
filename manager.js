@@ -2,7 +2,7 @@ var __manager_profiles=[
     {
         condition: ()=>{return isPhone()},
         files:{
-
+            core:{p:"phoneCore.js"},
         }
     },
     {
