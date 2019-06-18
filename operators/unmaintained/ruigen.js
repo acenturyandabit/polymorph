@@ -70,7 +70,7 @@ core.registerOperator("ruigen", function (operator) {
         // The date of an item was updated.
     });
 
-    this.resize = function () {
+    this.resirefreshze = function () {
         // This is called when my parent rect is resized.
     }
 

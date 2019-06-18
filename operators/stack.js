@@ -82,7 +82,7 @@ core.registerOperator("stack", {
     this.rootdiv.addEventListener("mousemove",function(e){
         if (resizingDiv){
             resizingDiv.style.height=originalSize+(e.clientY-mouseY)+"px";
-            me.rects[resizingN].rect.resize();
+            me.rects[resizingN].rect.refresh();
             me.rects[resizingN].size=originalSize+(e.clientY-mouseY);
         }
     })
@@ -120,9 +120,9 @@ core.registerOperator("stack", {
         return obj;
     }
 
-    this.resize=function(){
+    this.refresh=function(){
         for (let i=0;i<this.rects.length;i++){
-            this.rects[i].rect.resize();
+            this.rects[i].rect.refresh();
         }
         this.parentRect=this.container.rect;//enable forwarding for elements in the stack.
     }

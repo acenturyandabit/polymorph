@@ -55,7 +55,7 @@ core.registerOperator("aon", function (operator) {
         // The date of an item was updated.
     });
 
-    this.resize = function () {
+    this.refresh = function () {
         // This is called when my parent rect is resized.
     }
 

@@ -660,7 +660,7 @@ arrangeItem is at 672 or thereabouts.
       }
     });
 
-    this.resize = function () {
+    this.refresh = function () {
       me.switchView(me.settings.currentViewName, true);
       if (me.arrangeItem) {
         for (let i in core.items) {

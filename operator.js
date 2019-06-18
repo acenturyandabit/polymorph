@@ -72,10 +72,12 @@ core.operator = function operator(_type, _rect) {
             //clear the shadow and the div
             this.shadow.innerHTML = "";
             this.innerdiv.innerHTML = "";
+            if (!me.tabbarName)me.tabbarName=core.operators[me.type].options.displayName ||me.type;
             if (me.options.noShadow) {
                 this.div = this.innerdiv;
             } else {
                 this.div = this.shadow;
+                this.shader.style.display="block";
             }
             if (me.options.outerScroll) {
                 this.topdiv.style.overflowY = "auto";
@@ -98,6 +100,7 @@ core.operator = function operator(_type, _rect) {
         let h1 = document.createElement("h1");
         h1.innerHTML = "Loading operator...";
         this.innerdiv.appendChild(h1);
+        this.shader.style.display="none";
         if (!core.operatorLoadCallbacks[__type]) core.operatorLoadCallbacks[__type] = [];
         core.operatorLoadCallbacks[__type].push({
             op: me,

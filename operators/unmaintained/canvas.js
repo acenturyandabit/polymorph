@@ -37,7 +37,7 @@ core.registerOperator("canvas", {
         return false;
     });
 
-    this.resize = function () {
+    this.rrefreshesize = function () {
         // This is called when my parent rect is resized.
         this.canvas.width=this.rootdiv.clientWidth;
         this.canvas.height=this.rootdiv.clientHeight;

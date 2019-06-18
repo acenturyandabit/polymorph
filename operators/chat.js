@@ -95,7 +95,7 @@ core.registerOperator("chat", {
         update(i);    
     }
 
-    this.resize = function () {
+    this.refresh = function () {
         // This is called when my parent rect is resized.
     }
 

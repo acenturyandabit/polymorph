@@ -63,15 +63,11 @@ function readyTutorial(core) {
       to:[["Done"]]
     });
   });
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////
-//Also handle individual tutorials.
-documentReady(()=>{
-  document.querySelector("li.hlep").addEventListener("click", ()=>{
-    core.target().then((id)=>{
-      if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
+  tryUntilTrue(()=>{
+    document.body.querySelector("li.hlep").addEventListener("click", ()=>{
+      core.target().then((id)=>{
+        if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
+      })
     })
   })
-})
+}

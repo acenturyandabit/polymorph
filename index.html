@@ -12,7 +12,6 @@
     <script src="genui/useful.js"></script>
     <script src="genui/capacitor.js"></script>
     <script src="genui/bind.js"></script>
-    <script src="genui/filescreen.js"></script>
     <script src="genui/queryLoader.js"></script>
     <script src="genui/scriptassert.js"></script>
     <script src="genui/eventAPI.js"></script>
@@ -23,7 +22,6 @@
     <script src="genui/contextMenu.js"></script>
     <script src="genui/tutorial.js"></script>
     <script src="genui/filesave.js"></script>
-    <script src="rect.js"></script>
     <!--<script src="core.share.js"></script>-->
     <!--<script src="core.serviceWorker.js"></script>-->
     <!--<script src="core.server.save.js"></script>-->
@@ -33,11 +31,15 @@
         //ok now the PWA manager
         var pwaManager = new _pwaManager({
             prompt: (e) => {
-                document.querySelector(".installPrompt").style.display="block";
-                document.querySelector(".installPrompt button").addEventListener("click",()=>{
-                    e.prompt();
-                    document.querySelector(".installPrompt").style.display="none";
-                })
+                try {
+                    document.querySelector(".installPrompt").style.display = "block";
+                    document.querySelector(".installPrompt button").addEventListener("click", () => {
+                        e.prompt();
+                        document.querySelector(".installPrompt").style.display = "none";
+                    })
+                } catch (e) {
+                    console.log(e);
+                }
             }
         });
     </script>
@@ -52,31 +54,7 @@
 </head>
 
 <body style="display:flex; height:100%; flex-direction:column; margin:0; position:relative">
-    <div class="banner">
-        <h1 class="docName" contentEditable>Pad name</h1>
-        <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
-        <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
-        <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
-        <ul class="topbar">
-            <li>File
-                <ul>
-                    <li class="saveSources">Load/Save...</li> <!-- default is always localforage for now -->
-                    <li class="new">New</li>
-                </ul>
-            </li>
-            <li class="viewdialog">Views</li>
-            <li class="hlep">Help</li>
-        </ul>
-    </div>
-    <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
 
-    </div>
-    <div class="wall"
-        style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
-        <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
-            <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
-        </div>
-    </div>
 </body>
 
 </html>

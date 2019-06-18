@@ -123,7 +123,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             //just refresh the tabspan.
         }
         operator.rect = this;
-        if (operator.baseOperator && operator.baseOperator.resize) operator.baseOperator.resize();
+        if (operator.baseOperator && operator.baseOperator.refresh) operator.baseOperator.refresh();
     }
 
     //Callback for tab clicks to switch between operators.
@@ -133,7 +133,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.innerDivs[i].style.display = "none";
         }
         if (this.innerDivs[index]) this.innerDivs[index].style.display = "block";
-        if (this.operators[index] && this.operators[index].baseOperator && this.operators[index].baseOperator.resize) this.operators[index].baseOperator.resize();
+        if (this.operators[index] && this.operators[index].baseOperator && this.operators[index].baseOperator.refresh) this.operators[index].baseOperator.refresh();
         // hide buttons on previous operator
         for (let i = 0; i < this.tabspans.length; i++) {
             this.tabspans[i].children[1].style.display = "none";
@@ -239,8 +239,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         oldParent.tabspans = [];
         oldParent.tieOperator(sf);
         oldParent.innerDivs[0].style.display="block";
-        oldParent.resize();
-        oldParent.resize();// could probably be more efficient than calling resize twice...
+        oldParent.refresh();
+        oldParent.refresh();// could probably be more efficient than calling resize twice...
         core.fire("updateView",{sender:me});
         tabmenu.style.display="none";
     })
@@ -303,7 +303,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
 
     //handle a resize event.
-    this.resize = function () {
+    this.refresh = function () {
         if (this.XorY == RECT_ORIENTATION_X) {
             if (this.firstOrSecond == RECT_FIRST_SIBLING) {
                 this.outerDiv.style.left = 0;
@@ -330,12 +330,12 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             me.outerDiv.style.border = "none"; // verify border removal
             //hide other items
             me.tabbar.style.display = "none";
-            this.children[0].resize();
-            this.children[1].resize();
+            this.children[0].refresh();
+            this.children[1].refresh();
         } else {
             if (this.operators) {
                 for (let i = 0; i < this.operators.length; i++) {
-                    if (this.operators[i].baseOperator && this.operators[i].baseOperator.resize) this.operators[i].baseOperator.resize();
+                    if (this.operators[i].baseOperator && this.operators[i].baseOperator.refresh) this.operators[i].baseOperator.refresh();
                 }
             }
             me.tabbar.style.display = "block";
@@ -354,7 +354,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     } else {
         parent.outerDiv.appendChild(this.outerDiv);
     }
-    this.resize();
+    this.refresh();
     //events
     this.mouseMoveHandler = function (e) {
         let inOrOut = [false, false, false, false];
@@ -447,8 +447,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                     me.resizing = -1;
                 }
                 me.parentRect.children[!me.firstOrSecond * 1].pos = me.pos;
-                me.resize();
-                me.parentRect.children[!me.firstOrSecond * 1].resize();
+                me.refresh();
+                me.parentRect.children[!me.firstOrSecond * 1].refresh();
                 e.preventDefault();
                 rectChanged = true;
             }
@@ -610,7 +610,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.tieOperator(new me.core.operator("opSelect", me));
             this.switchOperator(0);
         }
-        this.resize();
+        this.refresh();
     }
     if (typeof XorY == 'object') this.fromSaveData(XorY);
 
@@ -644,7 +644,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
         //delete this.children[0];
         //delete this.children[1];
-        this.resize();
+        this.refresh();
         this.switchOperator(0);
     }
 

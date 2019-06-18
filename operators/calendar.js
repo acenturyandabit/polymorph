@@ -299,7 +299,7 @@ core.registerOperator("calendar", {
             }
         })
 
-        this.resize = function () {
+        this.refresh = function () {
             setTimeout(() => {
                 try {
                     $(me.rootdiv).fullCalendar('render');

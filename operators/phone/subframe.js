@@ -2,18 +2,21 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     let me = this;
     me.container=operator;
     this.settings = {};
-
-    this.rootdiv = document.createElement("div");
+    this.rdv= document.createElement("div");
+    this.rdv.innerHTML=`
+    <div style="margin-left: 10px">
+    
+        <p>Add an operator...</p>
+    </div>
+    
+    `
+    //issue: operator may not be tied yet-- in which case, wait.
+    setTimeout(()=>{this.container.tab.appendChild(this.rdv)});
     //Add div HTML here
-    this.rootdiv.innerHTML = ``;
-    this.rootdiv.style.cssText=`width:100%; height: 100%; position:relative`;
-    operator.div.appendChild(this.rootdiv);
-    this.rect=new _rect(core,this.rootdiv,RECT_ORIENTATION_X,1,0);
+    this.rect=new _rect(core,this.rdv.querySelector("div"));
     //////////////////Handle core item updates//////////////////
 
     this.refresh=function(){
-        this.rect.firstOrSecond=0;
-        this.rect.pos=1;
         this.rect.refresh();
     }
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
@@ -42,7 +45,6 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
         this.rect.refresh();
         this.processSettings();
     }
-
 
     //Handle the settings dialog click!
     this.dialogDiv=document.createElement("div");

@@ -1,5 +1,5 @@
-//V2.2.4 Filescreen: Loading screen for files
-//Expose more before document load
+//V2.3.0 Filescreen: Loading screen for files
+//Now with better mobile support!
 
 /*
 TODO:
@@ -74,15 +74,28 @@ function _filescreen(userSettings) {
     midDiv = document.createElement("div");
     midDiv.style.cssText = "display: table-cell; vertical-align: middle;";
     outerDiv.appendChild(midDiv);
-    let innerDiv;
-    innerDiv = document.createElement("div");
+    let innerDiv = document.createElement("div");
+    innerDiv.id="__filecreen_inner_div";
+    let style = document.createElement("style");
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;";
+        style.innerHTML=`
+            #__filecreen_inner_div{
+                position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;
+            }
+            #__filecreen_inner_div>p{
+                display: block;
+            }
+        `;
+        innerDiv.style.cssText = "";
     } else {
-        innerDiv.style.cssText = "position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 40vw; background-color: white; border-radius: 30px; padding: 30px;";
+        style.innerHTML=`
+            #__filecreen_inner_div{
+                position:relative; display: flex; flex-direction: column; margin: auto; min-height: 60vh; max-height: 80vh; width: 80vw; background-color: white; border-radius: 30px; padding: 30px;
+            }
+        `;
     }
-
     midDiv.appendChild(innerDiv);
+    midDiv.appendChild(style);
     if ((typeof me.settings.headprompt).toLowerCase() == "string") {
         let heading = document.createElement("h1");
         heading.innerText = me.settings.headprompt;

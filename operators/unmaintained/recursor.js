@@ -27,7 +27,7 @@ core.registerOperator("template", {
         //do stuff with the item.
     });
 
-    this.resize = function () {
+    this.refresh = function () {
         // This is called when my parent rect is resized.
     }
 

@@ -362,8 +362,8 @@ core.registerOperator(
       }
       // An item was deleted.
     });
-    this.resize = function () {
-      // This is called when my parent rect is resized.
+    this.refresh = function () {
+      // This is called when my parent rect is d.
     };
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 

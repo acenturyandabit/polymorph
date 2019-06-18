@@ -52,8 +52,42 @@ function _core() {
     if (!me.userData.id) {
         me.userData.id = me.userData.alias || guid(10);
     }
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Accept loading sources; default is local saving.
+
+
+    ////////////////////////////////////////////////////////////////////////
+    //very basic html
+    documentReady(() => {
+        document.body.innerHTML = `
+        <div class="banner">
+            <h1 class="docName" contentEditable>Pad name</h1>
+            <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
+            <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
+            <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
+            <ul class="topbar">
+                <li>File
+                    <ul>
+                        <li class="saveSources">Load/Save...</li> <!-- default is always localforage for now -->
+                        <li class="new">New</li>
+                    </ul>
+                </li>
+                <li class="viewdialog">Views</li>
+                <li class="hlep">Help</li>
+            </ul>
+        </div>
+        <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
+        
+        </div>
+        <div class="wall"
+            style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
+            <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
+                <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
+            </div>
+        </div>
+            `
+    })
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Starting function: this is only called once
     me.start = function () {
         resetDocument();
         let params = new URLSearchParams(window.location.search);
@@ -78,7 +112,25 @@ function _core() {
         } else {
             me.filescreen.showSplash();
         }
+        //register some handlers
+        window.addEventListener("resize", () => {
+            me.baseRect.refresh();
+        })
+        document.body.addEventListener("keydown", e => {
+            if (e.ctrlKey && e.key == "s") {
+                e.preventDefault();
+                core.userSave();
+                core.unsaved = false;
+                //also do the server save
+            }
+        });
+        document.querySelector(".topbar .new").addEventListener("click", () => {
+            window.open(window.location.pathname);
+        })
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Accept loading sources; default is local saving.
 
 
     this.saveSources = [];
@@ -111,8 +163,6 @@ function _core() {
             history.pushState({}, "", loc);
             console.log(window.location.href);
         }
-
-
         userLoad(source, id, true, template);
     }
 
@@ -189,7 +239,7 @@ function _core() {
         this.items = data.items;
         if (!this.currentDoc.currentView) this.currentDoc.currentView = Object.keys(this.currentDoc.views)[0];
         this.presentView(this.currentDoc.currentView);
-        this.baseRect.resize();
+        this.baseRect.refresh();
         for (let i in this.items) {
             this.fire("updateItem", {
                 id: i
@@ -230,7 +280,12 @@ function _core() {
             };
         }
         for (let i in me.currentDoc.saveSources) {
-            me.saveSources[i].pushAll(me.currentDoc.saveSources[i], d);
+            try{
+                me.saveSources[i].pushAll(me.currentDoc.saveSources[i], d);
+            }catch (e){
+                continue;
+            }
+            
         }
     }
 
@@ -315,7 +370,7 @@ function _core() {
             type: type
         });
         for (let i = 0; i < this.operatorLoadCallbacks[type]; i++) {
-            this.operatorLoadCallbacks[type][i].op.load(
+            this.operatorLoadCallbacks[type][i].op.reload(
                 this.operatorLoadCallbacks[type][i].data
             );
         }
@@ -495,11 +550,14 @@ function _core() {
         document.querySelector(".saveSources").addEventListener("click", () => {
             for (let i in me.saveSources)
                 if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
-            for (let i in me.userData.documents[me.currentDocName]){
-                me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked=true;
+            for (let i in me.userData.documents[me.currentDocName]) {
+                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
+                catch (e){
+                    console.log(e);
+                }
             }
             let params = new URLSearchParams(window.location.search);
-            if (params.get("src"))me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked=true;
+            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
             autosaveOp.load();
             loadDialog.style.display = "block";
         });
@@ -507,7 +565,7 @@ function _core() {
     //----------Autosave----------//
     let autosaveCapacitor = new capacitor(200, 20, me.userSave);
     this.on("updateItem", function (d) {
-        if (me.currentDoc.autosave) {
+        if (me.userData.documents[me.currentDocName].autosave) {
             autosaveCapacitor.submit();
         }
     });
@@ -524,18 +582,13 @@ function _core() {
             if (e.target.checked) {
                 me.userData.documents[me.currentDocName][csource] = me.currentDocName;
                 if (me.saveSources[csource].hook) me.saveSources[csource].hook(me.currentDocName);
-            }else{
+            } else {
                 if (me.saveSources[csource].unhook) me.saveSources[csource].unhook(me.currentDocName);
                 delete me.userData.documents[me.currentDocName][csource];
             }
             me.saveUserData();
         }
     })
-
-
-
-
-
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -547,61 +600,61 @@ function _core() {
         fix firebase integration
         change save structure
         */
-
-    scriptassert([
-        ["dialog", "genui/dialog.js"]
-    ], () => {
-        let viewDialog = document.createElement("div");
-        viewDialog.classList.add("dialog");
-        viewDialog = dialogManager.checkDialogs(viewDialog)[0];
-        let viewInnerDialog = document.createElement("div");
-        viewDialog.querySelector(".innerDialog").appendChild(viewInnerDialog);
-        viewInnerDialog.innerHTML = `
-        <h1>Choose a view to load!</h1>
-        <div class="buttons" style=display:flex; flex-direction:column;">
-        </div>
-        <h2> Or, make a new view...</h2>
-        <input class="newView"><button class="nb">Make new view</button>
-        `;
-        documentReady(() => {
-            document.body.appendChild(viewDialog);
-            document.querySelector(".viewdialog").addEventListener("click", () => {
-                //add all current views
-                viewDialog.querySelector(".buttons").innerHTML = "";
-                for (let i in me.views) {
-                    let b = document.createElement("button");
-                    b.innerHTML = i;
-                    viewDialog.querySelector(".buttons").appendChild(b);
-                }
-                viewDialog.style.display = "block";
+    /*
+        scriptassert([
+            ["dialog", "genui/dialog.js"]
+        ], () => {
+            let viewDialog = document.createElement("div");
+            viewDialog.classList.add("dialog");
+            viewDialog = dialogManager.checkDialogs(viewDialog)[0];
+            let viewInnerDialog = document.createElement("div");
+            viewDialog.querySelector(".innerDialog").appendChild(viewInnerDialog);
+            viewInnerDialog.innerHTML = `
+            <h1>Choose a view to load!</h1>
+            <div class="buttons" style=display:flex; flex-direction:column;">
+            </div>
+            <h2> Or, make a new view...</h2>
+            <input class="newView"><button class="nb">Make new view</button>
+            `;
+            documentReady(() => {
+                document.body.appendChild(viewDialog);
+                document.querySelector(".viewdialog").addEventListener("click", () => {
+                    //add all current views
+                    viewDialog.querySelector(".buttons").innerHTML = "";
+                    for (let i in me.views) {
+                        let b = document.createElement("button");
+                        b.innerHTML = i;
+                        viewDialog.querySelector(".buttons").appendChild(b);
+                    }
+                    viewDialog.style.display = "block";
+                });
             });
-        });
-
-        //existing view buttons
-        viewInnerDialog
-            .querySelector(".buttons")
-            .addEventListener("click", function (e) {
-                if (e.target.matches("button")) {
-                    me.presentView(e.target.innerHTML);
-                    viewDialog.style.display = "none";
-                    me.currentDoc.currentView = e.target.innerHTML;
+    
+            //existing view buttons
+            viewInnerDialog
+                .querySelector(".buttons")
+                .addEventListener("click", function (e) {
+                    if (e.target.matches("button")) {
+                        me.presentView(e.target.innerHTML);
+                        viewDialog.style.display = "none";
+                        me.currentDoc.currentView = e.target.innerHTML;
+                        me.saveUserData();
+                    }
+                });
+            //new view buttons
+            viewInnerDialog.querySelector(".nb").addEventListener("click", function (e) {
+                if (viewInnerDialog.querySelector(".newView").value.length) {
+                    me.views[viewInnerDialog.querySelector(".newView").value] = {};
+                    me.presentView(viewInnerDialog.querySelector(".newView").value);
+                    me.currentDoc.currentView = viewInnerDialog.querySelector(
+                        ".newView"
+                    ).value;
                     me.saveUserData();
+                    viewDialog.style.display = "none";
                 }
             });
-        //new view buttons
-        viewInnerDialog.querySelector(".nb").addEventListener("click", function (e) {
-            if (viewInnerDialog.querySelector(".newView").value.length) {
-                me.views[viewInnerDialog.querySelector(".newView").value] = {};
-                me.presentView(viewInnerDialog.querySelector(".newView").value);
-                me.currentDoc.currentView = viewInnerDialog.querySelector(
-                    ".newView"
-                ).value;
-                me.saveUserData();
-                viewDialog.style.display = "none";
-            }
         });
-    });
-
+    */
     ///////////////////////////////////////////////////////////////////////////////////////
     // targeter
     this.targeter = undefined;
@@ -652,24 +705,7 @@ function _core() {
     //More useful bits
 
     //A shared space for operators to access
-    this.shared = {}
-
-    setTimeout(() => {
-        window.addEventListener("resize", () => {
-            me.baseRect.resize();
-        })
-        document.body.addEventListener("keydown", e => {
-            if (e.ctrlKey && e.key == "s") {
-                e.preventDefault();
-                core.userSave();
-                core.unsaved = false;
-                //also do the server save
-            }
-        });
-        document.querySelector(".topbar .new").addEventListener("click", () => {
-            window.open(window.location.pathname);
-        })
-    });
+    this.shared = {};
 
     function resetDocument() {
         me.items = {};
@@ -680,7 +716,7 @@ function _core() {
             RECT_ORIENTATION_X,
             0,
             1);
-        me.baseRect.resize();
+        me.baseRect.refresh();
     }
 }
 

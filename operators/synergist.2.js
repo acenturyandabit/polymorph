@@ -370,7 +370,7 @@ core.registerOperator("itemcluster2", {
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
             if (core.shared.synergistCopyElement) {
-                let coords=me.mapPageToSvgCoords(e.pageX,e.pageY);
+                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
                 core.items[core.shared.synergistCopyElement].itemcluster.viewData[me.settings.currentViewName] = {
                     x: coords.x,
                     y: coords.y,
@@ -433,6 +433,11 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < links.length; i++) {
                 let ina = indexedOrder.indexOf(links[i].a);
                 let inb = indexedOrder.indexOf(links[i].b);
+                if (ina == -1 || inb == -1) {
+                    //delete this item
+                    links.splice(i,1);
+                    i--;
+                }
                 if (ina < inb) { //enforce a=lower<-b=higher
                     let c = links[i].b;
                     links[i].b = links[i].a;
@@ -608,7 +613,7 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                core.shared.synergistCopyElement=me.contextedElement.dataset.id;
+                core.shared.synergistCopyElement = me.contextedElement.dataset.id;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -1251,7 +1256,7 @@ core.registerOperator("itemcluster2", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Core interactions
 
-    this.resize = function () {
+    this.refresh = function () {
         if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
         me.switchView(me.settings.currentViewName, true);
     };
