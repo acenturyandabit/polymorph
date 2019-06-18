@@ -45,8 +45,8 @@ core.registerOperator("itemList", function (operator) {
         let currentItemSpan = me.template.cloneNode(true);
         me.taskList.appendChild(currentItemSpan);
         //get data and register item
-        for (i in this.settings.properties) {
-            switch (this.settings.properties[i]) {
+        for (i in me.settings.properties) {
+            switch (me.settings.properties[i]) {
                 case "text":
                 case "tag":
                 case "number":
@@ -71,11 +71,11 @@ core.registerOperator("itemList", function (operator) {
         //clear the template
         core.fire("create", {
             id: id,
-            sender: this
+            sender: me
         });
         core.fire("updateItem", {
             id: id,
-            sender: this
+            sender: me
         });
         me.datereparse(id);
     }
@@ -97,6 +97,7 @@ core.registerOperator("itemList", function (operator) {
     }
 
     me.sortItems = function () {
+        if (!me.settings.sortby)return;
         //collect all items
         let itms = me.taskList.querySelectorAll(`[data-id]`);
         let its = [];

@@ -62,9 +62,16 @@ function scriptassert(list, done, sroot) {//shadow root option
                     __assert_states[varname].callbacks[i]();
                     //console.log("done");
                 }
-
             }
-            s.src = path;
+            try{s.src = path;
+            }catch(e){
+                console.log(e);
+                __assert_states[varname].state='failed'
+                for (var i = 0; i < __assert_states[varname].callbacks.length; i++) {
+                    __assert_states[varname].callbacks[i]();
+                    //console.log("done");
+                }
+            }
             //while(waiting);
             //console.log("started...");
         } else if (__assert_states[varname].state == 'loading') {

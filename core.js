@@ -41,7 +41,6 @@ function _core() {
             },
             id: guid(10),
         };
-        me.saveUserData();
     }
     if (!me.userData.introductions) {
         me.userData.introductions = {};
@@ -52,39 +51,7 @@ function _core() {
     if (!me.userData.id) {
         me.userData.id = me.userData.alias || guid(10);
     }
-
-
-    ////////////////////////////////////////////////////////////////////////
-    //very basic html
-    documentReady(() => {
-        document.body.innerHTML = `
-        <div class="banner">
-            <h1 class="docName" contentEditable>Pad name</h1>
-            <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
-            <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
-            <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
-            <ul class="topbar">
-                <li>File
-                    <ul>
-                        <li class="saveSources">Load/Save...</li> <!-- default is always localforage for now -->
-                        <li class="new">New</li>
-                    </ul>
-                </li>
-                <li class="viewdialog">Views</li>
-                <li class="hlep">Help</li>
-            </ul>
-        </div>
-        <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
-        
-        </div>
-        <div class="wall"
-            style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
-            <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
-                <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
-            </div>
-        </div>
-            `
-    })
+    me.saveUserData();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Starting function: this is only called once
@@ -112,21 +79,28 @@ function _core() {
         } else {
             me.filescreen.showSplash();
         }
-        //register some handlers
-        window.addEventListener("resize", () => {
-            me.baseRect.refresh();
-        })
-        document.body.addEventListener("keydown", e => {
-            if (e.ctrlKey && e.key == "s") {
-                e.preventDefault();
-                core.userSave();
-                core.unsaved = false;
-                //also do the server save
-            }
+        me.startUI();
+        document.querySelector(".docName").addEventListener("keyup", () => {
+            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
+            tc.submit();
+            document.querySelector("title").innerHTML =
+                me.currentDoc.displayName + " - Polymorph";
         });
-        document.querySelector(".topbar .new").addEventListener("click", () => {
-            window.open(window.location.pathname);
-        })
+        document.body.appendChild(loadDialog);
+        document.querySelector(".saveSources").addEventListener("click", () => {
+            for (let i in me.saveSources)
+                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
+            for (let i in me.userData.documents[me.currentDocName]) {
+                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
+                catch (e){
+                    console.log(e);
+                }
+            }
+            let params = new URLSearchParams(window.location.search);
+            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
+            autosaveOp.load();
+            loadDialog.style.display = "block";
+        });
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -191,7 +165,7 @@ function _core() {
                     /*if (!tutorialStarted) {
                         core.tutorial.start();
                     }*/
-
+                    me.fire("documentCreated",me.currentDocName);
                 }
                 //reconcile that particular save source within the copy of the document
                 d.saveSources = d.saveSources || {}; //neat instadeclare!
@@ -253,6 +227,7 @@ function _core() {
         //patch current doc
         me.currentDoc.views[me.currentDoc.currentView] = me.baseRect.toSaveData();
         //clean up
+        me.isSaving = true;
         for (let i in me.items) {
             me.itemShouldBeDeleted = true;
             me.fire("updateItem", {
@@ -262,6 +237,7 @@ function _core() {
                 delete core.items[i];
             }
         }
+        me.isSaving = false;
         //patch items
         me.currentDoc.items = me.items;
         //save to all sources
@@ -287,6 +263,7 @@ function _core() {
             }
             
         }
+        me.unsaved = false;
     }
 
     /*
@@ -312,29 +289,13 @@ function _core() {
     let tc = new capacitor(1000, 10, () => {
         core.fire("updateDoc");
     })
-    documentReady(() => {
-        document.querySelector(".docName").addEventListener("keyup", () => {
-            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
-            tc.submit();
-            document.querySelector("title").innerHTML =
-                me.currentDoc.displayName + " - Polymorph";
-        })
-    })
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //View level functions
 
     this.presentView = function (view) {
         //reset and present a view
-        document.body.querySelector(".rectspace").innerHTML = "";
-        //Regenerate rects
-        this.baseRect = new _rect(
-            this,
-            document.body.querySelector(".rectspace"),
-            RECT_ORIENTATION_X,
-            0,
-            1
-        );
+        me.resetView();
         this.baseRect.fromSaveData(me.currentDoc.views[view]);
         this.baseRect.pos = 0;
         this.baseRect.firstOrSecond = 1;
@@ -500,18 +461,7 @@ function _core() {
         // create a new workspace, then load it
         window.location.href += "?doc=" + guid(7) + "&src=lf";
     })*/
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Top bar
-    let tbman = new _topbarManager();
-    tbman._init();
-    //select the topbar
-    document.addEventListener("DOMContentLoaded", function () {
-        let t = document.querySelector(".banner");
-        tbman.checkTopbars(t);
-    });
-    tbman.checkTopbars();
-
+    
     //////////////////////////////////////////////////////////////////
     //Loading dialogs
     loadDialog = document.createElement("div");
@@ -545,27 +495,10 @@ function _core() {
         property: "autosave",
         label: "Autosave all changes"
     });
-    documentReady(() => {
-        document.body.appendChild(loadDialog);
-        document.querySelector(".saveSources").addEventListener("click", () => {
-            for (let i in me.saveSources)
-                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
-            for (let i in me.userData.documents[me.currentDocName]) {
-                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
-                catch (e){
-                    console.log(e);
-                }
-            }
-            let params = new URLSearchParams(window.location.search);
-            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
-            autosaveOp.load();
-            loadDialog.style.display = "block";
-        });
-    });
     //----------Autosave----------//
     let autosaveCapacitor = new capacitor(200, 20, me.userSave);
     this.on("updateItem", function (d) {
-        if (me.userData.documents[me.currentDocName].autosave) {
+        if (me.userData.documents[me.currentDocName].autosave && !me.isSaving) {
             autosaveCapacitor.submit();
         }
     });
@@ -706,9 +639,7 @@ function _core() {
 
     //A shared space for operators to access
     this.shared = {};
-
-    function resetDocument() {
-        me.items = {};
+    me.resetView=function(){
         document.body.querySelector(".rectspace").innerHTML = "";
 
         me.baseRect = new _rect(me,
@@ -716,6 +647,10 @@ function _core() {
             RECT_ORIENTATION_X,
             0,
             1);
+    }
+    function resetDocument() {
+        me.items = {};
+        me.resetView();
         me.baseRect.refresh();
     }
 }

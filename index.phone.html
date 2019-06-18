@@ -1,0 +1,60 @@
+<html style='height:100%'>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymorph</title>
+    <!--External libraries-->
+    <script src="3pt/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"></script>
+    <!--<script src="3pt/firebase-app.js"></script>
+        <script src="3pt/firebase-firestore.js"></script>-->
+    <script src="genui/useful.js"></script>
+    <script src="genui/capacitor.js"></script>
+    <script src="genui/bind.js"></script>
+    <script src="genui/queryLoader.js"></script>
+    <script src="genui/scriptassert.js"></script>
+    <script src="genui/eventAPI.js"></script>
+    <script src="genui/options.js"></script>
+    <script src="genui/topbar.js"></script>
+    <script src="genui/swint.js"></script>
+    <script src="genui/dialog.js"></script>
+    <script src="genui/contextMenu.js"></script>
+    <script src="genui/tutorial.js"></script>
+    <script src="genui/filesave.js"></script>
+    <!--<script src="core.share.js"></script>-->
+    <!--<script src="core.serviceWorker.js"></script>-->
+    <!--<script src="core.server.save.js"></script>-->
+    <script src="manager.js" data-version="phone"></script>
+    <script src="pwa.js"></script>
+    <script>
+        //ok now the PWA manager
+        var pwaManager = new _pwaManager({
+            prompt: (e) => {
+                try {
+                    document.querySelector(".installPrompt").style.display = "block";
+                    document.querySelector(".installPrompt button").addEventListener("click", () => {
+                        e.prompt();
+                        document.querySelector(".installPrompt").style.display = "none";
+                    })
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        });
+    </script>
+
+    <style>
+        h1 {
+            margin: 0;
+        }
+    </style>
+    <link href="assets/jason.css" rel="stylesheet" type="text/css">
+    </link>
+</head>
+
+<body style="display:flex; height:100%; flex-direction:column; margin:0; position:relative">
+
+</body>
+
+</html>
