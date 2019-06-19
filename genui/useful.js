@@ -21,12 +21,11 @@ function guid(count = 6) {
 }
 
 function randcol() {
-    var output = "#00";
+    var output = "#";
     ac_char="1234567890abcdef";
-    for (var i = 0; i < 2; i++) {
+    for (var i = 0; i < 6; i++) {
         output += ac_char[Math.floor(Math.random() * 17)];
     }
-    output += "00";
     return output;
 }
 
