@@ -22,25 +22,7 @@ function guid(count = 6) {
 
 function randcol() {
     var output = "#00";
-    var ac_char = [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0",
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f"
-    ];
+    ac_char="1234567890abcdef";
     for (var i = 0; i < 2; i++) {
         output += ac_char[Math.floor(Math.random() * 17)];
     }
