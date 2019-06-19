@@ -4,7 +4,7 @@ var __manager_profiles = {
         files: {
             filescreen: { p: "genui/filescreen.js" },
             templates: { p: "templates.js" },
-            core_dialog: { p: "core.dialog.js" },
+            core_dialog: { p: "versions/phone/core.dialog.js" },
             core_tutorial: { p: "core.tutorial.js" },
             core: { p: "core.js" },
             coreUI: { p: "versions/phone/coreUI.js" },

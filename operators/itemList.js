@@ -157,17 +157,17 @@ core.registerOperator("itemList", function (operator) {
         }
     }
 
-    let sortcap = new capacitor(100, 1000, me.sortItems);
+    let sortcap = new capacitor(500+isPhone()*1000, 1000, me.sortItems);
 
     core.on("updateItem", function (d) {
         let id = d.id;
         let s = d.sender;
         me.settings.currentID = id;
-        sortcap.submit();
-        return me.updateItem(id, s);
+        if (s!="GARBAGE_COLLECTOR")sortcap.submit();
+        return me.updateItem(id);
     });
 
-    this.updateItem = function (id, sender) {
+    this.updateItem = function (id) {
         let it = core.items[id];
         //First check if we should show the item
         if (!mf(me.settings.filterProp, it)) {

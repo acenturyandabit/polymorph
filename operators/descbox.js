@@ -187,6 +187,7 @@ core.registerOperator("descbox", function (operator) {
                 if (me.settings['focusOperatorID'] == sender.container.uuid) {
                     me.settings.currentID = id;
                     me.updateItem(id);
+                    core.fire("updateView");
                 }
             } else {
                 if (sender) {
@@ -201,11 +202,11 @@ core.registerOperator("descbox", function (operator) {
                         if (me.settings.operationMode == 'focus') {
                             me.settings.currentID = id;
                             me.updateItem(id);
+                            core.fire("updateView");
                         }
                     }
                 }
             }
-            core.fire("updateView");
         } else if (me.settings.operationMode == "putter") {
             if (!me.settings.focusOperatorID) {
                 me.focusOperatorID = d.sender.container.uuid;

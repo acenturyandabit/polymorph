@@ -231,7 +231,8 @@ function _core() {
         for (let i in me.items) {
             me.itemShouldBeDeleted = true;
             me.fire("updateItem", {
-                id: i
+                id: i,
+                sender:"GARBAGE_COLLECTOR"
             });
             if (me.itemShouldBeDeleted) {
                 delete core.items[i];

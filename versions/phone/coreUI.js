@@ -35,10 +35,13 @@ core.startUI = function () {
             core.toggleMenu(false);//hide on direct taps
         }
     });
-
     document.querySelector(".open").addEventListener("click", () => {
         window.open(window.location.pathname);
     })
+    document.querySelector("#opop").addEventListener("click", () => {
+        core.dialog.register(core.currentOperator);
+    })
+    document.body.appendChild(core.dialog.div);
 }
 
 documentReady(() => {
@@ -46,6 +49,7 @@ documentReady(() => {
         <div id="topbar" style="flex: 0 0 2em">
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
             <span class="docName" contentEditable>Polymorph</span>
+            <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
         </div>
         <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
             <div style="position: absolute;top:0;bottom:0; left:-100%; background:rgba(0,0,0,0.5); width:100%; z-index:100;">
@@ -59,8 +63,7 @@ documentReady(() => {
                     overflow: auto;
                     width: 100%;">
                     <p id="newoperator">Add an operator...</p>
-                    </div>    
-                    
+                    </div>
                 </div>
             </div>
             <div id="body" style="position: absolute;top:0;bottom:0; width: 100%">
@@ -68,13 +71,13 @@ documentReady(() => {
             </div>
         </div>
         <div class="wall"
-            style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
+            style="z-index: 100;position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>
             `;
 })
-core.on("documentCreated",(id)=>{
+core.on("documentCreated", (id) => {
     core.userData.documents[id] = {};
     core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
 })
@@ -88,7 +91,7 @@ core.showOperator = function (op) {
     document.body.querySelector("#body").children[0].remove();
     document.body.querySelector("#body").appendChild(op.topdiv);
     if (op.baseOperator && op.baseOperator.refresh) op.baseOperator.refresh();
-    core.currentOperator=op;
+    core.currentOperator = op;
     core.fire("operatorChanged");
 }
 
@@ -169,9 +172,9 @@ core.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => 
 })*/
 
 
-core.resetView=function() {
-    let c=document.body.querySelector("#oplists").children;
-    for (let i=0;i<c.length-1;i++)c[i].remove();
+core.resetView = function () {
+    let c = document.body.querySelector("#oplists").children;
+    for (let i = 0; i < c.length - 1; i++)c[i].remove();
     core.baseRect = new _rect(core,
         document.body.querySelector("#oplists"), {});
 }
