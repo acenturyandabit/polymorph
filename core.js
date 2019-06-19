@@ -56,6 +56,28 @@ function _core() {
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Starting function: this is only called once
     me.start = function () {
+        me.startUI();
+        document.querySelector(".docName").addEventListener("keyup", () => {
+            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
+            tc.submit();
+            document.querySelector("title").innerHTML =
+                me.currentDoc.displayName + " - Polymorph";
+        });
+        document.body.appendChild(loadDialog);
+        document.querySelector(".saveSources").addEventListener("click", () => {
+            for (let i in me.saveSources)
+                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
+            for (let i in me.userData.documents[me.currentDocName]) {
+                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
+                catch (e){
+                    console.log(e);
+                }
+            }
+            let params = new URLSearchParams(window.location.search);
+            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
+            autosaveOp.load();
+            loadDialog.style.display = "block";
+        });
         resetDocument();
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
@@ -79,28 +101,6 @@ function _core() {
         } else {
             me.filescreen.showSplash();
         }
-        me.startUI();
-        document.querySelector(".docName").addEventListener("keyup", () => {
-            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
-            tc.submit();
-            document.querySelector("title").innerHTML =
-                me.currentDoc.displayName + " - Polymorph";
-        });
-        document.body.appendChild(loadDialog);
-        document.querySelector(".saveSources").addEventListener("click", () => {
-            for (let i in me.saveSources)
-                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
-            for (let i in me.userData.documents[me.currentDocName]) {
-                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
-                catch (e){
-                    console.log(e);
-                }
-            }
-            let params = new URLSearchParams(window.location.search);
-            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
-            autosaveOp.load();
-            loadDialog.style.display = "block";
-        });
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -496,10 +496,10 @@ function _core() {
         label: "Autosave all changes"
     });
     //----------Autosave----------//
-    let autosaveCapacitor = new capacitor(200, 20, me.userSave);
-    this.on("updateItem", function (d) {
+    me.autosaveCapacitor = new capacitor(200, 20, me.userSave);
+    this.on("updateView,updateItem", function (d) {
         if (me.userData.documents[me.currentDocName].autosave && !me.isSaving) {
-            autosaveCapacitor.submit();
+            me.autosaveCapacitor.submit();
         }
     });
 
@@ -641,7 +641,6 @@ function _core() {
     this.shared = {};
     me.resetView=function(){
         document.body.querySelector(".rectspace").innerHTML = "";
-
         me.baseRect = new _rect(me,
             document.body.querySelector(".rectspace"),
             RECT_ORIENTATION_X,

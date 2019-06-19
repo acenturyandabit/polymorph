@@ -47,7 +47,7 @@ documentReady(() => {
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
             <span class="docName" contentEditable>Polymorph</span>
         </div>
-        <div style="width:100%; flex: 1 1 100%; overflow: hidden">
+        <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
             <div style="position: absolute;top:0;bottom:0; left:-100%; background:rgba(0,0,0,0.5); width:100%; z-index:100;">
                 <div id="menulist" style="position: absolute;top:0;bottom:0; background:blueviolet; width:70%">    
                     <p><button class="saveSources">save</button>
@@ -63,7 +63,7 @@ documentReady(() => {
                     
                 </div>
             </div>
-            <div id="body">
+            <div id="body" style="position: absolute;top:0;bottom:0; width: 100%">
                 <span></span><!--burner-->
             </div>
         </div>
@@ -85,11 +85,11 @@ core.on("documentCreated",(id)=>{
 
 core.showOperator = function (op) {
     let bcr = document.body.querySelector("#body").parentElement.getBoundingClientRect();
-    document.body.querySelector("#body").style.height = bcr.height;
-    document.body.querySelector("#body").style.width = bcr.width;
     document.body.querySelector("#body").children[0].remove();
     document.body.querySelector("#body").appendChild(op.topdiv);
     if (op.baseOperator && op.baseOperator.refresh) op.baseOperator.refresh();
+    core.currentOperator=op;
+    core.fire("operatorChanged");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +170,14 @@ core.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => 
 
 
 core.resetView=function() {
+    let c=document.body.querySelector("#oplists").children;
+    for (let i=0;i<c.length-1;i++)c[i].remove();
     core.baseRect = new _rect(core,
         document.body.querySelector("#oplists"), {});
 }
 
+core.on("operatorChanged", function (d) {
+    if (core.userData.documents[core.currentDocName].autosave && !core.isSaving) {
+        core.autosaveCapacitor.submit();
+    }
+});

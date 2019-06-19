@@ -129,6 +129,8 @@ core.registerOperator("itemcluster2", {
             let u = me.arrangeItem(id);
             acp.submit();
             return u;
+        }else{
+            return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName))!= undefined);
         }
         //Check if item is shown
         //Update item if relevant
@@ -998,7 +1000,7 @@ core.registerOperator("itemcluster2", {
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = me.svg.select(`[data-id=${me.linkingDiv.dataset.id}]`).first();
+            let rect = me.svg.select(`[data-id="${me.linkingDiv.dataset.id}"]`).first();
             let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
             me.linkingLine.plot(
                 rect.x() + rect.width() / 2,

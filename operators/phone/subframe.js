@@ -59,6 +59,9 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     this.getOperator=function(id){
         return this.rect.getOperator(id);
     }
+    this.getOperatorPath=function(id){
+        return this.rect.getOperatorPath(id);
+    }
     this.listOperators=function(list){
         this.rect.listOperators(list);
     }

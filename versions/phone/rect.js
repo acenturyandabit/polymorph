@@ -31,7 +31,7 @@ function _rect(core, parent, data) {
                 // add the name to the list.
                 me.parent.insertBefore(d, me.parent.children[me.parent.children.length - 1]);
                 d.addEventListener("click", (e) => {
-                    if (d.children[0]== e.target) {
+                    if (d.children[0] == e.target) {
                         core.toggleMenu(false);
                         core.showOperator(op);
                     }
@@ -41,6 +41,22 @@ function _rect(core, parent, data) {
                 op.tab.children[0].innerText = op.tabbarName;
             }
         }
+    }
+    this.getOperatorPath = function (op) {
+        if (!op) op = core.currentOperator;
+        if (me.operators) {
+            for (let i = 0; i < me.operators.length; i++) {
+                if (me.operators[i]==op)return i;
+                else if (me.operators[i].baseOperator.getOperatorPath){
+                    if (me.operators[i].baseOperator.getOperatorPath(op)!=-1)return i;
+                }
+            }
+        }else if (me.children){
+            for (let i = 0; i < me.operators.length; i++) {
+                if (me.children[i].getOperatorPath(op)!=-1)return i;
+            }
+        }
+        return -1; // not found
     }
 
     ///Saving
@@ -65,6 +81,10 @@ function _rect(core, parent, data) {
         } else if (me.children.length) {
             me.intlobj.children = [me.children[0].toSaveData(), me.children[1].toSaveData()];
         }
+        //find a 'path' to the currently focused operator
+        let path = me.getOperatorPath();
+        me.intlobj.path=path;
+
         me.intlobj = transcopy(me.intlobj, {
             remap: {
                 "XorY": "x",
@@ -92,7 +112,7 @@ function _rect(core, parent, data) {
             }, reverse: true
         });
         me.intlobj = obj;
-
+        if (obj.path)me.pathBias=obj.path;
         if (obj.children) {
             //children are not recognised formally in phone mode, but to preserve the data structure, we honor this and create a new rect in memory.
             me.children = [new _rect(core, me, obj.children[0]), new _rect(core, me, obj.children[1])];
@@ -110,17 +130,23 @@ function _rect(core, parent, data) {
     }
     if (data) this.fromSaveData(data);
     this.refresh = function () {
-        //if i am baserect, tell core to show _something_
+        let path=-1;
+        if (me.pathBias!=undefined){
+            if (me.pathBias==-1)return;
+            path=me.pathBias;
+            delete me.pathBias;
+        }
+        if (path==-1 || path==undefined)path=0;
         if (me.children && me.children.length) {
-            me.children[0].refresh();
+            me.children[path].refresh();
         } else if (me.operators) {
-            core.showOperator(me.operators[0]);
+            core.showOperator(me.operators[path]);
         } else {
             if (!me.operators) me.operators = [];
             let newop = new core.operator('opSelect', me);
             me.operators.push(newop);
             me.tieOperator(newop);
             core.showOperator(newop);
-        } ``
+        } 
     }
 }

@@ -10,8 +10,8 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
     <button class="lfs">Load from source</button>
     </span>
     `;
-    function saveToFile(){
-        saveJSON(core.toSaveData(), core.currentDoc.displayName + "_" + Date.now()+".json");
+    function saveToFile() {
+        saveJSON(core.toSaveData(), core.currentDoc.displayName + "_" + Date.now() + ".json");
     }
     this.dialog.querySelector(".snow").addEventListener("click", () => {
         this.pushAll(undefined, core.toSaveData());
@@ -29,19 +29,28 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
     this.pullAll = async function (id) {
         return JSON.parse(this.dialog.querySelector("textarea").value);
     }
-    let me=this;
-    this.hook=async function(){
-        me.hooktimer=setInterval(()=>{
-            saveToFile();
-        },1000000);
+    let me = this;
+    me.edited = false;
+
+    core.on("updateView,updateItem", function (d) {
+        me.edited=true;
+    });
+
+    this.hook = async function () {
+        me.hooktimer = setInterval(() => {
+            if (me.edited) {
+                saveToFile();
+                me.edited = false;
+            }
+        }, 1000000);
         //also force beforeunload to save
-        window.addEventListener("beforeunload",saveToFile);
+        window.addEventListener("beforeunload", saveToFile);
         console.log("Auto file save enabled.");
     }
-    this.unhook=async function(){
+    this.unhook = async function () {
         clearInterval(me.hooktimer);
         //also force beforeunload to save
-        window.removeEventListener("beforeunload",saveToFile);
+        window.removeEventListener("beforeunload", saveToFile);
         console.log("Auto file save disabled.");
     }
 })

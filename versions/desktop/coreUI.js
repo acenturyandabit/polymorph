@@ -1,5 +1,5 @@
 documentReady(() => {
-    document.body.innerHTML = `
+    document.body.appendChild(htmlwrap(`
     <div class="banner">
         <h1 class="docName" contentEditable>Pad name</h1>
         <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
@@ -15,20 +15,21 @@ documentReady(() => {
             <li class="viewdialog">Views</li>
             <li class="hlep">Help</li>
         </ul>
-    </div>
+    </div>`));
+    document.body.appendChild(htmlwrap(`
     <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
     
-    </div>
+    </div>`));
+    document.body.appendChild(htmlwrap(`
     <div class="wall"
         style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
         <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
             <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>
-    </div>
-        `
+    </div>`));
 })
 
-core.startUI=function(){
+core.startUI = function () {
     document.querySelector(".topbar .new").addEventListener("click", () => {
         window.open(window.location.pathname);
     })
