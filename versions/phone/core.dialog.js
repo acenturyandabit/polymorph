@@ -40,13 +40,16 @@ function dialogSystemManager(core) {
             core.dialog.innerDialog.children[3].style.maxWidth="50vw";
             //set the calling items.
             core.dialog.currentBaseOperator = baseOperator;
+            core.dialog.currentOperator=operator;
             //now show the dialog
             core.dialog.div.style.display="block";
         }
         core.dialog.div.querySelector(".cb").addEventListener("click", function () {
             //also forward close event to the baseOperator
             core.dialog.currentBaseOperator.dialogUpdateSettings();
-            core.fire("updateView")
+            core.dialog.currentOperator.tabbarName=core.dialog.standardOptions.querySelector(".tabDisplayName").value;
+            core.dialog.currentOperator.tab.children[0].children[0].innerText=core.dialog.currentOperator.tabbarName;
+            core.fire("updateView", {sender:core.dialog});
         })
     })
 }

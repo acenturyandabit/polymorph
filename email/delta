@@ -1,0 +1,8 @@
+given 2 stacks:
+when there is a difference, how do we know which is more recent?
+-- store the entire change history alongside each document?
+--- takes up too much space.
+---- thats fine as long as there is no information duplication?
+
+recieve deltas
+collapse (?) with an index of the change number we are at 

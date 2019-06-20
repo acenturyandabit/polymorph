@@ -20,20 +20,37 @@ function _rect(core, parent, data) {
         me.tieOperator(newop);
     }
 
-    this.tieOperator = function (op) {
+    this.removeOperator=function(op){
+        for (i=0;i<me.operators.length;i++){
+            if (me.operators[i]==op){
+                me.operators.splice(i,1);
+                core.fire("updateView",{sender:me});
+                break;
+            }
+        }
+    }
+
+    this.tieOperator = function (op,rectponsible) {
+        if (!rectponsible)rectponsible=me;
         if (!me.isRoot) {
-            me.parent.tieOperator(op);
+            me.parent.tieOperator(op,rectponsible);
         } else {
             if (!op.tab) {
                 // create a div for it
                 let d = document.createElement('div');
-                d.innerHTML = `<p>${op.tabbarName}</p>`
+                d.innerHTML = `<p><span>${op.tabbarName}</span><button class="remove">X</button></p>`
                 // add the name to the list.
                 me.parent.insertBefore(d, me.parent.children[me.parent.children.length - 1]);
                 d.addEventListener("click", (e) => {
-                    if (d.children[0] == e.target) {
-                        core.toggleMenu(false);
-                        core.showOperator(op);
+                    if (d.children[0].contains(e.target)) {
+                        if (e.target.matches("button.remove")){
+                            //deregister the operator
+                            d.remove();
+                            rectponsible.removeOperator(op);
+                        }else{
+                            core.toggleMenu(false);
+                            core.showOperator(op);
+                        }
                     }
                 })
                 op.tab = d;

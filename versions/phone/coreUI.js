@@ -46,6 +46,15 @@ core.startUI = function () {
 
 documentReady(() => {
     document.body.innerHTML = `
+        <style>
+            #oplists button.remove{
+                float: right;
+                margin-right: 20%;
+                font-style: normal;
+                font-weight: bold;
+                color: darkred;
+            }
+        </style>
         <div id="topbar" style="flex: 0 0 2em">
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
             <span class="docName" contentEditable>Polymorph</span>
