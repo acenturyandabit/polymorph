@@ -29,7 +29,7 @@ documentReady(() => {
     </div>`));
 })
 
-core.startUI = function () {
+core.on("UIstart", () => {
     document.querySelector(".topbar .new").addEventListener("click", () => {
         window.open(window.location.pathname);
     })
@@ -56,5 +56,4 @@ core.startUI = function () {
         tbman.checkTopbars(t);
     });
     tbman.checkTopbars();
-
-}
+});

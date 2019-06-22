@@ -1,85 +1,113 @@
 var __manager_profiles = {
-    phone:{
-        condition: () => { return isPhone() },
-        files: {
-            filescreen: { p: "genui/filescreen.js" },
-            templates: { p: "templates.js" },
-            core_dialog: { p: "versions/phone/core.dialog.js" },
-            core_tutorial: { p: "core.tutorial.js" },
-            core: { p: "core.js" },
-            coreUI: { p: "versions/phone/coreUI.js" },
-            rect: { p: "versions/phone/rect.js" },
-            operator: { p: "operator.js" },
-            outputToText: { p: "saveSources/outputToText.js" },
-            localforage2: { p: "saveSources/localforage2.js" },
-            firebase: { p: "saveSources/firebase.js" },
-            server: { p: "saveSources/server.js" },
-            gdrive: { p: "saveSources/gdrive.js" },
-            opSelect: { p: "operators/opSelect.js" },
-            itemList: { p: "operators/itemList.js" },
-            descbox: { p: "operators/descbox.js" },
-            calendar: { p: "operators/calendar.js" },
-            synergist: { p: "operators/synergist.js" },
-            stack: { p: "operators/stack.js" },
-            terminal: { p: "operators/terminal.js" },
-            inspector: { p: "operators/inspector.js" },
-            subframe: { p: "operators/phone/subframe.js" },
-            sorter: { p: "operators/sorter.js" },
-            httree: { p: "operators/httree.js" },
-            chat: { p: "operators/chat.js" },
-            synergist_2: { p: "operators/synergist.2.js" }
-        }
+    base: {
+        files: [
+            ["filescreen", "genui/filescreen.js"],
+            ["templates", "templates.js"],
+            ["core_dialog", "core.dialog.js"],
+            ["core_tutorial", "core.tutorial.js"],
+            ["core", "core.js"],
+            ["core_docLoading", "core.docLoading.js"],
+            ["operator", "operator.js"],
+        ]
     },
-    default:{
-        files: {
-            filescreen: { p: "genui/filescreen.js" },
-            templates: { p: "templates.js" },
-            core_dialog: { p: "core.dialog.js" },
-            core_tutorial: { p: "core.tutorial.js" },
-            rect: { p: "rect.js" },
-            core: { p: "core.js" },
-            coreUI: { p: "versions/desktop/coreUI.js" },
-            operator: { p: "operator.js" },
-            opSelect: { p: "operators/opSelect.js" },
-            itemList: { p: "operators/itemList.js" },
-            descbox: { p: "operators/descbox.js" },
-            calendar: { p: "operators/calendar.js" },
-            synergist: { p: "operators/synergist.js" },
-            stack: { p: "operators/stack.js" },
-            terminal: { p: "operators/terminal.js" },
-            inspector: { p: "operators/inspector.js" },
-            subframe: { p: "operators/subframe.js" },
-            sorter: { p: "operators/sorter.js" },
-            httree: { p: "operators/httree.js" },
-            chat: { p: "operators/chat.js" },
-            synergist_2: { p: "operators/synergist.2.js" },
-            outputToText: { p: "saveSources/outputToText.js" },
-            localforage2: { p: "saveSources/localforage2.js" },
-            firebase: { p: "saveSources/firebase.js" },
-            server: { p: "saveSources/server.js" },
-            gdrive: { p: "saveSources/gdrive.js" },
-        }
+    operators: {
+        files: [
+            ["opSelect", "operators/opSelect.js"],
+            ["itemList", "operators/itemList.js"],
+            ["descbox", "operators/descbox.js"],
+            ["calendar", "operators/calendar.js"],
+            ["synergist", "operators/synergist.js"],
+            ["stack", "operators/stack.js"],
+            ["terminal", "operators/terminal.js"],
+            ["inspector", "operators/inspector.js"],
+            ["sorter", "operators/sorter.js"],
+            ["httree", "operators/httree.js"],
+            ["chat", "operators/chat.js"],
+            ["synergist.2", "operators/synergist.2.js"]
+        ]
+    },
+    saveSources: {
+        files: [
+            ["outputToText", "saveSources/outputToText.js"],
+            ["localforage2", "saveSources/localforage2.js"],
+            ["firebase", "saveSources/firebase.js"],
+            ["server", "saveSources/server.js"],
+            ["gdrive", "saveSources/gdrive.js"],
+        ]
+    },
+    phone: {
+        condition: () => { return isPhone() },
+        files: [
+            { r: "base" },
+            ["coreUI", "versions/phone/coreUI.js"],
+            ["rect", "versions/phone/rect.js"],
+            ["subframe", "operators/phone/subframe.js"],
+            { r: "operators" },
+            { r: "saveSources" },
+        ]
+    },
+    know:{
+        files: [
+            { r: "base" },
+            ["rect", "rect.js"],
+            ["opSelect", "operators/opSelect.js"],
+            ["coreUI", "versions/desktop/coreUI.js"],
+            ["subframe", "operators/subframe.js"],
+            ["roundshow", "operators/know/roundshow.js"],
+            ["tester", "operators/know/tester.js"],
+            { r: "saveSources" },
+        ]
+    },
+
+    default: {
+        files: [
+            { r: "base" },
+            ["rect", "rect.js"],
+            ["coreUI", "versions/desktop/coreUI.js"],
+            { r: "operators" },
+            ["subframe", "operators/subframe.js"],
+            { r: "saveSources" },
+        ]
     }
 };
 (function () {
+    //function to expand a profile
+    function expand(files) {
+        let expanded = true;
+        while (expanded) {
+            expanded = false;
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].r) {
+                    for (let j = __manager_profiles[files[i].r].files.length - 1; j >= 0; j--) {
+                        files.splice(i + 1, 0, __manager_profiles[files[i].r].files[j]);
+                    }
+                    files.splice(i, 1);//get rid of the r one
+                    expanded = true;
+                }
+            }
+        }
+        return files;
+    }
+
+
     //first, find the tag that contains me. If it has a parameter that determines version, load that version
     let loaded = false;
     let mscpt = document.querySelector("script[src*='manager.js']");
     if (mscpt && mscpt.dataset.version) {
         if (__manager_profiles[mscpt.dataset.version])
-            scriptassert(__manager_profiles[mscpt.dataset.version].files, () => { core.start(); });
+            scriptassert(expand(__manager_profiles[mscpt.dataset.version].files), () => { core.start(); });
         loaded = true;
     } else {
-        for (i in  __manager_profiles) {
+        for (i in __manager_profiles) {
             if (__manager_profiles[i].condition && __manager_profiles[i].condition()) {
                 //load all files from phone
-                scriptassert(__manager_profiles[i].files, () => { core.start(); });
+                scriptassert(expand(__manager_profiles[i].files), () => { core.start(); });
                 loaded = true;
             }
         }
     }
 
     if (!loaded) {
-        scriptassert(__manager_profiles['default'].files, () => { core.start(); });
+        scriptassert(expand(__manager_profiles['default'].files), () => { core.start(); });
     }
 })()

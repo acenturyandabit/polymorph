@@ -1,4 +1,5 @@
 core.registerSaveSource("srv", function (core) { // a sample save source, implementing a number of functions.
+    this.prettyName="Save to server";
     //initialise here
     this.pushAll = async function (id, data) {
         //push to the source (force save)
@@ -8,7 +9,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
                 //alert("Save success!");
             }
         };
-        xmlhttp.open("POST", core.currentDoc.saveSources['srv'], true);
+        xmlhttp.open("POST", id, true);
         xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xmlhttp.send(JSON.stringify(data));
     }
@@ -26,31 +27,19 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
                 }
             };
         });
-        xmlhttp.open("GET", core.currentDoc.saveSources['srv'], true);
+        xmlhttp.open("GET", id, true);
         xmlhttp.send();
         return p;
     }
     this.dialog = document.createElement("div");
-    this.dialog.innerHTML = `
-    <h2>Save to server</h2>`;
     let addrop = new _option({
         div: this.dialog,
         type: "text",
         object: () => {
-            return core.currentDoc.saveSources
+            return core.userData.documents[core.currentDocID].saveSources
         },
         property: "srv",
         label: "Full server address (include document name)"
-    });
-    let morebuttons = htmlwrap(`<button class="save">Save to source</button>
-    <button class="load">Load from source</button>`,"div");
-    //<button class="vfy">Verify source</button>`);
-    this.dialog.appendChild(morebuttons);
-    this.dialog.querySelector(".save").addEventListener("click", () => {
-        this.pushAll(core.currentDoc.saveSources.srv, core.toSaveData());
-    });
-    this.dialog.querySelector(".load").addEventListener("click", () => {
-        core.userLoad("srv", core.currentDoc.saveSources.srv);
     });
     this.readyDialog = function () {
         addrop.load();

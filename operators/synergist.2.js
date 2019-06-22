@@ -424,7 +424,7 @@ core.registerOperator("itemcluster2", {
             //make a list of links
             let links = [];
             for (let i = 0; i < visibleItems.length; i++) {
-                for (let j in core.items[visibleItems[i].id].links) {
+                for (let j in core.items[visibleItems[i].id].to) {
                     links.push({
                         a: visibleItems[i].id,
                         b: j
@@ -727,8 +727,8 @@ core.registerOperator("itemcluster2", {
                 }
             }
             //draw its lines
-            if (core.items[id].links) {
-                for (let i in core.items[id].links) {
+            if (core.items[id].to) {
+                for (let i in core.items[id].to) {
                     me.enforceLine(i, id);
                 }
             }
@@ -774,19 +774,12 @@ core.registerOperator("itemcluster2", {
                 end = _start;
             }
             //check if linked; if linked, remove link
-            if (!core.items[start].links)
-                core.items[start].links = {};
-            if (!core.items[end].links)
-                core.items[end].links = {};
-            if (core.items[start].links[end]) {
-                delete core.items[start].links[end];
-                delete core.items[end].links[start];
+            if (core.linked(start,end)){
+                core.unlink(start,end,true);
                 if (me.activeLines[start]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
-            } else {
-                //otherwise create link
-                core.items[start].links[end] = true;
-                core.items[end].links[start] = true;
+            }else{
+                core.link(start,end,true);
                 me.enforceLine(start, end);
             }
         };
@@ -1183,25 +1176,6 @@ core.registerOperator("itemcluster2", {
         me.arrangeItem(id);
     };
 
-    this.clearParent = function (id) {
-        delete core.items[id].links.parent;
-        let itm = me.itemSpace.querySelector(
-            ".floatingitem[data-id='" + id + "']"
-        );
-        itm.style.border = "";
-        itm.style.position = "absolute";
-    };
-
-    this.setParent = function (childID, parentID) {
-        if (!core.items[childID].links) core.items[childID].links = {};
-        core.items[childID].links.parent = parentID;
-        core.fire("updateItem", {
-            sender: this,
-            id: childID
-        });
-        me.arrangeItem(childID);
-    };
-
     this.createItem = function (x, y) {
         let itm = new _item();
         //register it with the core
@@ -1276,15 +1250,6 @@ core.registerOperator("itemcluster2", {
 
     this.fromSaveData = function (d) {
         //this is called when your operator is started OR your operator loads for the first time
-        for (let i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.links) {
-                //rehash into generic links
-                if (!core.items[i].links) core.items[i].links = {};
-                for (let j in core.items[i].itemcluster.links) {
-                    core.items[i].links[j] = true;
-                }
-            }
-        }
         Object.assign(this.settings, d);
         if (this.settings.viewpath) {
             this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a

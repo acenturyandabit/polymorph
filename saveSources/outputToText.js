@@ -1,7 +1,7 @@
 core.registerSaveSource("toText", function (core) { // a sample save source, implementing a number of functions.
+    this.prettyName="Output to text";
     this.dialog = document.createElement("div");
     this.dialog.innerHTML = `
-    <h2>Output to text</h2>
     <span>
     <textarea placeholder="Output"></textarea>
     <br>

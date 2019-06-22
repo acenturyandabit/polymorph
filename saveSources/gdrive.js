@@ -1,5 +1,6 @@
 core.registerSaveSource("gd", function () { // Google drive save source - based off firebase savesource
   let me = this;
+  this.prettyName="Google drive integration";
   //firebase things
   me.unsub = {};
   try {

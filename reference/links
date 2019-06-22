@@ -1,0 +1,19 @@
+How links work
+
+item.to:{
+    dest:{
+        prio:{
+            guid:0
+        }
+    }
+}
+item.from:{
+    dest:{
+        prio:{
+            guid:0
+        }
+    }
+}
+
+
+operators (should) enforce parent-child links wherever possible but are not obligated to.

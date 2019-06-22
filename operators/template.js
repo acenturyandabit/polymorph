@@ -7,7 +7,7 @@ core.registerOperator("template", {
     this.settings = {};
 
     this.rootdiv = document.createElement("div");
-    //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
+    //Add content-independent HTML here.
     this.rootdiv.innerHTML = ``;
 
     container.div.appendChild(this.rootdiv);

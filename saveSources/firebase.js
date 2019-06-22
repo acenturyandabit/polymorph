@@ -1,6 +1,6 @@
 core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
   let me = this;
-
+  this.prettyName="Firebase (Real time collaboration)";
   //initialise firebase
   me.unsub = {};
   try {
@@ -22,7 +22,8 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
   this.pushAll = async function (id, data) {
     //dont actually do anything here... this is a ctrl s by the user.
   }
-  this.pullAll = async function (id) {
+  this.pullAll = async function (data) {
+    let id=data;
     this.dialog.querySelector("input[type='checkbox']").checked = true;
     if (!this.db) return;
     let root = this.db
@@ -158,7 +159,6 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
 
   this.dialog = document.createElement("div");
   this.dialog.innerHTML = `
-    <h2>Firebase (Real time collaboration) </h2>
     <span>
     <input placeholder="Save ID">
     <label>Enable sharing <input type="checkbox"></label>

@@ -51,37 +51,25 @@ function _core() {
     if (!me.userData.id) {
         me.userData.id = me.userData.alias || guid(10);
     }
+    if (!me.userData.version) {
+        me.userData.version = "0.1";
+        for (i in me.userData.documents) {
+            me.userData.documents[i] = {
+                saveSources: me.userData.documents[i],
+                autosave: me.userData.documents[i].autosave
+            }
+        }
+    }
     me.saveUserData();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Starting function: this is only called once
     me.start = function () {
-        me.startUI();
-        document.querySelector(".docName").addEventListener("keyup", () => {
-            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
-            tc.submit();
-            document.querySelector("title").innerHTML =
-                me.currentDoc.displayName + " - Polymorph";
-        });
-        document.body.appendChild(loadDialog);
-        document.querySelector(".saveSources").addEventListener("click", () => {
-            for (let i in me.saveSources)
-                if (me.saveSources[i].readyDialog) me.saveSources[i].readyDialog();
-            for (let i in me.userData.documents[me.currentDocName]) {
-                try{me.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;}
-                catch (e){
-                    console.log(e);
-                }
-            }
-            let params = new URLSearchParams(window.location.search);
-            if (params.get("src")) me.loadInnerDialog.querySelector(`div[data-saveref='${params.get('src')}'] [name='dflt']`).checked = true;
-            autosaveOp.load();
-            loadDialog.style.display = "block";
-        });
-        resetDocument();
+        me.fire("UIstart");
+        me.resetDocument();
         let params = new URLSearchParams(window.location.search);
         if (params.has("doc")) {
-            loadFromURL(params);
+            me.loadFromURL(params);
         } else if (window.location.search) {
             //For non-polymorph links, like drive links
             //try each save source to see if it can handle this kind of request
@@ -107,166 +95,6 @@ function _core() {
     //Accept loading sources; default is local saving.
 
 
-    this.saveSources = [];
-
-    this.registerSaveSource = function (id, f) {
-        me.saveSources[id] = new f(core);
-        //create a wrapper for it in the loading dialog
-        let wrapper = htmlwrap(`
-        <div data-saveref='${id}'>
-            <h1>${me.saveSources[id].prettyName || id}</h1>
-            <span><label>Default save source<input type="radio" name="dflt"></input></label><label>Sync to this source<input data-role="tsync" type="checkbox"></input></label></span>
-        </div>
-        `);
-        //also register its settings in the save dialog
-        if (me.saveSources[id].dialog) wrapper.appendChild(me.saveSources[id].dialog);
-        me.loadInnerDialog.appendChild(wrapper);
-    }
-
-    function loadFromURL(params) { // very first load
-        //screw the id, we just gonna use urlme.userDataparams straight up
-
-        let source = params.get("src") || 'lf';
-        let id = params.get("doc");
-        //if there is a template, knock off the template from the url and remember it (discreetly)
-        let template;
-        if (params.has("tmp")) {
-            template = params.get("tmp");
-            let loc = window.location.href
-            loc = loc.replace(/&tmp=[^&]+/, "");
-            history.pushState({}, "", loc);
-            console.log(window.location.href);
-        }
-        userLoad(source, id, true, template);
-    }
-
-    function userLoad(source, id, initial = false, template) { // direct from URL
-        //reset
-        resetDocument();
-        if (me.saveSources[source]) {
-            me.currentDocName = id;
-            //put up a wall
-            document.querySelector(".wall").style.display = "block";
-
-
-            //load from loadsource
-            me.saveSources[source].pullAll(id).then((d) => {
-                document.querySelector(".wall").style.display = "none";
-                let params = new URLSearchParams(window.location.search);
-                if (!d) {
-                    d = {
-                        displayName: "New Workspace",
-                        saveSources: {},
-                        currentView: "default",
-                        views: {},
-                        items: {}
-                    }
-                    d.saveSources[source] = id;
-                    /*if (!tutorialStarted) {
-                        core.tutorial.start();
-                    }*/
-                    me.fire("documentCreated",me.currentDocName);
-                }
-                //reconcile that particular save source within the copy of the document
-                d.saveSources = d.saveSources || {}; //neat instadeclare!
-                d.saveSources[source] = id;
-                me.fromSaveData(d);
-                if (template) {
-                    core.baseRect.fromSaveData(polymorphTemplates[template]);
-                }
-                me.filescreen.saveRecentDocument(id, undefined, me.currentDoc.displayName);
-                let tutorialStarted = false;
-                if (params.has("view")) {
-                    me.currentDoc.currentView = params.get("view");
-                } else if (!me.currentDoc.currentView) me.currentDoc.currentView = "default";
-                if (params.has("t")) {
-                    core.tutorial.start(params.get("t"));
-                    tutorialStarted = true;
-                }
-                // load / remember the save settings for this particular document on this particular device
-                if (!me.userData.documents[id]) me.userData.documents[id] = {};
-                me.userData.documents[id][source] = id;
-                d.saveSources = me.userData.documents[id];
-
-                for (let i in d.saveSources) {
-                    if (me.saveSources[i]) {
-                        if (me.saveSources[i].hook) me.saveSources[i].hook(d.saveSources[i]);
-                    } else {
-                        console.log("Warning - The save source " + i + " is not available on this computer. Some saving functions may be disabled.");
-                    }
-                }
-                //ensure that other save sources are appropriately registered.
-            });
-
-        } else if (initial) {
-            console.log("Warning - no save source could be identified. Falling back to localforage...");
-            userLoad("lf", id);
-            return;
-        }
-    }
-    this.userLoad = userLoad;
-
-    this.fromSaveData = function (data) {
-        //load metadata, including views
-        resetDocument();
-        this.currentDoc = data;
-        this.items = data.items;
-        if (!this.currentDoc.currentView) this.currentDoc.currentView = Object.keys(this.currentDoc.views)[0];
-        this.presentView(this.currentDoc.currentView);
-        this.baseRect.refresh();
-        for (let i in this.items) {
-            this.fire("updateItem", {
-                id: i
-            });
-        }
-        this.updateSettings();
-        me.unsaved = false;
-    }
-
-    this.toSaveData = function () {
-        //patch current doc
-        me.currentDoc.views[me.currentDoc.currentView] = me.baseRect.toSaveData();
-        //clean up
-        me.isSaving = true;
-        for (let i in me.items) {
-            me.itemShouldBeDeleted = true;
-            me.fire("updateItem", {
-                id: i,
-                sender:"GARBAGE_COLLECTOR"
-            });
-            if (me.itemShouldBeDeleted) {
-                delete core.items[i];
-            }
-        }
-        me.isSaving = false;
-        //patch items
-        me.currentDoc.items = me.items;
-        //save to all sources
-        //upgrade older save systems
-        return me.currentDoc;
-    }
-
-    this.userSave = function () {
-        //save to all sources
-        //upgrade older save systems
-        let d = me.toSaveData();
-        me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
-        if (!me.currentDoc.saveSources) {
-            me.currentDoc.saveSources = {
-                lf: me.currentDocName
-            };
-        }
-        for (let i in me.currentDoc.saveSources) {
-            try{
-                me.saveSources[i].pushAll(me.currentDoc.saveSources[i], d);
-            }catch (e){
-                continue;
-            }
-            
-        }
-        me.unsaved = false;
-    }
-
     /*
         //generate a URL which will allow another user to access the file, if it is registered to a firebase.
         function generateSelfURL() {
@@ -283,7 +111,7 @@ function _core() {
         ).innerText = this.currentDoc.displayName;
         document.querySelector("title").innerHTML =
             this.currentDoc.displayName + " - Polymorph";
-        me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
+        me.filescreen.saveRecentDocument(me.currentDocID, undefined, me.currentDoc.displayName);
         me.fire("updateSettings");
     };
 
@@ -391,6 +219,70 @@ function _core() {
         return nuid;
     }
 
+    this.standardiseItem=function(itm){
+        //Clean items to follow established standards here. Ideally dont do too much but sometimes necessary.
+        if (core.items[itm].links){
+            //bidirectional links upgrade
+            if (!core.items[i].from)core.items[itm].from={};
+            if (!core.items[i].to)core.items[itm].to={};
+            for (let i in core.items[itm].links){
+                if (!core.items[i].from)core.items[i].from={};
+                if (!core.items[i].to)core.items[i].to={};
+                core.items[i].from[itm]=true;
+                core.items[i].to[itm]=true;
+                core.items[itm].from[i]=true;
+                core.items[itm].to[i]=true;
+            }
+            delete core.items[itm].links;
+        }
+    }
+
+    this.isLinked=function(A,B){
+        let ret=0; //unlinked
+        if (core.items[A].to && core.items[B].from && (core.items[A].to[B] || core.items[B].from[A])){
+            //make sure to enforce both sides of link
+            core.items[A].to[B]=core.items[A].to[B]||true;
+            core.items[B].from[A]=core.items[B].from[A]||true;
+            ret=ret+1;// 1: there is a link FROM A to B
+        }
+        if (core.items[A].from && core.items[B].to && (core.items[A].from[B] || core.items[B].to[A])){
+            //make sure to enforce both sides of link
+            core.items[A].from[B]=core.items[A].from[B]||true;
+            core.items[B].to[A]=core.items[B].to[A]||true;
+            ret=ret+2;// 2: there is a link FROM B to A
+        }
+        return ret;
+    }
+
+    this.link=function(A,B,undirected=false){
+        core.items[A].to=core.items[A].to||{};
+        core.items[B].from=core.items[B].from||{};
+        core.items[A].to[B]=core.items[A].to[B]||true;
+        core.items[B].from[A]=core.items[B].from[A]||true;
+        if (undirected){
+            this.link(B,A);
+        }
+    }
+    this.unlink=function(A,B,undirected=false){
+        core.items[A].to=core.items[A].to||{};
+        core.items[B].from=core.items[B].from||{};
+        delete core.items[A].to[B];
+        delete core.items[B].from[A];
+        if (undirected){
+            this.unlink(B,A);
+        }
+    }
+
+    //title updates
+    me.on("UIstart", () => {
+        document.querySelector(".docName").addEventListener("keyup", () => {
+            me.currentDoc.displayName = document.body.querySelector(".docName").innerText;
+            tc.submit();
+            document.querySelector("title").innerHTML =
+                me.currentDoc.displayName + " - Polymorph";
+        });
+    })
+
     ///////////////////////////////////////////////////////////////////////////////////////
     //UI handling
 
@@ -462,69 +354,8 @@ function _core() {
         // create a new workspace, then load it
         window.location.href += "?doc=" + guid(7) + "&src=lf";
     })*/
+
     
-    //////////////////////////////////////////////////////////////////
-    //Loading dialogs
-    loadDialog = document.createElement("div");
-    loadDialog.classList.add("dialog");
-    loadDialog = dialogManager.checkDialogs(loadDialog)[0];
-
-    this.loadInnerDialog = document.createElement("div");
-    //me.userData.documents[id]
-    loadDialog.querySelector(".innerDialog").appendChild(this.loadInnerDialog);
-    this.loadInnerDialog.classList.add("loadInnerDialog")
-    this.loadInnerDialog.innerHTML = `
-    <style>
-    .loadInnerDialog>div{
-        border: 1px solid;
-        position:relative;
-    }
-    .loadInnerDialog>div>span:nth-child(2){
-        position:absolute;
-        top: 0;
-        right: 0;
-    }
-    </style>
-          <h1>Load/Save settings</h1>
-          `;
-    let autosaveOp = new _option({
-        div: this.loadInnerDialog,
-        type: "bool",
-        object: () => {
-            return me.userData.documents[me.currentDocName]
-        },
-        property: "autosave",
-        label: "Autosave all changes"
-    });
-    //----------Autosave----------//
-    me.autosaveCapacitor = new capacitor(200, 20, me.userSave);
-    this.on("updateView,updateItem", function (d) {
-        if (me.userData.documents[me.currentDocName].autosave && !me.isSaving) {
-            me.autosaveCapacitor.submit();
-        }
-    });
-
-    //delegate toggle event handlers
-
-    this.loadInnerDialog.addEventListener("input", (e) => {
-        if (e.target.matches("[name='dflt']")) {
-            //'change' the default save source, by changing the url
-            window.history.pushState("", me.currentDoc.displayName, `?doc=${me.currentDocName}&src=${e.target.parentElement.parentElement.parentElement.dataset.saveref}`);
-            me.filescreen.saveRecentDocument(me.currentDocName, undefined, me.currentDoc.displayName);
-        } else if (e.target.matches("[data-role='tsync']")) {
-            let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
-            if (e.target.checked) {
-                me.userData.documents[me.currentDocName][csource] = me.currentDocName;
-                if (me.saveSources[csource].hook) me.saveSources[csource].hook(me.currentDocName);
-            } else {
-                if (me.saveSources[csource].unhook) me.saveSources[csource].unhook(me.currentDocName);
-                delete me.userData.documents[me.currentDocName][csource];
-            }
-            me.saveUserData();
-        }
-    })
-
-
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views dialog
     /*
@@ -640,7 +471,7 @@ function _core() {
 
     //A shared space for operators to access
     this.shared = {};
-    me.resetView=function(){
+    me.resetView = function () {
         document.body.querySelector(".rectspace").innerHTML = "";
         me.baseRect = new _rect(me,
             document.body.querySelector(".rectspace"),
@@ -648,10 +479,16 @@ function _core() {
             0,
             1);
     }
-    function resetDocument() {
+    this.resetDocument=function() {
+        me.documentIsClean=true;
         me.items = {};
         me.resetView();
         me.baseRect.refresh();
+    }
+
+    //Merging
+    me.tryMerge=function(){
+        //cry for now
     }
 }
 

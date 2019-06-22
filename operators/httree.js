@@ -162,11 +162,12 @@ core.registerOperator(
             return;
           }
           //Create a new item
-          let it = new _item();
-          it.links = {};
-          it.links.parent = e.target.parentElement.dataset.id;
+          let it ={};
+          it.to={};
+          it.from[e.target.parentElement.dataset.id]=true;
           //register it with the core
           let id = core.insertItem(it);
+          core.items[e.target.parentElement.dataset.id].to[id]=true;
           if (me.settings.filter && !it[me.settings.filter]) {
             it[me.settings.filter] = true;
           }

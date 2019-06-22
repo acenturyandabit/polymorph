@@ -1,0 +1,39 @@
+press load < load and save overhaul
+> document exists < load and save overhaul
+>> document has same ID as currently loaded document < store doc id with savedata
+>>> merge the two documents! < make merging struct, modify existing struct
+>>>> let user decide for each change via a dialog < polish inspector, make dialog
+>> document has different ID: notify and change new window
+> document doesnt exist: alert, do nothing
+
+
+
+Save standardisation
+inside box:
+{
+    id:"",
+    version: "",
+    views:{},
+    items:{}
+}
+
+per host:
+{
+    uuid: "",
+    docs: {
+        id: {
+            default: 'something'
+            saveSources:{
+                source: {
+                    hooked:true,
+                    data:data
+                }
+            }
+        }
+    }
+}
+
+load: pullAll(me.userData.documents[me.currentDoc.id].saveSources[source])
+save: pushAll(me.data.docs[me.currentDoc.id].saveSources[source])
+
+so it is possible to load another doc from a source.

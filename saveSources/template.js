@@ -16,10 +16,13 @@ core.registerSaveSource("template", function () { // a sample save source, imple
     this.pullAll = async function (id) {
         return object_with_data; //or nothing, if undefined
     }
-    this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
-        //hook to pull changes and push changes.
+
+    // Please remove or comment out this function if you can't subscribe to live updates.
+    this.hook = async function (id) { 
+        //hook to pull changes and push changes. You need to manually use core.on("updateItem",handler) to listen to item updates and core.on("updateView",handler) as well.
     }
-    this.unhook = async function (id) { // just comment out if you can't subscribe to live updates.
+    // Please remove or comment out this function if you can't subscribe to live updates.
+    this.unhook = async function (id) {
         //unhook previous hooks.
     }
 })

@@ -13,7 +13,7 @@ core.userData={
 */
 
 
-core.startUI = function () {
+core.on("UIstart", () => {
     core.toggleMenu = function (visible) {
         if (visible == undefined) {
             visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
@@ -42,10 +42,10 @@ core.startUI = function () {
         core.dialog.register(core.currentOperator);
     })
     document.body.appendChild(core.dialog.div);
-}
+});
 
 documentReady(() => {
-    document.body.innerHTML = `
+    document.body.appendChild(htmlwrap(`
         <style>
             #oplists button.remove{
                 float: right;
@@ -54,13 +54,13 @@ documentReady(() => {
                 font-weight: bold;
                 color: darkred;
             }
-        </style>
-        <div id="topbar" style="flex: 0 0 2em">
+        </style>`));
+    document.body.appendChild(htmlwrap(`<div id="topbar" style="flex: 0 0 2em">
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
             <span class="docName" contentEditable>Polymorph</span>
             <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
-        </div>
-        <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
+        </div>`));
+    document.body.appendChild(htmlwrap(`<div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
             <div style="position: absolute;top:0;bottom:0; left:-100%; background:rgba(0,0,0,0.5); width:100%; z-index:100;">
                 <div id="menulist" style="position: absolute;top:0;bottom:0; background:blueviolet; width:70%">    
                     <p><button class="saveSources">save</button>
@@ -78,16 +78,15 @@ documentReady(() => {
             <div id="body" style="position: absolute;top:0;bottom:0; width: 100%">
                 <span></span><!--burner-->
             </div>
-        </div>
-        <div class="wall"
+        </div>`));
+    document.body.appendChild(htmlwrap(`<div class="wall"
             style="z-index: 100;position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
-        </div>
-            `;
+        </div>`));
 })
 core.on("documentCreated", (id) => {
-    core.userData.documents[id] = {};
+    core.userData.documents[id] = {saveSources:{}};
     core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
 })
 
@@ -189,7 +188,7 @@ core.resetView = function () {
 }
 
 core.on("operatorChanged", function (d) {
-    if (core.userData.documents[core.currentDocName].autosave && !core.isSaving) {
+    if (core.userData.documents[core.currentDocID].autosave && !core.isSaving) {
         core.autosaveCapacitor.submit();
     }
 });
