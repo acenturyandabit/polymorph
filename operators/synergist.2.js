@@ -774,7 +774,7 @@ core.registerOperator("itemcluster2", {
                 end = _start;
             }
             //check if linked; if linked, remove link
-            if (core.linked(start,end)){
+            if (core.isLinked(start,end)){
                 core.unlink(start,end,true);
                 if (me.activeLines[start]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];

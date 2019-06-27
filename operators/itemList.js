@@ -7,7 +7,8 @@ core.registerOperator("itemList", function (operator) {
             title: "text"
         },
         filterProp: guid(),
-        enableEntry: true
+        enableEntry: true,
+        implicitOrder: true
     };
 
     this.settingsBar = document.createElement('div');
@@ -65,7 +66,7 @@ core.registerOperator("itemList", function (operator) {
         currentItemSpan.children[1].innerHTML = "X";
         it.itemList = true;
         //ensure the filter property exists
-        if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = true;
+        if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = Date.now();
         let id = core.insertItem(it);
         currentItemSpan.dataset.id = id;
         //clear the template
@@ -97,73 +98,81 @@ core.registerOperator("itemList", function (operator) {
     }
 
     me.sortItems = function () {
-        if (!me.settings.sortby)return;
-        //collect all items
-        let itms = me.taskList.querySelectorAll(`[data-id]`);
-        let its = [];
-        for (let i = 0; i < itms.length; i++) {
-            cpp = {
-                id: itms[i].dataset.id,
-                dt: core.items[itms[i].dataset.id][me.settings.sortby]
-            };
-            its.push(cpp);
+        if (!me.container.visible()) return;
+        if (me.settings.implicitOrder){
+            me.settings.sortby=me.settings.filterProp;
         }
-        //sort everything based on the date.
-        switch (me.settings.properties[me.settings.sortby]) {
-            case "date":
-                let dateprop = me.settings.sortby;
-                for (let i = 0; i < its.length; i++) {
-                    //we are going to upgrade all dates that don't match protocol)
-                    if (its[i].dt && its[i].dt.date) {
-                        if (typeof its[i].dt.date == "number") {
-                            core.items[its[i].id][dateprop].date = [{
-                                date: core.items[its[i].id][dateprop].date
-                            }];
-                        }
-                        if (core.items[its[i].id][dateprop].date[0]) its[i].date = core.items[its[i].id][dateprop].date[0].date;
-                        else its[i].date = Date.now() * 10000;
-                    } else its[i].date = Date.now() * 10000;
+        if (me.settings.sortby) {
+            //collect all items
+            let itms = me.taskList.querySelectorAll(`[data-id]`);
+            let its = [];
+            for (let i = 0; i < itms.length; i++) {
+                cpp = {
+                    id: itms[i].dataset.id,
+                    dt: core.items[itms[i].dataset.id][me.settings.sortby]
+                };
+                its.push(cpp);
+            }
+            //sort everything based on the filtered property.
+            switch (me.settings.properties[me.settings.sortby]) {
+                case "date":
+                    let dateprop = me.settings.sortby;
+                    for (let i = 0; i < its.length; i++) {
+                        //we are going to upgrade all dates that don't match protocol)
+                        if (its[i].dt && its[i].dt.date) {
+                            if (typeof its[i].dt.date == "number") {
+                                core.items[its[i].id][dateprop].date = [{
+                                    date: core.items[its[i].id][dateprop].date
+                                }];
+                            }
+                            if (core.items[its[i].id][dateprop].date[0]) its[i].date = core.items[its[i].id][dateprop].date[0].date;
+                            else its[i].date = Date.now() * 10000;
+                        } else its[i].date = Date.now() * 10000;
+                    }
+                    its.sort((a, b) => {
+                        return a.date - b.date;
+                    });
+                    break;
+                case "text":
+                    for (let i = 0; i < its.length; i++) {
+                        if (!its[i].dt) its[i].dt = "";
+                    }
+                    its.sort((a, b) => {
+                        return a.dt.localeCompare(b.dt);
+                    });
+                    break;
+                default: // probably implicit ordering
+                    its.sort((a, b) => {
+                        return a.dt - b.dt;
+                    });
+            }
+            //remember focused item
+            let fi = me.taskList.querySelector(":focus");
+            //also remember cursor position
+            let cp;
+            if (fi) cp = fi.selectionStart || 0;
+            //rearrange items
+            for (let i = 0; i < its.length; i++) {
+                me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
+            }
+            //return focused item
+            if (fi) {
+                fi.focus();
+                try{
+                    fi.selectionStart = cp;
+                }catch (e){
                 }
-                its.sort((a, b) => {
-                    return a.date - b.date;
-                });
-                break;
-            case "text":
-                for (let i = 0; i < its.length; i++) {
-                    if (!its[i].dt) its[i].dt = "";
-                }
-                its.sort((a, b) => {
-                    return a.dt.localeCompare(b.dt);
-                });
-                break;
-            default:
-                its.sort((a, b) => {
-                    return a.dt - b.dt;
-                });
-        }
-        //remember focused item
-        let fi = me.taskList.querySelector(":focus");
-        //also remember cursor position
-        let cp;
-        if (fi) cp = fi.selectionStart || 0;
-        //rearrange items
-        for (let i = 0; i < its.length; i++) {
-            me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
-        }
-        //return focused item
-        if (fi) {
-            fi.focus();
-            fi.selectionStart = cp;
+            }
         }
     }
 
-    let sortcap = new capacitor(500+isPhone()*1000, 1000, me.sortItems);
+    let sortcap = new capacitor(500 + isPhone() * 1000, 1000, me.sortItems);
 
     core.on("updateItem", function (d) {
         let id = d.id;
         let s = d.sender;
         me.settings.currentID = id;
-        if (s!="GARBAGE_COLLECTOR")sortcap.submit();
+        if (s != "GARBAGE_COLLECTOR") sortcap.submit();
         return me.updateItem(id);
     });
 
@@ -409,7 +418,7 @@ core.registerOperator("itemList", function (operator) {
         let menu;
 
         function filter(e) {
-            contextedInput=e.target;
+            contextedInput = e.target;
             contextedProp = contextedInput.dataset.role;
             let id = contextedInput;
             while (!id.dataset.id) {
@@ -485,13 +494,22 @@ core.registerOperator("itemList", function (operator) {
     <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
     <button class="targeter">Select operator</button>
     `;
-    let entryok = new _option({
-        div: this.dialogDiv,
-        type: "bool",
-        object: this.settings,
-        property: "enableEntry",
-        label: "Enable adding new items"
-    })
+    let options = {
+        entryok: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "enableEntry",
+            label: "Enable adding new items"
+        }),
+        implicitOrder: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "implicitOrder",
+            label: "Implicit ordering"
+        })
+    }
     let d = this.dialogDiv;
     this.showDialog = function () {
         // update your dialog elements with your settings
@@ -518,7 +536,9 @@ core.registerOperator("itemList", function (operator) {
             }
         }
         //enable adding new items checkbox
-        entryok.load();
+        for (i in options) {
+            options[i].load();
+        }
         // Now fill in the ones which we're currently monitoring.
         me.proplist.innerHTML = "";
         for (let prop in me.settings.properties) {

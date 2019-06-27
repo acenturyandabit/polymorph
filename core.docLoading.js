@@ -38,6 +38,7 @@ core.registerSaveSource = function (id, f) {
 }
 
 core.userLoad = async function (source, data, state) { // direct from URL
+    if (!state)state={};
     //do some checks before we do any lasting damage
     if (!core.saveSources[source]) {
         //save source does not exist, alert the user
@@ -268,7 +269,8 @@ core.loadInnerDialog.addEventListener("click", (e) => {
         core.saveSources[e.target.parentElement.parentElement.dataset.saveref].pushAll(core.currentDocID, core.toSaveData());
     } else if (e.target.matches("[data-role='dlg_load']")) {
         //Load from the save source
-        core.saveSources[e.target.parentElement.parentElement.dataset.saveref].pullAll(core.currentDocID);
+        let source=e.target.parentElement.parentElement.dataset.saveref;
+        core.userLoad(source,core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID)
     }
 })
 

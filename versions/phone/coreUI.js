@@ -80,7 +80,7 @@ documentReady(() => {
             </div>
         </div>`));
     document.body.appendChild(htmlwrap(`<div class="wall"
-            style="z-index: 100;position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
+            style="z-index: 100;position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: none">
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
@@ -106,73 +106,6 @@ core.showOperator = function (op) {
 ///////////////////////////////////////////////////////////////////////////////////////
 //UI handling
 
-//Instantiate filemanager
-core.filescreen = new _filescreen({
-    headprompt: htmlwrap(`
-        <div style="text-align:center">
-    <h1>Polymorph: Effective Organisation</h1>
-    <button class="__fsnewbtn"><h2>Create a new document</h2></button>
-    <style>
-    .buttons>button{
-        flex: 0 0 25%;
-    }
-    button:disabled{
-        background: repeating-linear-gradient(-60deg, #333333 0px,#333333 10px,#0000ee 10px, #0000ee 20px);
-    }
-    button:disabled>*{
-        background: rgba(100,100,100,0.7);
-        color: white;
-    }
-    .olol>button{
-        flex: 1 0 auto;
-        background: darkgrey;
-    }
-    .olol>button.selected{
-        background: blue;
-        color: white;
-    }
-    </style>
-    <div id="__fsnew" style="display: none">
-        <div style="display:flex;flex-direction:row;" class="olol"><button class="selected" data-source="lf">Work offline</button><button data-source="fb">Collaborate in real time</button></div>
-        <div style="display:flex;flex-direction:row;overflow-x:scroll" class="buttons">
-            <button data-template="brainstorm"><h1>Brainstorm</h1><p>Brainstorm and lay out ideas with others!</p></button>
-            <button ><h1>Custom</h1><p>Use Polymorph's customisability to build your own user interface.</p></button>
-            <button disabled><h1>Coming soon...</h1></button>
-            <button data-template="chatmode" disabled><h1>Chat mode</h1><p>Have a chat with yourself or a friend, and let Polymorph build the structure for you!</p></button>
-            <button data-template="kanban" disabled><h1>Kanban board</h1><p>Simple, ticket based project management.</p></button>
-            <button data-template="calendar" disabled><h1>Calendar</h1><p>A text-based calendar / tasklist combination.</p></button>
-        </div>
-    </div>
-    </div>
-    `),
-    formats: false,
-    tutorialEnabled: false,
-    savePrefix: "polymorph"
-});
-core.filescreen.baseDiv.querySelector(".__fsnewbtn").addEventListener("click", () => {
-    core.filescreen.baseDiv.querySelector("#__fsnew").style.display = "block";
-})
-core.filescreen.baseDiv.querySelector(".buttons").addEventListener("click", (e) => {
-    let t = e.target;
-    while (t != core.filescreen.baseDiv) {
-        if (t.tagName == "BUTTON" && !t.disabled) {
-            let url = window.location.pathname + "?doc=" + guid(7) + "&src=" + core.filescreen.baseDiv.querySelector('.olol .selected').dataset.source;
-            if (t.dataset.template) url += "&tmp=" + t.dataset.template;
-            window.location.href = url;
-            break;
-        } else {
-            t = t.parentElement;
-        }
-    }
-})
-
-core.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => {
-    if (e.target.tagName == "BUTTON") {
-        let btns = core.filescreen.baseDiv.querySelectorAll(".olol>button");
-        for (let i = 0; i < btns.length; i++)btns[i].classList.remove("selected");
-        e.target.classList.add("selected");
-    }
-})
 
 /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
     // create a new workspace, then load it
@@ -188,7 +121,7 @@ core.resetView = function () {
 }
 
 core.on("operatorChanged", function (d) {
-    if (core.userData.documents[core.currentDocID].autosave && !core.isSaving) {
+    if (core.userData.documents[core.currentDocID] && core.userData.documents[core.currentDocID].autosave && !core.isSaving) {
         core.autosaveCapacitor.submit();
     }
 });

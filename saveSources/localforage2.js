@@ -1,5 +1,6 @@
 core.registerSaveSource("lf",function(core){ // a sample save source, implementing a number of functions.
     this.id="";
+    this.createable=true;
     this.prettyName="Localforage (offline storage)";
     this.pushAll=async function(id,data){
         localforage.setItem("__polymorph_" + id,data);

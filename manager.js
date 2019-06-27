@@ -6,6 +6,7 @@ var __manager_profiles = {
             ["core_dialog", "core.dialog.js"],
             ["core_tutorial", "core.tutorial.js"],
             ["core", "core.js"],
+            ["polymorph_filescreen", "versions/filescreen.js"],
             ["core_docLoading", "core.docLoading.js"],
             ["operator", "operator.js"],
         ]

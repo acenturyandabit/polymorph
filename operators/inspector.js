@@ -11,10 +11,10 @@ core.registerOperator("inspector", {
     };
     me.internal = document.createElement("div");
     me.rootdiv = document.createElement("div");
-    me.rootdiv.style.overflow="auto";
-    me.rootdiv.style.height="100%";
+    me.rootdiv.style.overflow = "auto";
+    me.rootdiv.style.height = "100%";
     me.rootdiv.appendChild(me.internal);
-    let ttypes = `<select>
+    let ttypes = `<select data-role="nttype">
     <option>Text</option>
     <option>Date</option>
     </select>`;
@@ -22,17 +22,61 @@ core.registerOperator("inspector", {
         <h4>Add a property:</h4>
         <input type="text" placeholder="Name">
         <label>Type:${ttypes}</label>
+        <button>Add property</button>
     `));
+    let insertbtn = htmlwrap(`
+    <button>Add new item</button>`);
+    me.rootdiv.appendChild(insertbtn);
+    insertbtn.style.display = "none";
+    let commitbtn = htmlwrap(`
+    <button>Commit changes</button>`);
+    me.rootdiv.appendChild(commitbtn);
+    commitbtn.style.display = "none";
+    insertbtn.addEventListener("click", () => {
+        //create a new element with the stated specs
+        let item = {};
+        for (let i = 0; i < me.internal.children.length; i++) {
+            item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
+        }
+        let id = core.insertItem(item)
+        core.fire("updateItem", { id: id });
+        me.settings.currentItem = undefined;
+        //clear modified class on item
+        for (let i=0;i<me.internal.children.length;i++){
+            me.internal.children[i].classList.remove("modified");
+        }
+    })
+    commitbtn.addEventListener("click", () => {
+        //commit changes
+        if (me.settings.currentItem) {
+            let item = core.items[me.settings.currentItem];
+            for (let i = 0; i < me.internal.children.length; i++) {
+                item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
+            }
+            core.fire("updateItem", { id: me.settings.currentItem });
+            //clear modified class on item
+            for (let i=0;i<me.internal.children.length;i++){
+                me.internal.children[i].classList.remove("modified");
+            }
+        }
+    })
+    /*let clearBtn=htmlwrap(`
+    <button>Clear fields</button>`);
+    me.rootdiv.appendChild(clearBtn);
+    insertbtn.addEventListener("click",()=>{
+        //create a new element with the stated specs
+    })*/
     me.rootdiv.querySelector("input[placeholder='Name']").addEventListener("keyup", (e) => {
         if (e.key == "Enter") {
-            core.items[me.settings.currentItem][e.target.value] = " ";
-            if (me.settings.propsOn) me.settings.propsOn[e.target.value] = true;
+            if (me.settings.currentItem) core.items[me.settings.currentItem][e.target.value] = " ";
+            if (me.settings.propsOn) me.settings.propsOn[e.target.value] = me.rootdiv.querySelector("[data-role='nttype']").value;
             me.renderItem(me.settings.currentItem);
             e.target.value = "";
             core.fire("updateItem", {
                 sender: me,
                 id: me.settings.currentItem
             });
+
         }
     })
     operator.div.appendChild(htmlwrap(
@@ -40,6 +84,9 @@ core.registerOperator("inspector", {
         <style>
         h4{
             margin:0;
+        }
+        .modified input{
+            background: lightblue;
         }
         </style>
     `
@@ -56,21 +103,26 @@ core.registerOperator("inspector", {
     })
 
     me.internal.addEventListener("input", (e) => {
-        let it = core.items[me.settings.currentItem];
-        let i = e.target.parentElement.dataset.role;
-        switch (e.target.parentElement.dataset.type) {
-            case 'Text':
-                it[i] = e.target.value;
-                upc.submit(me.settings.currentItem);
-                break;
-            case 'Date':
-                if (!it[i]) it[i] = {};
-                if (typeof it[i] == "string") it[i] = {
-                    datestring: it[i]
-                };
-                it[i].datestring = e.target.value;
-                if (me.datereparse) me.datereparse(it, i);
-                break;
+        //change this to invalidate instead of directly edit?
+        if (me.settings.commitChanges){
+            e.target.parentElement.classList.add("modified");
+        }else if (me.settings.currentItem) {
+            let it = core.items[me.settings.currentItem];
+            let i = e.target.parentElement.dataset.role;
+            switch (e.target.parentElement.dataset.type) {
+                case 'Text':
+                    it[i] = e.target.value;
+                    upc.submit(me.settings.currentItem);
+                    break;
+                case 'Date':
+                    if (!it[i]) it[i] = {};
+                    if (typeof it[i] == "string") it[i] = {
+                        datestring: it[i]
+                    };
+                    it[i].datestring = e.target.value;
+                    if (me.datereparse) me.datereparse(it, i);
+                    break;
+            }
         }
     })
 
@@ -114,17 +166,15 @@ core.registerOperator("inspector", {
         for (let i = 0; i < me.internal.children.length; i++) {
             me.internal.children[i].dataset.invalid = 1;
         }
+        let clean_obj = {};
         if (core.items[id]) {
             //clean the object
-            let clean_obj = JSON.parse(JSON.stringify(core.items[id]));
-            if (me.settings.showNonexistent){
-                for (let i in me.settings.propsOn){
-                    clean_obj[i]="";
-                }
-            }
-            for (let i in clean_obj) {
-                if (me.settings.propsOn && !me.settings.propsOn[i]) continue; // skip properties we dont want
+            clean_obj = JSON.parse(JSON.stringify(core.items[id]));
+        }
+        for (let i in me.settings.propsOn) {
+            if (me.settings.propsOn[i] && (clean_obj[i] || me.settings.showNonexistent)) {
                 let pdiv = me.internal.querySelector("[data-role='" + i + "']");
+                //create or change type if necessary
                 if (!pdiv || pdiv.dataset.type != me.settings.propsOn[i]) {
                     //regenerate it 
                     if (pdiv) pdiv.remove();
@@ -141,30 +191,27 @@ core.registerOperator("inspector", {
                     me.internal.appendChild(pdiv);
                 }
                 pdiv.dataset.invalid = 0;
-                //change type if necessary
-
                 //display value
                 switch (me.settings.propsOn[i]) {
                     case 'Text':
-                        pdiv.querySelector("input").value = core.items[id][i];
+                        pdiv.querySelector("input").value = clean_obj[i] || "";
                         break;
                     case 'Date':
-                        pdiv.querySelector("input").value = core.items[id][i].datestring;
+                        pdiv.querySelector("input").value = clean_obj[i].datestring || "";
                         break;
                 }
-
             }
-            its = me.internal.querySelectorAll("[data-invalid='1']");
-            for (let i = 0; i < its.length; i++) {
-                its[i].remove();
-            }
+        }
+        //remove invalidated items
+        its = me.internal.querySelectorAll("[data-invalid='1']");
+        for (let i = 0; i < its.length; i++) {
+            its[i].remove();
         }
         //(each has a dropdown for datatype)
         //rendering should not destroy ofject data
         //little 'new property' item
         //delete properties
     }
-
     ///////////////////////////////////////////////////////////////////////////////////////
     //First time load
     me.renderItem(me.settings.currentItem);
@@ -195,6 +242,16 @@ core.registerOperator("inspector", {
                 });
             }
         }
+        if (me.settings.dataEntry) {
+            insertbtn.style.display = "block";
+        } else {
+            insertbtn.style.display = "none";
+        }
+        if (me.settings.commitChanges) {
+            commitbtn.style.display = "block";
+        } else {
+            commitbtn.style.display = "none";
+        }
         //render the item
         me.renderItem(me.settings.currentItem);
     }
@@ -211,9 +268,12 @@ core.registerOperator("inspector", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    let options = [
-        new _option({
-            div: this.dialogDiv,
+    this.optionsDiv = document.createElement("div");
+    this.dialogDiv.appendChild(this.optionsDiv);
+    this.optionsDiv.style.width = "30vw";
+    let options = {
+        operationMode: new _option({
+            div: this.optionsDiv,
             type: "select",
             object: me.settings,
             property: "operationMode",
@@ -223,35 +283,57 @@ core.registerOperator("inspector", {
             },
             label: "Select operation mode:"
         }),
-        new _option({
-            div: this.dialogDiv,
+        currentItem: new _option({
+            div: this.optionsDiv,
             type: "text",
             object: me.settings,
             property: "currentItem",
             label: "Set item to display:"
         }),
-        new _option({
-            div: this.dialogDiv,
+        focusOperatorID: new _option({
+            div: this.optionsDiv,
             type: "text",
             object: me.settings,
             property: "focusOperatorID",
             label: "Set operator UID to focus from:"
         }),
-        new _option({
-            div: this.dialogDiv,
+        orientation: new _option({
+            div: this.optionsDiv,
             type: "bool",
             object: me.settings,
             property: "orientation",
             label: "Horizontal orientation"
         }),
-        new _option({
-            div: this.dialogDiv,
+        showNonexistent: new _option({
+            div: this.optionsDiv,
             type: "bool",
             object: me.settings,
             property: "showNonexistent",
             label: "Show enabled but not currently filled fields"
+        }),
+        commitChanges: new _option({
+            div: this.optionsDiv,
+            type: "bool",
+            object: me.settings,
+            property: "commitChanges",
+            label: "Manually commit changes",
+        }),
+        dataEntry: new _option({
+            div: this.optionsDiv,
+            type: "bool",
+            object: me.settings,
+            property: "dataEntry",
+            label: "Enable data entry",
+            afterInput: (i) => {
+                if (i.checked) {
+                    me.settings.showNonexistent = true;
+                    options.showNonexistent.load();
+                    me.settings.commitChanges = true;
+                    options.commitChanges.load();
+                }
+            }
         })
-    ]
+    }
     let more = document.createElement('div');
     more.innerHTML = `
     <p> Or, click to target 'focus' events from an operator...
@@ -285,10 +367,12 @@ core.registerOperator("inspector", {
         }
         if (!this.settings.propsOn) this.settings.propsOn = props;
         for (let j in props) {
-            app.appendChild(htmlwrap(`<p data-pname="${j}">${j}<span style="display: block; float: right;"><input type="checkbox" ${(this.settings.propsOn[j])?"checked":""}> ${ttypes}</span></p>`));
+            app.appendChild(htmlwrap(`<p data-pname="${j}">${j}<span style="display: block; float: right;"><input type="checkbox" ${(this.settings.propsOn[j]) ? "checked" : ""}> ${ttypes}</span></p>`));
         }
         //fill out some details
-        options.forEach((i) => i.load());
+        for (i in options) {
+            options[i].load();
+        }
     }
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
@@ -305,6 +389,7 @@ core.registerOperator("inspector", {
             }
         }
         me.updateSettings();
+        me.renderItem(me.settings.currentItem);
     }
     me.dialogDiv.addEventListener("input", function (e) {
         if (e.target.dataset.role) {

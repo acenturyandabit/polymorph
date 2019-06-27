@@ -39,14 +39,14 @@ let op=new _option({
 
 
 */
-var _option=(function(){
+var _option = (function () {
     //snippet that pre-evaluates functions, so that we can quickly load dynmaics
-    function iff(it){
-        if (typeof it =="function"){
+    function iff(it) {
+        if (typeof it == "function") {
             return it();
-        }else return it;
+        } else return it;
     }
-    
+
     function _option(settings) {
         let appendedElement;
         ///////////////////////////////////////////////////////////////////////////////////////
@@ -56,64 +56,77 @@ var _option=(function(){
                 appendedElement = document.createElement("input");
                 appendedElement.type = "checkbox";
                 appendedElement.addEventListener("input", () => {
-                    let actualObject=iff(settings.object);
+                    let actualObject = iff(settings.object);
+                    if (!actualObject) actualObject = {};
+                    if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.checked;
+                    if (settings.afterInput)settings.afterInput(appendedElement);
                 })
                 break;
             case "text":
                 appendedElement = document.createElement("input");
-                appendedElement.style.display="block";
-                appendedElement.style.float="right";
+                appendedElement.style.display = "block";
                 appendedElement.addEventListener("input", () => {
-                    let actualObject=iff(settings.object);
+                    let actualObject = iff(settings.object);
+                    if (!actualObject) actualObject = {};
+                    if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.value;
+                    if (settings.afterInput)settings.afterInput(appendedElement);
                 })
                 break;
             case "select":
                 appendedElement = document.createElement("select");
                 appendedElement.addEventListener("changed", () => {
-                    let actualObject=iff(settings.object);
+                    let actualObject = iff(settings.object);
+                    if (!actualObject) actualObject = {};
+                    if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.value;
+                    if (settings.afterInput)settings.afterInput(appendedElement);
                 })
                 break;
         }
+        appendedElement.style.float = "right";
         if (settings.label) {
             let lb = document.createElement("label");
             lb.innerHTML = settings.label;
             lb.appendChild(appendedElement);
             lb.style.display = "block";
+            lb.style.margin = "3px";
             settings.div.appendChild(lb);
         } else {
             settings.div.appendChild(appendedElement);
         }
         //initially load the property value.
         this.load = function () {
-            let actualObject=iff(settings.object);
-            switch (settings.type) {
-                case "bool":
-                    if (actualObject[settings["property"]])appendedElement.checked = actualObject[settings["property"]];
-                    else appendedElement.checked = false;
-                    break;
-                case "text":
-                    if (actualObject[settings["property"]])appendedElement.value = actualObject[settings["property"]] || "";
-                    else appendedElement.value ="";
-                    break;
-                case "select":
-                    //clear my div
-                    appendedElement.innerHTML="";
-                    let _source = iff(settings.source);
-                    //if source is an array
-                    if (_source.length){
-                        //differentiate between array of objects and array of string
-                    }else
-                    for (let i in _source){
-                        let op=document.createElement("option");
-                        op.innerText=_source[i];
-                        op.value=i;
-                        appendedElement.appendChild(op);
-                    }
-                    if (settings["object"][settings["property"]])appendedElement.value = settings["object"][settings["property"]];
-                    break;
+            let actualObject = iff(settings.object);
+            if (!actualObject) console.log("Warning: attempt to reference an undefined object");
+            else {
+                switch (settings.type) {
+                    case "bool":
+                        if (actualObject[settings["property"]]) appendedElement.checked = actualObject[settings["property"]];
+                        else appendedElement.checked = false;
+                        break;
+                    case "text":
+                        if (actualObject[settings["property"]]) appendedElement.value = actualObject[settings["property"]] || "";
+                        else appendedElement.value = "";
+                        break;
+                    case "select":
+                        //clear my div
+                        appendedElement.innerHTML = "";
+                        let _source = iff(settings.source);
+                        //if source is an array
+                        if (_source.length) {
+                            //differentiate between array of objects and array of string
+                        } else
+                            for (let i in _source) {
+                                let op = document.createElement("option");
+                                op.innerText = _source[i];
+                                op.value = i;
+                                appendedElement.appendChild(op);
+                            }
+                        if (settings["object"][settings["property"]]) appendedElement.value = settings["object"][settings["property"]];
+                        break;
+                }
             }
         }
     }
@@ -147,10 +160,10 @@ var _option=(function(){
             if (data){
                 callback(data[id]);
             }else{
-                callback(fetch(id)); 
+                callback(fetch(id));
             }
             //The callback function is used because data fetching may be asynchronous. No biggie if it's synchronous.
-        }; 
+        };
         write: (id, val)=>{}; save a property based on a string id. It will be passed the ID for the options in opts. Self is the optionsmanager; you can probably access some property to assist in context menus.
     }
 }
@@ -161,7 +174,7 @@ optionsManager.update(data){
 }
 
 
-Different types of prompt: 
+Different types of prompt:
 text
 textarea
 checkbox
@@ -170,7 +183,7 @@ none
 Some default access types: You can pass an object with {type,params} instead of {read,write} for access if you are using these.
 (not yet implemented)
 {type: "chromeStorageLocal"} : chrome.storage.local storage system.
-{type: "localStorage",prefix:"somePrefix"}: localstorage. The prefix will be appended when fetching. 
+{type: "localStorage",prefix:"somePrefix"}: localstorage. The prefix will be appended when fetching.
 //
 
 

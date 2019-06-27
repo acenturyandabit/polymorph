@@ -69,7 +69,7 @@ function _rect(core, parent, data) {
                 }
             }
         }else if (me.children){
-            for (let i = 0; i < me.operators.length; i++) {
+            for (let i = 0; i < me.children.length; i++) {
                 if (me.children[i].getOperatorPath(op)!=-1)return i;
             }
         }

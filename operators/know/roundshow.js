@@ -88,7 +88,7 @@ core.registerOperator("roundshow", {
             }
         }
         if (root) {
-            if (children[root])roots = children[root];
+            if (children[root]) roots = children[root];
             else return {};
         }
         for (let i = 0; i < roots.length; i++) {
@@ -129,12 +129,21 @@ core.registerOperator("roundshow", {
                 //draw a sector for it
                 me.arcs.push(me.svg.path(`
                 M ${innerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${innerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
-                A ${innerR} ${innerR} 0 ${(itemsToRender[i].arcsize / l2c) > 0.5 ? 1 : 0} 1 ${innerR * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c) + centre} ${innerR * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c) + centre}
-                L ${middleR * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c) + centre}
+                A ${innerR} ${innerR} 0 ${(itemsToRender[i].arcsize / l2c) > 0.5 ? 1 : 0} 1 ${innerR * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c-0.001) + centre} ${innerR * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c-0.001) + centre}
+                L ${middleR * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c-0.001) + centre} ${middleR * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c-0.001) + centre}
                 A ${middleR} ${middleR} 0 ${(itemsToRender[i].arcsize / l2c) > 0.5 ? 1 : 0} 0 ${middleR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 L ${innerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${innerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 Z
                 `).attr({
+                    fill: '#f06'
+                    , 'fill-opacity': 0.5
+                    , stroke: '#000'
+                    , 'stroke-width': 1
+                }).data('item', i));
+                //label it
+                if (core.items[i].title) me.arcs.push(me.svg.text(core.items[i].title).cx((innerR + (middleR - innerR) / 2) * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre).cy(
+                    (innerR + (middleR - innerR) / 2) * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre
+                ).attr({
                     fill: '#f06'
                     , 'fill-opacity': 0.5
                     , stroke: '#000'
@@ -145,9 +154,9 @@ core.registerOperator("roundshow", {
                     for (j in itemsToRender[i].children) {
                         me.arcs.push(me.svg.path(`
                 M ${middleR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
-                A ${middleR} ${middleR} 0 0 1 ${middleR * Math.cos(2 * Math.PI * (c2c + 1) / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * (c2c + 1) / l2c) + centre}
-                L ${outerR * Math.cos(2 * Math.PI * (c2c + 1) / l2c) + centre} ${outerR * Math.sin(2 * Math.PI * (c2c + 1) / l2c) + centre}
-                A ${outerR} ${outerR} 0 0 0 ${outerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${outerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
+                A ${middleR} ${middleR} 0 ${l2c ==1 ? 1 : 0} 1 ${middleR * Math.cos(2 * Math.PI * (c2c + 1) / l2c-0.001) + centre} ${middleR * Math.sin(2 * Math.PI * (c2c + 1) / l2c-0.001) + centre}
+                L ${outerR * Math.cos(2 * Math.PI * (c2c + 1) / l2c-0.001) + centre} ${outerR * Math.sin(2 * Math.PI * (c2c + 1) / l2c-0.001) + centre}
+                A ${outerR} ${outerR} 0 ${l2c ==1 ? 1 : 0} 0 ${outerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${outerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 L ${middleR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 Z
                 `).attr({
@@ -156,6 +165,15 @@ core.registerOperator("roundshow", {
                             , stroke: '#000'
                             , 'stroke-width': 1
                         }).data('item', j));
+                        if (core.items[j].title)
+                            me.arcs.push(me.svg.text(core.items[j].title).cx((middleR + (outerR - middleR) / 2) * Math.cos(2 * Math.PI * (c2c + 0.5) / l2c) + centre).cy(
+                                (middleR + (outerR - middleR) / 2) * Math.sin(2 * Math.PI * (c2c + 0.5) / l2c) + centre
+                            ).attr({
+                                fill: '#f06'
+                                , 'fill-opacity': 0.5
+                                , stroke: '#000'
+                                , 'stroke-width': 1
+                            }).data('item', i));
                         c2c += 1;
                     }
                 } else {
@@ -180,15 +198,16 @@ core.registerOperator("roundshow", {
             fill: '#f06'
             , 'fill-opacity': 0.5
         }).data('item', me.settings.currentRoot)
-        .data('role', 'return');
+            .data('role', 'return');
         me.rootdiv.querySelector(".svg [data-role='return']").addEventListener("click", (e) => {
-            if (me.centreItem.data('return')==me.settings.currentRoot){
+            if (me.centreItem.data('return') == me.settings.currentRoot) {
                 me.centreItem.data('return', null);
             }
-            let itm=me.rootdiv.querySelector(".svg [data-role='return']").dataset.return;
-            let tree=createTree(itm);
+            let itm = me.rootdiv.querySelector(".svg [data-role='return']").dataset.return;
+            let tree = createTree(itm);
             me.renderTree(tree);
-            if(itm)me.coreText.text(core.items[itm].title || "Root").cx(200).cy(200);
+            core.fire("focus",{sender:this,id:itm});
+            if (itm) me.coreText.text(core.items[itm].title || "Root").cx(200).cy(200);
             else me.coreText.text("Root").cx(200).cy(200);
         })
     })
@@ -199,7 +218,7 @@ core.registerOperator("roundshow", {
         me.coreText.text(core.items[id].title);
         me.coreText.cx(200).cy(200);
         //render the subtree
-        let tree=createTree(id);
+        let tree = createTree(id);
         me.renderTree(tree);
     })
 
@@ -209,7 +228,7 @@ core.registerOperator("roundshow", {
     core.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
-        let tree=createTree(me.settings.currentRoot);
+        let tree = createTree(me.settings.currentRoot);
         me.renderTree(tree);
         //return true or false based on whether we can or cannot edit the item from this operator.
         //otherwise your items _may_ be deleted by the core garbage collector :/
@@ -228,7 +247,7 @@ core.registerOperator("roundshow", {
     this.fromSaveData = function (d) {
         //this is called when your operator is started OR your operator loads for the first time
         Object.assign(this.settings, d);
-        let tree=createTree(me.settings.currentRoot);
+        let tree = createTree(me.settings.currentRoot);
         me.renderTree(tree);
     }
 

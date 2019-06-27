@@ -223,8 +223,8 @@ function _core() {
         //Clean items to follow established standards here. Ideally dont do too much but sometimes necessary.
         if (core.items[itm].links){
             //bidirectional links upgrade
-            if (!core.items[i].from)core.items[itm].from={};
-            if (!core.items[i].to)core.items[itm].to={};
+            if (!core.items[itm].from)core.items[itm].from={};
+            if (!core.items[itm].to)core.items[itm].to={};
             for (let i in core.items[itm].links){
                 if (!core.items[i].from)core.items[i].from={};
                 if (!core.items[i].to)core.items[i].to={};
@@ -282,79 +282,6 @@ function _core() {
                 me.currentDoc.displayName + " - Polymorph";
         });
     })
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //UI handling
-
-    //Instantiate filemanager
-    this.filescreen = new _filescreen({
-        headprompt: htmlwrap(`
-    <h1>Welcome to Polymorph: Effective Organisation app</h1>
-    <h2>Select an option below to get started!</h2>
-    
-    <style>
-    .buttons>button{
-        flex: 0 0 25%;
-    }
-    button:disabled{
-        background: repeating-linear-gradient(-60deg, #333333 0px,#333333 10px,#0000ee 10px, #0000ee 20px);
-    }
-    button:disabled>*{
-        background: rgba(100,100,100,0.7);
-        color: white;
-    }
-    .olol>button{
-        flex: 1 0 auto;
-        background: darkgrey;
-    }
-    .olol>button.selected{
-        background: blue;
-        color: white;
-    }
-    </style>
-    <div style="display:flex;flex-direction:row;" class="olol"><button class="selected" data-source="lf">Work offline</button><button data-source="fb">Collaborate in real time</button></div>
-    <div style="display:flex;flex-direction:row;overflow-x:scroll" class="buttons">
-        <button data-template="brainstorm"><h1>Brainstorm</h1><p>Brainstorm and lay out ideas with others!</p></button>
-        <button ><h1>Custom</h1><p>Use Polymorph's customisability to build your own user interface.</p></button>
-        <button disabled><h1>Coming soon...</h1></button>
-        <button data-template="chatmode" disabled><h1>Chat mode</h1><p>Have a chat with yourself or a friend, and let Polymorph build the structure for you!</p></button>
-        <button data-template="kanban" disabled><h1>Kanban board</h1><p>Simple, ticket based project management.</p></button>
-        <button data-template="calendar" disabled><h1>Calendar</h1><p>A text-based calendar / tasklist combination.</p></button>
-        
-    </div>
-    `, "div"),
-        formats: false,
-        tutorialEnabled: false,
-        savePrefix: "polymorph"
-    });
-
-    this.filescreen.baseDiv.querySelector(".buttons").addEventListener("click", (e) => {
-        let t = e.target;
-        while (t != this.filescreen.baseDiv) {
-            if (t.tagName == "BUTTON" && !t.disabled) {
-                let url = window.location.pathname + "?doc=" + guid(7) + "&src=" + this.filescreen.baseDiv.querySelector('.olol .selected').dataset.source;
-                if (t.dataset.template) url += "&tmp=" + t.dataset.template;
-                window.location.href = url;
-                break;
-            } else {
-                t = t.parentElement;
-            }
-        }
-    })
-
-    this.filescreen.baseDiv.querySelector(".olol").addEventListener("click", (e) => {
-        if (e.target.tagName == "BUTTON") {
-            let btns = this.filescreen.baseDiv.querySelectorAll(".olol>button");
-            for (let i = 0; i < btns.length; i++)btns[i].classList.remove("selected");
-            e.target.classList.add("selected");
-        }
-    })
-
-    /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
-        // create a new workspace, then load it
-        window.location.href += "?doc=" + guid(7) + "&src=lf";
-    })*/
-
     
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views dialog

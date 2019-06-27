@@ -1,6 +1,7 @@
 core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
   let me = this;
   this.prettyName="Firebase (Real time collaboration)";
+  this.createable=true;
   //initialise firebase
   me.unsub = {};
   try {
