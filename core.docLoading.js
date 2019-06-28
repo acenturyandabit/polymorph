@@ -38,7 +38,7 @@ core.registerSaveSource = function (id, f) {
 }
 
 core.userLoad = async function (source, data, state) { // direct from URL
-    if (!state)state={};
+    if (!state) state = {};
     //do some checks before we do any lasting damage
     if (!core.saveSources[source]) {
         //save source does not exist, alert the user
@@ -103,8 +103,8 @@ core.fromSaveData = function (data) {
     core.resetDocument();
     core.currentDoc = data;
     core.items = data.items;
-    if (!core.currentDoc.currentView) core.currentDoc.currentView = Object.keys(core.currentDoc.views)[0];
-    core.presentView(core.currentDoc.currentView);
+    if (!core.userData.documents[core.currentDocID].currentView) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
+    core.presentView(core.userData.documents[core.currentDocID].currentView);
     core.baseRect.refresh();
     for (let i in core.items) {
         core.standardiseItem(i);
@@ -120,7 +120,7 @@ core.fromSaveData = function (data) {
 
 core.toSaveData = function () {
     //patch current doc
-    core.currentDoc.views[core.currentDoc.currentView] = core.baseRect.toSaveData();
+    core.currentDoc.views[core.userData.documents[core.currentDocID].currentView] = core.baseRect.toSaveData();
     //clean up
     core.isSaving = true;
     for (let i in core.items) {
@@ -146,18 +146,25 @@ core.userSave = function () {
     //upgrade older save systems
     let d = core.toSaveData();
     core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.currentDoc.displayName);
-    if (!core.currentDoc.saveSources) {
-        core.currentDoc.saveSources = {
-            lf: core.currentDocID
-        };
+    if (!core.userData.documents[core.currentDocID]) {
+        core.userData.documents[core.currentDocID] = {};
     }
-    for (let i in core.currentDoc.saveSources) {
+    if (!core.userData.documents[core.currentDocID].saveSources) {
+        if (core.currentDoc.saveSources) {
+            core.userData.documents[core.currentDocID].saveSources = core.currentDoc.saveSources;
+        } else {
+            core.userData.documents[core.currentDocID].saveSources = {
+                lf: core.currentDocID
+            };
+        }
+    }// the above realllly shouldnt happen
+    let srcs = core.userData.documents[core.currentDocID].saveSources
+    for (let i in srcs) {
         try {
-            core.saveSources[i].pushAll(core.currentDoc.saveSources[i], d);
+            core.saveSources[i].pushAll(srcs[i], d);
         } catch (e) {
             continue;
         }
-
     }
     core.unsaved = false;
 };
@@ -243,7 +250,7 @@ core.userSave = function () {
             loadDialog.style.display = "block";
         });
     });
-    loadDialog.querySelector(".cb").addEventListener("click",core.saveUserData);
+    loadDialog.querySelector(".cb").addEventListener("click", core.saveUserData);
 })();
 core.loadInnerDialog.addEventListener("input", (e) => {
     if (e.target.matches("[name='dflt']")) {
@@ -266,11 +273,12 @@ core.loadInnerDialog.addEventListener("input", (e) => {
 core.loadInnerDialog.addEventListener("click", (e) => {
     if (e.target.matches("[data-role='dlg_save']")) {
         //Get the save source to save now
-        core.saveSources[e.target.parentElement.parentElement.dataset.saveref].pushAll(core.currentDocID, core.toSaveData());
+        let src=e.target.parentElement.parentElement.dataset.saveref;
+        core.saveSources[src].pushAll(core.userData.documents[core.currentDocID].saveSources[src], core.toSaveData());
     } else if (e.target.matches("[data-role='dlg_load']")) {
         //Load from the save source
-        let source=e.target.parentElement.parentElement.dataset.saveref;
-        core.userLoad(source,core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID)
+        let source = e.target.parentElement.parentElement.dataset.saveref;
+        core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID)
     }
 })
 

@@ -68,7 +68,7 @@ core.registerOperator("descbox", function (operator) {
             let staticItem = me.settings.staticItem;
             me.settings.currentID = me.settings.staticItem;
             if (!core.items[staticItem]) {
-                let it = new _item();
+                let it = {};
                 it[me.settings.property] = "";
                 core.items[staticItem] = it;
                 core.fire("create", {

@@ -41,7 +41,7 @@ core.registerOperator("itemList", function (operator) {
 
     //Handle item creation
     this.createItem = function () {
-        let it = new _item();
+        let it = {};
         //clone the template and append it
         let currentItemSpan = me.template.cloneNode(true);
         me.taskList.appendChild(currentItemSpan);

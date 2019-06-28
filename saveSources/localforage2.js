@@ -1,5 +1,4 @@
 core.registerSaveSource("lf",function(core){ // a sample save source, implementing a number of functions.
-    this.id="";
     this.createable=true;
     this.prettyName="Localforage (offline storage)";
     this.pushAll=async function(id,data){
@@ -13,16 +12,10 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
     this.dialog=document.createElement("div");
     this.dialog.innerHTML=`
     <span>
-    <input placeholder="Save ID">
-    <button class="snow">Save now</button>
-    <button class="lfs">Load from source</button>
+    <input class="svid" placeholder="Save ID">
     </span>
     `;
-    this.dialog.querySelector(".snow").addEventListener("click",()=>{
-        this.pushAll(this.id,core.toSaveData());
-        core.filescreen.saveRecentDocument(core.docName, undefined, core.currentDoc.displayName);
-    })
-    this.dialog.querySelector(".lfs").addEventListener("click",()=>{
-        core.userLoad("lf",this.id);
-    })
+    this.readyDialog=function(){
+        this.dialog.querySelector(".svid").value=core.userData.documents[core.currentDocID].saveSources['lf'];
+    }
 })

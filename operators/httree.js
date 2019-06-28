@@ -415,7 +415,7 @@ core.registerOperator(
 
     this.quickAdd = function (data) {
       //Create a new item
-      let it = new _item();
+      let it = {};
       it.httree = {};
       it.httree.parent = me.settings.selected;
       it.title = data;

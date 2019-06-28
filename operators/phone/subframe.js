@@ -1,4 +1,4 @@
-core.registerOperator("subframe", {targetForward:true},function (operator) {
+core.registerOperator("subframe", {targetForward:true, hidden:true},function (operator) {
     let me = this;
     me.container=operator;
     this.settings = {};

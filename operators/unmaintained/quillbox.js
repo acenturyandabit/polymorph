@@ -72,7 +72,7 @@ core.registerOperator("quillbox", {
         if (me.settings.operationMode == 'static') {
             me.settings.currentID = me.settings.staticItem;
             if (!core.items[staticItem]) {
-                let it = new _item();
+                let it = {};
                 it[me.settings.property] = "";
                 core.items[staticItem] = it;
                 core.fire("create", {

@@ -258,7 +258,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
     });
     //views
     me.viewcapacitor = new capacitor(500, 30, () => {
-      root.collection('views').doc(core.currentDoc.currentView).set(JSON.parse(JSON.stringify(core.baseRect.toSaveData())));
+      root.collection('views').doc(core.userData.documents[core.currentDocID].currentView).set(JSON.parse(JSON.stringify(core.baseRect.toSaveData())));
     })
     core.on("updateView", (d) => {
       me.viewcapacitor.submit(d.id);

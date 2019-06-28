@@ -48,7 +48,7 @@ function dialogSystemManager(core) {
             //also forward close event to the baseOperator
             core.dialog.currentBaseOperator.dialogUpdateSettings();
             core.dialog.currentOperator.tabbarName=core.dialog.standardOptions.querySelector(".tabDisplayName").value;
-            core.dialog.currentOperator.tab.children[0].children[0].innerText=core.dialog.currentOperator.tabbarName;
+            core.dialog.currentOperator.tab.children[0].innerText=core.dialog.currentOperator.tabbarName;
             core.fire("updateView", {sender:core.dialog});
         })
     })

@@ -3,7 +3,6 @@ var __manager_profiles = {
         files: [
             ["filescreen", "genui/filescreen.js"],
             ["templates", "templates.js"],
-            ["core_dialog", "core.dialog.js"],
             ["core_tutorial", "core.tutorial.js"],
             ["core", "core.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
@@ -39,6 +38,7 @@ var __manager_profiles = {
     phone: {
         condition: () => { return isPhone() },
         files: [
+            ["core_dialog", "versions/phone/core.dialog.js"],
             { r: "base" },
             ["coreUI", "versions/phone/coreUI.js"],
             ["rect", "versions/phone/rect.js"],
@@ -62,7 +62,8 @@ var __manager_profiles = {
 
     default: {
         files: [
-            { r: "base" },
+            ["core_dialog", "core.dialog.js"],
+            { r: "base" }
             ["rect", "rect.js"],
             ["coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },

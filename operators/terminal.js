@@ -77,7 +77,7 @@ core.registerOperator("terminal", {
             regex: /^mki (.+)$/ig,
             help: "This command can be thought of as an equivalent to mkdir, for items. Type mkitm $1 $2 to make an item called $1 in the current path, with title $2.",
             operate: function (regres, state) {
-                let it = new _item();
+                let it = {};
                 it.links={};
                 if (state.state.path)it.links.parent = state.state.path;
                 it.title = regres[1];
@@ -177,7 +177,7 @@ core.registerOperator("terminal", {
             name: "mkii",
             help: "Make an item from JSON.",
             operate: function (regres, state) {
-                let itm = new _item();
+                let itm = {};
                 let _itm=JSON.parse(regres[1]);
                 if (typeof _itm=="string"){
                     itm.title=_itm;

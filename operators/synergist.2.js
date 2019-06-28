@@ -51,6 +51,27 @@ core.registerOperator("itemcluster2", {
         border: 1px solid black;
         box-sizing: border-box;
     }
+    .itemcluster{
+        position:relative;
+    }
+    .tray{
+        position:absolute;
+        transform: translateY(80px);
+        height: 120px;
+        width: 100%;
+        bottom: 0;
+        background: lightgrey;
+        transition: all 0.5s ease;
+        flex-direction:row;
+        overflow-x:auto;
+    }
+    .tray:hover{
+        transform: translateY(0);
+    }
+    .tray textarea{
+        height:100%;
+        resize: none;
+    }
     </style>
 <div>
     <div class="itemcluster-container">
@@ -60,13 +81,15 @@ core.registerOperator("itemcluster2", {
                 <span>
                     <a class="viewNameContainer" style="background:rgb(132, 185, 218);"><span><span contenteditable class="viewName" data-listname='main' style="cursor:text"></span><span
                                 class="listDrop">&#x25BC</span>
-                        </span><img class="gears" src="assets/gear.png" style="height:1em"></a>
+                        </span><!--<img class="gears" src="assets/gear.png" style="height:1em">--></a>
                     <div class="viewNameDrop" style="display:none">
                     </div>
                 </span>
             </span>
         </div>
         <div class="itemcluster"  style="flex: 1 1 100%;position: relative; background:grey;">
+        <div class="tray">
+        </div>
         </div>
     </div>
 </div>`;
@@ -78,6 +101,16 @@ core.registerOperator("itemcluster2", {
     );
     this.itemSpace = this.rootdiv.querySelector(".itemcluster");
     container.div.appendChild(this.rootdiv);
+
+
+    this.rootdiv.querySelector(".tray").addEventListener("wheel", (e) => {
+        this.rootdiv.querySelector(".tray").scrollLeft += e.deltaY;
+    })
+
+    this.rootdiv.querySelector(".tray").addEventListener("input", (e) => {
+        core.items[e.target.parentElement.dataset.id].title=e.target.value;
+        core.fire('updateItem',{sender:me,id:e.target.parentElement.dataset.id});
+    })
 
     me.mapPageToSvgCoords = function (pageX, pageY, vb) {
         let rels = me.svg.node.getBoundingClientRect();
@@ -110,7 +143,7 @@ core.registerOperator("itemcluster2", {
             core.saveUserData();
         });
     }
-    //////////////////Handle core item updates//////////////////
+    ////////////////////////////////////////Handle core item updates//////////////////
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
     let acp = new capacitor(200, 1000, () => {
@@ -125,13 +158,24 @@ core.registerOperator("itemcluster2", {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
-        if (me.arrangeItem && me.container.visible()) {
-            let u = me.arrangeItem(id);
-            acp.submit();
-            return u;
-        }else{
-            return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName))!= undefined);
+
+        if (me.container.visible()) {
+            let present = false;
+            try {
+                if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+                    if (me.arrangeItem) {
+                        me.arrangeItem(id);
+                        acp.submit();
+                    }
+                    present = true;
+                }
+            } catch (e) {
+            }
+            if (!present && (!(me.settings.filter) || core.items[id][me.settings.filter])) {
+                me.addToTray(id);
+            }
         }
+        return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined);
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -191,6 +235,7 @@ core.registerOperator("itemcluster2", {
         me.viewDropdown.innerHTML = "";
         for (i in core.items) {
             if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
+                if (me.settings.filter && !(core.items[i][me.settings.filter])) continue;//apply filter to views
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
                 aa.innerHTML = core.items[i].itemcluster.viewName;
@@ -206,7 +251,7 @@ core.registerOperator("itemcluster2", {
     });
     this.rootdiv.addEventListener("mousedown", function (e) {
         let p = e.target;
-        while (p != me.rootdiv) {
+        while (p != me.rootdiv && p) {
             if (p == me.viewDropdown) return;
             p = p.parentElement;
         }
@@ -220,6 +265,9 @@ core.registerOperator("itemcluster2", {
             let switched = false;
             for (let i in core.items) {
                 if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
+                    if (me.settings.filter && !(core.items[i][me.settings.filter])) {
+                        continue;
+                    }
                     this.switchView(i);
                     switched = true;
                     break;
@@ -314,6 +362,9 @@ core.registerOperator("itemcluster2", {
         itm.itemcluster = {
             viewName: "New View"
         };
+        if (me.settings.filter) {
+            if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
+        }
         //register a change
         core.fire("updateItem", {
             sender: this,
@@ -332,15 +383,27 @@ core.registerOperator("itemcluster2", {
             viewName: "Copy of" + core.items[me.settings.currentViewName].itemcluster.viewName
         };
         itm.title = core.items[me.settings.currentViewName].itemcluster.viewName;
+        if (me.settings.filter) {
+            if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
+        }
         core.fire("updateItem", {
             sender: this,
             id: id
         });
+        //clone positions as well
+        for (let i in core.items) {
+            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                core.items[i].itemcluster.viewData[id] = core.items[i].itemcluster.viewData[me.settings.currentViewName];
+            }
+        }
         this.switchView(id);
     };
     this.destroyView = function (viewName, auto) {
         // Destroy the itemcluster property of the item but otherwise leave it alone
         delete core.items[viewName].itemcluster.viewName;
+        if (me.settings.filter) {
+            delete core.items[viewName][me.settings.filter];
+        }
         core.fire("deleteItem", {
             id: viewName
         });
@@ -437,7 +500,7 @@ core.registerOperator("itemcluster2", {
                 let inb = indexedOrder.indexOf(links[i].b);
                 if (ina == -1 || inb == -1) {
                     //delete this item
-                    links.splice(i,1);
+                    links.splice(i, 1);
                     i--;
                 }
                 if (ina < inb) { //enforce a=lower<-b=higher
@@ -774,12 +837,12 @@ core.registerOperator("itemcluster2", {
                 end = _start;
             }
             //check if linked; if linked, remove link
-            if (core.isLinked(start,end)){
-                core.unlink(start,end,true);
+            if (core.isLinked(start, end)) {
+                core.unlink(start, end, true);
                 if (me.activeLines[start]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
-            }else{
-                core.link(start,end,true);
+            } else {
+                core.link(start, end, true);
                 me.enforceLine(start, end);
             }
         };
@@ -939,17 +1002,19 @@ core.registerOperator("itemcluster2", {
                 me.linkingDiv = it;
                 me.linking = true;
             }
+        } else if (e.target.matches(".tray textarea")) {
+            me.fromTray = e.target.parentElement.dataset.id;
         } else {
-            //shift to pan
-            if (e.getModifierState("Shift") || e.which == 2) {
-                me.globalDrag = true;
-                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                me.originalViewBox = me.svg.viewbox();
-                me.dragDX = coords.x;
-                me.dragDY = coords.y;
-                me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
-                me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
-            }
+            //Pan
+            //if (e.getModifierState("Shift") || e.which == 2) {
+            me.globalDrag = true;
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            me.originalViewBox = me.svg.viewbox();
+            me.dragDX = coords.x;
+            me.dragDY = coords.y;
+            me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
+            me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
+            //}
         }
     });
 
@@ -957,6 +1022,28 @@ core.registerOperator("itemcluster2", {
         //stop from creating an item if we are resizing another item
         if (Math.abs(e.offsetX - me.mouseStoredX) > 5 || Math.abs(e.offsetY - me.mouseStoredY) > 5) {
             me.possibleResize = true;
+        }
+        if (me.fromTray) {
+            let cid=me.fromTray;
+            //make us drag the item
+            me.removeFromTray(cid);
+            if (!core.items[cid].itemcluster) core.items[cid].itemcluster = {};
+            if (!core.items[cid].itemcluster.viewData) core.items[cid].itemcluster.viewData = {};
+            core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
+            me.arrangeItem(cid);
+            me.movingDiv = me.svg.select("[data-id='" + cid + "']").members[0];
+            // force a mousemove
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            me.dragDX = 30;
+            me.dragDY = 30;
+            me.movingDiv.x(coords.x - me.dragDX);
+            me.movingDiv.y(coords.y - me.dragDY);
+
+            me.updatePosition(cid);
+            me.dragging = true;
+            //set a flag so we dont instantly return it to the tray
+            me.stillInTray = true;
+            me.fromTray=false;
         }
         if (me.dragging) {
             //dragging an item
@@ -978,13 +1065,28 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < fi.length; i++) {
                 fi[i].style.border = "";
             }
+            let stillInTray = false;
             for (let i = 0; i < elements.length; i++) {
+                if (elements[i].matches(".tray")) {
+                    if (me.stillInTray) {
+                        stillInTray = true;
+                        break;
+                    }
+                    //send to tray, and end interaction
+                    // delete the item from this view
+                    let cid = me.movingDiv.attr("data-id");
+                    delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                    me.arrangeItem(cid);
+                    me.addToTray(cid);
+                    me.dragging = false;
+                    core.fire("updateItem", { sender: me, id: cid });
+                }
                 if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.movingDiv.attr("data-id")) {
                     elements[i].style.border = "3px dotted red";
                     break;
                 }
-
             }
+            if (!stillInTray) me.stillInTray = false;
             //if we are moving something ensure it wont be twice-click selected.
             me.preselected = undefined;
             //redraw all lines
@@ -1027,7 +1129,7 @@ core.registerOperator("itemcluster2", {
 
     this.itemSpace.addEventListener("wheel", (e) => {
         if (e.target.matches(".floatingItem") ||
-            e.target.matches(".floatingItem *")) {
+            e.target.matches(".floatingItem *") || me.rootdiv.querySelector(".tray").contains(e.target)) {
             return;
         }
         //calculate old width constant
@@ -1059,6 +1161,7 @@ core.registerOperator("itemcluster2", {
     });
 
     me.handleMoveEnd = function (e, touch) {
+        me.fromTray=false;
         if (me.globalDrag) {
             setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;
@@ -1177,7 +1280,7 @@ core.registerOperator("itemcluster2", {
     };
 
     this.createItem = function (x, y) {
-        let itm = new _item();
+        let itm = {};
         //register it with the core
         let id = core.insertItem(itm);
         itm.title = "";
@@ -1189,6 +1292,9 @@ core.registerOperator("itemcluster2", {
             x: x,
             y: y
         };
+        if (me.settings.filter) {
+            itm[me.settings.filter] = true;
+        }
         //register a change
         core.fire("create", {
             sender: this,
@@ -1229,8 +1335,58 @@ core.registerOperator("itemcluster2", {
             });
         }
     })
+
+    ////////////////////////////////////////////////////////////
+    //The tray
+    me.addToTray = function (id) {
+        let cti = me.rootdiv.querySelector(`.tray div[data-id='${id}']`);
+        if (!cti) {
+            cti = htmlwrap(`
+                <div data-id=${id}>
+                <textarea></textarea>
+                </div>
+            `);
+            me.rootdiv.querySelector(`.tray`).appendChild(cti);
+        }
+        cti.querySelector("textarea").value = core.items[id].title;
+    }
+
+    me.removeFromTray = function (id) {
+        let cti = me.rootdiv.querySelector(`.tray div[data-id='${id}']`);
+        if (cti) cti.remove();
+    }
+    me.emptyTray = function () {
+        let trayitems = me.rootdiv.querySelector(".tray>div");
+        if (trayitems) for (let i = 0; i < trayitems.length; i++) {
+            trayitems[i].remove();
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////
     //Core interactions
+
+    function updateSettings() {
+        if (me.settings.tray) {
+            //show the tray
+            me.emptyTray();
+            me.rootdiv.querySelector(".tray").style.display = "flex";
+            //also populate the tray
+            for (let i in core.items) {
+                try {
+                    if (core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                        continue;
+                    }
+                } catch (e) {
+                }
+                if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
+                    me.addToTray(i);
+                }
+            }
+        } else {
+            me.emptyTray();
+            me.rootdiv.querySelector(".tray").style.display = "none";
+        }
+    }
 
     this.refresh = function () {
         if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
@@ -1259,6 +1415,7 @@ core.registerOperator("itemcluster2", {
         } else {//for older versions
             me.switchView(me.settings.currentViewName, true, true);
         }
+        updateSettings();
     }
 
     //Handle the settings dialog click!
@@ -1272,6 +1429,22 @@ core.registerOperator("itemcluster2", {
       <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
       <button class="targeter">Select operator</button>
       `;
+    let options = {
+        tray: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "tray",
+            label: "Show item tray"
+        }),
+        filter: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "filter",
+            label: "Filter items by string:"
+        })
+    }
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
         core.target().then((id) => {
@@ -1285,6 +1458,9 @@ core.registerOperator("itemcluster2", {
             let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
             if (it) it.value = me.settings[i];
         }
+        for (i in options) {
+            options[i].load();
+        }
         // update your dialog elements with your settings
     }
     this.dialogUpdateSettings = function () {
@@ -1292,7 +1468,9 @@ core.registerOperator("itemcluster2", {
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
+        updateSettings();
         core.fire("updateView");
         // pull settings and update when your dialog is closed.
+
     }
 });

@@ -118,6 +118,14 @@ function _rect(core, parent, data) {
     this.fromSaveData = function (obj) {
         //children first!
         if (!obj) return;
+        if (!obj.x){
+            //this is a new object... generate it
+            Object.assign(obj,{
+                x:0,
+                p:0,
+                f:1,
+            })
+        }
         obj = transcopy(obj, {
             remap: {
                 "XorY": "x",

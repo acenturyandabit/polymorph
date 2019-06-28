@@ -156,7 +156,7 @@ arrangeItem is at 672 or thereabouts.
     };
 
     this.makeNewView = function () {
-      let itm = new _item();
+      let itm = {};
       //register it with the core
       let id = core.insertItem(itm);
       itm.title = "New view";
@@ -178,7 +178,7 @@ arrangeItem is at 672 or thereabouts.
     };
 
     this.cloneView = function () {
-      let itm = new _item();
+      let itm = {};
       //register it with the core
       let id = core.insertItem(itm);
       itm.title = "New view";
@@ -928,7 +928,7 @@ arrangeItem is at 672 or thereabouts.
     });
 
     this.createItem = function (x, y) {
-      let itm = new _item();
+      let itm = {};
       //register it with the core
       let id = core.insertItem(itm);
       itm.title = "";
@@ -1127,7 +1127,7 @@ arrangeItem is at 672 or thereabouts.
     this.processSettings = function () {
       // add a new view if there is no existing view
       if (this.settings.currentViewName == undefined) {
-        let itm = new _item();
+        let itm = {};
         let id = core.insertItem(itm);
         itm.title = "New View";
         itm.synergist = {

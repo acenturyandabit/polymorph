@@ -12,11 +12,6 @@ core.userData={
 
 */
 
-
-function _item() {
-    return {};
-}
-
 // Items are just native objects now 
 function _core() {
     let me = this;
@@ -129,7 +124,7 @@ function _core() {
         this.baseRect.pos = 0;
         this.baseRect.firstOrSecond = 1;
         //set user's current view
-        me.currentDoc.currentView = view;
+        me.userData.documents[me.currentDocID].currentView = view;
         me.saveUserData();
         for (let i in me.items) {
             me.fire("updateItem", {

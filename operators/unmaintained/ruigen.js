@@ -82,7 +82,7 @@ core.registerOperator("ruigen", function (operator) {
     //Handle item creation, locally
     this.createItem = function () {
         //Create a new item
-        let it = new _item();
+        let it = {};
 
         //register it with the core
         let id = core.insertItem(it);

@@ -234,7 +234,7 @@ core.registerOperator("inspector", {
         if (me.settings.operationMode == 'static') {
             //create if it does not exist
             if (!core.items[staticItem]) {
-                let it = new _item();
+                let it = {};
                 core.items[staticItem] = it;
                 core.fire("updateItem", {
                     sender: this,

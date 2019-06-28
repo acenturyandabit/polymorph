@@ -5,7 +5,7 @@ core.registerOperator("template", {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {corel:guid(7)};
-    core.items[this.settings.corel]=new _item();
+    core.items[this.settings.corel]={};
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
