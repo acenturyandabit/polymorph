@@ -20,9 +20,6 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
   } catch (e) {
     console.log(e);
   }
-  this.pushAll = async function (id, data) {
-    //dont actually do anything here... this is a ctrl s by the user.
-  }
   this.pullAll = async function (data) {
     let id=data;
     this.dialog.querySelector("input[type='checkbox']").checked = true;

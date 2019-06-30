@@ -54,6 +54,14 @@ function _core() {
                 autosave: me.userData.documents[i].autosave
             }
         }
+    }if (me.userData.version=="0.1"){
+        me.userData.version="0.2";
+        for (i in me.userData.documents) {
+            me.userData.documents[i].saveHooks={};
+            for (j in me.userData.documents[i].saveSources){
+                me.userData.documents[i].saveHooks[j]=true;    
+            }
+        }
     }
     me.saveUserData();
 

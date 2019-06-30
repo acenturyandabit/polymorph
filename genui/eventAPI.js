@@ -10,12 +10,14 @@ return false at any point to interrupt the event.
 
 A sample cetch function similar to e.stopPropagation:
 
-function cetchInterrupt(arg,stat){
+function cetchInterrupt(arg,status){
     if (arg.interrupt){
         return false;
     }
     return true; // or don't return at all - anything but an actual false is fine (undefined is ok)
 }
+Then:
+itm.cetch('event',f);
 
 And a corresponding event handler:
 itm.on('event', ()=>{
@@ -51,7 +53,7 @@ function addEventAPI(itm) {
 
                 });
             }
-            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, true)));
+            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, false)));
         })
     };
     itm.on = function (e, f) {

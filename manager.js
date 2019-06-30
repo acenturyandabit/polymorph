@@ -63,7 +63,7 @@ var __manager_profiles = {
     default: {
         files: [
             ["core_dialog", "core.dialog.js"],
-            { r: "base" }
+            { r: "base" },
             ["rect", "rect.js"],
             ["coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },

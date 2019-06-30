@@ -39,6 +39,20 @@ let op=new _option({
 
 
 */
+function isPhone() {
+    var mobiles = [
+        "Android",
+        "iPhone",
+        "Linux armv8l",
+        "Linux armv7l",
+        "Linux aarch64"
+    ];
+    if (mobiles.includes(navigator.platform) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        return true;
+    }
+    return false;
+}
+
 var _option = (function () {
     //snippet that pre-evaluates functions, so that we can quickly load dynmaics
     function iff(it) {
@@ -57,7 +71,7 @@ var _option = (function () {
                 appendedElement.type = "checkbox";
                 appendedElement.addEventListener("input", () => {
                     let actualObject = iff(settings.object);
-                    if (!actualObject) actualObject = {};
+                    if (typeof actualObject !="object") actualObject = {};// this doesnt always work :///
                     if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.checked;
                     if (settings.afterInput)settings.afterInput(appendedElement);
@@ -68,7 +82,7 @@ var _option = (function () {
                 appendedElement.style.display = "block";
                 appendedElement.addEventListener("input", () => {
                     let actualObject = iff(settings.object);
-                    if (!actualObject) actualObject = {};
+                    if (typeof actualObject !="object") actualObject = {};
                     if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.value;
                     if (settings.afterInput)settings.afterInput(appendedElement);
@@ -78,14 +92,14 @@ var _option = (function () {
                 appendedElement = document.createElement("select");
                 appendedElement.addEventListener("changed", () => {
                     let actualObject = iff(settings.object);
-                    if (!actualObject) actualObject = {};
+                    if (typeof actualObject !="object") actualObject = {};
                     if (settings.beforeInput)settings.beforeInput(appendedElement);
                     actualObject[settings["property"]] = appendedElement.value;
                     if (settings.afterInput)settings.afterInput(appendedElement);
                 })
                 break;
         }
-        appendedElement.style.float = "right";
+        if (!isPhone())appendedElement.style.float = "right";
         if (settings.label) {
             let lb = document.createElement("label");
             lb.innerHTML = settings.label;
