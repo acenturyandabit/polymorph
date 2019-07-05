@@ -7,6 +7,7 @@ var __manager_profiles = {
             ["core", "core.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
             ["core_docLoading", "core.docLoading.js"],
+            ["core_view", "core.view.js"],
             ["operator", "operator.js"],
         ]
     },

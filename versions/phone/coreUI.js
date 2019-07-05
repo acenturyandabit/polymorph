@@ -41,55 +41,7 @@ core.on("UIstart", () => {
     document.querySelector("#opop").addEventListener("click", () => {
         core.dialog.register(core.currentOperator);
     })
-
-    let viewDialog = document.createElement('div');
-    viewDialog.classList.add("dialog");
-    viewDialog = dialogManager.checkDialogs(viewDialog)[0];
-    innerDialog = viewDialog.querySelector(".innerDialog");
-    document.body.appendChild(viewDialog); // where root is the document
-    let d = document.createElement("div");
-    d.innerHTML = `
-<h2>View management</h2>
-<select class="views">
-</select>
-    <button class="acvu">Activate view</button>
-    <button class="nvu">New view</button>
-    <button class="clnvu">Clone view</button>
-`;
-    d.querySelector(".acvu").addEventListener("click", () => {
-        core.presentView(d.querySelector(".views").value);
-        core.baseRect.refresh();
-    })
-    d.querySelector(".nvu").addEventListener("click", () => {
-        let newViewName = guid();
-        while (core.currentDoc.views[newViewName]) newViewName = guid();
-        core.currentDoc.views[newViewName] = {};
-        d.querySelector(".views").appendChild(htmlwrap(`<option>${newViewName}</option>`));
-    })
-    d.querySelector(".clnvu").addEventListener("click", () => {
-        let newViewName = guid();
-        while (core.currentDoc.views[newViewName]) newViewName = guid();
-        core.currentDoc.views[newViewName] = JSON.parse(JSON.stringify(core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]));
-        d.querySelector(".views").appendChild(htmlwrap(`<option>${newViewName}</option>`));
-    })
-    innerDialog.appendChild(d);
-
-    document.querySelector(".viewdialog").addEventListener("click", () => {
-        //save the current view
-        core.currentDoc.views[core.userData.documents[core.currentDocID].currentView] = core.baseRect.toSaveData();
-        //open the view dialog
-        let dcd = d.querySelector(".views").children;
-        for (let i = 0; i < dcd.length; i++)dcd[i].remove();
-        for (let i in core.currentDoc.views) {
-            d.querySelector(".views").appendChild(htmlwrap(`<option>${core.currentDoc.views[i].prettyName || i}</option>`));
-        } 
-        core.toggleMenu(false);//hide on direct taps
-        viewDialog.style.display = "block";
-    })
-
-    document.body.appendChild(core.dialog.div);
 });
-
 documentReady(() => {
     document.body.appendChild(htmlwrap(`
         <style>
@@ -117,6 +69,7 @@ documentReady(() => {
                     bottom: 0;
                     overflow: auto;
                     width: 100%;">
+                    <div class="rectspace"></div>
                     <p id="newoperator">Add an operator...</p>
                     </div>
                 </div>
@@ -158,11 +111,10 @@ core.showOperator = function (op) {
 
 
 core.resetView = function () {
-    let c = document.body.querySelector("#oplists").children;
     if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
-    for (let i = 0; i < c.length - 1; i++)c[i].remove();
     core.baseRect = new _rect(core,
-        document.body.querySelector("#oplists"), {});
+        undefined, {});
+    core.baseRect.refresh();
 }
 
 core.on("operatorChanged", function (d) {

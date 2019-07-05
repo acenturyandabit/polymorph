@@ -3,12 +3,12 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     me.container=operator;
     this.settings = {};
 
-    this.rootdiv = document.createElement("div");
+    this.outerDiv = document.createElement("div");
     //Add div HTML here
-    this.rootdiv.innerHTML = ``;
-    this.rootdiv.style.cssText=`width:100%; height: 100%; position:relative`;
-    operator.div.appendChild(this.rootdiv);
-    this.rect=new _rect(core,this.rootdiv,RECT_ORIENTATION_X,1,0);
+    this.outerDiv.innerHTML = ``;
+    this.outerDiv.style.cssText=`width:100%; height: 100%; position:relative`;
+    operator.div.appendChild(this.outerDiv);
+    this.rect=new _rect(core,this,RECT_ORIENTATION_X,1,0);
     //////////////////Handle core item updates//////////////////
 
     this.refresh=function(){

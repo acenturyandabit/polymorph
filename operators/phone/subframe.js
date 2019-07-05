@@ -13,7 +13,8 @@ core.registerOperator("subframe", {targetForward:true, hidden:true},function (op
     //issue: operator may not be tied yet-- in which case, wait.
     setTimeout(()=>{this.container.tab.appendChild(this.rdv)});
     //Add div HTML here
-    this.rect=new _rect(core,this.rdv.querySelector("div"));
+    this.rect=new _rect(core,undefined);
+    this.rdv.querySelector("div").appendChild(this.rect.outerDiv);
     //////////////////Handle core item updates//////////////////
 
     this.refresh=function(){

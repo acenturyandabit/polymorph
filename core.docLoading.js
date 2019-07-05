@@ -105,11 +105,15 @@ core.fromSaveData = function (data) {
     core.currentDoc = data;
     core.items = data.items;
     // create allll the views
+    delete core.baseRects;
+    core.baseRects={};
+    for (let i in core.currentDoc.views){
+        //load up said view
+        core.baseRects[i]=new _rect(core,undefined,core.currentDoc.views[i]);
+    }
     // cry a little when they arent created
-
     if (!core.userData.documents[core.currentDocID].currentView || !core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
     core.presentView(core.userData.documents[core.currentDocID].currentView);
-    core.baseRect.refresh();
     for (let i in core.items) {
         core.standardiseItem(i);
     }

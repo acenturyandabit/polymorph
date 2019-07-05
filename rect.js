@@ -10,28 +10,25 @@ const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 10;
 
+//parent is either undefined or another rect-like object
+//pseudo parents should implement following methods:
+//.core property
+//
+
 function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Putting all the variables here for quick reference.
-    this.parent = parent; // parent is either a DOM element or another rect.
+    this.parent=parent;
     if (typeof XorY != 'object') {
         this.XorY = XorY; // XorY determines whether the split is in the X or the Y direction. 
         this.pos = pos; //if first, the size; otherwise position (and size);
         this.firstOrSecond = firstOrSecond;
     }
     this.core = core;
-    this.isRoot = false;
     this.outerDiv = undefined;
     this.children = [];
     this.split = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will be split into 2 smaller boxes. 
     this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
     let me = this;
-
-    //Determine whether the item is a root item.
-    if (!this.parent.core) {
-        this.isRoot = true;
-    } else {
-        this.parentRect = this.parent;
-    }
 
     // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
@@ -148,7 +145,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     // The actual tabbar.
     this.tabbar = document.createElement("p");
-    this.tabbar.style.cssText = `displaparentElementy:block;margin:0; width:100%;background:white`
+    this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:white`
     this.plus = document.createElement("button");
     this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
     this.plus.innerText = "+";
@@ -210,7 +207,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             if (tp.children[i]==t)contextedOperatorIndex=i;
         }
         if (me.parent && me.parent.constructor.name=="_rect"){
-            //i have a prent, show subframe parent
+            //i have a prent, show subframe parent button
             tabmenu.querySelector(".subframePR").style.display="block";
         }else{
             tabmenu.querySelector(".subframePR").style.display="none";
@@ -349,12 +346,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
     // If parent is body, ensure loaded, so we can create a new rect whenever.
-    if (this.isRoot) {
-        parent.appendChild(me.outerDiv);
-    } else {
-        parent.outerDiv.appendChild(this.outerDiv);
+    //hmm what if we break this
+    if (this.parent) {
+        this.parent.outerDiv.appendChild(this.outerDiv);
     }
-    this.refresh();
     //events
     this.mouseMoveHandler = function (e) {
         let inOrOut = [false, false, false, false];
@@ -367,7 +362,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
         //Parsing the event
 
-        if (!me.isRoot) {
+        if (me.parent) {
             //resizing along XorY is allowed.
         }
         let dirn = -1;
@@ -530,7 +525,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
     this.fromSaveData = function (obj) {
         //children first!
-        if (!obj) return;
+        if (!obj || !Object.keys(obj).length) return;
         obj=transcopy(obj,{remap:{
             "XorY":"x",
             "firstOrSecond":"f",
@@ -610,7 +605,6 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.tieOperator(new me.core.operator("opSelect", me));
             this.switchOperator(0);
         }
-        this.refresh();
     }
     if (typeof XorY == 'object') this.fromSaveData(XorY);
 

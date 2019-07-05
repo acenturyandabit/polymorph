@@ -54,12 +54,12 @@ function _core() {
                 autosave: me.userData.documents[i].autosave
             }
         }
-    }if (me.userData.version=="0.1"){
-        me.userData.version="0.2";
+    } if (me.userData.version == "0.1") {
+        me.userData.version = "0.2";
         for (i in me.userData.documents) {
-            me.userData.documents[i].saveHooks={};
-            for (j in me.userData.documents[i].saveSources){
-                me.userData.documents[i].saveHooks[j]=true;    
+            me.userData.documents[i].saveHooks = {};
+            for (j in me.userData.documents[i].saveSources) {
+                me.userData.documents[i].saveHooks[j] = true;
             }
         }
     }
@@ -121,26 +121,6 @@ function _core() {
     let tc = new capacitor(1000, 10, () => {
         core.fire("updateDoc");
     })
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //View level functions
-
-    this.presentView = function (view) {
-        //reset and present a view
-        me.resetView();
-        this.baseRect.fromSaveData(me.currentDoc.views[view]);
-        this.baseRect.pos = 0;
-        this.baseRect.firstOrSecond = 1;
-        //set user's current view
-        me.userData.documents[me.currentDocID].currentView = view;
-        me.saveUserData();
-        for (let i in me.items) {
-            me.fire("updateItem", {
-                id: i
-            });
-        }
-        me.unsaved = false;
-    };
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Operator conveinence functions
@@ -222,57 +202,58 @@ function _core() {
         return nuid;
     }
 
-    this.standardiseItem=function(itm){
+    this.standardiseItem = function (itm) {
         //Clean items to follow established standards here. Ideally dont do too much but sometimes necessary.
-        if (core.items[itm].links){
+        if (core.items[itm].links) {
             //bidirectional links upgrade
-            if (!core.items[itm].from)core.items[itm].from={};
-            if (!core.items[itm].to)core.items[itm].to={};
-            for (let i in core.items[itm].links){
-                if (!core.items[i].from)core.items[i].from={};
-                if (!core.items[i].to)core.items[i].to={};
-                core.items[i].from[itm]=true;
-                core.items[i].to[itm]=true;
-                core.items[itm].from[i]=true;
-                core.items[itm].to[i]=true;
+            if (!core.items[itm].from) core.items[itm].from = {};
+            if (!core.items[itm].to) core.items[itm].to = {};
+            for (let i in core.items[itm].links) {
+                if (!core.items[i].from) core.items[i].from = {};
+                if (!core.items[i].to) core.items[i].to = {};
+                core.items[i].from[itm] = true;
+                core.items[i].to[itm] = true;
+                core.items[itm].from[i] = true;
+                core.items[itm].to[i] = true;
             }
             delete core.items[itm].links;
         }
     }
 
-    this.isLinked=function(A,B){
-        let ret=0; //unlinked
-        if (core.items[A].to && core.items[B].from && (core.items[A].to[B] || core.items[B].from[A])){
+    this.isLinked = function (A, B) {
+        me.baseRect.refresh();
+        let ret = 0; //unlinked
+        if (core.items[A].to && core.items[B].from && (core.items[A].to[B] || core.items[B].from[A])) {
             //make sure to enforce both sides of link
-            core.items[A].to[B]=core.items[A].to[B]||true;
-            core.items[B].from[A]=core.items[B].from[A]||true;
-            ret=ret+1;// 1: there is a link FROM A to B
+            core.items[A].to[B] = core.items[A].to[B] || true;
+            core.items[B].from[A] = core.items[B].from[A] || true;
+            ret = ret + 1;// 1: there is a link FROM A to B
         }
-        if (core.items[A].from && core.items[B].to && (core.items[A].from[B] || core.items[B].to[A])){
+        if (core.items[A].from && core.items[B].to && (core.items[A].from[B] || core.items[B].to[A])) {
             //make sure to enforce both sides of link
-            core.items[A].from[B]=core.items[A].from[B]||true;
-            core.items[B].to[A]=core.items[B].to[A]||true;
-            ret=ret+2;// 2: there is a link FROM B to A
+            core.items[A].from[B] = core.items[A].from[B] || true;
+            core.items[B].to[A] = core.items[B].to[A] || true;
+            ret = ret + 2;// 2: there is a link FROM B to A
         }
         return ret;
     }
 
-    this.link=function(A,B,undirected=false){
-        core.items[A].to=core.items[A].to||{};
-        core.items[B].from=core.items[B].from||{};
-        core.items[A].to[B]=core.items[A].to[B]||true;
-        core.items[B].from[A]=core.items[B].from[A]||true;
-        if (undirected){
-            this.link(B,A);
+    this.link = function (A, B, undirected = false) {
+        core.items[A].to = core.items[A].to || {};
+        core.items[B].from = core.items[B].from || {};
+        core.items[A].to[B] = core.items[A].to[B] || true;
+        core.items[B].from[A] = core.items[B].from[A] || true;
+        if (undirected) {
+            this.link(B, A);
         }
     }
-    this.unlink=function(A,B,undirected=false){
-        core.items[A].to=core.items[A].to||{};
-        core.items[B].from=core.items[B].from||{};
+    this.unlink = function (A, B, undirected = false) {
+        core.items[A].to = core.items[A].to || {};
+        core.items[B].from = core.items[B].from || {};
         delete core.items[A].to[B];
         delete core.items[B].from[A];
-        if (undirected){
-            this.unlink(B,A);
+        if (undirected) {
+            this.unlink(B, A);
         }
     }
 
@@ -285,71 +266,6 @@ function _core() {
                 me.currentDoc.displayName + " - Polymorph";
         });
     })
-    
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Views dialog
-    /*
-        press views dialog to open views dialog
-        list all available views
-        make add new view button
-        fix firebase integration
-        change save structure
-        */
-    /*
-        scriptassert([
-            ["dialog", "genui/dialog.js"]
-        ], () => {
-            let viewDialog = document.createElement("div");
-            viewDialog.classList.add("dialog");
-            viewDialog = dialogManager.checkDialogs(viewDialog)[0];
-            let viewInnerDialog = document.createElement("div");
-            viewDialog.querySelector(".innerDialog").appendChild(viewInnerDialog);
-            viewInnerDialog.innerHTML = `
-            <h1>Choose a view to load!</h1>
-            <div class="buttons" style=display:flex; flex-direction:column;">
-            </div>
-            <h2> Or, make a new view...</h2>
-            <input class="newView"><button class="nb">Make new view</button>
-            `;
-            documentReady(() => {
-                document.body.appendChild(viewDialog);
-                document.querySelector(".viewdialog").addEventListener("click", () => {
-                    //add all current views
-                    viewDialog.querySelector(".buttons").innerHTML = "";
-                    for (let i in me.views) {
-                        let b = document.createElement("button");
-                        b.innerHTML = i;
-                        viewDialog.querySelector(".buttons").appendChild(b);
-                    }
-                    viewDialog.style.display = "block";
-                });
-            });
-    
-            //existing view buttons
-            viewInnerDialog
-                .querySelector(".buttons")
-                .addEventListener("click", function (e) {
-                    if (e.target.matches("button")) {
-                        me.presentView(e.target.innerHTML);
-                        viewDialog.style.display = "none";
-                        me.currentDoc.currentView = e.target.innerHTML;
-                        me.saveUserData();
-                    }
-                });
-            //new view buttons
-            viewInnerDialog.querySelector(".nb").addEventListener("click", function (e) {
-                if (viewInnerDialog.querySelector(".newView").value.length) {
-                    me.views[viewInnerDialog.querySelector(".newView").value] = {};
-                    me.presentView(viewInnerDialog.querySelector(".newView").value);
-                    me.currentDoc.currentView = viewInnerDialog.querySelector(
-                        ".newView"
-                    ).value;
-                    me.saveUserData();
-                    viewDialog.style.display = "none";
-                }
-            });
-        });
-    */
     ///////////////////////////////////////////////////////////////////////////////////////
     // targeter
     this.targeter = undefined;
@@ -401,23 +317,15 @@ function _core() {
 
     //A shared space for operators to access
     this.shared = {};
-    me.resetView = function () {
-        document.body.querySelector(".rectspace").innerHTML = "";
-        me.baseRect = new _rect(me,
-            document.body.querySelector(".rectspace"),
-            RECT_ORIENTATION_X,
-            0,
-            1);
-    }
-    this.resetDocument=function() {
-        me.documentIsClean=true;
+    this.resetDocument = function () {
+        me.documentIsClean = true;
         me.items = {};
         me.resetView();
         me.baseRect.refresh();
     }
 
     //Merging
-    me.tryMerge=function(){
+    me.tryMerge = function () {
         //cry for now
     }
 }

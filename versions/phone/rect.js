@@ -2,11 +2,12 @@ function _rect(core, parent, data) {
     //Putting all the variables here for quick reference.
     this.parent = parent; // parent is either a DOM element or another rect. The DOM element is the one in the sidebar that contains the label for the operators.
     this.core = core; // allows us to load even if there is no other stuff around.
-    this.isRoot = !((this.parent.intlobj) && true); // if parent is not a rect, then this is a root rect.
+    this.isRoot = !((this.parent) && true); // if parent is not a rect, then this is a root rect.
     this.children = [];
     let me = this;
     //manage the internal object if we are importing from e.g. a desktop file
     this.intlobj = {};
+    this.outerDiv=document.createElement("div");
 
     this.split = function () {
         // if i have children, delegate the task to my children
@@ -40,7 +41,7 @@ function _rect(core, parent, data) {
                 let d = document.createElement('div');
                 d.innerHTML = `<p><span>${op.tabbarName}</span><button class="remove">X</button></p>`
                 // add the name to the list.
-                me.parent.insertBefore(d, me.parent.children[me.parent.children.length - 1]);
+                me.outerDiv.insertBefore(d, me.outerDiv.children[me.outerDiv.children.length - 1]);
                 d.addEventListener("click", (e) => {
                     if (d.children[0].contains(e.target)) {
                         if (e.target.matches("button.remove")){
