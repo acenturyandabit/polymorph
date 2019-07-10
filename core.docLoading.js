@@ -37,7 +37,7 @@ core.rehookAll = function (id) {
         if (core.saveSources[i].unhook) core.saveSources[i].unhook();
     }
     for (let i in core.userData.documents[id].saveHooks) {
-        if (core.saveSources[i] && core.saveSources[i].hook) core.saveSources[i].hook();
+        if (core.saveSources[i] && core.saveSources[i].hook) core.saveSources[i].hook(core.userData.documents[core.currentDocID].saveSources[i]);
     }
 }
 
@@ -104,12 +104,13 @@ core.fromSaveData = function (data) {
     core.resetDocument();
     core.currentDoc = data;
     core.items = data.items;
+    core.documentIsClean = false;
     // create allll the views
     delete core.baseRects;
-    core.baseRects={};
-    for (let i in core.currentDoc.views){
+    core.baseRects = {};
+    for (let i in core.currentDoc.views) {
         //load up said view
-        core.baseRects[i]=new _rect(core,undefined,core.currentDoc.views[i]);
+        core.baseRects[i] = new _rect(core, undefined, core.currentDoc.views[i]);
     }
     // cry a little when they arent created
     if (!core.userData.documents[core.currentDocID].currentView || !core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
@@ -242,7 +243,7 @@ core.userSave = function () {
         document.body.appendChild(loadDialog)
         document.querySelector(".saveSources").addEventListener("click", () => {
             for (let i in core.saveSources)
-                if (core.saveSources[i].readyDialog) core.saveSources[i].readyDialog();
+                if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();
             for (let i in core.userData.documents[core.currentDocID].saveHooks) {
                 try { core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true; }
                 catch (e) {
@@ -259,12 +260,13 @@ core.loadInnerDialog.addEventListener("input", (e) => {
     if (e.target.matches("[data-role='tsync']")) {
         let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
         if (e.target.checked) {
-            core.userData.documents[core.currentDocID].saveSources[csource] = core.currentDocID;
-            if (core.saveSources[csource].hook) core.saveSources[csource].hook(core.currentDocID);
+            if (!core.userData.documents[core.currentDocID].saveSources[csource]) core.userData.documents[core.currentDocID].saveSources[csource] = core.currentDocID;
+            if (core.saveSources[csource].hook) core.saveSources[csource].hook(core.userData.documents[core.currentDocID].saveSources[csource]);
         } else {
-            if (core.saveSources[csource].unhook) core.saveSources[csource].unhook(core.currentDocID);
+            if (core.saveSources[csource].unhook) core.saveSources[csource].unhook(core.userData.documents[core.currentDocID].saveSources[csource]);
             delete core.userData.documents[core.currentDocID].saveSources[csource];
         }
+        core.userData.documents[core.currentDocID].saveHooks[csource] = e.target.checked;
         core.saveUserData();
     }
 })

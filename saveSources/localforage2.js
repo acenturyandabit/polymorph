@@ -15,7 +15,7 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
     <input class="svid" placeholder="Save ID">
     </span>
     `;
-    this.readyDialog=function(){
+    this.showDialog=function(){
         this.dialog.querySelector(".svid").value=core.userData.documents[core.currentDocID].saveSources['lf'];
     }
     this.hook = async function (id) { 

@@ -324,7 +324,8 @@ core.registerOperator("inspector", {
             object: me.settings,
             property: "dataEntry",
             label: "Enable data entry",
-            afterInput: (i) => {
+            afterInput: (e) => {
+                let i=e.currentTarget;
                 if (i.checked) {
                     me.settings.showNonexistent = true;
                     options.showNonexistent.load();

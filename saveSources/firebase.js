@@ -1,7 +1,7 @@
 core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
   let me = this;
-  this.prettyName="Firebase (Real time collaboration)";
-  this.createable=true;
+  this.prettyName = "Firebase (Real time collaboration)";
+  this.createable = true;
   //initialise firebase
   me.unsub = {};
   try {
@@ -21,8 +21,7 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
     console.log(e);
   }
   this.pullAll = async function (data) {
-    let id=data;
-    this.dialog.querySelector("input[type='checkbox']").checked = true;
+    let id = data;
     if (!this.db) return;
     let root = this.db
       .collection("polymorph")
@@ -43,16 +42,68 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
     //meta properties
     snapshot = await root.get();
     Object.assign(result, snapshot.data());
+    me.pulledAll = true;
     return result;
   }
 
+  async function internalPushAll(root){
+    for (let i in core.items) {
+      root.collection('items').doc(i).set(JSON.parse(JSON.stringify(core.items[i])));
+    }
+    for (let i in core.baseRects){
+      root.collection('views').doc(i).set(JSON.parse(JSON.stringify(core.baseRects[i].toSaveData())));
+    }
+    let copyobj = Object.assign({}, core.currentDoc);
+    delete copyobj.items;
+    delete copyobj.views;
+    root.set(copyobj);
+    
+  }
+
   this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
-    this.dialog.querySelector("input[type='checkbox']").checked = true;
-    this.dialog.querySelector("input[placeholder='Save ID']").value=id;
     let root = this.db
       .collection("polymorph")
       .doc(id);
-    // remote
+    if (core.documentIsClean) {
+      //if the document was not loaded, also pull it.
+      me.pullAll(id).then((r) => {
+        core.fromSaveData(r);
+        me.hook(id);
+      })
+      return;
+    } else {
+      //did we pullall in the beginning?
+      if (me.pulledAll) {
+        me.pulledAll = false;
+        //carry on
+      } else {
+        let result = await root.get();
+        if (result.exists) {
+          //what does the user want? 
+          if (confirm("The local document may conflict with the remote document. Do we pull the remote document anyway?")) {
+            me.pullAll(id).then((r) => {
+              core.fromSaveData(r);
+              me.hook(id);
+            })
+            return;
+          } else {
+            if (confirm("Overwrite the remote document?")) {
+              //force push everything
+              await internalPushAll(root);
+              //then continue hooking
+            } else {
+              //do nothing
+              return;
+            }
+          }
+        }else{
+          //assume the user wants to push everything
+          await internalPushAll(root);
+        }
+      }
+    }
+
+    //remote
     //items
     me.unsub['items'] = root.collection("items").onSnapshot(shot => {
       shot.docChanges().forEach(change => {
@@ -117,11 +168,11 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
       }
     });
     //views
-    me.viewcapacitor = new capacitor(500, 30, () => {
-      root.collection('views').doc(core.userData.documents[core.currentDocID].currentView).set(JSON.parse(JSON.stringify(core.baseRect.toSaveData())));
+    me.viewcapacitor = new capacitor(500, 30, (i) => {
+      root.collection('views').doc(i).set(JSON.parse(JSON.stringify(core.baseRects[i].toSaveData())));
     })
     core.on("updateView", (d) => {
-      me.viewcapacitor.submit();
+      me.viewcapacitor.submit(core.userData.documents[core.currentDocID].currentView);
     });
     //meta
     core.on("updateDoc", () => {
@@ -133,43 +184,30 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
         root.set(copyobj);
       }
     });
-    //If forced trigger, fire initial push sequence.
-    //keep as internal state because future extensions to hook api may cause issues.
-    if (me.forcedTrigger){
-      for (let i in core.items){
-        me.itemcapacitor.submit(i);
-      }
-      me.viewcapacitor.submit();
-      let copyobj = Object.assign({}, core.currentDoc);
-      delete copyobj.items;
-      delete copyobj.views;
-      root.set(copyobj);
-      me.forcedTrigger=false;
-    }
-    
   }
   this.unhook = async function (id) { // just comment out if you can't subscribe to live updates.
-    this.dialog.querySelector("input[type='checkbox']").checked = false;
     for (i in me.unsub) {
       me.unsub[i]();
     }
   }
 
   this.dialog = document.createElement("div");
-  this.dialog.innerHTML = `
-    <span>
-    <input placeholder="Save ID">
-    </span>
-    `;
-  this.dialog.querySelector("input[type='checkbox']").addEventListener("change", (e) => {
-    if (e.target.checked) {
-      this.forcedTrigger=true;
-      //change the document's URL to be a shareable one.
-      window.history.pushState("","","?doc="+this.dialog.querySelector("input[placeholder='Save ID']").value+"&src=fb");
-      this.hook(this.dialog.querySelector("input[placeholder='Save ID']").value);
-    } else {
-      this.unhook();
+  let generatedURL = htmlwrap(`<input placeholder="URL for sharing"></input>`);
+  me.addrop = new _option({
+    div: this.dialog,
+    type: "text",
+    object: () => {
+      return core.userData.documents[core.currentDocID].saveSources
+    },
+    property: "fb",
+    label: "Document ID",
+    afterInput: (e) => {
+      generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
     }
-
-  })
+  });
+  this.dialog.appendChild(generatedURL);
+  this.showDialog = function () {
+    me.addrop.load();
+    if (core.userData.documents[core.currentDocID].saveSources.fb) generatedURL.value = location.origin + location.pathname + `?doc=${core.userData.documents[core.currentDocID].saveSources.fb}&src=fb`;
+  }
 })

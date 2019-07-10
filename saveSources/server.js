@@ -78,7 +78,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         property: "loadFrom",
         label: "Full server load address (include document name)"
     });
-    this.readyDialog = function () {
+    this.showDialog = function () {
         if (!core.userData.documents[core.currentDocID].saveSources.srv || typeof core.userData.documents[core.currentDocID].saveSources.srv!="object"){
             core.userData.documents[core.currentDocID].saveSources.srv={};
         }

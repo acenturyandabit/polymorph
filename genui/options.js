@@ -69,33 +69,33 @@ var _option = (function () {
             case "bool":
                 appendedElement = document.createElement("input");
                 appendedElement.type = "checkbox";
-                appendedElement.addEventListener("input", () => {
+                appendedElement.addEventListener("input", (e) => {
                     let actualObject = iff(settings.object);
                     if (typeof actualObject !="object") actualObject = {};// this doesnt always work :///
-                    if (settings.beforeInput)settings.beforeInput(appendedElement);
+                    if (settings.beforeInput)settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.checked;
-                    if (settings.afterInput)settings.afterInput(appendedElement);
+                    if (settings.afterInput)settings.afterInput(e);
                 })
                 break;
             case "text":
                 appendedElement = document.createElement("input");
                 appendedElement.style.display = "block";
-                appendedElement.addEventListener("input", () => {
+                appendedElement.addEventListener("input", (e) => {
                     let actualObject = iff(settings.object);
                     if (typeof actualObject !="object") actualObject = {};
-                    if (settings.beforeInput)settings.beforeInput(appendedElement);
+                    if (settings.beforeInput)settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.value;
-                    if (settings.afterInput)settings.afterInput(appendedElement);
+                    if (settings.afterInput)settings.afterInput(e);
                 })
                 break;
             case "select":
                 appendedElement = document.createElement("select");
-                appendedElement.addEventListener("changed", () => {
+                appendedElement.addEventListener("changed", (e) => {
                     let actualObject = iff(settings.object);
                     if (typeof actualObject !="object") actualObject = {};
-                    if (settings.beforeInput)settings.beforeInput(appendedElement);
+                    if (settings.beforeInput)settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.value;
-                    if (settings.afterInput)settings.afterInput(appendedElement);
+                    if (settings.afterInput)settings.afterInput(e);
                 })
                 break;
         }
@@ -167,7 +167,9 @@ var _option = (function () {
             type: string; one of various types of options.
             validator: (data)=>{}; return true or false for validating an option. If left uninitialised, any value will be accepted.
         }
-    ]
+    ],
+    beforeInput:(e)=>{},
+    afterInput:(e)=>{}
     access:{
         read: (id,callback,data)=>{
             //use some sort of saving system to read a key 'id'. Pass the value of 'id' as the first argument of continue.
