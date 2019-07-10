@@ -159,7 +159,6 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
   this.dialog.innerHTML = `
     <span>
     <input placeholder="Save ID">
-    <label>Enable sharing <input type="checkbox"></label>
     </span>
     `;
   this.dialog.querySelector("input[type='checkbox']").addEventListener("change", (e) => {

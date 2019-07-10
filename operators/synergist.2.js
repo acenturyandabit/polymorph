@@ -108,8 +108,8 @@ core.registerOperator("itemcluster2", {
     })
 
     this.rootdiv.querySelector(".tray").addEventListener("input", (e) => {
-        core.items[e.target.parentElement.dataset.id].title=e.target.value;
-        core.fire('updateItem',{sender:me,id:e.target.parentElement.dataset.id});
+        core.items[e.target.parentElement.dataset.id].title = e.target.value;
+        core.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
     me.mapPageToSvgCoords = function (pageX, pageY, vb) {
@@ -883,12 +883,16 @@ core.registerOperator("itemcluster2", {
                 return;
             }
             l.show();
-            l.plot(
-                me.svg.select(`[data-id='${start}']`).first().cx(),
-                me.svg.select(`[data-id='${start}']`).first().cy(),
-                me.svg.select(`[data-id='${end}']`).first().cx(),
-                me.svg.select(`[data-id='${end}']`).first().cy()
-            );
+            try {
+                l.plot(
+                    me.svg.select(`[data-id='${start}']`).first().cx(),
+                    me.svg.select(`[data-id='${start}']`).first().cy(),
+                    me.svg.select(`[data-id='${end}']`).first().cx(),
+                    me.svg.select(`[data-id='${end}']`).first().cy()
+                );
+            } catch (e) {
+                l.hide();
+            }
             try {
                 l.back();
             } catch (e) { }
@@ -1024,7 +1028,7 @@ core.registerOperator("itemcluster2", {
             me.possibleResize = true;
         }
         if (me.fromTray) {
-            let cid=me.fromTray;
+            let cid = me.fromTray;
             //make us drag the item
             me.removeFromTray(cid);
             if (!core.items[cid].itemcluster) core.items[cid].itemcluster = {};
@@ -1043,7 +1047,7 @@ core.registerOperator("itemcluster2", {
             me.dragging = true;
             //set a flag so we dont instantly return it to the tray
             me.stillInTray = true;
-            me.fromTray=false;
+            me.fromTray = false;
         }
         if (me.dragging) {
             //dragging an item
@@ -1161,7 +1165,7 @@ core.registerOperator("itemcluster2", {
     });
 
     me.handleMoveEnd = function (e, touch) {
-        me.fromTray=false;
+        me.fromTray = false;
         if (me.globalDrag) {
             setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;

@@ -575,7 +575,15 @@ core.registerOperator("itemList", function (operator) {
                 me.focusOperatorID = me.settings['focusOperatorID'];
             })
         }
+    })
 
+    //when clicking a sort radio button, turn off implict ordering
+    me.proplist = me.dialogDiv.querySelector(".proplist");
+    me.proplist.addEventListener("input",(e)=>{
+        if (e.target.matches("[name='sortie']")){
+            me.settings.implicitOrder=false;
+            options.implicitOrder.load();
+        }
     })
 
     this.dialogUpdateSettings = function () {
@@ -609,8 +617,6 @@ core.registerOperator("itemList", function (operator) {
             };
         }
     })
-
-    me.proplist = me.dialogDiv.querySelector(".proplist");
 
     //Handle select's in proplist
     me.proplist.addEventListener('change', function (e) {
