@@ -32,6 +32,9 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
                     //if (fail) fail();
                 }
             };
+            xmlhttp.onerror=function(){
+                reject("An error occured...");
+            }
         });
         xmlhttp.open("GET", id.loadFrom, true);
         xmlhttp.send();

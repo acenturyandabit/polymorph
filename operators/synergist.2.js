@@ -243,10 +243,8 @@ core.registerOperator("itemcluster2", {
             }
             //v = itemcluster.views[i].name;
         }
-        let aa = document.createElement("a");
-        aa.dataset.isnew = "yes";
-        aa.innerHTML = `<em>Add another view</em>`;
-        me.viewDropdown.appendChild(aa);
+        me.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Add another view</em></a>`));
+        me.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Create view from filter</em></a>`));
         me.viewDropdown.style.display = "block";
     });
     this.rootdiv.addEventListener("mousedown", function (e) {

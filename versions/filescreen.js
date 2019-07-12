@@ -2,6 +2,7 @@
 core.filescreen = new _filescreen({
     headprompt: htmlwrap(`
     <h1>Polymorph: Effective Organisation</h1>
+    <p style="margin:0">v 1.1</p>
     <div id="__fsnew">
         <h2>Creat a new document</h2>
         <label>Template<select class="tmplt"></select></label><br>
@@ -62,4 +63,5 @@ core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click", () => {
     core.fromSaveData(d);
     core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.currentDoc.displayName);
     core.filescreen.baseDiv.style.display="none";
+    document.querySelector(".wall").style.display = "none";
 })

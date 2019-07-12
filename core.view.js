@@ -23,11 +23,6 @@ core.presentView = function (view) {
     core.baseRect.refresh();
     core.userData.documents[core.currentDocID].currentView = view;
     core.saveUserData();
-    for (let i in core.items) {
-        core.fire("updateItem", {
-            id: i
-        });
-    }
     core.unsaved = false;
 };
 
@@ -62,6 +57,13 @@ core.on("UIstart", () => {
 `;
     d.querySelector(".acvu").addEventListener("click", () => {
         core.presentView(d.querySelector(".views").value);
+        core.isSaving=true;//prevent autosave from firing repeatedly
+        for (let i in core.items) {
+            core.fire("updateItem", {
+                id: i
+            });
+        }
+        core.isSaving=false;
         core.baseRect.refresh();
     })
     d.querySelector(".nvu").addEventListener("click", () => {
