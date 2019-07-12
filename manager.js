@@ -24,7 +24,9 @@ var __manager_profiles = {
             ["sorter", "operators/sorter.js"],
             ["httree", "operators/httree.js"],
             ["chat", "operators/chat.js"],
-            ["synergist.2", "operators/synergist.2.js"]
+            ["synergist.2", "operators/synergist.2.js"],
+            ["roundshow", "operators/know/roundshow.js"],
+            ["tester", "operators/know/tester.js"]
         ]
     },
     saveSources: {
@@ -48,20 +50,6 @@ var __manager_profiles = {
             { r: "saveSources" },
         ]
     },
-    know:{
-        files: [
-            ["core_dialog", "core.dialog.js"],
-            { r: "base" },
-            ["rect", "rect.js"],
-            ["opSelect", "operators/opSelect.js"],
-            ["coreUI", "versions/desktop/coreUI.js"],
-            ["subframe", "operators/subframe.js"],
-            ["roundshow", "operators/know/roundshow.js"],
-            ["tester", "operators/know/tester.js"],
-            { r: "saveSources" },
-        ]
-    },
-
     default: {
         files: [
             ["core_dialog", "core.dialog.js"],

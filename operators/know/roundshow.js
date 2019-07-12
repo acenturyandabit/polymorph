@@ -185,11 +185,12 @@ core.registerOperator("roundshow", {
         }
         //add some click handlers
         me.rootdiv.querySelector(".svg").addEventListener("click", (e) => {
-            if (e.target.dataset.item) {
+            if (e.target.parentElement.dataset.item || e.target.dataset.item){
+                let currentItem=e.target.dataset.item || e.target.parentElement.dataset.item;
                 //set the centre item so we can go back up the tree
                 me.centreItem.data('return', me.settings.currentRoot);
                 //focus it
-                core.fire("focus", { id: e.target.dataset.item });
+                core.fire("focus", { id: currentItem });
             }
         })
         if (me.storedTree) me.renderTree(me.storedTree);
