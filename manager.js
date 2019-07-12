@@ -50,6 +50,7 @@ var __manager_profiles = {
     },
     know:{
         files: [
+            ["core_dialog", "core.dialog.js"],
             { r: "base" },
             ["rect", "rect.js"],
             ["opSelect", "operators/opSelect.js"],

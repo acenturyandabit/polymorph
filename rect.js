@@ -17,7 +17,7 @@ const RECT_BORDER_WIDTH = 10;
 
 function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Putting all the variables here for quick reference.
-    this.parent=parent;
+    this.parent = parent;
     if (typeof XorY != 'object') {
         this.XorY = XorY; // XorY determines whether the split is in the X or the Y direction. 
         this.pos = pos; //if first, the size; otherwise position (and size);
@@ -87,28 +87,28 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
 
     //Function for adding an operator to this rect. Operator must already exist.
-    this.tieOperator = function (operator,index) {
-        if (!operator){
+    this.tieOperator = function (operator, index) {
+        if (!operator) {
             console.log("Ack!");
             return;
         }
         if (!this.operators) this.operators = [];
         if (!this.operators.includes(operator)) {
-            if (index==undefined)this.operators.push(operator);
-            else this.operators[index]=operator;
+            if (index == undefined) this.operators.push(operator);
+            else this.operators[index] = operator;
             let ts;
             let innrd;
-            if (index==undefined){
+            if (index == undefined) {
                 this.tabspans.push(this.createTypeName());
-                ts=this.tabspans[this.tabspans.length - 1];
+                ts = this.tabspans[this.tabspans.length - 1];
                 this.tabbar.insertBefore(ts, this.plus);
                 //Create a tab for it
                 this.innerDivs.push(this.createInnerDiv());
-                innrd=this.innerDivs[this.innerDivs.length - 1];
+                innrd = this.innerDivs[this.innerDivs.length - 1];
                 this.outerDiv.appendChild(innrd);
-            }else{
-                ts=this.tabspans[index];
-                innrd=this.innerDivs[index];
+            } else {
+                ts = this.tabspans[index];
+                innrd = this.innerDivs[index];
                 innrd.children[0].remove();
             }
             //Create a button for it
@@ -160,7 +160,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     //Delegated operator switching
     this.tabbar.addEventListener("click", (e) => {
         //pass direct clicks so we don't switch to blank operators
-        if (e.target==this.tabbar)return;
+        if (e.target == this.tabbar) return;
         if (!e.target.previousSibling) {
             let ptg = e.target;
             if (ptg.parentElement.tagName.toLowerCase() == 'span') ptg = ptg.parentElement;
@@ -190,81 +190,81 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.outerDiv.appendChild(this.tabbar);
     let tabmenu;
     //Delegated context menu click on tabs
-    let c=new _contextMenuManager(this.outerDiv);
-    let contextedOperatorIndex=0;
-    function tabfilter(e){
-        contextedOperatorIndex=-1;
-        let t= e.target;
-        while (t!=this.tabbar){
-            if (t.tagName=="SPAN"){
+    let c = new _contextMenuManager(this.outerDiv);
+    let contextedOperatorIndex = 0;
+    function tabfilter(e) {
+        contextedOperatorIndex = -1;
+        let t = e.target;
+        while (t != this.tabbar) {
+            if (t.tagName == "SPAN") {
                 break;
-            }else{
-                t=t.parentElement;
+            } else {
+                t = t.parentElement;
             }
         }
-        let tp=t.parentElement;
-        for (let i=0;i<tp.children.length;i++){
-            if (tp.children[i]==t)contextedOperatorIndex=i;
+        let tp = t.parentElement;
+        for (let i = 0; i < tp.children.length; i++) {
+            if (tp.children[i] == t) contextedOperatorIndex = i;
         }
-        if (me.parent && me.parent.constructor.name=="_rect"){
+        if (me.parent && me.parent.constructor.name == "_rect") {
             //i have a prent, show subframe parent button
-            tabmenu.querySelector(".subframePR").style.display="block";
-        }else{
-            tabmenu.querySelector(".subframePR").style.display="none";
+            tabmenu.querySelector(".subframePR").style.display = "block";
+        } else {
+            tabmenu.querySelector(".subframePR").style.display = "none";
         }
         return true;
     }
-    tabmenu=c.registerContextMenu(`
+    tabmenu = c.registerContextMenu(`
     <li class="subframe">Subframe this</li>
     <li class="subframePR">Subframe parent rect</li>
     <li class="cpfr">Copy frame settings</li>
-    <li class="psfr">Paste frame settings</li>`,this.tabbar,undefined,tabfilter);
-    tabmenu.querySelector(".subframePR").addEventListener("click",()=>{
+    <li class="psfr">Paste frame settings</li>`, this.tabbar, undefined, tabfilter);
+    tabmenu.querySelector(".subframePR").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf=(new core.operator("subframe",this.parent));
-        let pcp=new _rect(core,sf.baseOperator.rootdiv,RECT_ORIENTATION_X,1,0);
-        sf.baseOperator.rect=pcp;
-        let oldParent=this.parent;
-        pcp.children=this.parent.children;
-        pcp.outerDiv.children[pcp.outerDiv.children.length-1].remove();//remove rect, just to clean up
+        let sf = (new core.operator("subframe", this.parent));
+        let pcp = new _rect(core, sf.baseOperator.rootdiv, RECT_ORIENTATION_X, 1, 0);
+        sf.baseOperator.rect = pcp;
+        let oldParent = this.parent;
+        pcp.children = this.parent.children;
+        pcp.outerDiv.children[pcp.outerDiv.children.length - 1].remove();//remove rect, just to clean up
         pcp.outerDiv.appendChild(pcp.children[0].outerDiv);
         pcp.outerDiv.appendChild(pcp.children[1].outerDiv);
-        pcp.children[0].parent=pcp;
-        pcp.children[1].parent=pcp;
-        oldParent.children=[];
+        pcp.children[0].parent = pcp;
+        pcp.children[1].parent = pcp;
+        oldParent.children = [];
         oldParent.innerDivs = [];
         oldParent.tabspans = [];
         oldParent.tieOperator(sf);
-        oldParent.innerDivs[0].style.display="block";
+        oldParent.innerDivs[0].style.display = "block";
         oldParent.refresh();
         oldParent.refresh();// could probably be more efficient than calling resize twice...
-        core.fire("updateView",{sender:me});
-        tabmenu.style.display="none";
+        core.fire("updateView", { sender: me });
+        tabmenu.style.display = "none";
     })
-    tabmenu.querySelector(".subframe").addEventListener("click",()=>{
+    tabmenu.querySelector(".subframe").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf=(new core.operator("subframe",this));
-        let oop=this.operators[contextedOperatorIndex];
-        sf.tabbarName=oop.tabbarName;
-        this.tieOperator(sf,contextedOperatorIndex);
-        sf.baseOperator.rect.tieOperator(oop,0);
-        core.fire("updateView",{sender:me});
-        tabmenu.style.display="none";
+        let sf = (new core.operator("subframe", this));
+        let oop = this.operators[contextedOperatorIndex];
+        sf.tabbarName = oop.tabbarName;
+        this.tieOperator(sf, contextedOperatorIndex);
+        sf.baseOperator.rect.tieOperator(oop, 0);
+        core.fire("updateView", { sender: me });
+        tabmenu.style.display = "none";
     })
 
-    tabmenu.querySelector(".cpfr").addEventListener("click",()=>{
+    tabmenu.querySelector(".cpfr").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        core.copiedFrameData=this.operators[contextedOperatorIndex].toSaveData();
-        core.fire("updateView",{sender:me});
-        tabmenu.style.display="none";
+        core.copiedFrameData = this.operators[contextedOperatorIndex].toSaveData();
+        core.fire("updateView", { sender: me });
+        tabmenu.style.display = "none";
     })
 
-    tabmenu.querySelector(".psfr").addEventListener("click",()=>{
+    tabmenu.querySelector(".psfr").addEventListener("click", () => {
         // at the tab, create a new subframe operator
         this.operators[contextedOperatorIndex].fromSaveData(core.copiedFrameData);
-        this.tieOperator(this.operators[contextedOperatorIndex],contextedOperatorIndex);
-        core.fire("updateView",{sender:me});
-        tabmenu.style.display="none";
+        this.tieOperator(this.operators[contextedOperatorIndex], contextedOperatorIndex);
+        core.fire("updateView", { sender: me });
+        tabmenu.style.display = "none";
     })
 
     this.selectedOperator = 0;
@@ -413,21 +413,21 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 }
                 rectChanged = true;
                 me.operators = undefined;
-                me.children[_firstOrSecond].resizing = me.split^1;
+                me.children[_firstOrSecond].resizing = me.split ^ 1;
                 me.split = -1;
                 //move the operator into the new box; create a blank box; set this box to a nonprimary box
             }
             //for resizing
             if (me.resizing != -1) {
                 //cancel on mouseup
-                if (!(e.buttons % 2) || me.resizing!=me.XorY*2+!(me.firstOrSecond)) {
+                if (!(e.buttons % 2) || me.resizing != me.XorY * 2 + !(me.firstOrSecond)) {
                     me.resizing = -1;
                     e.preventDefault();
                     //reset and return
                     return;
                 }
                 //don't resize if not appropriate border
-                
+
 
                 e.preventDefault();
                 //calculate the pos parameter (it can be fed to both siblings)
@@ -441,9 +441,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                     me.pos = 1;
                     me.resizing = -1;
                 }
-                me.parentRect.children[!me.firstOrSecond * 1].pos = me.pos;
-                me.refresh();
-                me.parentRect.children[!me.firstOrSecond * 1].refresh();
+                if (me.parent) {
+                    me.parent.children[!me.firstOrSecond * 1].pos = me.pos;
+                    me.refresh();
+                    me.parent.children[!me.firstOrSecond * 1].refresh();
+                }
                 e.preventDefault();
                 rectChanged = true;
             }
@@ -513,27 +515,31 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         if (this.children.length) {
             obj.children = [this.children[0].toSaveData(), this.children[1].toSaveData()];
         }
-        obj=transcopy(obj,{remap:{
-            "XorY":"x",
-            "firstOrSecond":"f",
-            "operators":"o",
-            "pos":"p",
-            "selectedOperator":"s",
-            "children":"c"
-        }})
+        obj = transcopy(obj, {
+            remap: {
+                "XorY": "x",
+                "firstOrSecond": "f",
+                "operators": "o",
+                "pos": "p",
+                "selectedOperator": "s",
+                "children": "c"
+            }
+        })
         return obj;
     }
     this.fromSaveData = function (obj) {
         //children first!
         if (!obj || !Object.keys(obj).length) return;
-        obj=transcopy(obj,{remap:{
-            "XorY":"x",
-            "firstOrSecond":"f",
-            "operators":"o",
-            "pos":"p",
-            "selectedOperator":"s",
-            "children":"c"
-        },reverse:true});
+        obj = transcopy(obj, {
+            remap: {
+                "XorY": "x",
+                "firstOrSecond": "f",
+                "operators": "o",
+                "pos": "p",
+                "selectedOperator": "s",
+                "children": "c"
+            }, reverse: true
+        });
         this.XorY = obj.XorY; // XorY determines whether the split is in the X or the Y direction. 
         this.pos = obj.pos; //if first, the size; otherwise position (and size);
         this.firstOrSecond = obj.firstOrSecond;
@@ -570,7 +576,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                     try {
                         op = new me.core.operator(obj.operators[i].opdata, me);
                         this.tieOperator(op);
-                    this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
+                        this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
                     } catch (e) {
                         console.log(e);
                         //aborttt
@@ -610,7 +616,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.remove = function () {
         //signal my brother to promote itself
-        if (this.parentRect) this.parentRect._remove(me.firstOrSecond, this);
+        if (this.parent) this.parent._remove(me.firstOrSecond, this);
     }
     this._remove = function (_firstOrSecond) {
         core.fire("updateView", {
@@ -633,8 +639,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             }
             this.outerDiv.appendChild(this.children[0].outerDiv);
             this.outerDiv.appendChild(this.children[1].outerDiv);
-            this.children[0].parentRect = this;
-            this.children[1].parentRect = this;
+            this.children[0].parent = this;
+            this.children[1].parent = this;
         }
         //delete this.children[0];
         //delete this.children[1];
@@ -673,7 +679,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         }
         return result;
     }
-    this.listOperators=function(list){
+    this.listOperators = function (list) {
         let iterable;
         if (this.operators) iterable = this.operators;
         else iterable = this.children;
