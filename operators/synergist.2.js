@@ -872,6 +872,9 @@ core.registerOperator("itemcluster2", {
                 l = me.svg.line(0, 0, 0, 0).stroke({
                     width: 3
                 });
+                l.marker('mid', 10, 10, function(add) {
+                    add.rect(5, 10).cx(5).fill('#ccc')
+                  })
                 if (!me.activeLines[start]) me.activeLines[start] = {};
                 me.activeLines[start][end] = l;
             }
