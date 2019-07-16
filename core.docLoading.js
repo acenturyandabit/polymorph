@@ -89,7 +89,7 @@ core.userLoad = async function (source, data, state) { // direct from URL
         }
         core.fire("documentCreated", core.currentDocID);
         if (state.template) {
-            Object.assign(d, polymorphTemplates[template]);
+            Object.assign(d, polymorphTemplates[state.template]);
         }
     }
     //Does the current document match the current document? 

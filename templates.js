@@ -1,24 +1,3 @@
 var polymorphTemplates = {
-    brainstorm: {
-        views: {
-            "o": [{
-                "name": "itemcluster2",
-                "opdata": {
-                    "type": "itemcluster2",
-                    "uuid": "mnmnbstorm",
-                    "data": {
-                        "currentViewName": "nv",
-                        "maxZ": null
-                    }
-                }
-            }],
-            "s": 0,
-            "x": 0,
-            "f": 1,
-            "p": 0
-        },
-        items: {
-            "nv": { title: "New View" }
-        }
-    }
+    brainstorm:JSON.parse(`{"displayName":"New Workspace","currentView":"default","id":"synergist","views":{"default":{"o":[{"name":"Itemcluster 2","opdata":{"type":"itemcluster2","uuid":"i33lyy","tabbarName":"Itemcluster 2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"currentViewName":"7hj0","viewpath":["7hj0"]}}}],"s":0,"x":0,"f":1,"p":0}},"items":{"7hj0":{"itemcluster":{"viewName":"New Itemcluster"}}}}`),
 }
