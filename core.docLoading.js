@@ -1,73 +1,66 @@
 core.loadDocument = function () {
     let params = new URLSearchParams(window.location.search);
+    let handled = false;
+    let sourceData;
+    let source;
     if (params.has("doc")) {
-        core.loadFromURL(params);
+        //screw the id, we just gonna use core.userData straight up
+        source = params.get("src") || 'lf';
+        sourceData = core.currentDocID = params.get("doc");
+        handled = true;
     } else if (window.location.search) {
         //For non-polymorph links, like drive links
         //try each save source to see if it can handle this kind of request
-        let handled = false;
         for (let i in core.saveSources) {
-            if (core.saveSources[i].canHandle && core.saveSources[i].canHandle(params)) {
-                //TODO: put a try catch around here.
-                //show the splash.
-                handled = true;
-                core.userLoad(i, params);
-                break;
+            if (core.saveSources[i].canHandle) {
+                sourceData=core.saveSources[i].canHandle(params);
+                core.currentDocID=sourceData.currentDocID;
+                source=i;
             }
         }
-        //otherwise just show filescreen as if nothing happened
-        //TODO: add convenient error message
-        if (!handled) core.filescreen.showSplash();
+    }
+    if (handled) {
+        //if the current document doesnt exist, then create it.
+        if (!core.userData.documents[core.currentDocID]) {
+            core.userData.documents[core.currentDocID] = {
+                v: 1,
+                saveSources: {},
+                saveHooks: {}
+            };
+        }
+        if (!core.userData.documents[core.currentDocID].v) {
+            let newdoc = {
+                v: 1,
+                saveSources: {},
+                saveHooks: {}
+            };
+            Object.assign(newdoc, core.userData.documents[core.currentDocID]);
+            core.userData.documents[core.currentDocID] = newdoc;
+        }
+        if (!core.userData.documents[core.currentDocID].saveSources[source]) {
+            //this is a new document.... do stuff
+            //Create a new profile for this save source and document
+            core.userData.documents[core.currentDocID].saveSources[source] = sourceData;
+            //also hook it
+            core.userData.documents[core.currentDocID].saveHooks[source] = true;
+        }
+
+        //if there is a template, knock off the template from the url and remember it (discreetly)
+        let template;
+        if (params.has("tmp")) {
+            template = params.get("tmp");
+            let loc = window.location.href
+            loc = loc.replace(/&tmp=[^&]+/, "");
+            history.pushState({}, "", loc);
+            console.log(window.location.href);
+        }
+        //Load it
+        if (!core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source], { initial: true, template: template })) {
+            core.filescreen.showSplash();
+        };
     } else {
         core.filescreen.showSplash();
     }
-}
-
-
-
-
-// UI needs a ".savesources" element
-
-core.loadFromURL = function (params) { // very first load
-    //screw the id, we just gonna use core.userData straight up
-    let source = params.get("src") || 'lf';
-    core.currentDocID = params.get("doc");
-    //if there is a template, knock off the template from the url and remember it (discreetly)
-    let template;
-    if (params.has("tmp")) {
-        template = params.get("tmp");
-        let loc = window.location.href
-        loc = loc.replace(/&tmp=[^&]+/, "");
-        history.pushState({}, "", loc);
-        console.log(window.location.href);
-    }
-    //if the current document doesnt exist, then create it.
-    if (!core.userData.documents[core.currentDocID]) {
-        core.userData.documents[core.currentDocID] = {
-            v: 1,
-            saveSources: {},
-            saveHooks: {}
-        };
-    }
-    if (!core.userData.documents[core.currentDocID].v) {
-        let newdoc = {
-            v: 1,
-            saveSources: {},
-            saveHooks: {}
-        };
-        Object.assign(newdoc, core.userData.documents[core.currentDocID]);
-        core.userData.documents[core.currentDocID] = newdoc;
-    }
-    if (!core.userData.documents[core.currentDocID].saveSources[source]) {
-        //this is a new document.... do stuff
-        //Create a new profile for this save source and document
-        core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
-        //also hook it
-        core.userData.documents[core.currentDocID].saveHooks[source] = true;
-    }
-    if (!core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source], { initial: true, template: template })) {
-        core.filescreen.showSplash();
-    };
 }
 
 core.rehookAll = function (id) {

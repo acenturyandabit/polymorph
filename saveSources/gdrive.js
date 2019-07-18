@@ -185,11 +185,6 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
   }
 
   this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
-    if (typeof id == 'string') {
-      alert('Please open Google Drive files from Google Drive! ');
-      return;
-    }
-    id = JSON.parse(id.get("state")).ids[0];
     let root = this.db
       .collection("polymorph")
       .doc(id);
