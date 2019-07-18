@@ -91,7 +91,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
                   //creation ok, redirect
                   let docID = response.result.id;
                   //quietly change the url
-                  history.pushState({}, "", "?doc=" + docID + "&src=gdrive");
+                  history.pushState({}, "", "?doc=" + docID + "&src=gd");
                   resolve(docID);
                   //todo: uid base?
                   break;
@@ -105,7 +105,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
             gapi.client.drive.files.get({ fileId: stateinfo.ids[0] }).then(async function (response) {
               let docID = stateinfo.ids[0];
               //quietly change the url
-              history.pushState({}, "", "?doc=" + docID + "&src=gdrive");
+              history.pushState({}, "", "?doc=" + docID + "&src=gd");
               resolve(docID);
             })
             //get metadata, then...
