@@ -240,7 +240,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       root.collection('views').doc(core.userData.documents[core.currentDocID].currentView).set(JSON.parse(JSON.stringify(core.baseRect.toSaveData())));
     })
     core.on("updateView", (d) => {
-      me.viewcapacitor.submit(d.id);
+      me.viewcapacitor.submit(core.userData.documents[core.currentDocID].currentView);
     });
     //meta
     scriptassert([
