@@ -89,10 +89,9 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
               switch (response.status) {
                 case 200:
                   //creation ok, redirect
-                  me.fileId = response.result;
-                  let docID = me.fileId.id;
+                  let docID = response.result.id;
                   //quietly change the url
-                  history.pushState({}, "", "?doc=" + docID + "&src=gd");
+                  history.pushState({}, "", "?doc=" + docID + "&src=gdrive");
                   resolve(docID);
                   //todo: uid base?
                   break;
@@ -102,12 +101,11 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
               }
             });
           } else if (stateinfo.action == 'open') {
-            me.fileId = stateinfo.ids[0];
             //redirect to firebase url.
             gapi.client.drive.files.get({ fileId: stateinfo.ids[0] }).then(async function (response) {
               let docID = stateinfo.ids[0];
               //quietly change the url
-              history.pushState({}, "", "?doc=" + docID + "&src=gd");
+              history.pushState({}, "", "?doc=" + docID + "&src=gdrive");
               resolve(docID);
             })
             //get metadata, then...
@@ -245,7 +243,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       me.viewcapacitor.submit(d.id);
     });
     //meta
-    let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: me.fileId, resource: { name: core.currentDoc.displayName } }).then((r) => { }) });
+    let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: core.currentDocID, resource: { name: core.currentDoc.displayName } }).then((r) => { }) });
     core.on("updateDoc", () => {
       gMetadataCapacitor.submit();
       if (me.localChange) me.localChange = false;
