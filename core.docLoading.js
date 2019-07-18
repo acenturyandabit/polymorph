@@ -16,6 +16,8 @@ core.loadDocument = function () {
                 sourceData=core.saveSources[i].canHandle(params);
                 core.currentDocID=sourceData.currentDocID;
                 source=i;
+                handled=true;
+                break;
             }
         }
     }
