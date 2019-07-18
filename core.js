@@ -82,7 +82,7 @@ function _core() {
                     //TODO: put a try catch around here.
                     //show the splash.
                     handled = true;
-                    userLoad(i, params);
+                    core.userLoad(i, params);
                     break;
                 }
             }

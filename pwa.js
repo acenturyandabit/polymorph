@@ -230,9 +230,8 @@ var _pwaManager = (() => {
 
                   if (!cachedResponse && event.request.url.indexOf("?") != -1) {
                     if (serviceWorkerSettings.SEARCH_SLICE){
-                      cachedResponse = await cache.match(event.request.url.slice(0,event.request.url.indexOf("?")), {
-                        ignoreSearch: event.request.url.indexOf("?") != -1
-                      });
+                      event.request.url=event.request.url.slice(0,event.request.url.indexOf("?"));
+                      cachedResponse = await cache.match(event.request);
                     }else{
                       cachedResponse = await cache.match(event.request, {
                         ignoreSearch: event.request.url.indexOf("?") != -1
