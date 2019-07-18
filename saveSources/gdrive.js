@@ -90,7 +90,10 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
                 case 200:
                   //creation ok, redirect
                   me.fileId = response.result;
-                  resolve(me.fileId.id);
+                  let docID = me.fileId.id;
+                  //quietly change the url
+                  history.pushState({}, "", "?doc=" + docID + "&src=gd");
+                  resolve(docID);
                   //todo: uid base?
                   break;
                 default:
@@ -102,7 +105,10 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
             me.fileId = stateinfo.ids[0];
             //redirect to firebase url.
             gapi.client.drive.files.get({ fileId: stateinfo.ids[0] }).then(async function (response) {
-              resolve(stateinfo.ids[0]);
+              let docID = stateinfo.ids[0];
+              //quietly change the url
+              history.pushState({}, "", "?doc=" + docID + "&src=gd");
+              resolve(docID);
             })
             //get metadata, then...
           }
