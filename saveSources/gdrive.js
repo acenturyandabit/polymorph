@@ -243,16 +243,20 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       me.viewcapacitor.submit(d.id);
     });
     //meta
-    let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: core.currentDocID, resource: { name: core.currentDoc.displayName } }).then((r) => { }) });
-    core.on("updateDoc", () => {
-      gMetadataCapacitor.submit();
-      if (me.localChange) me.localChange = false;
-      else {
-        let copyobj = Object.assign({}, core.currentDoc);
-        delete copyobj.items;
-        delete copyobj.views;
-        root.set(copyobj);
-      }
+    scriptassert([
+      ["googledriveapi", "https://apis.google.com/js/api.js"]
+    ], () => {
+      let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: core.currentDocID, resource: { name: core.currentDoc.displayName } }).then((r) => { }) });
+      core.on("updateDoc", () => {
+        gMetadataCapacitor.submit();
+        if (me.localChange) me.localChange = false;
+        else {
+          let copyobj = Object.assign({}, core.currentDoc);
+          delete copyobj.items;
+          delete copyobj.views;
+          root.set(copyobj);
+        }
+      });
     });
   }
   this.unhook = async function (id) { // just comment out if you can't subscribe to live updates.
