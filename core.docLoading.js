@@ -1,3 +1,31 @@
+core.loadDocument = function () {
+    let params = new URLSearchParams(window.location.search);
+    if (params.has("doc")) {
+        core.loadFromURL(params);
+    } else if (window.location.search) {
+        //For non-polymorph links, like drive links
+        //try each save source to see if it can handle this kind of request
+        let handled = false;
+        for (let i in core.saveSources) {
+            if (core.saveSources[i].canHandle && core.saveSources[i].canHandle(params)) {
+                //TODO: put a try catch around here.
+                //show the splash.
+                handled = true;
+                core.userLoad(i, params);
+                break;
+            }
+        }
+        //otherwise just show filescreen as if nothing happened
+        //TODO: add convenient error message
+        if (!handled) core.filescreen.showSplash();
+    } else {
+        core.filescreen.showSplash();
+    }
+}
+
+
+
+
 // UI needs a ".savesources" element
 
 core.loadFromURL = function (params) { // very first load
@@ -16,19 +44,19 @@ core.loadFromURL = function (params) { // very first load
     //if the current document doesnt exist, then create it.
     if (!core.userData.documents[core.currentDocID]) {
         core.userData.documents[core.currentDocID] = {
-            v:1,
+            v: 1,
             saveSources: {},
             saveHooks: {}
         };
     }
-    if (!core.userData.documents[core.currentDocID].v){
-        let newdoc={
-            v:1,
+    if (!core.userData.documents[core.currentDocID].v) {
+        let newdoc = {
+            v: 1,
             saveSources: {},
             saveHooks: {}
         };
-        Object.assign(newdoc,core.userData.documents[core.currentDocID]);
-        core.userData.documents[core.currentDocID]=newdoc;
+        Object.assign(newdoc, core.userData.documents[core.currentDocID]);
+        core.userData.documents[core.currentDocID] = newdoc;
     }
     if (!core.userData.documents[core.currentDocID].saveSources[source]) {
         //this is a new document.... do stuff
@@ -70,14 +98,14 @@ core.userLoad = async function (source, data, state) { // direct from URL
     }
     document.querySelector(".wall").style.display = "block";
     let d;
-    try{
-        d = await core.saveSources[source].pullAll(data);    
-    }catch(e){
-        alert("Something went wrong with the save source: "+e);
+    try {
+        d = await core.saveSources[source].pullAll(data);
+    } catch (e) {
+        alert("Something went wrong with the save source: " + e);
         document.querySelector(".wall").style.display = "block";
         return;
     }
-    
+
     //Does data exist? If not, make a new document.
     if (!d) {
         d = {
@@ -131,9 +159,9 @@ core.fromSaveData = function (data) {
         core.baseRects[i] = new _rect(core, undefined, core.currentDoc.views[i]);
     }
     // cry a little when they arent created
-    if (!core.userData.documents[core.currentDocID])core.userData.documents[core.currentDocID]={};
+    if (!core.userData.documents[core.currentDocID]) core.userData.documents[core.currentDocID] = {};
     if (!core.userData.documents[core.currentDocID].currentView || !core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
-    core.isSaving=true; // set this so that autosave doesnt save for each item
+    core.isSaving = true; // set this so that autosave doesnt save for each item
     core.presentView(core.userData.documents[core.currentDocID].currentView);
     for (let i in core.items) {
         core.standardiseItem(i);
@@ -143,7 +171,7 @@ core.fromSaveData = function (data) {
             id: i
         });
     }
-    core.isSaving=false;
+    core.isSaving = false;
     core.updateSettings();
     core.unsaved = false;
 }

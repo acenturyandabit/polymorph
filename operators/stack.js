@@ -46,17 +46,16 @@ core.registerOperator("stack", {
     this.rects = [];
     this.addStack = function (r) {
         let obj = {};
-        obj.div = document.createElement("div");
-        if (r && r.size)obj.div.style.height = r.size+"px";
-        else obj.div.style.height = "20em";
-        obj.div.style.width = "100%";
-        obj.div.style.borderBottom="5px solid black";
-        obj.div.style.cursor="ns-resize";
-        obj.div.style.boxSizing="border-box";
-        obj.div.classList.add("stack_Container");
-        me.rootdiv.insertBefore(obj.div,me.more);
-        obj.rect = new _rect(core, obj.div, RECT_ORIENTATION_X, 1, 0);
-        obj.rect.parentRect=me;
+        obj.outerDiv = document.createElement("div");
+        if (r && r.size)obj.outerDiv.style.height = r.size+"px";
+        else obj.outerDiv.style.height = "20em";
+        obj.outerDiv.style.width = "100%";
+        obj.outerDiv.style.borderBottom="5px solid black";
+        obj.outerDiv.style.cursor="ns-resize";
+        obj.outerDiv.style.boxSizing="border-box";
+        obj.outerDiv.classList.add("stack_Container");
+        me.rootdiv.insertBefore(obj.outerDiv,me.more);
+        obj.rect = new _rect(core, obj, RECT_ORIENTATION_X, 1, 0);
         if (r) obj.rect.fromSaveData(r.rect);
         me.rects.push(obj);
     }

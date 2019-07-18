@@ -1114,9 +1114,9 @@ core.registerOperator("itemcluster2", {
         let wc = ic.cx - vw / 2 + (e.clientX - br.x) / br.width * vw;
         let hc = ic.cy - vh / 2 + (e.clientY - br.y) / br.height * vh;
         if (e.deltaY > 0) {
-            ic.scale += 0.1;
+            ic.scale *= 1.1;
         } else {
-            ic.scale -= 0.1;
+            ic.scale *= 0.9;
         }
         //correct the new view centre
         vw = me.itemSpace.clientWidth * ic.scale;

@@ -70,28 +70,7 @@ function _core() {
     me.start = function () {
         me.fire("UIstart");
         me.resetDocument();
-        let params = new URLSearchParams(window.location.search);
-        if (params.has("doc")) {
-            me.loadFromURL(params);
-        } else if (window.location.search) {
-            //For non-polymorph links, like drive links
-            //try each save source to see if it can handle this kind of request
-            let handled = false;
-            for (let i in me.saveSources) {
-                if (me.saveSources[i].canHandle && me.saveSources[i].canHandle(params)) {
-                    //TODO: put a try catch around here.
-                    //show the splash.
-                    handled = true;
-                    me.userLoad(i, params);
-                    break;
-                }
-            }
-            //otherwise just show filescreen as if nothing happened
-            //TODO: add convenient error message
-            if (!handled) me.filescreen.showSplash();
-        } else {
-            me.filescreen.showSplash();
-        }
+        me.loadDocument();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
