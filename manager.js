@@ -26,7 +26,8 @@ var __manager_profiles = {
             ["chat", "operators/chat.js"],
             ["synergist.2", "operators/synergist.2.js"],
             ["roundshow", "operators/know/roundshow.js"],
-            ["tester", "operators/know/tester.js"]
+            ["tester", "operators/know/tester.js"],
+            ["calendar2", "operators/calendar.2.js"]
         ]
     },
     saveSources: {

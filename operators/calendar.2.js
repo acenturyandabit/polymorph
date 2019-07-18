@@ -1,6 +1,6 @@
-core.registerOperator("calendar", {
-        displayName: "Calendar",
-        description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
+core.registerOperator("calendar2", {
+        displayName: "Calendar v2",
+        description: "A simple calendar, courtesy of fullcalendar.js."
     },
     function (operator) {
         let me = this;
@@ -9,25 +9,29 @@ core.registerOperator("calendar", {
             dateproperty: "datestring",
             dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.
             titleproperty: 'title',
-            defaultView:"agendaWeek",
+            operationMode: undefined
         }; // Use my date retrieval format. (others not implented yet lm.ao)
 
         this.rootdiv = document.createElement("div");
         this.rootdiv.innerHTML = ``;
         this.rootdiv.style.cssText = 'height:100%; overflow-y: scroll';
-        this.cstyle = document.createElement("link");
-        this.cstyle.rel = "stylesheet";
-        this.cstyle.type = "text/css";
-        this.cstyle.href = "3pt/fullcalendar.min.css";
-        this.rootdiv.appendChild(this.cstyle);
+        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/core/main.css">`));
+        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/daygrid/main.css">`));
+        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/timegrid/main.css">`));
+        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/list/main.css">`));
         //Add div HTML here
         scriptassert([
-            ['jquery', '3pt/jquery.min.js'],
-            ['moment', '3pt/moment.min.js'],
-            ['fullcalendar', '3pt/fullcalendar.min.js']
+            ['fcal_core', '3pt/fullcalendar/core/main.js'],
+            ['fcal_daygrid', '3pt/fullcalendar/daygrid/main.js'],
+            ['fcal_timegrid', '3pt/fullcalendar/timegrid/main.js'],
+            ['fcal_list', '3pt/fullcalendar/list/main.js'],
         ], () => {
-            $(this.rootdiv).fullCalendar({
-                events: (start, end, timezone, callback) => {
+            this.calendar = new FullCalendar.Calendar(this.rootdiv,{
+                plugins:['dayGrid','timeGrid','list'],
+                events: (fetchinfo, callback, failure) => {
+                    let start=fetchinfo.start;
+                    let end=fetchinfo.end;
+                    let timezone=fetchinfo.timezone;
                     let allList = [];
                     if (me.settings.pushnotifs) {
                         me.notifstack = [];
@@ -46,8 +50,6 @@ core.registerOperator("calendar", {
                                 allList.push({
                                     id: i,
                                     title: core.items[i][me.settings.titleproperty],
-                                    //backgroundColor: $(e).find("input")[0].style.backgroundColor,
-                                    //textColor: $(e).find("input")[0].style.color || "black",
                                     start: isostring,
                                     end: eisostring
                                 });
@@ -62,8 +64,6 @@ core.registerOperator("calendar", {
                                     allList.push({
                                         id: i,
                                         title: core.items[i][me.settings.titleproperty],
-                                        //backgroundColor: $(e).find("input")[0].style.backgroundColor,
-                                        //textColor: $(e).find("input")[0].style.color || "black",
                                         start: isostring,
                                         end: eisostring
                                     });
@@ -119,19 +119,24 @@ core.registerOperator("calendar", {
                 header: {
                     left: 'title',
                     center: '',
-                    right: 'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
+                    right: 'dayGridMonth timeGridWeek timeGridDay list today prev,next'
                 },
-                defaultView: me.settings.defaultView,
+                defaultView: "dayGridMonth",
                 height: "parent"
             });
+            this.calendar.refetchEvents();
+            this.calendar.render();
         });
         operator.div.appendChild(this.rootdiv);
         //Handle item updates
         let updateItemCapacitor=new capacitor(1000,1000,()=>{
             try {
-                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible()){
+                    me.calendar.render();
+                    me.calendar.refetchEvents();
+                }
             } catch (e) {
-                console.log("JQUERY not ready yet :/");
+                console.log(e);
             }
         },true);
         this.updateItem = function (id, sender) {
@@ -144,9 +149,9 @@ core.registerOperator("calendar", {
         }
         core.on("dateUpdate", () => {
             try {
-                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible())updateItemCapacitor.submit();
             } catch (e) {
-                console.log("JQUERY not ready yet :/");
+                console.log(e);
             }
         });
         
@@ -156,10 +161,10 @@ core.registerOperator("calendar", {
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
             try {
-                $(this.rootdiv).fullCalendar('refetchEvents');
+                updateItemCapacitor.submit();
                 me.fire("updateView");
             } catch (e) {
-                console.log("JQUERY not ready yet :/");
+                console.log(e);
             }
             // pull settings and update when your dialog is closed.
             if (this.settings.pushnotifs) {
@@ -233,7 +238,6 @@ core.registerOperator("calendar", {
 
         //Saving and loading
         this.toSaveData = function () {
-            this.settings.defaultView=$(this.rootdiv).fullCalendar('getView').name;
             return this.settings;
         }
 
@@ -287,27 +291,26 @@ core.registerOperator("calendar", {
 
         core.on("createItem", (d) => {
             try {
-                $(me.rootdiv).fullCalendar('refetchEvents');
+                updateItemCapacitor.submit();
             } catch (e) {
-                console.log("JQUERY not ready yet :/");
+                console.log(e);
             }
         })
 
         core.on("deleteItem", (d) => {
             try {
-                $(me.rootdiv).fullCalendar('refetchEvents');
+                updateItemCapacitor.submit();
             } catch (e) {
-                console.log("JQUERY not ready yet :/");
+                console.log(e);
             }
         })
 
         this.refresh = function () {
             setTimeout(() => {
                 try {
-                    $(me.rootdiv).fullCalendar('render');
-                    $(me.rootdiv).fullCalendar('refetchEvents');
-                } catch (err) {
-                    console.log("jquery not ready yet :/");
+                    updateItemCapacitor.submit();
+                } catch (e) {
+                    console.log(e);
                 }
             }, 1000);
         }

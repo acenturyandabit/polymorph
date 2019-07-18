@@ -790,7 +790,7 @@ core.registerOperator("itemcluster2", {
             //draw its lines
             if (core.items[id].to) {
                 for (let i in core.items[id].to) {
-                    me.enforceLine(i, id);
+                    me.enforceLine(id, i);
                 }
             }
             /*
@@ -816,88 +816,52 @@ core.registerOperator("itemcluster2", {
 
 
         me.linkingLine = me.svg.line(0, 0, 0, 0).stroke({
-            width: 5
+            width: 3
         }).back();
         me.activeLines = {};
         me.toggleLine = function (start, end) {
-            //enforce start is start end is end
-            let _start = start;
-            let _end = end;
-            start = 0;
-            end = 0;
-            for (i in _start) start = start + _start.charCodeAt(i)
-            for (i in _end) end = end + _end.charCodeAt(i)
-            if (start > end) {
-                start = _start;
-                end = _end;
-            } else {
-                start = _end;
-                end = _start;
-            }
+            //start and end is now directional. 
             //check if linked; if linked, remove link
-            if (core.isLinked(start, end)) {
-                core.unlink(start, end, true);
-                if (me.activeLines[start]) me.activeLines[start][end].remove();
+            if (core.isLinked(start, end)%2) {
+                core.unlink(start, end);
+                if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
             } else {
-                core.link(start, end, true);
+                core.link(start, end);
                 me.enforceLine(start, end);
             }
         };
 
         me.enforceLine = function (start, end) {
-            let sd = me.rootdiv.querySelector("[data-id='" + start + "']");
-            let ed = me.rootdiv.querySelector("[data-id='" + end + "']");
+            let sd = me.svg.select(`[data-id='${start}']`).first();
+            let ed = me.svg.select(`[data-id='${end}']`).first()
             if (!sd || !ed) {
                 return;
             }
-            //ordering  
-            let _start = start;
-            let _end = end;
-            start = 0;
-            end = 0;
-            for (i in _start) start = start + _start.charCodeAt(i)
-            for (i in _end) end = end + _end.charCodeAt(i)
-            if (start > end) {
-                start = _start;
-                end = _end;
-            } else {
-                start = _end;
-                end = _start;
-            }
             //check if line already exists
             if (me.activeLines[start] && me.activeLines[start][end]) {
-                l = me.activeLines[start][end];
-            } else {
-                l = me.svg.line(0, 0, 0, 0).stroke({
-                    width: 3
-                });
-                l.marker('mid', 10, 10, function(add) {
-                    add.rect(5, 10).cx(5).fill('#ccc')
-                  })
-                if (!me.activeLines[start]) me.activeLines[start] = {};
-                me.activeLines[start][end] = l;
+                //if so, remove
+                me.activeLines[start][end].remove();
             }
+            
             //if either is not visible, then dont draw
             if (sd.style.display == "none" || ed.style.display == "none") {
-                l.hide();
                 return;
-            }
-            l.show();
-            try {
-                l.plot(
-                    me.svg.select(`[data-id='${start}']`).first().cx(),
-                    me.svg.select(`[data-id='${start}']`).first().cy(),
-                    me.svg.select(`[data-id='${end}']`).first().cx(),
-                    me.svg.select(`[data-id='${end}']`).first().cy()
-                );
-            } catch (e) {
-                l.hide();
-            }
-            try {
+            } else {
+                if (!me.activeLines[start]) me.activeLines[start] = {};
+                let x=[me.svg.select(`[data-id='${start}']`).first().cx(),0,me.svg.select(`[data-id='${end}']`).first().cx()];
+                let y=[me.svg.select(`[data-id='${start}']`).first().cy(),0,me.svg.select(`[data-id='${end}']`).first().cy()];
+                x[1]=(x[0]+x[2])/2;
+                y[1]=(y[0]+y[2])/2;
+                let l=me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({width:2,color:"#000"});
+                l.marker('mid', 9, 6, function (add) {
+                    add.path("M0,0 L0,6 L9,3 z").fill("#000");
+                })
+                me.activeLines[start][end] = l;
                 l.back();
-            } catch (e) { }
+            }
         };
+
 
         //arrange items 
         for (let i in core.items) {
@@ -1107,7 +1071,11 @@ core.registerOperator("itemcluster2", {
                 rect.y() + rect.height() / 2,
                 p.x,
                 p.y
-            );
+            ).stroke({
+                width: 3
+            }).marker('end', 9, 6, function (add) {
+                add.path("M0,0 L0,6 L9,3 z").fill("#000");
+            });
         } else if (me.globalDrag) {
             // shift the view by delta
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
@@ -1218,7 +1186,7 @@ core.registerOperator("itemcluster2", {
             });
         } else if (me.linking) {
             //reset linking line
-            me.linkingLine.plot(0, 0, 0, 0);
+            me.linkingLine.plot(0, 0, 0, 0).stroke({width:0});
             me.linking = false;
             //change the data
             let linkedTo;
