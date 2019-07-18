@@ -131,6 +131,7 @@ core.fromSaveData = function (data) {
         core.baseRects[i] = new _rect(core, undefined, core.currentDoc.views[i]);
     }
     // cry a little when they arent created
+    if (!core.userData.documents[core.currentDocID])core.userData.documents[core.currentDocID]={};
     if (!core.userData.documents[core.currentDocID].currentView || !core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
     core.isSaving=true; // set this so that autosave doesnt save for each item
     core.presentView(core.userData.documents[core.currentDocID].currentView);
