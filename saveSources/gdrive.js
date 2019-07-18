@@ -66,8 +66,11 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
   this.canHandle = function (params) {
     if (params.has("state")) {
       try {
-        JSON.parse(params.get("state"));
-        return true;
+        if (JSON.parse(params.get("state"))){
+          return params;
+        }else{
+          return false;
+        };
       } catch (e) {
         return false;
       }
