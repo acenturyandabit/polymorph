@@ -133,7 +133,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
               case 200:
                 //creation ok, redirect
                 me.fileId = response.result;
-                let pc = await pullContinue(me.fileId);
+                let pc = await pullContinue(me.fileId.id);
                 pc.displayName = "New Polymorph Document";
                 resolve(pc);
                 //todo: uid base?
