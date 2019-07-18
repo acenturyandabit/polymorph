@@ -1,23 +1,23 @@
-core.loadDocument = function () {
+core.loadDocument = async function () {
     let params = new URLSearchParams(window.location.search);
     let handled = false;
-    let sourceData;
     let source;
     if (params.has("doc")) {
         //screw the id, we just gonna use core.userData straight up
         source = params.get("src") || 'lf';
-        sourceData = core.currentDocID = params.get("doc");
+        core.currentDocID = params.get("doc");
         handled = true;
     } else if (window.location.search) {
         //For non-polymorph links, like drive links
         //try each save source to see if it can handle this kind of request
         for (let i in core.saveSources) {
             if (core.saveSources[i].canHandle) {
-                sourceData=core.saveSources[i].canHandle(params);
-                core.currentDocID=sourceData.currentDocID;
-                source=i;
-                handled=true;
-                break;
+                core.currentDocID = await core.saveSources[i].canHandle(params);
+                if (core.currentDocID) {
+                    source = i;
+                    handled = true;
+                    break;
+                }
             }
         }
     }
@@ -42,7 +42,7 @@ core.loadDocument = function () {
         if (!core.userData.documents[core.currentDocID].saveSources[source]) {
             //this is a new document.... do stuff
             //Create a new profile for this save source and document
-            core.userData.documents[core.currentDocID].saveSources[source] = sourceData;
+            core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
             //also hook it
             core.userData.documents[core.currentDocID].saveHooks[source] = true;
         }

@@ -1,6 +1,6 @@
 core.registerSaveSource("gd", function () { // Google drive save source - based off firebase savesource
   let me = this;
-  this.prettyName="Google drive integration";
+  this.prettyName = "Google drive integration";
   //firebase things
   me.unsub = {};
   try {
@@ -65,24 +65,82 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
 
   this.canHandle = function (params) {
     if (params.has("state")) {
-      try {
-        if (JSON.parse(params.get("state"))){
-          return params;
-        }else{
-          return false;
-        };
-      } catch (e) {
-        return false;
-      }
-    }
+      let stateinfo = JSON.parse(params.get("state"));
+      //create a promise that never resolves but redirects the user once authenticated.
+      return new Promise(function (resolve, reject) {
+        function continueLoad(success) {
+          //if not successful, alert user, and abort
+          console.log(success);
+          if (!success) {
+            alert("Hey, turns out we need you to verify your Google account so we can use Google Drive. Mind if you close this window and try again?");
+            //TODO: Better error message
+            resolve(false);
+          }
+          //create if necessary
+          if (stateinfo.action == "create") {
+            let fileMetadata = {
+              'name': 'New Polymorph Document',
+              'mimeType': 'application/vnd.google-apps.drive-sdk',
+              'parents': [stateinfo.folderId]
+            };
+            gapi.client.drive.files.create({
+              resource: fileMetadata,
+            }).then(async function (response) {
+              switch (response.status) {
+                case 200:
+                  //creation ok, redirect
+                  me.fileId = response.result;
+                  resolve(me.fileId.id);
+                  //todo: uid base?
+                  break;
+                default:
+                  alert("Ack, something seems to have happened between us and Google and we weren't able to make your file. Maybe try again and it'll work? Otherwise do let us know 3: thx");
+                  break;
+              }
+            });
+          } else if (stateinfo.action == 'open') {
+            me.fileId = stateinfo.ids[0];
+            //redirect to firebase url.
+            gapi.client.drive.files.get({ fileId: stateinfo.ids[0] }).then(async function (response) {
+              resolve(stateinfo.ids[0]);
+            })
+            //get metadata, then...
+          }
+        }
+        scriptassert([
+          ["googledriveapi", "https://apis.google.com/js/api.js"]
+        ], () => {
+          gapi.load('client:auth2', () => {
+            gapi.client.init({
+              apiKey: API_KEY,
+              clientId: CLIENT_ID,
+              discoveryDocs: DISCOVERY_DOCS,
+              scope: SCOPES
+            }).then(function () {
+              // Listen for sign-in state changes.
+              gapi.auth2.getAuthInstance().isSignedIn.listen(continueLoad);
+
+              // Handle the initial sign-in state.
+              if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                //start the signin process!
+                gapi.auth2.getAuthInstance().signIn();
+              } else {
+                continueLoad(true);
+              }
+            }, function (error) {
+              reject(JSON.stringify(error));
+            });
+          });
+        });
+      })
+    } else return false;
   }
 
   this.pushAll = async function (id, data) {
     //dont actually do anything here... this is a ctrl s by the user.
   }
 
-  async function pullContinue(id) {
-
+  this.pullAll = async function (id) {
     let root = me.db
       .collection("polymorph")
       .doc(id);
@@ -103,88 +161,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
     snapshot = await root.get();
     Object.assign(result, snapshot.data());
     return result;
-  }
 
-  this.pullAll = async function (id) {
-    //this should never be called using a src='gd'
-    if (typeof id == 'string') {
-      alert('Please open Google Drive files from Google Drive! ');
-      return;
-    }
-    let stateinfo = JSON.parse(id.get("state"));
-    //create a promise that never resolves but redirects the user once authenticated.
-    return new Promise(function (resolve, reject) {
-      function continueLoad(success) {
-        //if not successful, alert user, and abort
-        console.log(success);
-        if (!success) {
-          alert("Hey, turns out we need you to verify your Google account so we can use Google Drive. Mind if you close this window and try again?");
-          //TODO: Better error message
-          resolve(undefined);
-        }
-        //create if necessary
-        if (stateinfo.action == "create") {
-          let fileMetadata = {
-            'name': 'New Polymorph Document',
-            'mimeType': 'application/vnd.google-apps.drive-sdk',
-            'parents': [stateinfo.folderId]
-          };
-          gapi.client.drive.files.create({
-            resource: fileMetadata,
-          }).then(async function (response) {
-            switch (response.status) {
-              case 200:
-                //creation ok, redirect
-                me.fileId = response.result;
-                let pc = await pullContinue(me.fileId.id);
-                pc.displayName = "New Polymorph Document";
-                resolve(pc);
-                //todo: uid base?
-                break;
-              default:
-                alert("Ack, something seems to have happened between us and Google and we weren't able to make your file. Maybe try again and it'll work? Otherwise do let us know 3: thx");
-                break;
-            }
-          });
-        } else if (stateinfo.action == 'open') {
-          me.fileId = stateinfo.ids[0];
-          //redirect to firebase url.
-          gapi.client.drive.files.get({ fileId: stateinfo.ids[0] }).then(async function (response) {
-            let pc = await pullContinue(stateinfo.ids[0]);
-            pc.displayName = response.result.name;
-            resolve(pc);
-          })
-          //get metadata, then...
-        }
-      }
-      scriptassert([
-        ["googledriveapi", "https://apis.google.com/js/api.js"]
-      ], () => {
-        gapi.load('client:auth2', () => {
-          gapi.client.init({
-            apiKey: API_KEY,
-            clientId: CLIENT_ID,
-            discoveryDocs: DISCOVERY_DOCS,
-            scope: SCOPES
-          }).then(function () {
-            // Listen for sign-in state changes.
-            gapi.auth2.getAuthInstance().isSignedIn.listen(continueLoad);
-
-            // Handle the initial sign-in state.
-            if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
-              //start the signin process!
-              gapi.auth2.getAuthInstance().signIn();
-            } else {
-              continueLoad(true);
-            }
-
-
-          }, function (error) {
-            reject(JSON.stringify(error));
-          });
-        });
-      });
-    })
   }
 
   this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
