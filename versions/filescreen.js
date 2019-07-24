@@ -29,39 +29,5 @@ core.on("UIstart", () => {
 })
 
 core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click", () => {
-    //don't reload the page, directly load a new document, so we can handle the case appropriately
-    //some parameters
-    let template = core.filescreen.baseDiv.querySelector(".tmplt").value;
-    let source = core.filescreen.baseDiv.querySelector(".source").value;
-    let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || guid(5);
-    let id = guid(5);
-    //generate the URL
-    window.history.pushState("", "", window.location + `?doc=${nm}&src=${source}`);
-    let d = {
-        displayName: nm,
-        currentView: "default",
-        id: core.currentDocID,
-        views: {},
-        items: {}
-    }
-    d.id = core.currentDocID = id;
-    if (template!="none") {
-        Object.assign(d, polymorphTemplates[template]);
-    }
-    if (!core.userData.documents[core.currentDocID]) {
-        core.userData.documents[core.currentDocID] = {};
-    }
-    if (!core.userData.documents[core.currentDocID].saveSources) {
-        core.userData.documents[core.currentDocID].saveSources = {};
-    }
-    if (!core.userData.documents[core.currentDocID].saveSources[source]) {
-        //this is a new document.... do stuff
-        //Create a new profile for this save source and document
-        core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
-    }
-    core.fire("documentCreated", id);
-    core.fromSaveData(d);
-    core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.currentDoc.displayName);
-    core.filescreen.baseDiv.style.display="none";
-    document.querySelector(".wall").style.display = "none";
+    core.instantNewDoc();
 })

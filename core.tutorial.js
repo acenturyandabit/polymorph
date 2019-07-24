@@ -1,73 +1,81 @@
-function readyTutorial(core) {
-  let t = core.tutorial;
-  documentReady(() => {
-    t.push({
+if (!core.userData.tutorialData) {
+  core.userData.tutorialData = { main: {} };
+}
+core.tutorial = new _tutorial({
+  data: () => { return core.userData.tutorialData.main },
+  saveData: () => { core.saveUserData() }
+});
+core.resetTutorial = function () {
+  core.userData.tutorialData = { main: {} };
+  core.tutorial.start();
+}
+core.on("UIstart", () => {
+  core.tutorial.addSteps([
+    {
       target: document.body,
       type: "shader",
       contents: `<h1>Welcome to Polymorph!</h1><h2>Productivity, your way.</h2> `,
-      to:[["Next","cnd"],["Skip"]]
-    });
-    t.push({
-      id:"cnd",
-      target: ()=>{return core.baseRect.outerDiv},
+      to: [["Next", "cnd"], ["Skip"]]
+    },
+    {
+      id: "cnd",
+      target: () => { return core.baseRect.outerDiv },
       type: "internal",
-      location:'left',
-      contents: `<p>Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
-      to:[["Next","clickop"],["Skip"]]
-    });
-    t.push({
-      id:"clickop",
-      target: ()=>{return core.baseRect.outerDiv},
+      location: 'left',
+      contents: `<p>&lt;---Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
+      to: [["Next", "clickop"], ["Skip"]]
+    }, {
+      id: "clickop",
+      target: () => { return core.baseRect.outerDiv },
       type: "internal",
-      location:'bottom',
+      location: 'center',
       contents: `<p>These boxes contain operators. Click an operator type to get started!</p>`,
-      to:[["Next","save"],["Skip"]]
-    });
-    t.push({
-      id:"save",
+      to: [["Next", "save"], ["Skip"]]
+    }, {
+      id: "save",
       target: document.body,
       type: "shader",
       contents: `<p>To save your work, simply press Ctrl-S. Your work will be saved in your browser.</p>`,
-      to:[["Done"]]
-    });
-
-    t.push({
+      to: [["Done"]]
+    }, {
       id: "ideas",
-      target: ()=>{return document.body},
+      target: () => { return document.body },
       type: "shader",
       contents: `<h1>Ideas with Polymorph</h1><h2>A whole new space for ideas to grow!</h2> `,
-      to:[["Next","idlist"],["Skip"]]
-    });
-    t.push({
-      id:"idlist",
-      target: ()=>{return core.getOperator("nvd5b4").topdiv},
+      to: [["Next", "idlist"], ["Skip"]]
+    }, {
+      id: "idlist",
+      target: () => { return core.getOperator("nvd5b4").topdiv },
       type: "internal",
-      location:'center',
+      location: 'center',
       contents: `<p>Here's a list of ideas! Click an idea to view more detail about it.</p>`,
-      to:[["Next","idfs"],["Skip"]]
-    });
-    t.push({
-      id:"idfs",
-      target: ()=>{return core.baseRect.children[1].outerDiv},
+      to: [["Next", "idfs"], ["Skip"]]
+    }, {
+      id: "idfs",
+      target: () => { return core.baseRect.children[1].outerDiv },
       type: "internal",
-      location:'top',
+      location: 'top',
       contents: `<p>This frame contains various aspects of a project. You can click any of the purple tabs to switch between frames!</p>`,
-      to:[["Next","idsv"],["Skip"]]
-    });
-    t.push({
-      id:"idsv",
+      to: [["Next", "idsv"], ["Skip"]]
+    }, {
+      id: "idsv",
       target: document.body,
       type: "shader",
       contents: `<h1>Sharing</h1>
       <p>This document is saved in realtime, so you can collaborate with your friends. Just share the link up the top!</p>`,
-      to:[["Done"]]
-    });
-  });
-  tryUntilTrue(()=>{
-    document.body.querySelector("li.hlep").addEventListener("click", ()=>{
-      core.target().then((id)=>{
-        if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
-      })
-    })
+      to: [["Done"]]
+    }
+  ]);
+  //wait for a baserect to show before continuing the tutorial
+  core.on("viewReady",()=>{
+    core.tutorial.continueStart(()=>{core.tutorial.start();});
   })
-}
+  document.body.querySelector("li.hlep").addEventListener("click", () => {
+    core.target().then((id) => {
+      if (core.getOperator(id).baseOperator.startTutorial) core.getOperator(id).baseOperator.startTutorial();
+    })
+  });
+})
+
+
+

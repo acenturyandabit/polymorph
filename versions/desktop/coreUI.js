@@ -8,12 +8,13 @@ documentReady(() => {
         <ul class="topbar">
             <li>File
                 <ul>
-                    <li class="saveSources">Load/Save...</li> <!-- default is always localforage for now -->
-                    <li class="new">New</li>
+                    <li class="open">Open</li>    
+                    <li class="saveSources">Preferences</li> <!-- default is always localforage for now -->
                 </ul>
             </li>
             <li class="viewdialog">Views</li>
             <li class="hlep">Help</li>
+            <li class="tutorial">Run the tutorial again</li>
         </ul>
     </div>`));
     document.body.appendChild(htmlwrap(`
@@ -30,8 +31,11 @@ documentReady(() => {
 })
 
 core.on("UIstart", () => {
-    document.querySelector(".topbar .new").addEventListener("click", () => {
-        window.open(window.location.pathname);
+    document.querySelector(".topbar .open").addEventListener("click", () => {
+        core.filescreen.showSplash();
+    })
+    document.querySelector(".topbar .tutorial").addEventListener("click", () => {
+        core.resetTutorial();
     })
     //register some handlers
     window.addEventListener("resize", () => {

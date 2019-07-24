@@ -21,6 +21,7 @@ core.presentView = function (view) {
     core.baseRect = core.baseRects[view];//set the ref so everyone can access it as before
     //set user's current view
     core.baseRect.refresh();
+    core.fire("viewReady");
     core.userData.documents[core.currentDocID].currentView = view;
     core.saveUserData();
     core.unsaved = false;

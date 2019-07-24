@@ -3,8 +3,8 @@ var __manager_profiles = {
         files: [
             ["filescreen", "genui/filescreen.js"],
             ["templates", "templates.js"],
-            ["core_tutorial", "core.tutorial.js"],
             ["core", "core.js"],
+            ["core_tutorial", "core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
             ["core_docLoading", "core.docLoading.js"],
             ["core_view", "core.view.js"],

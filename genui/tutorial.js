@@ -9,7 +9,7 @@ var t = new _tutorial({
 });
 
 - Push steps:
-var id=t.push({
+var id=t.addStep({
     
     id: 'uniqueID' (optional),
     
@@ -26,6 +26,8 @@ var id=t.push({
     arrowCentering: (for type=="internal" OR "highlight" only) 'center' OR 'start' OR 'end' OR a number between 0 and 1
     boxCentering: (for type=="internal" OR "highlight" only) 'center' OR 'start' OR 'end' OR a number between 0 and 1
 })
+
+// for adding multiple steps quickly, t.addSteps([steps]);
 
 - Run the tutorial!
 t.start(uuid);
@@ -155,41 +157,62 @@ var _tutorial = (function () {
         }
     }
 
+    //snippet that pre-evaluates functions, so that we can quickly load dynmaics
+    function iff(it) {
+        if (typeof it == "function") {
+            return it();
+        } else return it;
+    }
 
-
-
+    function mkhash (obj) {
+        let str;
+        if (typeof obj=="object")str=JSON.stringify(obj);
+        else str=obj.toString();
+        var hash = 0, i, chr;
+        if (str.length === 0) return hash.toString();
+        for (i = 0; i < str.length; i++) {
+            chr = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + chr;
+            hash |= 0; // Convert to 32bit integer
+        }
+        return hash.toString();
+    };
 
     function _tutorial(options) {
-        this.guid = function (count = 6) {
-            let pool = "1234567890qwertyuiopasdfghjklzxcvbnm";
-            tguid = "";
-            for (i = 0; i < count; i++) tguid += pool[Math.floor(Math.random() * pool.length)];
-            return tguid;
-        }
         this.firstItem = false;
         this.items = {};
         let lastData;
         let lastType;
         let me = this;
-        this.present = function (id) {
+        this.present = function (id,onErr) {
             //hide the previous slide
             if (lastData) {
                 types[lastType].unrender(lastData);
             }
             if (id) {
                 //present the current item
-                if(!me.items[id])return;
+                let data = iff(options.data);
+                data.step = id;
+                if (options.saveData) options.saveData();
+                if (!me.items[id]) {
+                    if (onErr)onErr();
+                    return;
+                }
                 lastType = me.items[id].type;
                 lastData = types[me.items[id].type].render(me.items[id], me.present);
-            }else{
-                if (me.end)me.end();
+            } else {
+                me.end();
             }
             //otherwise finish
         }
-        this.push = function (item) {
+        this.addSteps = function (steps) {
+            steps.forEach((v) => { this.addStep(v) });
+        }
+        this.addStep = function (item) {
             //if no id then generate a uuid? 
+            //needs to be deterministic
             if (!item.id) {
-                item.id = this.guid();
+                item.id = mkhash(item);
             }
             if (!this.firstItem) {
                 this.firstItem = item.id;
@@ -197,14 +220,25 @@ var _tutorial = (function () {
             this.items[item.id] = item;
             return item.id
         }
-        this.start = function (id) {
+        this.start = function (id,onErr) {
             if (!id) {
                 id = this.firstItem;
             }
-            this.present(id);
+            this.present(id,onErr);
             return {
-                end:(f)=>{me.end=f;}
+                end: (f) => { me._end = f; }
             }
+        }
+        this.continueStart = function (onErr) {
+            let data = iff(options.data);
+            if (!data.concluded) this.start(data.step,onErr);
+            //continue based on saved tutorial data
+        }
+        this.end = function () {
+            let data = iff(options.data);
+            data.concluded = true;
+            if (options.saveData) options.saveData();
+            me._end;
         }
     }
     return _tutorial;
@@ -226,11 +260,11 @@ var _tutorial = (function () {
 
 tutorialManager = {
     steps: [{
-            type: "overlay",
-            position: ["30vw", '30vh'],
-            //focusElement:()=>{return $(".synergist")[0]},
-            prompt: "Welcome to Synergist!",
-        }
+        type: "overlay",
+        position: ["30vw", '30vh'],
+        //focusElement:()=>{return $(".synergist")[0]},
+        prompt: "Welcome to Synergist!",
+    }
 
 
     ],
@@ -259,8 +293,8 @@ tutorialManager = {
             case "overlay":
                 $("tutorial").append(`<div class="tutorialShader"></div>`);
                 $("tutorial").append()
-                //Apply little shader.
-                //put text in box at coords.
+            //Apply little shader.
+            //put text in box at coords.
 
         }
     },

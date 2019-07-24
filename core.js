@@ -15,8 +15,6 @@ core.userData={
 // Items are just native objects now 
 function _core() {
     let me = this;
-    this.tutorial = new _tutorial();
-    readyTutorial(this);
     //Event API. pretty important, it turns out.
     addEventAPI(this);
     //call the dialog manager

@@ -849,8 +849,8 @@ core.registerOperator("itemcluster2", {
                 return;
             } else {
                 if (!me.activeLines[start]) me.activeLines[start] = {};
-                let x=[me.svg.select(`[data-id='${start}']`).first().cx(),0,me.svg.select(`[data-id='${end}']`).first().cx()];
-                let y=[me.svg.select(`[data-id='${start}']`).first().cy(),0,me.svg.select(`[data-id='${end}']`).first().cy()];
+                let x=[sd.cx(),0,ed.cx()];
+                let y=[sd.cy(),0,ed.cy()];
                 x[1]=(x[0]+x[2])/2;
                 y[1]=(y[0]+y[2])/2;
                 let l=me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({width:2,color:"#000"});

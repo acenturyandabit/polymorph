@@ -58,11 +58,54 @@ core.loadDocument = async function () {
         }
         //Load it
         if (!core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source], { initial: true, template: template })) {
-            core.filescreen.showSplash();
+            core.instantNewDoc();
         };
     } else {
-        core.filescreen.showSplash();
+        core.instantNewDoc();
     }
+}
+
+core.instantNewDoc = function () {
+    //don't reload the page, directly load a new document, so we can handle the case appropriately
+    //some parameters
+    let template = core.filescreen.baseDiv.querySelector(".tmplt").value;
+    let source = core.filescreen.baseDiv.querySelector(".source").value;
+    let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
+    let id = guid(5);
+    //generate the URL
+    window.history.pushState("", "", window.location + `?doc=${id}&src=${source}`);
+    let d = {
+        displayName: nm,
+        currentView: "default",
+        id: core.currentDocID,
+        views: {},
+        items: {}
+    }
+    d.id = core.currentDocID = id;
+    if (template != "none") {
+        Object.assign(d, polymorphTemplates[template]);
+    }
+    if (!core.userData.documents[core.currentDocID]) {
+        core.userData.documents[core.currentDocID] = {};
+    }
+    if (!core.userData.documents[core.currentDocID].saveSources) {
+        core.userData.documents[core.currentDocID].saveSources = {};
+    }
+    if (!core.userData.documents[core.currentDocID].saveHooks) {
+        core.userData.documents[core.currentDocID].saveHooks = {};
+    }
+    if (!core.userData.documents[core.currentDocID].saveSources[source]) {
+        //this is a new document.... do stuff
+        //Create a new profile for this save source and document
+        core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
+        //also hook it
+        core.userData.documents[core.currentDocID].saveHooks[source] = true;
+    }
+    core.fire("documentCreated", id);
+    core.fromSaveData(d);
+    core.filescreen.baseDiv.style.display = "none";
+    document.querySelector(".wall").style.display = "none";
+    //dont care about the 
 }
 
 core.rehookAll = function (id) {
