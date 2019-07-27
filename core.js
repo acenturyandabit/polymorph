@@ -198,7 +198,6 @@ function _core() {
     }
 
     this.isLinked = function (A, B) {
-        me.baseRect.refresh();
         let ret = 0; //unlinked
         if (core.items[A].to && core.items[B].from && (core.items[A].to[B] || core.items[B].from[A])) {
             //make sure to enforce both sides of link

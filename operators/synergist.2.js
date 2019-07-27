@@ -706,6 +706,8 @@ core.registerOperator("itemcluster2", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Items
+    let itemPointerCache={};
+
     scriptassert([
         ["svg", "3pt/svg.min.js"],
         ["foreignobject", "3pt/svg.foreignobject.js"]
@@ -717,14 +719,14 @@ core.registerOperator("itemcluster2", {
             if (!core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
             if (!core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                 //if an item of it exists, hide the item
-                let rect = me.svg.select("[data-id='" + id + "']").members[0];
+                let rect = itemPointerCache[id];
                 if (rect) {
                     rect.hide();
                 }
                 return true;
             }
 
-            let rect = me.svg.select("[data-id='" + id + "']").members[0];
+            let rect = itemPointerCache[id];
             if (!rect) {
                 //need to make a new rectangle
                 //let _rect = rect.rect(100, 50);
@@ -733,14 +735,15 @@ core.registerOperator("itemcluster2", {
                     class: "floatingItem"
                 });
                 rect.appendChild("div");
-                rect.node.querySelector("div").appendChild(document.createElement("textarea"));
+                itemPointerCache[id]=rect;
+                itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
             }
             rect.show();
             if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                 rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
-            let tta = me.rootdiv.querySelector("[data-id='" + id + "']>div>textarea");
+            let tta = itemPointerCache[id].node.children[0].children[0];
             tta.value = core.items[id].title || "";
             if (core.items[id].style) {
                 tta.style.background = core.items[id].style.background || "";
@@ -752,8 +755,8 @@ core.registerOperator("itemcluster2", {
                     h: "100px"
                 };
             }
-            me.rootdiv.querySelector("[data-id='" + id + "']>div").style.width = core.items[id].boxsize.w || "";
-            me.rootdiv.querySelector("[data-id='" + id + "']>div").style.height = core.items[id].boxsize.h || "";
+            itemPointerCache[id].node.children[0].style.width = core.items[id].boxsize.w || "";
+            itemPointerCache[id].node.children[0].style.height = core.items[id].boxsize.h || "";
             rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
 
             //add icons if necessary
@@ -833,8 +836,8 @@ core.registerOperator("itemcluster2", {
         };
 
         me.enforceLine = function (start, end) {
-            let sd = me.svg.select(`[data-id='${start}']`).first();
-            let ed = me.svg.select(`[data-id='${end}']`).first()
+            let sd = itemPointerCache[start];
+            let ed = itemPointerCache[end];
             if (!sd || !ed) {
                 return;
             }
@@ -933,7 +936,7 @@ core.registerOperator("itemcluster2", {
 
                 if (it.classList.contains("anchored")) return;
                 if (me.dragging) return;
-                me.movingDiv = me.svg.select("[data-id='" + it.dataset.id + "']").members[0];
+                me.movingDiv = itemPointerCache[it.dataset.id];
                 //adjust x indexes
                 let relements = me.rootdiv.querySelectorAll(".floatingItem");
                 let minzind = me.settings.maxZ;
@@ -1000,7 +1003,7 @@ core.registerOperator("itemcluster2", {
             if (!core.items[cid].itemcluster.viewData) core.items[cid].itemcluster.viewData = {};
             core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
-            me.movingDiv = me.svg.select("[data-id='" + cid + "']").members[0];
+            me.movingDiv = itemPointerCache[cid];
             // force a mousemove
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
             me.dragDX = 30;
@@ -1064,7 +1067,7 @@ core.registerOperator("itemcluster2", {
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = me.svg.select(`[data-id="${me.linkingDiv.dataset.id}"]`).first();
+            let rect = itemPointerCache[me.linkingDiv.dataset.id];
             let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
             me.linkingLine.plot(
                 rect.x() + rect.width() / 2,
@@ -1243,7 +1246,7 @@ core.registerOperator("itemcluster2", {
 
     //----------item functions----------//
     this.updatePosition = function (id) {
-        let it = me.svg.select(".floatingItem[data-id='" + id + "']").first();
+        let it = itemPointerCache[id];
         core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
         core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         core.fire("updateItem", {

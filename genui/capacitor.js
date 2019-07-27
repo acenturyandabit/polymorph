@@ -65,13 +65,13 @@ function capacitor(t, limit, send, settings={}, checkInterval = 100) {
     }
 }
 
-function tryUntilTrue(f, times = 5, separation=500) {
+function tryUntilSuccess(f, times = 5, separation=500) {
     try {
         f();
     } catch (e) {
         console.log(e);
         if (times != 0) {
-            setTimeout(()=>{tryUntilTrue(f, times - 1, separation)}, separation);
+            setTimeout(()=>{tryUntilSuccess(f, times - 1, separation)}, separation);
         }
     }
 }

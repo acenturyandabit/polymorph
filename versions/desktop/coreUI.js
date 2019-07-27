@@ -13,7 +13,13 @@ documentReady(() => {
                 </ul>
             </li>
             <li class="viewdialog">Views</li>
-            <li class="hlep">Help</li>
+            <li>Help
+                <ul>
+                    <li class="hleptute">Operator help</li>
+                    <li class="hlepdocs">Help topics</li>
+                </ul>
+            </li>
+            
             <li class="tutorial">Run the tutorial again</li>
         </ul>
     </div>`));
@@ -28,6 +34,7 @@ documentReady(() => {
             <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>
     </div>`));
+    core.fire("titleButtonsReady");
 })
 
 core.on("UIstart", () => {

@@ -99,8 +99,8 @@ core.registerOperator("itemList", function (operator) {
 
     me.sortItems = function () {
         if (!me.container.visible()) return;
-        if (me.settings.implicitOrder){
-            me.settings.sortby=me.settings.filterProp;
+        if (me.settings.implicitOrder) {
+            me.settings.sortby = me.settings.filterProp;
         }
         if (me.settings.sortby) {
             //collect all items
@@ -125,7 +125,14 @@ core.registerOperator("itemList", function (operator) {
                                     date: core.items[its[i].id][dateprop].date
                                 }];
                             }
-                            if (core.items[its[i].id][dateprop].date[0]) its[i].date = core.items[its[i].id][dateprop].date[0].date;
+                            if (core.items[its[i].id][dateprop].date[0]) {
+                                its[i].date = core.items[its[i].id][dateprop].date[0].date;
+                                //check for repetition structure
+                                if (its[i].dt.datestring.indexOf("(")) {
+                                    //evaluate the repetition
+                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date(its[i].dt.date[0].refdate))[0].date;
+                                }
+                            }
                             else its[i].date = Date.now() * 10000;
                         } else its[i].date = Date.now() * 10000;
                     }
@@ -158,9 +165,9 @@ core.registerOperator("itemList", function (operator) {
             //return focused item
             if (fi) {
                 fi.focus();
-                try{
+                try {
                     fi.selectionStart = cp;
-                }catch (e){
+                } catch (e) {
                 }
             }
         }
@@ -579,9 +586,9 @@ core.registerOperator("itemList", function (operator) {
 
     //when clicking a sort radio button, turn off implict ordering
     me.proplist = me.dialogDiv.querySelector(".proplist");
-    me.proplist.addEventListener("input",(e)=>{
-        if (e.target.matches("[name='sortie']")){
-            me.settings.implicitOrder=false;
+    me.proplist.addEventListener("input", (e) => {
+        if (e.target.matches("[name='sortie']")) {
+            me.settings.implicitOrder = false;
             options.implicitOrder.load();
         }
     })

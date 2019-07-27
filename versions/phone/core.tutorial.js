@@ -68,10 +68,14 @@ function readyTutorial(core) {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Also handle individual tutorials.
-documentReady(()=>{
-  document.querySelector("li.hlep").addEventListener("click", ()=>{
+core.on("titleButtonsReady",()=>{
+  document.querySelector("li.hleptute").addEventListener("click", ()=>{
     core.target().then((id)=>{
       if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
     })
+  })
+  document.querySelector("li.hlepdocs").addEventListener("click", ()=>{
+    //navigate to another help file.
+    window.open(window.location.path+"/docs","_blank");
   })
 })

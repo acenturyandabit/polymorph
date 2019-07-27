@@ -70,12 +70,20 @@ core.on("UIstart", () => {
   core.on("viewReady",()=>{
     core.tutorial.continueStart(()=>{core.tutorial.start();});
   })
-  document.body.querySelector("li.hlep").addEventListener("click", () => {
-    core.target().then((id) => {
-      if (core.getOperator(id).baseOperator.startTutorial) core.getOperator(id).baseOperator.startTutorial();
-    })
-  });
 })
 
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//Also handle individual tutorials.
+core.on("titleButtonsReady",()=>{
+  document.querySelector("li.hleptute").addEventListener("click", ()=>{
+    core.target().then((id)=>{
+      if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
+    })
+  })
+  document.querySelector("li.hlepdocs").addEventListener("click", ()=>{
+    //navigate to another help file.
+    window.open(window.location.pathname+"docs","_blank");
+  })
+})
