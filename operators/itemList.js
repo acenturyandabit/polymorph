@@ -15,12 +15,22 @@ core.registerOperator("itemList", function (operator) {
     this.settingsBar.innerHTML = `<div></div>`
     this.taskListBar = document.createElement("div");
     this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
-    this.template = document.createElement('span');
-    this.template.style.cssText = "display: inline-block; width: 100%;";
-    this._template = document.createElement("span");
-    this.template.appendChild(this._template);
-    this.template.appendChild(document.createElement("button"));
+    //top / insert 
+    this.template = htmlwrap(`<span style="display:inline-block; width:100%;">
+    <span></span>
+    <button>&gt;</button>
+    </span>`);
+    this._template = this.template.querySelector("span");
     this.taskListBar.appendChild(this.template);
+
+    //search
+    this.searchtemplate = htmlwrap(`<span style="display:inline-block; width:100%;">
+    <span></span>
+    <button disabled>&#128269;</button>
+    </span>`);
+    this._searchtemplate = this.searchtemplate.querySelector("span");
+    this.taskListBar.appendChild(this.searchtemplate);
+
     this.taskListBar.appendChild(document.createElement("hr"));
     this.taskList = document.createElement("div");
     this.taskList.style.cssText = "height:100%; overflow-y:auto";
@@ -80,14 +90,33 @@ core.registerOperator("itemList", function (operator) {
         });
         me.datereparse(id);
     }
-
-    this.template.querySelector("button").innerText = ">";
     this.template.querySelector("button").addEventListener("click", this.createItem);
     this.template.addEventListener("keydown", (e) => {
         if (e.key == "Enter") {
             me.createItem();
         }
     });
+
+
+    //Managing the search
+    let sortCapacitor = new capacitor(300, 100, () => {
+        //filter the items
+        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        let items = Array.from(this.taskList.children);
+        items.forEach((v) => {
+            let it = core.items[v.dataset.id];
+            v.style.display = "block";
+            for (let i = 0; i < searchboxes.length; i++) {
+                //only search by text for now
+                if (this.settings.properties[searchboxes[i].dataset.role] == "text") {
+                    if (it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
+                        v.style.display = "none";
+                    }
+                }
+            }
+        });
+    });
+    this.searchtemplate.addEventListener("keydown", sortCapacitor.submit);
 
     this.indexOf = function (id) {
         let childs = this.taskList.children;
@@ -292,6 +321,7 @@ core.registerOperator("itemList", function (operator) {
             }
         }
         this._template.innerHTML = htmlstring;
+        this._searchtemplate.innerHTML = htmlstring;
         //Recreate everything
         this.taskList.innerHTML = "";
         for (let i in core.items) {

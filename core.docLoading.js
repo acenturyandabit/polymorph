@@ -8,6 +8,15 @@ core.loadDocument = async function () {
         core.currentDocID = params.get("doc");
         handled = true;
     } else if (window.location.search) {
+        //check open flag
+        if (params.has("o")){
+            //trim the open flag
+            let loc = window.location.href
+            loc = loc.replace(/\?o/, "");
+            history.pushState({}, "", loc);
+            core.filescreen.showSplash();
+            return;
+        }
         //For non-polymorph links, like drive links
         //try each save source to see if it can handle this kind of request
         for (let i in core.saveSources) {
@@ -101,12 +110,15 @@ core.instantNewDoc = function () {
         //also hook it
         core.userData.documents[core.currentDocID].saveHooks[source] = true;
     }
+    core.isNewDoc=true;
     core.fire("documentCreated", id);
     core.fromSaveData(d);
     core.filescreen.baseDiv.style.display = "none";
     document.querySelector(".wall").style.display = "none";
     //dont care about the 
 }
+
+core.on("updateItem,updateView",()=>{core.isNewDoc=false});
 
 core.rehookAll = function (id) {
     for (let i in core.saveSources) {
@@ -326,8 +338,8 @@ core.userSave = function () {
         core.loadInnerDialog.appendChild(wrapper);
     }
 
-    core.on("UIstart", () => {
-        document.body.appendChild(loadDialog)
+    core.on("titleButtonsReady", () => {
+        document.body.appendChild(loadDialog);
         document.querySelector(".saveSources").addEventListener("click", () => {
             for (let i in core.saveSources)
                 if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();

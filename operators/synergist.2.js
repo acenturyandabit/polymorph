@@ -101,13 +101,13 @@ core.registerOperator("itemcluster2", {
     );
     this.itemSpace = this.rootdiv.querySelector(".itemcluster");
     container.div.appendChild(this.rootdiv);
+    this.tray = this.rootdiv.querySelector(".tray");
 
-
-    this.rootdiv.querySelector(".tray").addEventListener("wheel", (e) => {
-        this.rootdiv.querySelector(".tray").scrollLeft += e.deltaY;
+    this.tray.addEventListener("wheel", (e) => {
+        me.tray.scrollLeft += e.deltaY;
     })
 
-    this.rootdiv.querySelector(".tray").addEventListener("input", (e) => {
+    me.tray.addEventListener("input", (e) => {
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
         core.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
@@ -143,6 +143,23 @@ core.registerOperator("itemcluster2", {
             core.saveUserData();
         });
     }
+    //////////////////////////// Focusing an item////////////////////
+    core.on("focus", (d) => {
+        if (d.sender == me) return;
+        if (itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
+            core.items[me.settings.currentViewName].itemcluster.cx = itemPointerCache[d.id].cx();
+            core.items[me.settings.currentViewName].itemcluster.cy = itemPointerCache[d.id].cy();
+            me.viewAdjust();
+            if (me.preselected) {
+                me.preselected.classList.remove("selected");
+                me.preselected.classList.remove("anchored");
+            }
+            me.preselected = itemPointerCache[d.id].node;
+            me.preselected.classList.add("anchored");
+        }
+    })
+
+
     ////////////////////////////////////////Handle core item updates//////////////////
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
@@ -706,7 +723,7 @@ core.registerOperator("itemcluster2", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Items
-    let itemPointerCache={};
+    let itemPointerCache = {};
 
     scriptassert([
         ["svg", "3pt/svg.min.js"],
@@ -725,7 +742,8 @@ core.registerOperator("itemcluster2", {
                 }
                 return true;
             }
-
+            //enforce a property on it with viewName.
+            if (!core.items[id][`__itemcluster_${me.settings.currentViewName}`]) core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
             let rect = itemPointerCache[id];
             if (!rect) {
                 //need to make a new rectangle
@@ -735,7 +753,7 @@ core.registerOperator("itemcluster2", {
                     class: "floatingItem"
                 });
                 rect.appendChild("div");
-                itemPointerCache[id]=rect;
+                itemPointerCache[id] = rect;
                 itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
             }
             rect.show();
@@ -804,13 +822,6 @@ core.registerOperator("itemcluster2", {
             .click(selectThis);
             */
             //also delete lines associated with it
-
-            //send an updated item list to everyone who is listening to me
-            let existingItems = me.rootdiv.querySelectorAll("[data-id='" + id + "']");
-            let eis = [];
-            for (let i = 0; i < existingItems.length; i++) eis.push(existingItems[i].dataset.id);
-            me.fire('updateItemList', eis);
-
             return true;
         }
 
@@ -825,7 +836,7 @@ core.registerOperator("itemcluster2", {
         me.toggleLine = function (start, end) {
             //start and end is now directional. 
             //check if linked; if linked, remove link
-            if (core.isLinked(start, end)%2) {
+            if (core.isLinked(start, end) % 2) {
                 core.unlink(start, end);
                 if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
@@ -846,17 +857,17 @@ core.registerOperator("itemcluster2", {
                 //if so, remove
                 me.activeLines[start][end].remove();
             }
-            
+
             //if either is not visible, then dont draw
             if (sd.style.display == "none" || ed.style.display == "none") {
                 return;
             } else {
                 if (!me.activeLines[start]) me.activeLines[start] = {};
-                let x=[sd.cx(),0,ed.cx()];
-                let y=[sd.cy(),0,ed.cy()];
-                x[1]=(x[0]+x[2])/2;
-                y[1]=(y[0]+y[2])/2;
-                let l=me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({width:2,color:"#000"});
+                let x = [sd.cx(), 0, ed.cx()];
+                let y = [sd.cy(), 0, ed.cy()];
+                x[1] = (x[0] + x[2]) / 2;
+                y[1] = (y[0] + y[2]) / 2;
+                let l = me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({ width: 2, color: "#000" });
                 l.marker('mid', 9, 6, function (add) {
                     add.path("M0,0 L0,6 L9,3 z").fill("#000");
                 })
@@ -938,8 +949,9 @@ core.registerOperator("itemcluster2", {
                 if (me.dragging) return;
                 me.movingDiv = itemPointerCache[it.dataset.id];
                 //adjust x indexes
-                let relements = me.rootdiv.querySelectorAll(".floatingItem");
+                let relements = Object.values(itemPointerCache);
                 let minzind = me.settings.maxZ;
+
                 for (let i = 0; i < relements.length; i++) {
                     relements[i].style.border = "";
                     let contest = Number(relements[i].style["z-index"]);
@@ -1033,9 +1045,8 @@ core.registerOperator("itemcluster2", {
             me.movingDiv.y(coords.y - me.dragDY);
             let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
             //borders for the drag item in item
-            let fi = me.rootdiv.querySelectorAll(".floatingItem");
-            for (let i = 0; i < fi.length; i++) {
-                fi[i].style.border = "";
+            if (me.hoverOver) {
+                me.hoverOver.style.border = "";
             }
             let stillInTray = false;
             for (let i = 0; i < elements.length; i++) {
@@ -1048,12 +1059,14 @@ core.registerOperator("itemcluster2", {
                     // delete the item from this view
                     let cid = me.movingDiv.attr("data-id");
                     delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                    delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                     me.arrangeItem(cid);
                     me.addToTray(cid);
                     me.dragging = false;
                     core.fire("updateItem", { sender: me, id: cid });
                 }
                 if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.movingDiv.attr("data-id")) {
+                    me.hoverOver = elements[i];
                     elements[i].style.border = "3px dotted red";
                     break;
                 }
@@ -1061,9 +1074,14 @@ core.registerOperator("itemcluster2", {
             if (!stillInTray) me.stillInTray = false;
             //if we are moving something ensure it wont be twice-click selected.
             me.preselected = undefined;
-            //redraw all lines
+            //redraw all ITS lines
+            let ci = me.movingDiv.node.dataset.id
             for (let i in me.activeLines) {
-                for (let j in me.activeLines[i]) me.enforceLine(i, j);
+                for (let j in me.activeLines[i]) {
+                    if (i == ci || j == ci) {// this could STILL be done better
+                        me.enforceLine(i, j);
+                    }
+                }
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
@@ -1105,7 +1123,7 @@ core.registerOperator("itemcluster2", {
 
     this.itemSpace.addEventListener("wheel", (e) => {
         if (e.target.matches(".floatingItem") ||
-            e.target.matches(".floatingItem *") || me.rootdiv.querySelector(".tray").contains(e.target)) {
+            e.target.matches(".floatingItem *") || me.tray.contains(e.target)) {
             return;
         }
         //calculate old width constant
@@ -1146,12 +1164,7 @@ core.registerOperator("itemcluster2", {
             //disengage drag
             me.dragging = false;
             //me.movingDiv.classList.remove("moving");
-            let fi = me.rootdiv.querySelectorAll(".floatingItem");
-
-            for (let i = 0; i < fi.length; i++) {
-                fi[i].style.border = "";
-            }
-
+            if (me.hoverOver) me.hoverOver.style.border = "";
 
             //define some stuff
             let thing = me.movingDiv.attr("data-id");
@@ -1189,7 +1202,7 @@ core.registerOperator("itemcluster2", {
             });
         } else if (me.linking) {
             //reset linking line
-            me.linkingLine.plot(0, 0, 0, 0).stroke({width:0});
+            me.linkingLine.plot(0, 0, 0, 0).stroke({ width: 0 });
             me.linking = false;
             //change the data
             let linkedTo;
@@ -1315,26 +1328,25 @@ core.registerOperator("itemcluster2", {
     ////////////////////////////////////////////////////////////
     //The tray
     me.addToTray = function (id) {
-        let cti = me.rootdiv.querySelector(`.tray div[data-id='${id}']`);
+        let cti = me.tray.querySelector(`div[data-id='${id}']`);
         if (!cti) {
             cti = htmlwrap(`
                 <div data-id=${id}>
                 <textarea></textarea>
                 </div>
             `);
-            me.rootdiv.querySelector(`.tray`).appendChild(cti);
+            me.tray.appendChild(cti);
         }
         cti.querySelector("textarea").value = core.items[id].title;
     }
 
     me.removeFromTray = function (id) {
-        let cti = me.rootdiv.querySelector(`.tray div[data-id='${id}']`);
+        let cti = me.tray.querySelector(`div[data-id='${id}']`);
         if (cti) cti.remove();
     }
     me.emptyTray = function () {
-        let trayitems = me.rootdiv.querySelector(".tray>div");
-        if (trayitems) for (let i = 0; i < trayitems.length; i++) {
-            trayitems[i].remove();
+        while (me.tray.children.length) {
+            me.tray.children[0].remove();
         }
     }
 
@@ -1345,7 +1357,7 @@ core.registerOperator("itemcluster2", {
         if (me.settings.tray) {
             //show the tray
             me.emptyTray();
-            me.rootdiv.querySelector(".tray").style.display = "flex";
+            me.tray.style.display = "flex";
             //also populate the tray
             for (let i in core.items) {
                 try {
@@ -1360,7 +1372,7 @@ core.registerOperator("itemcluster2", {
             }
         } else {
             me.emptyTray();
-            me.rootdiv.querySelector(".tray").style.display = "none";
+            me.tray.style.display = "none";
         }
     }
 

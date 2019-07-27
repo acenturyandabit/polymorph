@@ -38,8 +38,12 @@ documentReady(() => {
 })
 
 core.on("UIstart", () => {
+    
     document.querySelector(".topbar .open").addEventListener("click", () => {
-        core.filescreen.showSplash();
+        if (core.isNewDoc)core.filescreen.showSplash();
+        else{
+            window.open(window.location.pathname+"?o","_blank");
+        }
     })
     document.querySelector(".topbar .tutorial").addEventListener("click", () => {
         core.resetTutorial();
