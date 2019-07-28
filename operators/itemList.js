@@ -59,9 +59,15 @@ core.registerOperator("itemList", function (operator) {
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
                 case "text":
-                case "tag":
                 case "number":
                     it[i] = currentItemSpan.querySelector("[data-role='" + i + "']").value;
+                    break;
+                case "object":
+                    try {
+                        it[i] = JSON.parse(currentItemSpan.querySelector("[data-role='" + i + "']").value);
+                    } catch (e) {
+
+                    }
                     break;
                 case "date":
                     if (!it[i]) it[i] = {};
@@ -102,21 +108,48 @@ core.registerOperator("itemList", function (operator) {
     let sortCapacitor = new capacitor(300, 100, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        let amSearching=false;
+        for (let i=0;i<searchboxes.length;i++){
+            if (searchboxes[i].value!=""){
+                amSearching=true;
+            }
+        }
+        if (amSearching){
+            this.searchtemplate.querySelector("button").innerHTML="&#9003;";
+            this.searchtemplate.querySelector("button").disabled=false;
+        }else{
+            this.searchtemplate.querySelector("button").innerHTML="&#128269;";
+            this.searchtemplate.querySelector("button").disabled=true;
+            //dont return yet, we have to reset everything
+        }
+            
         let items = Array.from(this.taskList.children);
         items.forEach((v) => {
             let it = core.items[v.dataset.id];
             v.style.display = "block";
             for (let i = 0; i < searchboxes.length; i++) {
                 //only search by text for now
-                if (this.settings.properties[searchboxes[i].dataset.role] == "text") {
-                    if (it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
-                        v.style.display = "none";
-                    }
+                switch (this.settings.properties[searchboxes[i].dataset.role]) {
+                    case "text":
+                        if (it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
+                            v.style.display = "none";
+                        }
+                        break;
+                    case "object":
+                        if (v.querySelector(`[data-role="${searchboxes[i].dataset.role}"]`).value.indexOf(searchboxes[i].value) == -1) {
+                            v.style.display = "none";
+                        }
+                        break;
                 }
             }
         });
     });
     this.searchtemplate.addEventListener("keydown", sortCapacitor.submit);
+    this.searchtemplate.querySelector("button").addEventListener("click",()=>{
+        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        searchboxes.forEach(v=>{v.value="";});
+        sortCapacitor.submit();
+    })
 
     this.indexOf = function (id) {
         let childs = this.taskList.children;
@@ -233,10 +266,16 @@ core.registerOperator("itemList", function (operator) {
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
                 case "text":
-                case "tag":
                 case "number":
                     if (it[i]) {
                         currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i];
+                    } else {
+                        currentItemSpan.querySelector("[data-role='" + i + "']").value = "";
+                    }
+                    break;
+                case "object":
+                    if (it[i]) {
+                        currentItemSpan.querySelector("[data-role='" + i + "']").value = JSON.stringify(it[i]);
                     } else {
                         currentItemSpan.querySelector("[data-role='" + i + "']").value = "";
                     }
@@ -312,7 +351,7 @@ core.registerOperator("itemList", function (operator) {
             switch (this.settings.properties[i]) {
                 case "text":
                 case "date":
-                case "tag":
+                case "object":
                     htmlstring += "<input data-role='" + i + "' placeholder='" + i + "'>";
                     break;
                 case "number":
@@ -352,8 +391,18 @@ core.registerOperator("itemList", function (operator) {
         switch (me.settings.properties[e.target.dataset.role]) {
             case "text":
             case "number":
-            case "tag":
                 currentItem[e.target.dataset.role] = e.target.value;
+                break;
+            case "object":
+                try {
+                    currentItem[e.target.dataset.role] = JSON.parse(e.target.value);
+                    e.target.style.background="white";
+                    e.target.style.color="black";
+                } catch (e) {
+                    e.target.style.background="red";
+                    e.target.style.color="white";
+                    return;
+                }
                 break;
             case "date":
                 if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
@@ -584,7 +633,7 @@ core.registerOperator("itemList", function (operator) {
             <select data-role=` + prop + `>
                 <option value="text">Text</option>
                 <option value="date">Date</option>
-                <option value="tag">Tag</option>
+                <option value="object">Object</option>
                 <option value="number">Number</option>
             </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole=` + prop + `>X</button>`
             pspan.querySelector("select").value = me.settings.properties[prop];
