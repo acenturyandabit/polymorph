@@ -647,6 +647,8 @@ core.registerOperator("itemcluster2", {
           <li class="subview">Open Subview</li>
           <li>Edit style
           <ul class="submenu">
+            <li class="cstyl">Copy style</li>
+            <li class="pstyl">Paste style</li>
             <li><input class="background" placeholder="Background"></li>
             <li><input class="color" placeholder="Color"></li>
           </ul>
@@ -676,6 +678,25 @@ core.registerOperator("itemcluster2", {
                 id: cid
             });
         }
+        me.itemContextMenu
+            .querySelector(".cstyl")
+            .addEventListener("click", ()=>{
+                let cid = me.contextedElement.dataset.id;
+                me.copiedStyle=core.items[cid].style;
+                me.itemContextMenu.style.display = "none";
+            });
+        me.itemContextMenu
+            .querySelector(".pstyl")
+            .addEventListener("click", ()=>{
+                let cid = me.contextedElement.dataset.id;
+                core.items[cid].style=me.copiedStyle;
+                me.arrangeItem(cid);
+                core.fire("updateItem", {
+                    sender: this,
+                    id: cid
+                });
+                me.itemContextMenu.style.display = "none";
+            });
         me.itemContextMenu
             .querySelector(".background")
             .addEventListener("input", updateStyle);
