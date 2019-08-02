@@ -972,6 +972,32 @@ core.registerOperator("itemcluster2", {
     });
 
     this.dragging = false;
+    this.movingDivs = [];
+    this.shouldHighlightMovingDivs = 0;
+    //clear out multiple items when ctrl key upped.
+    function decrementAndClear(){
+        me.shouldHighlightMovingDivs--;
+        if (!me.shouldHighlightMovingDivs) {
+            //dehighlight them.
+            me.movingDivs.forEach((v) => {
+                v.el.node.children[0].style.border = "1px solid black";
+            })
+            me.movingDivs=[];
+        }
+    }
+
+    document.body.addEventListener("keyup", (e) => {
+        if (e.key == "Control") {
+            decrementAndClear();
+        }
+    })
+
+    document.body.addEventListener("keydown", (e) => {
+        if (e.key == "Control") {
+            me.shouldHighlightMovingDivs++;
+        }
+    })
+
     this.itemSpace.addEventListener("mousedown", function (e) {
         if (
             e.target.matches(".floatingItem") ||
@@ -981,12 +1007,21 @@ core.registerOperator("itemcluster2", {
             if (e.which != 1) return;
             if (!e.getModifierState("Shift")) {
                 //if not lineing
+                //clear the movingDivs if they need to be cleared
+                me.shouldHighlightMovingDivs++;
+                if (me.movingDivs.length && !e.getModifierState("Control")) {
+                    me.movingDivs = [];//empty them
+                }
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
-
                 if (it.classList.contains("anchored")) return;
                 if (me.dragging) return;
-                me.movingDiv = itemPointerCache[it.dataset.id];
+                me.movingDivs.push({
+                    el: itemPointerCache[it.dataset.id]
+                });
+                me.lastMovingDiv = itemPointerCache[it.dataset.id];
+                //style it so we can see it
+                itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
                 //adjust x indexes
                 let relements = Object.values(itemPointerCache);
                 let minzind = me.settings.maxZ;
@@ -1011,8 +1046,10 @@ core.registerOperator("itemcluster2", {
                 me.dragging = true;
                 //set relative drag coordinates
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                me.dragDX = coords.x - me.movingDiv.x();
-                me.dragDY = coords.y - me.movingDiv.y();
+                for (let i = 0; i < me.movingDivs.length; i++) {
+                    me.movingDivs[i].dx = coords.x - me.movingDivs[i].el.x();
+                    me.movingDivs[i].dy = coords.y - me.movingDivs[i].el.y();
+                }
                 //Enforce its lines in blue.
                 if (me.prevFocusID) me.redrawLines(me.prevFocusID);
                 me.redrawLines(it.dataset.id, "red");
@@ -1053,13 +1090,15 @@ core.registerOperator("itemcluster2", {
             if (!core.items[cid].itemcluster.viewData) core.items[cid].itemcluster.viewData = {};
             core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
-            me.movingDiv = itemPointerCache[cid];
+            //this is probably broken now
+            me.movingDivs.push(itemPointerCache[cid]);
+            me.lastMovingDiv = itemPointerCache[cid];
             // force a mousemove
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
             me.dragDX = 30;
             me.dragDY = 30;
-            me.movingDiv.x(coords.x - me.dragDX);
-            me.movingDiv.y(coords.y - me.dragDY);
+            me.lastMovingDiv.x(coords.x - me.dragDX);
+            me.lastMovingDiv.y(coords.y - me.dragDY);
 
             me.updatePosition(cid);
             me.dragging = true;
@@ -1069,24 +1108,20 @@ core.registerOperator("itemcluster2", {
         }
         if (me.dragging) {
             //dragging an item
-
-            /*if (me.movingDiv.parentElement.parentElement.matches(".floatingItem")) {
-                //nested items
-                me.itemSpace.appendChild(me.movingDiv);
-                me.clearParent(me.movingDiv.dataset.id);
-                //me.items[me.movingDiv.dataset.id].viewData[me.currentView].parent = undefined;
-            }*/
-            //me.movingDiv.classList.add("moving");
             //translate position of mouse to position of rectangle
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.movingDiv.x(coords.x - me.dragDX);
-            me.movingDiv.y(coords.y - me.dragDY);
+            for (let i = 0; i < me.movingDivs.length; i++) {
+                me.movingDivs[i].el.x(coords.x - me.movingDivs[i].dx);
+                me.movingDivs[i].el.y(coords.y - me.movingDivs[i].dy);
+            }
             let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
             //borders for the drag item in item
             if (me.hoverOver) {
                 me.hoverOver.style.border = "";
             }
             let stillInTray = false;
+
+            //we'll leave this for later
             for (let i = 0; i < elements.length; i++) {
                 if (elements[i].matches(".tray")) {
                     if (me.stillInTray) {
@@ -1095,7 +1130,7 @@ core.registerOperator("itemcluster2", {
                     }
                     //send to tray, and end interaction
                     // delete the item from this view
-                    let cid = me.movingDiv.attr("data-id");
+                    let cid = me.lastMovingDiv.attr("data-id");
                     delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
                     delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                     me.arrangeItem(cid);
@@ -1103,7 +1138,7 @@ core.registerOperator("itemcluster2", {
                     me.dragging = false;
                     core.fire("updateItem", { sender: me, id: cid });
                 }
-                if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.movingDiv.attr("data-id")) {
+                if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.lastMovingDiv.attr("data-id")) {
                     me.hoverOver = elements[i];
                     elements[i].style.border = "3px dotted red";
                     break;
@@ -1113,8 +1148,9 @@ core.registerOperator("itemcluster2", {
             //if we are moving something ensure it wont be twice-click selected.
             me.preselected = undefined;
             //redraw all ITS lines
-            let ci = me.movingDiv.node.dataset.id
-            me.redrawLines(ci, "red");
+            for (let i = 0; i < me.movingDivs.length; i++) {
+                me.redrawLines(me.movingDivs[i].el.node.dataset.id, "red");
+            }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
             let rect = itemPointerCache[me.linkingDiv.dataset.id];
@@ -1199,7 +1235,7 @@ core.registerOperator("itemcluster2", {
             if (me.hoverOver) me.hoverOver.style.border = "";
 
             //define some stuff
-            let thing = me.movingDiv.attr("data-id");
+            let cid = me.lastMovingDiv.attr("data-id");
 
             let elements = me.rootdiv
                 .getRootNode()
@@ -1213,24 +1249,27 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches(".floatingItem") &&
-                    elements[i].dataset.id != thing
+                    elements[i].dataset.id != cid
                 ) {
-                    core.items[thing].itemcluster.viewData[elements[i].dataset.id] = {
+                    core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
                         x: 0,
                         y: 0
                     };
                     if (!e.ctrlKey) {
-                        delete core.items[thing].itemcluster.viewData[me.settings.currentViewName];
-                        me.arrangeItem(thing);
+                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                        me.arrangeItem(cid);
                     }
                     //me.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
             }
-            me.updatePosition(thing);
+            me.movingDivs.forEach((v) => {
+                me.updatePosition(v.el.node.dataset.id);
+            })
+            decrementAndClear();
             core.fire("updateItem", {
                 sender: me,
-                id: thing
+                id: cid
             });
         } else if (me.linking) {
             //reset linking line
@@ -1516,8 +1555,8 @@ core.registerOperator("itemcluster2", {
                 y = Math.random() * 1000;
             }
             let id = core.insertItem(item);
-            core.items[id].itemcluster={viewData:{}};
-            core.items[id].itemcluster.viewData[me.settings.currentViewName]={};
+            core.items[id].itemcluster = { viewData: {} };
+            core.items[id].itemcluster.viewData[me.settings.currentViewName] = {};
             core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
             core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
