@@ -144,7 +144,7 @@ core.registerOperator("itemList", function (operator) {
             }
         });
     });
-    this.searchtemplate.addEventListener("keydown", sortCapacitor.submit);
+    this.searchtemplate.addEventListener("keyup", sortCapacitor.submit);
     this.searchtemplate.querySelector("button").addEventListener("click",()=>{
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
         searchboxes.forEach(v=>{v.value="";});
@@ -732,5 +732,5 @@ core.registerOperator("itemList", function (operator) {
             }
         }
         me.focusItem(data.id);
-    })
+    });
 });
