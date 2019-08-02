@@ -264,6 +264,8 @@ core.registerOperator("itemcluster2", {
         me.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Create view from filter</em></a>`));
         me.viewDropdown.style.display = "block";
     });
+
+    //hide the view dropdown button, if necessary.
     this.rootdiv.addEventListener("mousedown", function (e) {
         let p = e.target;
         while (p != me.rootdiv && p) {
@@ -680,16 +682,16 @@ core.registerOperator("itemcluster2", {
         }
         me.itemContextMenu
             .querySelector(".cstyl")
-            .addEventListener("click", ()=>{
+            .addEventListener("click", () => {
                 let cid = me.contextedElement.dataset.id;
-                me.copiedStyle=core.items[cid].style;
+                me.copiedStyle = Object.assign({}, core.items[cid].style);
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
             .querySelector(".pstyl")
-            .addEventListener("click", ()=>{
+            .addEventListener("click", () => {
                 let cid = me.contextedElement.dataset.id;
-                core.items[cid].style=me.copiedStyle;
+                core.items[cid].style = Object.assign({}, me.copiedStyle);
                 me.arrangeItem(cid);
                 core.fire("updateItem", {
                     sender: this,
@@ -745,7 +747,7 @@ core.registerOperator("itemcluster2", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Items
     let itemPointerCache = {};
-
+    let cachedStyle = {};
     scriptassert([
         ["svg", "3pt/svg.min.js"],
         ["foreignobject", "3pt/svg.foreignobject.js"]
@@ -784,9 +786,13 @@ core.registerOperator("itemcluster2", {
             //fill in the textarea inside
             let tta = itemPointerCache[id].node.children[0].children[0];
             tta.value = core.items[id].title || "";
-            if (core.items[id].style) {
-                tta.style.background = core.items[id].style.background || "";
-                tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+            if (core.items[id].style) { // dont update this if it hasn't changed.
+                if (JSON.stringify(core.items[id].style) != JSON.stringify(cachedStyle[id])) {
+                    tta.style.background = core.items[id].style.background || "";
+                    tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+                    cachedStyle[id] = JSON.parse(JSON.stringify(core.items[id].style));
+                }
+
             }
             if (!core.items[id].boxsize) {
                 core.items[id].boxsize = {
@@ -807,14 +813,14 @@ core.registerOperator("itemcluster2", {
                 } else {
                     subviewItemCount = document.createElement("p");
                     subviewItemCount.style.cssText = `
-      display: block;
-      width: 1em;
-      height: 1em;
-      font-size: 0.7em;
-      margin: 0px;
-      text-align: center;
-      background: orange;
-      `;
+                    display: block;
+                    width: 1em;
+                    height: 1em;
+                    font-size: 0.7em;
+                    margin: 0px;
+                    text-align: center;
+                    background: orange;
+                    `;
                     subviewItemCount.classList.add("subviewItemCount");
                     rect.node.children[0].appendChild(subviewItemCount);
                     //also count all the items in my subview and report.
@@ -832,7 +838,11 @@ core.registerOperator("itemcluster2", {
             //draw its lines
             if (core.items[id].to) {
                 for (let i in core.items[id].to) {
-                    me.enforceLine(id, i);
+                    if (i == me.prevFocusID || id == me.prevFocusID) {
+                        me.enforceLine(id, i, "red");
+                    } else {
+                        me.enforceLine(id, i);
+                    }
                 }
             }
             /*
@@ -866,8 +876,16 @@ core.registerOperator("itemcluster2", {
                 me.enforceLine(start, end);
             }
         };
-
-        me.enforceLine = function (start, end) {
+        me.redrawLines = function (ci, style = "black") {
+            for (let i in me.activeLines) {
+                for (let j in me.activeLines[i]) {
+                    if (i == ci || j == ci) {// this could STILL be done better
+                        me.enforceLine(i, j, style);
+                    }
+                }
+            }
+        }
+        me.enforceLine = function (start, end, style = "black") {
             let sd = itemPointerCache[start];
             let ed = itemPointerCache[end];
             if (!sd || !ed) {
@@ -888,9 +906,9 @@ core.registerOperator("itemcluster2", {
                 let y = [sd.cy(), 0, ed.cy()];
                 x[1] = (x[0] + x[2]) / 2;
                 y[1] = (y[0] + y[2]) / 2;
-                let l = me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({ width: 2, color: "#000" });
+                let l = me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({ width: 2, color: style });
                 l.marker('mid', 9, 6, function (add) {
-                    add.path("M0,0 L0,6 L9,3 z").fill("#000");
+                    add.path("M0,0 L0,6 L9,3 z").fill(style);
                 })
                 me.activeLines[start][end] = l;
                 l.back();
@@ -902,7 +920,7 @@ core.registerOperator("itemcluster2", {
         for (let i in core.items) {
             me.arrangeItem(i);
         }
-        //twice for lines
+        //twice for lines, as some items may not have loaded yets
         for (let i in core.items) {
             me.arrangeItem(i);
         }
@@ -995,11 +1013,10 @@ core.registerOperator("itemcluster2", {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
                 me.dragDX = coords.x - me.movingDiv.x();
                 me.dragDY = coords.y - me.movingDiv.y();
-                /*
-                let rect = it.getBoundingClientRect();
-                me.dragDX = e.pageX - (rect.left + document.body.scrollLeft);
-                me.dragDY = e.pageY - (rect.top + document.body.scrollTop);*/
-                //e.preventDefault();
+                //Enforce its lines in blue.
+                if (me.prevFocusID) me.redrawLines(me.prevFocusID);
+                me.redrawLines(it.dataset.id, "red");
+                me.prevFocusID = it.dataset.id;
                 //return false;
             } else {
                 let it = e.target;
@@ -1097,13 +1114,7 @@ core.registerOperator("itemcluster2", {
             me.preselected = undefined;
             //redraw all ITS lines
             let ci = me.movingDiv.node.dataset.id
-            for (let i in me.activeLines) {
-                for (let j in me.activeLines[i]) {
-                    if (i == ci || j == ci) {// this could STILL be done better
-                        me.enforceLine(i, j);
-                    }
-                }
-            }
+            me.redrawLines(ci, "red");
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
             let rect = itemPointerCache[me.linkingDiv.dataset.id];
@@ -1319,6 +1330,14 @@ core.registerOperator("itemcluster2", {
 
     this.removeItem = function (id) {
         delete core.items[id].itemcluster.viewData[me.settings.currentViewName];
+        //hide all the lines
+        for (let i in me.activeLines) {
+            for (let j in me.activeLines[i]) {
+                if (i == id || j == id) {// this could STILL be done better
+                    me.toggleLine(i, j);
+                }
+            }
+        }
         me.arrangeItem(id);
         core.fire("deleteItem", {
             id: id
@@ -1332,6 +1351,9 @@ core.registerOperator("itemcluster2", {
                 id: id,
                 sender: this
             });
+            if (me.prevFocusID) me.redrawLines(me.prevFocusID);
+            me.redrawLines(id, "red");
+            me.prevFocusID = id;
         }
     })
 
@@ -1480,6 +1502,27 @@ core.registerOperator("itemcluster2", {
         updateSettings();
         core.fire("updateView");
         // pull settings and update when your dialog is closed.
+    }
 
+    //extension API
+    this.callables = {
+        placeItem: function (data) {
+            let item = data.item;
+            let x = data.x;
+            let y = data.y;
+            if (x == undefined) {
+                //they want us to decide where to place the item
+                x = Math.random() * 1000;
+                y = Math.random() * 1000;
+            }
+            let id = core.insertItem(item);
+            core.items[id].itemcluster={viewData:{}};
+            core.items[id].itemcluster.viewData[me.settings.currentViewName]={};
+            core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
+            core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
+            me.arrangeItem(id);
+            core.fire("updateItem", { id: id, sender: me });
+            return id;
+        }
     }
 });

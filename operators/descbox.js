@@ -27,7 +27,7 @@ core.registerOperator("descbox", function (operator) {
                 me.textarea.disabled = false;
                 if (core.items[id].style) {
                     me.textarea.style.background = core.items[id].style.background;
-                    me.textarea.style.color = core.items[id].style.color|| matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
+                    me.textarea.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
                 } else {
                     me.textarea.style.background = "";
                     me.textarea.style.color = "";
@@ -127,6 +127,16 @@ core.registerOperator("descbox", function (operator) {
         }
     });
 
+    let options = {
+        showWordCount: new _option({
+            div: this.optionsDiv,
+            type: "bool",
+            object: me.settings,
+            property: "showWordCount",
+            label: "Show wordcount?"
+        })
+    };
+
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `
@@ -168,7 +178,7 @@ core.registerOperator("descbox", function (operator) {
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
-        me.textarea.placeholder=me.settings.placeholder|| "";
+        me.textarea.placeholder = me.settings.placeholder || "";
         me.updateSettings();
         core.fire("updateView");
     }

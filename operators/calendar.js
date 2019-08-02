@@ -1,7 +1,7 @@
 core.registerOperator("calendar", {
-        displayName: "Calendar",
-        description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
-    },
+    displayName: "Calendar",
+    description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
+},
     function (operator) {
         let me = this;
         me.container = operator;
@@ -9,7 +9,7 @@ core.registerOperator("calendar", {
             dateproperty: "datestring",
             dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.
             titleproperty: 'title',
-            defaultView:"agendaWeek",
+            defaultView: "agendaWeek",
         }; // Use my date retrieval format. (others not implented yet lm.ao)
 
         this.rootdiv = document.createElement("div");
@@ -74,12 +74,10 @@ core.registerOperator("calendar", {
                                 try {
                                     let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, start, end);
                                     for (let j = 0; j < result.length; j++) {
-                                        if (me.settings.pushnotifs) {
-                                            me.notifstack.push({
-                                                txt: core.items[i][me.settings.titleproperty],
-                                                time: result[j].date
-                                            });
-                                        }
+                                        me.notifstack.push({
+                                            txt: core.items[i][me.settings.titleproperty],
+                                            time: result[j].date
+                                        });
                                         let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
                                         let eisostring;
                                         if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
@@ -127,13 +125,13 @@ core.registerOperator("calendar", {
         });
         operator.div.appendChild(this.rootdiv);
         //Handle item updates
-        let updateItemCapacitor=new capacitor(1000,1000,()=>{
+        let updateItemCapacitor = new capacitor(1000, 1000, () => {
             try {
-                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible()) $(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }
-        },true);
+        }, true);
         this.updateItem = function (id, sender) {
             if (sender == this) return;
             if (!core.items[id][me.settings.dateproperty]) return;
@@ -144,12 +142,12 @@ core.registerOperator("calendar", {
         }
         core.on("dateUpdate", () => {
             try {
-                if (me.container.visible())$(me.rootdiv).fullCalendar('refetchEvents');
+                if (me.container.visible()) $(me.rootdiv).fullCalendar('refetchEvents');
             } catch (e) {
                 console.log("JQUERY not ready yet :/");
             }
         });
-        
+
         core.on("updateItem", (d) => {
             this.updateItem(d.id, d.sender);
         });
@@ -168,17 +166,34 @@ core.registerOperator("calendar", {
             if (this.settings.wsOn) {
                 this.tryEstablishWS();
             }
+            //create window if window option is open.
+            if (this.settings.notifWindow) {
+                if (!this.notifWindow) {
+                    this.notifWindow = window.open("", "__blank", "dependent:on");
+                }
+            } else {
+                this.notifWindow.close();
+                delete this.notifWindow;
+            }
         }
         //every 10 s, check for new notifs!
         this.notifstack = [];
         setInterval(() => {
+            let ihtml = "";
             for (let i = 0; i < this.notifstack.length; i++) {
-                if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000) {
-                    this.notify(this.notifstack[i].txt);
-                    this.wsnotify(this.notifstack[i].txt);
-                    this.notifstack.splice(i, 1);
-                    i--;
+                if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000 && !this.notifstack[i].notified) {
+                    if (this.settings.pushnotifs) {
+                        this.notify(this.notifstack[i].txt);
+                        this.wsnotify(this.notifstack[i].txt);
+                        this.notifstack[i].notified = true;
+                    }
                 }
+                if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000 && !this.notifstack[i].notified) {
+                    ihtml += `<p>${this.notifstack[i].txt}</p>`;//within 20 s
+                }
+            }
+            if (this.notifWindow) {
+                this.notifWindow.document.body.innerHTML = ihtml;
             }
         }, 10000);
 
@@ -233,7 +248,7 @@ core.registerOperator("calendar", {
 
         //Saving and loading
         this.toSaveData = function () {
-            this.settings.defaultView=$(this.rootdiv).fullCalendar('getView').name;
+            this.settings.defaultView = $(this.rootdiv).fullCalendar('getView').name;
             return this.settings;
         }
 
@@ -251,26 +266,33 @@ core.registerOperator("calendar", {
         `;
 
         let ops = [new _option({
-                div: this.dialogDiv,
-                type: "bool",
-                object: this.settings,
-                property: "pushnotifs",
-                label: "Show push notifications?"
-            }),
-            new _option({
-                div: this.dialogDiv,
-                type: "bool",
-                object: this.settings,
-                property: "wsOn",
-                label: "Send events to a websocket?"
-            }),
-            new _option({
-                div: this.dialogDiv,
-                type: "text",
-                object: this.settings,
-                property: "wsurl",
-                label: "Websocket address"
-            })
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "pushnotifs",
+            label: "Show push notifications?"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "wsOn",
+            label: "Send events to a websocket?"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "wsurl",
+            label: "Websocket address"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "notifWindow",
+            label: "Show Notification window"
+        })
         ];
 
         this.dialogDiv.addEventListener("input", function (e) {

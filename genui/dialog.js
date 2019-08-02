@@ -151,15 +151,14 @@ function _dialogManager(userSettings) {
                     closeButton.classList.add(me.settings.closeButtonClass);
                     let closeDialogHandler = () => {
                         prediv.style.display = "none";
-                        //act as if close button was clicked
-                        closeButton.click();
+                        //act as if close button was clicked   
                     }
                     closeButton.addEventListener("click", closeDialogHandler);
                     e.parentElement.appendChild(closeButton);
                     //only bind escape close to dialogs that have a closeButton
                     window.addEventListener("keydown", (e) => {
                         if (e.key == "Escape" && prediv.style.display!="none") {
-                            closeDialogHandler();
+                            closeButton.click();
                         }
                     });
                 }

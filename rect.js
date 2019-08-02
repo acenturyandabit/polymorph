@@ -355,10 +355,14 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         let inOrOut = [false, false, false, false];
         let borders = ['left', 'right', 'top', 'bottom'];
         //reset all border colors
-        if (!me.children.length) {
-            me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
-        } else {
-            me.outerDiv.style.border = "";
+        //this probably doesnt need to exist?
+        if (me.borderInvalidated) {
+            if (!me.children.length) {
+                me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
+            } else {
+                me.outerDiv.style.border = "";
+            }
+            me.borderInvalidated = false;
         }
         //Parsing the event
 
@@ -385,7 +389,10 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         } else {
             if (dirn != -1) {
                 inOrOut[dirn] = true;
-                if (!me.children.length) me.outerDiv.style["border-" + borders[dirn]] = RECT_BORDER_WIDTH + "px red solid";
+                if (!me.children.length) {
+                    me.outerDiv.style["border-" + borders[dirn]] = RECT_BORDER_WIDTH + "px red solid";
+                    me.borderInvalidated = true;
+                }
             }
             if (me.split != -1 && me.split != dirn) {
                 if (!(e.buttons % 2)) {
