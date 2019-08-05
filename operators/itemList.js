@@ -127,7 +127,7 @@ core.registerOperator("itemList", function (operator) {
                 //only search by text for now
                 switch (this.settings.properties[searchboxes[i].dataset.role]) {
                     case "text":
-                        if (it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
+                        if (!it[searchboxes[i].dataset.role] || it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
                             v.style.display = "none";
                         }
                         break;
