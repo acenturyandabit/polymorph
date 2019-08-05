@@ -178,18 +178,21 @@ core.registerOperator("itemcluster2", {
 
         if (me.container.visible()) {
             let present = false;
-            try {
-                if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                    if (me.arrangeItem) {
-                        me.arrangeItem(id);
-                        acp.submit();
+            if (core.items[id].itemcluster){
+                if (core.items[id].itemcluster.viewData){
+                    if (core.items[id].itemcluster.viewData[me.settings.currentViewName]){
+                        if (me.arrangeItem){
+                            me.arrangeItem(id);
+                            acp.submit();//redraw lines
+                        }
+                    }else{
+                        me.addToTray(id);
                     }
-                    present = true;
                 }
-            } catch (e) {
             }
+            
             if (!present && (!(me.settings.filter) || core.items[id][me.settings.filter])) {
-                me.addToTray(id);
+                
             }
         }
         return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined);
@@ -975,14 +978,14 @@ core.registerOperator("itemcluster2", {
     this.movingDivs = [];
     this.shouldHighlightMovingDivs = 0;
     //clear out multiple items when ctrl key upped.
-    function decrementAndClear(){
+    function decrementAndClear() {
         me.shouldHighlightMovingDivs--;
         if (!me.shouldHighlightMovingDivs) {
             //dehighlight them.
             me.movingDivs.forEach((v) => {
                 v.el.node.children[0].style.border = "1px solid black";
             })
-            me.movingDivs=[];
+            me.movingDivs = [];
         }
     }
 
@@ -1091,14 +1094,17 @@ core.registerOperator("itemcluster2", {
             core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
             //this is probably broken now
-            me.movingDivs.push(itemPointerCache[cid]);
+            let divrep = {
+                el: itemPointerCache[cid],
+                dx: 30,
+                dy: 30
+            };
+            me.movingDivs=[divrep];//overwrite the thing in the array
             me.lastMovingDiv = itemPointerCache[cid];
             // force a mousemove
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.dragDX = 30;
-            me.dragDY = 30;
-            me.lastMovingDiv.x(coords.x - me.dragDX);
-            me.lastMovingDiv.y(coords.y - me.dragDY);
+            me.lastMovingDiv.x(coords.x - divrep.dx);
+            me.lastMovingDiv.y(coords.y - divrep.dy);
 
             me.updatePosition(cid);
             me.dragging = true;
@@ -1121,7 +1127,7 @@ core.registerOperator("itemcluster2", {
             }
             let stillInTray = false;
 
-            //we'll leave this for later
+            //if we send the items to tray
             for (let i = 0; i < elements.length; i++) {
                 if (elements[i].matches(".tray")) {
                     if (me.stillInTray) {
@@ -1130,13 +1136,16 @@ core.registerOperator("itemcluster2", {
                     }
                     //send to tray, and end interaction
                     // delete the item from this view
-                    let cid = me.lastMovingDiv.attr("data-id");
-                    delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
-                    delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
-                    me.arrangeItem(cid);
-                    me.addToTray(cid);
+                    me.movingDivs.forEach((v) => {
+                        let cid = v.el.attr("data-id");
+                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                        delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
+                        me.arrangeItem(cid);
+                        me.addToTray(cid);
+                        core.fire("updateItem", { sender: me, id: cid });
+                    });
+                    me.movingDivs=[];
                     me.dragging = false;
-                    core.fire("updateItem", { sender: me, id: cid });
                 }
                 if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.lastMovingDiv.attr("data-id")) {
                     me.hoverOver = elements[i];
@@ -1331,6 +1340,7 @@ core.registerOperator("itemcluster2", {
     //----------item functions----------//
     this.updatePosition = function (id) {
         let it = itemPointerCache[id];
+        if (!core.items[id].itemcluster.viewData[this.settings.currentViewName]) core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
         core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
         core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         core.fire("updateItem", {
@@ -1356,10 +1366,6 @@ core.registerOperator("itemcluster2", {
             itm[me.settings.filter] = true;
         }
         //register a change
-        core.fire("create", {
-            sender: this,
-            id: id
-        });
         core.fire("updateItem", {
             sender: this,
             id: id
@@ -1442,14 +1448,12 @@ core.registerOperator("itemcluster2", {
             me.tray.style.display = "flex";
             //also populate the tray
             for (let i in core.items) {
-                try {
-                    if (core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                        continue;
+                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
+                    if (!core.items[i].itemcluster.viewData[me.settings.currentViewName]) {//not in this view
+                        if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
+                            me.addToTray(i);
+                        }
                     }
-                } catch (e) {
-                }
-                if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
-                    me.addToTray(i);
                 }
             }
         } else {

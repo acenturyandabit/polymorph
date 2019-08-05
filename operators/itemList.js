@@ -86,10 +86,6 @@ core.registerOperator("itemList", function (operator) {
         let id = core.insertItem(it);
         currentItemSpan.dataset.id = id;
         //clear the template
-        core.fire("create", {
-            id: id,
-            sender: me
-        });
         core.fire("updateItem", {
             id: id,
             sender: me
@@ -108,21 +104,21 @@ core.registerOperator("itemList", function (operator) {
     let sortCapacitor = new capacitor(300, 100, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        let amSearching=false;
-        for (let i=0;i<searchboxes.length;i++){
-            if (searchboxes[i].value!=""){
-                amSearching=true;
+        let amSearching = false;
+        for (let i = 0; i < searchboxes.length; i++) {
+            if (searchboxes[i].value != "") {
+                amSearching = true;
             }
         }
-        if (amSearching){
-            this.searchtemplate.querySelector("button").innerHTML="&#9003;";
-            this.searchtemplate.querySelector("button").disabled=false;
-        }else{
-            this.searchtemplate.querySelector("button").innerHTML="&#128269;";
-            this.searchtemplate.querySelector("button").disabled=true;
+        if (amSearching) {
+            this.searchtemplate.querySelector("button").innerHTML = "&#9003;";
+            this.searchtemplate.querySelector("button").disabled = false;
+        } else {
+            this.searchtemplate.querySelector("button").innerHTML = "&#128269;";
+            this.searchtemplate.querySelector("button").disabled = true;
             //dont return yet, we have to reset everything
         }
-            
+
         let items = Array.from(this.taskList.children);
         items.forEach((v) => {
             let it = core.items[v.dataset.id];
@@ -145,9 +141,9 @@ core.registerOperator("itemList", function (operator) {
         });
     });
     this.searchtemplate.addEventListener("keyup", sortCapacitor.submit);
-    this.searchtemplate.querySelector("button").addEventListener("click",()=>{
+    this.searchtemplate.querySelector("button").addEventListener("click", () => {
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        searchboxes.forEach(v=>{v.value="";});
+        searchboxes.forEach(v => { v.value = ""; });
         sortCapacitor.submit();
     })
 
@@ -396,11 +392,11 @@ core.registerOperator("itemList", function (operator) {
             case "object":
                 try {
                     currentItem[e.target.dataset.role] = JSON.parse(e.target.value);
-                    e.target.style.background="white";
-                    e.target.style.color="black";
+                    e.target.style.background = "white";
+                    e.target.style.color = "black";
                 } catch (e) {
-                    e.target.style.background="red";
-                    e.target.style.color="white";
+                    e.target.style.background = "red";
+                    e.target.style.color = "white";
                     return;
                 }
                 break;
@@ -733,4 +729,28 @@ core.registerOperator("itemList", function (operator) {
         }
         me.focusItem(data.id);
     });
+    me.callables = {
+        addArray: function (a) {
+            let createdIDs=[];
+            a.forEach((v) => {
+                let obj = {};
+                if (typeof v == "string") {
+                    obj.title = v;
+                } else {
+                    obj = v;
+                }
+                let id = core.insertItem(obj);
+                core.fire("updateItem", {
+                    id: id
+                });
+                createdIDs.push(id);
+            });
+            return createdIDs;
+        },
+        addObjects: function (a) {
+            for (let i in a) {
+                core.items[i] = a[i];
+            }
+        }
+    };
 });

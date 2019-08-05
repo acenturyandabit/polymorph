@@ -425,10 +425,6 @@ core.registerOperator(
         it[me.settings.filter] = true;
       }
       //register a change
-      core.fire("create", {
-        sender: me,
-        id: id
-      });
       core.fire("updateItem", {
         sender: me,
         id: id

@@ -60,4 +60,10 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
     this.listOperators=function(list){
         this.rect.listOperators(list);
     }
+
+    this.callables={
+        loadRectFromData:function(data){
+            this.rect.fromSaveData(data);
+        }
+    }
 });

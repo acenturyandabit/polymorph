@@ -49,13 +49,6 @@ core.registerOperator("ruigen", function (operator) {
         // An item was focused.
     });
 
-    core.on("create", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        if (sender == me) return;
-        // An item was created.
-    });
-
     core.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
@@ -88,10 +81,6 @@ core.registerOperator("ruigen", function (operator) {
         let id = core.insertItem(it);
 
         //register a change
-        core.fire("create", {
-            sender: this,
-            id: id
-        });
         core.fire("updateItem", {
             sender: this,
             id: id

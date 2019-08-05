@@ -165,10 +165,6 @@ arrangeItem is at 672 or thereabouts.
         viewName: "New View"
       };
       //register a change
-      core.fire("create", {
-        sender: this,
-        id: id
-      });
       core.fire("updateItem", {
         sender: this,
         id: id
@@ -188,10 +184,6 @@ arrangeItem is at 672 or thereabouts.
       };
       itm.title = core.items[me.settings.currentViewName].synergist.viewName;
       //register a change
-      core.fire("create", {
-        sender: this,
-        id: id
-      });
       core.fire("updateItem", {
         sender: this,
         id: id
@@ -941,10 +933,6 @@ arrangeItem is at 672 or thereabouts.
         y: y
       };
       //register a change
-      core.fire("create", {
-        sender: this,
-        id: id
-      });
       core.fire("updateItem", {
         sender: this,
         id: id
@@ -1136,9 +1124,6 @@ arrangeItem is at 672 or thereabouts.
         };
         this.settings.currentViewName = id;
         this.switchView(id);
-        core.fire("create", {
-          id: id
-        });
         core.fire("updateItem", {
           id: id
         });

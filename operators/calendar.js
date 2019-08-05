@@ -178,7 +178,7 @@ core.registerOperator("calendar", {
         }
         //every 10 s, check for new notifs!
         this.notifstack = [];
-        setInterval(() => {
+        /*setInterval(() => {
             let ihtml = "";
             for (let i = 0; i < this.notifstack.length; i++) {
                 if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000 && !this.notifstack[i].notified) {
@@ -195,7 +195,7 @@ core.registerOperator("calendar", {
             if (this.notifWindow) {
                 this.notifWindow.document.body.innerHTML = ihtml;
             }
-        }, 10000);
+        }, 10000);*/
 
 
         this.tryEstablishWS = function () {

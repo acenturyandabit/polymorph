@@ -52,6 +52,13 @@ core.registerOperator("terminal", {
                 state.outputToWS(regres[1]);
             }
         },
+        intlecho: {
+            regex: /^intlecho (.+)$/ig,
+            help: "Send information to the Polymorph interpreter, when on websocket passthrough mode.",
+            operate: function (regres, state) {
+                state.process(regres[1]);
+            }
+        },
         userEcho: {
             help: "Type userecho $1 to echo specifically to the user.",
             regex: /^userecho (.+)$/ig,
@@ -193,7 +200,7 @@ core.registerOperator("terminal", {
             help: "Clears the screen.",
             operate: function (regres, state) {
                 state.clearScreen();
-                me.settings.record="";
+                me.settings.record = "";
             }
         },
         mkii: {
@@ -291,6 +298,7 @@ core.registerOperator("terminal", {
                 me.state.outputToUser("Websocket not connected - operation aborted.");
                 if (me.settings.wsautocon) {
                     me.state.outputToUser("Autorestart enabled - attempting to connect...");
+                    me.storedCommand = data;
                     me.tryEstablishWS();
                 }
             }
@@ -302,18 +310,29 @@ core.registerOperator("terminal", {
             setTimeout(f, t - Date.now());
         },
         process: function (command) {
-            processQuery(command);
+            processQuery(command, "internal");
         }
     }
 
     this.state.state = this.settings.state;
 
-    function processQuery(q) {
-        for (let i in operatorRegexes) {
-            operatorRegexes[i].regex.lastIndex = 0; //force reset regex
-            if ((regres = operatorRegexes[i].regex.exec(q))) {
-                operatorRegexes[i].operate(regres, me.state);
+    function processQuery(q, forcedMode) {
+        //check if intlecho first
+        operatorRegexes.intlecho.regex.lastIndex = 0; //force reset regex
+        if ((regres = operatorRegexes.intlecho.regex.exec(q))) {
+            operatorRegexes.intlecho.operate(regres, me.state);
+            return;
+        }
+        if (forcedMode == "internal" || !me.settings.wsthru) {
+
+            for (let i in operatorRegexes) {
+                operatorRegexes[i].regex.lastIndex = 0; //force reset regex
+                if ((regres = operatorRegexes[i].regex.exec(q))) {
+                    operatorRegexes[i].operate(regres, me.state);
+                }
             }
+        } else {
+            me.state.outputToWS(q);
         }
     }
     this.textarea = this.rootdiv.querySelector("textarea");
@@ -326,7 +345,7 @@ core.registerOperator("terminal", {
                     if (me.settings.echoOn) {
                         me.state.outputToUser(me.querybox.value);
                     }
-                    me.state.respondent="user";
+                    me.state.respondent = "user";
                     processQuery(me.querybox.value);
                     me.querybox.value = "";
                     me.cline = 0;
@@ -353,7 +372,7 @@ core.registerOperator("terminal", {
     this.button = this.rootdiv.querySelector("button");
     this.button.addEventListener("click", () => {
         if (me.settings.opmode == "console") {
-            me.state.respondent="user";
+            me.state.respondent = "user";
             processQuery(me.querybox.value);
             me.querybox.value = "";
             me.cline = 0;
@@ -417,19 +436,23 @@ core.registerOperator("terminal", {
         if (this.settings.wsurl) {
             try {
                 this.ws = new WebSocket(this.settings.wsurl);
-                this.ws.onerror=function(e){
+                this.ws.onerror = function (e) {
                     me.state.outputToUser('Failed to connect.');
                     console.log(e);
                 }
                 this.ws.onmessage = function (e) {
                     if (me.settings.echoOn) {
-                        me.state.outputToUser("ws:"+e.data);
+                        me.state.outputToUser("ws:" + e.data);
                     }
-                    me.state.respondent="WS";
+                    me.state.respondent = "WS";
                     processQuery(e.data);
                 }
-                this.ws.onopen=function(e){
+                this.ws.onopen = function (e) {
                     me.state.outputToUser('Connnection established!');
+                    if (me.storedCommand) {
+                        me.ws.send(me.storedCommand);
+                        me.storedCommand = undefined;
+                    }
                 }
             } catch (e) {
                 me.state.outputToUser('Failed to connect.');
@@ -463,6 +486,12 @@ core.registerOperator("terminal", {
             object: this.settings,
             property: "wsautocon",
             label: "Autoconnect websocket on disconnect"
+        }), new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "wsthru",
+            label: "Use as dedicated websocket interface"
         })
     ];
     this.dialogDiv.addEventListener("click", () => {
@@ -474,7 +503,7 @@ core.registerOperator("terminal", {
         this.tryEstablishWS();
     })
     this.showDialog = function () {
-        me.settings.record=me.textarea.value;
+        me.settings.record = me.textarea.value;
         ops.forEach((op) => { op.load(); });
         if (this.settings.wsurl) this.dialogDiv.querySelector(".wshook").value = this.settings.wsurl;
         // update your dialog elements with your settings

@@ -71,10 +71,6 @@ core.registerOperator("descbox", function (operator) {
                 let it = {};
                 it[me.settings.property] = "";
                 core.items[staticItem] = it;
-                core.fire("create", {
-                    sender: this,
-                    id: staticItem
-                });
                 core.fire("updateItem", {
                     sender: this,
                     id: staticItem
