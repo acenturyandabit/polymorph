@@ -125,17 +125,19 @@ core.registerOperator("itemList", function (operator) {
             v.style.display = "block";
             for (let i = 0; i < searchboxes.length; i++) {
                 //only search by text for now
-                switch (this.settings.properties[searchboxes[i].dataset.role]) {
-                    case "text":
-                        if (!it[searchboxes[i].dataset.role] || it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
-                            v.style.display = "none";
-                        }
-                        break;
-                    case "object":
-                        if (v.querySelector(`[data-role="${searchboxes[i].dataset.role}"]`).value.indexOf(searchboxes[i].value) == -1) {
-                            v.style.display = "none";
-                        }
-                        break;
+                if (searchboxes[i].value) {
+                    switch (this.settings.properties[searchboxes[i].dataset.role]) {
+                        case "text":
+                            if (!it[searchboxes[i].dataset.role] || it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
+                                v.style.display = "none";
+                            }
+                            break;
+                        case "object":
+                            if (v.querySelector(`[data-role="${searchboxes[i].dataset.role}"]`).value.indexOf(searchboxes[i].value) == -1) {
+                                v.style.display = "none";
+                            }
+                            break;
+                    }
                 }
             }
         });
@@ -731,7 +733,7 @@ core.registerOperator("itemList", function (operator) {
     });
     me.callables = {
         addArray: function (a) {
-            let createdIDs=[];
+            let createdIDs = [];
             a.forEach((v) => {
                 let obj = {};
                 if (typeof v == "string") {
