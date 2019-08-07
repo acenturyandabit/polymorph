@@ -172,8 +172,8 @@ core.registerOperator("calendar", {
                     this.notifWindow = window.open("", "__blank", "dependent:on");
                 }
             } else {
-                this.notifWindow.close();
-                delete this.notifWindow;
+                //this.notifWindow.close();
+                //delete this.notifWindow;
             }
         }
         //every 10 s, check for new notifs!

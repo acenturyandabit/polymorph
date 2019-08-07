@@ -411,10 +411,10 @@ core.registerOperator("inspector", {
             } else {
                 //calculate the base rect of the sender
                 let baserectSender = sender.container.rect;
-                while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
+                while (baserectSender.parent) baserectSender = baserectSender.parent;
                 //calculate my base rect
                 let myBaseRect = me.container.rect;
-                while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
+                while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
                 //if they're the same, then update.
                 if (myBaseRect == baserectSender) {
                     if (me.settings.operationMode == 'focus') {

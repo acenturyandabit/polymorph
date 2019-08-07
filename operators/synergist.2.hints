@@ -1,5 +1,6 @@
 itemPointerCache[id] contains me.svg.foreignObject.
-itemPointerCache[id].node.
+itemPointerCache[id].node has dataset.id = id; class is .floatingitem.
+movingdivs.el gives itemPointerCache[id].
 
 
 

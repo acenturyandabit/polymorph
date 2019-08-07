@@ -188,9 +188,9 @@ core.registerOperator("itemList", function (operator) {
                             if (core.items[its[i].id][dateprop].date[0]) {
                                 its[i].date = core.items[its[i].id][dateprop].date[0].date;
                                 //check for repetition structure
-                                if (its[i].dt.datestring.indexOf("(")) {
+                                if (its[i].dt.datestring.indexOf("(")!=-1) {
                                     //evaluate the repetition
-                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date(its[i].dt.date[0].refdate))[0].date;
+                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date())[0].date;
                                 }
                             }
                             else its[i].date = Date.now() * 10000;

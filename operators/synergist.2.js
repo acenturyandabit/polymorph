@@ -178,21 +178,21 @@ core.registerOperator("itemcluster2", {
 
         if (me.container.visible()) {
             let present = false;
-            if (core.items[id].itemcluster){
-                if (core.items[id].itemcluster.viewData){
-                    if (core.items[id].itemcluster.viewData[me.settings.currentViewName]){
-                        if (me.arrangeItem){
+            if (core.items[id].itemcluster) {
+                if (core.items[id].itemcluster.viewData) {
+                    if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+                        if (me.arrangeItem) {
                             me.arrangeItem(id);
                             acp.submit();//redraw lines
                         }
-                    }else{
+                    } else {
                         me.addToTray(id);
                     }
                 }
             }
-            
+
             if (!present && (!(me.settings.filter) || core.items[id][me.settings.filter])) {
-                
+
             }
         }
         return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined);
@@ -669,19 +669,34 @@ core.registerOperator("itemcluster2", {
                 if (core.items[cte.dataset.id].style) {
                     me.itemContextMenu.querySelector(".background").value = core.items[cte.dataset.id].style.background || "";
                     me.itemContextMenu.querySelector(".color").value = core.items[cte.dataset.id].style.color || "";
+                } else {
+                    me.itemContextMenu.querySelector(".background").value = "";
+                    me.itemContextMenu.querySelector(".color").value = "";
                 }
                 return true;
             }
         );
 
         function updateStyle(e) {
-            let cid = me.contextedElement.dataset.id;
-            if (!core.items[cid].style) core.items[cid].style = {};
-            core.items[cid].style[e.target.className] = e.target.value;
-            core.fire("updateItem", {
-                sender: this,
-                id: cid
+            let cids = [me.contextedElement.dataset.id];
+            let applyToAll = false;
+            me.movingDivs.forEach((v) => {
+                if (v.el.node.dataset.id == cids[0]) {
+                    //apply to all moving divs.
+                    applyToAll = true;
+                }
             });
+            if (applyToAll) {
+                cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
+            }
+            cids.forEach((cid) => {
+                if (!core.items[cid].style) core.items[cid].style = {};
+                core.items[cid].style[e.target.className] = e.target.value;
+                core.fire("updateItem", {
+                    sender: this,
+                    id: cid
+                });
+            })
         }
         me.itemContextMenu
             .querySelector(".cstyl")
@@ -693,13 +708,25 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".pstyl")
             .addEventListener("click", () => {
-                let cid = me.contextedElement.dataset.id;
-                core.items[cid].style = Object.assign({}, me.copiedStyle);
-                me.arrangeItem(cid);
-                core.fire("updateItem", {
-                    sender: this,
-                    id: cid
+                let cids = [me.contextedElement.dataset.id];
+                let applyToAll = false;
+                me.movingDivs.forEach((v) => {
+                    if (v.el.node.dataset.id == cids[0]) {
+                        //apply to all moving divs.
+                        applyToAll = true;
+                    }
                 });
+                if (applyToAll) {
+                    cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
+                }
+                cids.forEach((cid) => {
+                    core.items[cid].style = Object.assign({}, me.copiedStyle);
+                    me.arrangeItem(cid);
+                    core.fire("updateItem", {
+                        sender: this,
+                        id: cid
+                    });
+                })
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -712,8 +739,22 @@ core.registerOperator("itemcluster2", {
         me.itemContextMenu
             .querySelector(".deleteButton")
             .addEventListener("click", e => {
-                //delete the div and delete its corresponding item
-                me.removeItem(me.contextedElement.dataset.id);
+                let cids = [me.contextedElement.dataset.id];
+                let applyToAll = false;
+                me.movingDivs.forEach((v) => {
+                    if (v.el.node.dataset.id == cids[0]) {
+                        //apply to all moving divs.
+                        applyToAll = true;
+                    }
+                });
+                if (applyToAll) {
+                    cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
+                    me.clearOutMovingDivs();
+                }
+                cids.forEach((cid) => {
+                    //delete the div and delete its corresponding item
+                    me.removeItem(cid);
+                })
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -976,52 +1017,46 @@ core.registerOperator("itemcluster2", {
 
     this.dragging = false;
     this.movingDivs = [];
-    this.shouldHighlightMovingDivs = 0;
-    //clear out multiple items when ctrl key upped.
-    function decrementAndClear() {
-        me.shouldHighlightMovingDivs--;
-        if (!me.shouldHighlightMovingDivs) {
-            //dehighlight them.
-            me.movingDivs.forEach((v) => {
-                v.el.node.children[0].style.border = "1px solid black";
-            })
-            me.movingDivs = [];
-        }
+    this.alreadyMoving = -1;//for deselecting nodes
+    this.clearOutMovingDivs = function () {
+        me.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
+        me.movingDivs = [];//empty them
     }
-
-    document.body.addEventListener("keyup", (e) => {
-        if (e.key == "Control") {
-            decrementAndClear();
-        }
-    })
-
-    document.body.addEventListener("keydown", (e) => {
-        if (e.key == "Control") {
-            me.shouldHighlightMovingDivs++;
-        }
-    })
-
     this.itemSpace.addEventListener("mousedown", function (e) {
-        if (
-            e.target.matches(".floatingItem") ||
-            e.target.matches(".floatingItem *")
-        ) {
+        if (e.target.matches(".floatingItem") || e.target.matches(".floatingItem *")) {
             // If we are clicking on an item:
             if (e.which != 1) return;
-            if (!e.getModifierState("Shift")) {
+            if (e.getModifierState("Shift")) {
+                let it = e.target;
+                while (!it.matches(".floatingItem")) it = it.parentElement;
+                me.linkingDiv = it;
+                me.linking = true;
+            } else {
                 //if not lineing
                 //clear the movingDivs if they need to be cleared
                 me.shouldHighlightMovingDivs++;
                 if (me.movingDivs.length && !e.getModifierState("Control")) {
-                    me.movingDivs = [];//empty them
+                    //also reset the borders
+                    me.clearOutMovingDivs();
                 }
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
                 if (it.classList.contains("anchored")) return;
                 if (me.dragging) return;
-                me.movingDivs.push({
-                    el: itemPointerCache[it.dataset.id]
-                });
+                //check to see if we are already in movingDivs...
+                me.alreadyMoving = -1;
+                me.movingDivs.forEach((v, i) => {
+                    if (v.el == itemPointerCache[it.dataset.id]) {
+                        //remove the red border
+                        v.el.node.children[0].style.border = "1px solid black"
+                        me.alreadyMoving = i;
+                    }
+                })
+                if (me.alreadyMoving==-1){
+                    me.movingDivs.push({
+                        el: itemPointerCache[it.dataset.id]
+                    });
+                }
                 me.lastMovingDiv = itemPointerCache[it.dataset.id];
                 //style it so we can see it
                 itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
@@ -1057,16 +1092,24 @@ core.registerOperator("itemcluster2", {
                 if (me.prevFocusID) me.redrawLines(me.prevFocusID);
                 me.redrawLines(it.dataset.id, "red");
                 me.prevFocusID = it.dataset.id;
-                //return false;
-            } else {
-                let it = e.target;
-                while (!it.matches(".floatingItem")) it = it.parentElement;
-                me.linkingDiv = it;
-                me.linking = true;
+                //return false;                
             }
         } else if (e.target.matches(".tray textarea")) {
             me.fromTray = e.target.parentElement.dataset.id;
+        } else if (e.getModifierState("Control")) {
+            //start a rectangleDrag!
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            me.rectangleDragging = {
+                rect: me.svg.rect(0, 0).stroke({ width: 1, color: "red" }).fill({ opacity: 0 }),
+                sx: coords.x,
+                sy: coords.y
+            }
         } else {
+            //deselect
+            if (me.movingDivs.length && !e.getModifierState("Control")) {
+                //also reset the borders
+                me.clearOutMovingDivs();
+            }
             //Pan
             //if (e.getModifierState("Shift") || e.which == 2) {
             me.globalDrag = true;
@@ -1099,7 +1142,8 @@ core.registerOperator("itemcluster2", {
                 dx: 30,
                 dy: 30
             };
-            me.movingDivs=[divrep];//overwrite the thing in the array
+            me.clearOutMovingDivs();
+            me.movingDivs = [divrep];//overwrite the thing in the array
             me.lastMovingDiv = itemPointerCache[cid];
             // force a mousemove
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -1112,7 +1156,36 @@ core.registerOperator("itemcluster2", {
             me.stillInTray = true;
             me.fromTray = false;
         }
+        if (me.rectangleDragging) {
+            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            let dx = coords.x - me.rectangleDragging.sx;
+            if (dx > 0) {
+                me.rectangleDragging.rect.x(me.rectangleDragging.sx).width(dx);
+            } else {
+                me.rectangleDragging.rect.x(coords.x).width(-dx);
+            }
+            let dy = coords.y - me.rectangleDragging.sy;
+            if (dy > 0) {
+                me.rectangleDragging.rect.y(me.rectangleDragging.sy).height(dy);
+            } else {
+                me.rectangleDragging.rect.y(coords.y).height(-dy);
+            }
+            me.clearOutMovingDivs();
+            for (let i in itemPointerCache) {
+                if (((itemPointerCache[i].cx() > coords.x && itemPointerCache[i].cx() < me.rectangleDragging.sx) ||
+                    (itemPointerCache[i].cx() < coords.x && itemPointerCache[i].cx() > me.rectangleDragging.sx)) &&
+                    ((itemPointerCache[i].cy() > coords.y && itemPointerCache[i].cy() < me.rectangleDragging.sy) ||
+                        (itemPointerCache[i].cy() < coords.y && itemPointerCache[i].cy() > me.rectangleDragging.sy))) {
+                    me.movingDivs.push({
+                        el: itemPointerCache[i]
+                    });
+                    itemPointerCache[i].node.children[0].style.border = "1px solid red";
+                    //add to movingdivs
+                }
+            }
+        }
         if (me.dragging) {
+            me.dragged=true;
             //dragging an item
             //translate position of mouse to position of rectangle
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -1144,7 +1217,7 @@ core.registerOperator("itemcluster2", {
                         me.addToTray(cid);
                         core.fire("updateItem", { sender: me, id: cid });
                     });
-                    me.movingDivs=[];
+                    me.clearOutMovingDivs();
                     me.dragging = false;
                 }
                 if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.lastMovingDiv.attr("data-id")) {
@@ -1237,9 +1310,20 @@ core.registerOperator("itemcluster2", {
             setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;
         }
+        if (me.rectangleDragging) {
+            me.rectangleDragging.rect.remove();
+            me.rectangleDragging = undefined;
+        }
         if (me.dragging) {
             //disengage drag
             me.dragging = false;
+            if (!me.dragged){
+                if (me.alreadyMoving!=-1){
+                    me.movingDivs[me.alreadyMoving].el.node.children[0].style.border="1px solid black";
+                    me.movingDivs.splice(me.alreadyMoving,1);
+                }
+            }
+            me.dragged=false;
             //me.movingDiv.classList.remove("moving");
             if (me.hoverOver) me.hoverOver.style.border = "";
 
@@ -1275,7 +1359,6 @@ core.registerOperator("itemcluster2", {
             me.movingDivs.forEach((v) => {
                 me.updatePosition(v.el.node.dataset.id);
             })
-            decrementAndClear();
             core.fire("updateItem", {
                 sender: me,
                 id: cid

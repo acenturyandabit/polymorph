@@ -123,16 +123,6 @@ core.registerOperator("descbox", function (operator) {
         }
     });
 
-    let options = {
-        showWordCount: new _option({
-            div: this.optionsDiv,
-            type: "bool",
-            object: me.settings,
-            property: "showWordCount",
-            label: "Show wordcount?"
-        })
-    };
-
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `
@@ -152,6 +142,16 @@ core.registerOperator("descbox", function (operator) {
     <input data-role="property" placeholder="Enter the property to display...">
     <input data-role="placeholder" placeholder="Enter a placeholder...">
     `;
+
+    let options = {
+        showWordCount: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: me.settings,
+            property: "showWordCount",
+            label: "Show wordcount?"
+        })
+    };
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
         core.target().then((id) => {
@@ -163,6 +163,9 @@ core.registerOperator("descbox", function (operator) {
     this.showDialog = function () {
         // update your dialog elements with your settings
         //fill out some details
+        for (i in options) {
+            options[i].load();
+        }
         for (i in me.settings) {
             let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
             if (it) it.value = me.settings[i];
@@ -199,17 +202,15 @@ core.registerOperator("descbox", function (operator) {
                 if (sender) {
                     //calculate the base rect of the sender
                     let baserectSender = sender.container.rect;
-                    while (baserectSender.parentRect) baserectSender = baserectSender.parentRect;
+                    while (baserectSender.parent) baserectSender = baserectSender.parent;
                     //calculate my base rect
                     let myBaseRect = me.container.rect;
-                    while (myBaseRect.parentRect) myBaseRect = myBaseRect.parentRect;
+                    while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
                     //if they're the same, then update.
                     if (myBaseRect == baserectSender) {
-                        if (me.settings.operationMode == 'focus') {
-                            me.settings.currentID = id;
-                            me.updateItem(id);
-                            core.fire("updateView");
-                        }
+                        me.settings.currentID = id;
+                        me.updateItem(id);
+                        core.fire("updateView");
                     }
                 }
             }
