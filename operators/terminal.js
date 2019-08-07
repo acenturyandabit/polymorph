@@ -223,7 +223,7 @@ core.registerOperator("terminal", {
         cron: {
             regex: /^cron "(.+?)" (.+?)$/ig,
             name: "cron",
-            help: "Schedule a commasnd to run.",
+            help: "Schedule a command to run.",
             operate: function (regres, state) {
                 scriptassert([["dateparser", "genui/dateparser.js"]], () => {
                     let dp = new _dateParser();

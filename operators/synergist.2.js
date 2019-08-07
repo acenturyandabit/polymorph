@@ -431,6 +431,7 @@ core.registerOperator("itemcluster2", {
     };
 
     core.on("focus", (e) => {
+        if (e.sender==me)return;
         if (me.settings.operationMode == "focus") {
             if (e.sender.container.uuid == me.settings.focusOperatorID) {
                 me.switchView(e.id, true);
@@ -1307,7 +1308,7 @@ core.registerOperator("itemcluster2", {
     me.handleMoveEnd = function (e, touch) {
         me.fromTray = false;
         if (me.globalDrag) {
-            setTimeout(me.viewAdjust, 500);
+            //setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;
         }
         if (me.rectangleDragging) {
@@ -1477,7 +1478,7 @@ core.registerOperator("itemcluster2", {
             let id = e.target.parentElement.parentElement.dataset.id;
             core.fire("focus", {
                 id: id,
-                sender: this
+                sender: me
             });
             if (me.prevFocusID) me.redrawLines(me.prevFocusID);
             me.redrawLines(id, "red");
@@ -1629,7 +1630,6 @@ core.registerOperator("itemcluster2", {
         core.fire("updateView");
         // pull settings and update when your dialog is closed.
     }
-
     //extension API
     this.callables = {
         placeItem: function (data) {

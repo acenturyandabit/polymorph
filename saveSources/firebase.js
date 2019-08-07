@@ -115,14 +115,15 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
             //dont double up local updates
             me.localChange = true;
             core.fire("updateItem", {
-              id: change.doc.id
+              id: change.doc.id,
+              load:true
             });
             break;
           case "removed":
             localChange = true;
             core.fire("deleteItem", {
               id: change.doc.id,
-              forced: true // not yet implemented but ill figure it out
+              load:true
             });
             break;
         }

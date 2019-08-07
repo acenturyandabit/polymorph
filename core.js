@@ -279,7 +279,9 @@ function _core() {
     //a little nicety to warn user of unsaved items.
     this.unsaved = false;
     me.on("updateView,updateItem", (e) => {
-        me.unsaved = true;
+        if (!e.load){//if event was not triggered by a loading action
+            me.unsaved = true;
+        }
     })
     window.addEventListener("beforeunload", (e) => {
         if (me.unsaved) {
