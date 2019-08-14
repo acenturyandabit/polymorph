@@ -125,10 +125,10 @@ core.registerOperator("itemcluster2", {
     //Tutorial
 
     if (!core.userData.introductions.itemcluster) {
-        let tu = new _tutorial({
+        /*let tu = new _tutorial({
             root: me.rootdiv
         });
-        tu.push({
+        tu.addStep({
             id: "hello",
             target: me.rootdiv,
             type: "shader",
@@ -141,7 +141,7 @@ core.registerOperator("itemcluster2", {
         tu.start("hello").end(() => {
             core.userData.introductions.itemcluster = true;
             core.saveUserData();
-        });
+        });*/
     }
     //////////////////////////// Focusing an item////////////////////
     core.on("focus", (d) => {
