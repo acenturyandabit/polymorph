@@ -1,9 +1,11 @@
-core.registerOperator("itemcluster2", {
-    displayName: "Itemcluster 2",
-    description: "A brainstorming board. Add items, arrange them, and connect them with lines."
+core.registerOperator("turmach", {
+    displayName: "Turmach",
+    description: "A turn based state machine. For emulating very simple consciousnesses...?"
 }, function (container) {
     let me = this;
     addEventAPI(this);
+    me.propertyName = 'turmach';//use turmach to store our data rather than synergist...
+
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {
         itemcluster: {
@@ -121,10 +123,49 @@ core.registerOperator("itemcluster2", {
         return ret;
     }
 
+    //Turmach specific things
+    me.updateLinks=function(id){
+        
+    }
+
+
+    function iterate(){
+        if (!me.settings.currentHead)break;
+        //evaluate the state and iterate off it
+        //check new next
+        me.updateLinks(me.settings.currentHead);
+        
+        //if new next = old new next, then change head, modify internal state
+        
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //end turmach specific things
+
+
     ///////////////////////////////////////////////////////////////////////////////////////
     //Tutorial
 
-    if (!core.userData.introductions.itemcluster) {
+    if (!core.userData.introductions[me.propertyName]) {
         /*let tu = new _tutorial({
             root: me.rootdiv
         });
@@ -139,16 +180,16 @@ core.registerOperator("itemcluster2", {
             ]
         });
         tu.start("hello").end(() => {
-            core.userData.introductions.itemcluster = true;
+            core.userData.introductions[me.propertyName] = true;
             core.saveUserData();
         });*/
     }
     //////////////////////////// Focusing an item////////////////////
     core.on("focus", (d) => {
         if (d.sender == me) return;
-        if (itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
-            core.items[me.settings.currentViewName].itemcluster.cx = itemPointerCache[d.id].cx();
-            core.items[me.settings.currentViewName].itemcluster.cy = itemPointerCache[d.id].cy();
+        if (itemPointerCache[d.id] && core.items[d.id][me.propertyName].viewData[me.settings.currentViewName]) {
+            core.items[me.settings.currentViewName][me.propertyName].cx = itemPointerCache[d.id].cx();
+            core.items[me.settings.currentViewName][me.propertyName].cy = itemPointerCache[d.id].cy();
             me.viewAdjust();
             if (me.preselected) {
                 me.preselected.classList.remove("selected");
@@ -165,7 +206,7 @@ core.registerOperator("itemcluster2", {
     // but only update items that are visible; and only update if we are visible
     let acp = new capacitor(200, 1000, () => {
         for (let i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
                 me.arrangeItem(i);
             }
         }
@@ -178,9 +219,9 @@ core.registerOperator("itemcluster2", {
 
         if (me.container.visible()) {
             let present = false;
-            if (core.items[id].itemcluster) {
-                if (core.items[id].itemcluster.viewData) {
-                    if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+            if (core.items[id][me.propertyName]) {
+                if (core.items[id][me.propertyName].viewData) {
+                    if (core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
                         if (me.arrangeItem) {
                             me.arrangeItem(id);
                             acp.submit();//redraw lines
@@ -195,7 +236,7 @@ core.registerOperator("itemcluster2", {
 
             }
         }
-        return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined);
+        return ((core.items[id][me.propertyName] && (core.items[id][me.propertyName].viewData || core.items[id][me.propertyName].viewName)) != undefined);
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -208,7 +249,7 @@ core.registerOperator("itemcluster2", {
 
     //Editing the name of a view
     this.viewName.addEventListener("keyup", function (e) {
-        core.items[me.settings.currentViewName].itemcluster.viewName =
+        core.items[me.settings.currentViewName][me.propertyName].viewName =
             e.currentTarget.innerText;
         core.fire("updateItem", {
             id: me.settings.currentViewName,
@@ -254,11 +295,11 @@ core.registerOperator("itemcluster2", {
     this.viewDropdownButton.addEventListener("click", function () {
         me.viewDropdown.innerHTML = "";
         for (i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
+            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewName) {
                 if (me.settings.filter && !(core.items[i][me.settings.filter])) continue;//apply filter to views
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
-                aa.innerHTML = core.items[i].itemcluster.viewName;
+                aa.innerHTML = core.items[i][me.propertyName].viewName;
                 me.viewDropdown.appendChild(aa);
             }
             //v = itemcluster.views[i].name;
@@ -284,7 +325,7 @@ core.registerOperator("itemcluster2", {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
             for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewName) {
                     if (me.settings.filter && !(core.items[i][me.settings.filter])) {
                         continue;
                     }
@@ -307,17 +348,17 @@ core.registerOperator("itemcluster2", {
                     return;
                 }
             }
-            if (!core.items[me.settings.currentViewName].itemcluster) {
+            if (!core.items[me.settings.currentViewName][me.propertyName]) {
                 if (assert) {
-                    core.items[me.settings.currentViewName].itemcluster = {};
+                    core.items[me.settings.currentViewName][me.propertyName] = {};
                 } else {
                     me.switchView();
                     return;
                 }
             }
-            if (!core.items[me.settings.currentViewName].itemcluster.viewName) {
+            if (!core.items[me.settings.currentViewName][me.propertyName].viewName) {
                 if (assert) {
-                    core.items[me.settings.currentViewName].itemcluster.viewName = core.items[ln].title || ln
+                    core.items[me.settings.currentViewName][me.propertyName].viewName = core.items[ln].title || ln
                     core.fire("updateItem", {
                         id: me.settings.currentViewName
                     });
@@ -329,13 +370,13 @@ core.registerOperator("itemcluster2", {
 
             //buttons
             this.viewName.innerText =
-                core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
+                core.items[me.settings.currentViewName][me.propertyName].viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (preview != ln && preview) {
                 if (subview) {
                     let b = document.createElement("button");
                     b.dataset.ref = preview;
-                    b.innerText = core.items[preview].itemcluster.viewName;
+                    b.innerText = core.items[preview][me.propertyName].viewName;
                     b.addEventListener("click", () => {
                         me.switchView(b.dataset.ref, true, false);
                         while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
@@ -359,13 +400,13 @@ core.registerOperator("itemcluster2", {
             }
             //reposition all items, also updating viewbox
             for (i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //position the item appropriately.
                 }
             }
             for (i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //twice so that all lines show up. How efficient.
                 }
@@ -379,7 +420,7 @@ core.registerOperator("itemcluster2", {
         let itm = {};
         let id = core.insertItem(itm);
         itm.title = "New view";
-        itm.itemcluster = {
+        itm[me.propertyName] = {
             viewName: "New View"
         };
         if (me.settings.filter) {
@@ -399,10 +440,10 @@ core.registerOperator("itemcluster2", {
         let itm = {};
         let id = core.insertItem(itm);
         itm.title = "New view";
-        itm.itemcluster = {
-            viewName: "Copy of" + core.items[me.settings.currentViewName].itemcluster.viewName
+        itm[me.propertyName] = {
+            viewName: "Copy of" + core.items[me.settings.currentViewName][me.propertyName].viewName
         };
-        itm.title = core.items[me.settings.currentViewName].itemcluster.viewName;
+        itm.title = core.items[me.settings.currentViewName][me.propertyName].viewName;
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
@@ -412,15 +453,15 @@ core.registerOperator("itemcluster2", {
         });
         //clone positions as well
         for (let i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                core.items[i].itemcluster.viewData[id] = core.items[i].itemcluster.viewData[me.settings.currentViewName];
+            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+                core.items[i][me.propertyName].viewData[id] = core.items[i][me.propertyName].viewData[me.settings.currentViewName];
             }
         }
         this.switchView(id);
     };
     this.destroyView = function (viewName, auto) {
         // Destroy the itemcluster property of the item but otherwise leave it alone
-        delete core.items[viewName].itemcluster.viewName;
+        delete core.items[viewName][me.propertyName].viewName;
         if (me.settings.filter) {
             delete core.items[viewName][me.settings.filter];
         }
@@ -457,7 +498,7 @@ core.registerOperator("itemcluster2", {
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
             if (core.shared.synergistCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.items[core.shared.synergistCopyElement].itemcluster.viewData[me.settings.currentViewName] = {
+                core.items[core.shared.synergistCopyElement][me.propertyName].viewData[me.settings.currentViewName] = {
                     x: coords.x,
                     y: coords.y,
                 }
@@ -472,9 +513,9 @@ core.registerOperator("itemcluster2", {
         me.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
             let rect = me.itemSpace.getBoundingClientRect();
             for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left;
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top;
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+                    core.items[i][me.propertyName].viewData[me.settings.currentViewName].x = e.clientX - rect.left;
+                    core.items[i][me.propertyName].viewData[me.settings.currentViewName].y = e.clientY - rect.top;
                     me.arrangeItem(i);
                 }
             }
@@ -487,68 +528,69 @@ core.registerOperator("itemcluster2", {
         })
         me.rootcontextMenu.querySelector(".hierarchy").addEventListener("click", (e) => {
             let rect = me.itemSpace.getBoundingClientRect();
-
-            //get position of items, and the links to other items
+            //order items
             let visibleItems = [];
             for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
                     visibleItems.push({
                         id: i,
-                        x: core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
-                        y: core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
-                        children: Object.keys(core.items[i].to || {}),
+                        x: core.items[i][me.propertyName].viewData[me.settings.currentViewName].x,
+                        y: core.items[i][me.propertyName].viewData[me.settings.currentViewName].y,
+                        children: []
                     });
                 }
             }
-
-            let visibleItemIds = visibleItems.map((v) => v.id);
-
-            //make sure links are relevant (point to items we care about) and directed (not bidirectional)
-            visibleItems.forEach((v, _i) => {
-                if (v.children) {
-                    for (let i = 0; i < v.children.length; i++) {
-                        let pos = visibleItemIds.indexOf(v.children[i]);
-                        if (pos == -1) {
-                            v.children.splice(i, 1);
-                            i--;
-                        } else if (core.items[visibleItems[pos].id].to && Object.keys(core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) {//bidirectional links
-                            v.children.splice(i, 1);
-                            i--;
-                        } else {
-                            //assign the to item a parent
-                            visibleItems[pos].parent = _i;
-                        }
-                    }
-                }
-            })
-            //figure out the idx of the item (its level in the hierarchy)
+            visibleItems.sort((a, b) => {
+                return a.y - b.y
+            }); // higher items appear first in array.
+            let indexedOrder = visibleItems.map((i) => {
+                return i.id
+            });
+            //make a list of links
+            let links = [];
             for (let i = 0; i < visibleItems.length; i++) {
-                let stack = [];
-                if (visibleItems[i].idx==undefined) {
-                    stack.push(i);
+                for (let j in core.items[visibleItems[i].id].to) {
+                    links.push({
+                        a: visibleItems[i].id,
+                        b: j
+                    });
                 }
-                while (stack.length) {
-                    let li = stack[stack.length - 1];
-                    if (visibleItems[li].idx != undefined) {
-                        stack.pop();
-                        continue;
+            }
+            //internally reverse sort links by order
+            for (let i = 0; i < links.length; i++) {
+                let ina = indexedOrder.indexOf(links[i].a);
+                let inb = indexedOrder.indexOf(links[i].b);
+                if (ina == -1 || inb == -1) {
+                    //delete this item
+                    links.splice(i, 1);
+                    i--;
+                }
+                if (ina < inb) { //enforce a=lower<-b=higher
+                    let c = links[i].b;
+                    links[i].b = links[i].a;
+                    links[i].a = c;
+                }
+            }
+            //sort link array in reverse by order
+            links.sort((a, b) => {
+                let ina = indexedOrder.indexOf(a.a);
+                let inb = indexedOrder.indexOf(b.a);
+                let oua = indexedOrder.indexOf(a.b);
+                let oub = indexedOrder.indexOf(b.b);
+                return (ina - inb) + !(ina - inb) * (oua - oub); //enforce ones with higher targets are higher.
+            })
+            //remove duplicate links (i cbs because we just need to divide by a factor of 2 later, no worries)
+            //give each of them an order
+            let lin = 0; //index of the links
+            for (let i = 0; i < visibleItems.length; i++) {
+                visibleItems[i].idx = 0;
+                while (links[lin] && links[lin].a == visibleItems[i].id) {
+                    let nex = 0;
+                    if (indexedOrder.indexOf(links[lin].b) != -1) {
+                        nex = visibleItems[indexedOrder.indexOf(links[lin].b)].idx + 1;
                     }
-                    if (visibleItems[li].parent != undefined) {
-                        if (visibleItems[visibleItems[li].parent].idx != undefined) {
-                            visibleItems[li].idx = visibleItems[visibleItems[li].parent].idx + 1;
-                            stack.pop();
-                        } else if (stack.indexOf(visibleItems[li].parent) != -1) {
-                            //cycle - abort
-                            visibleItems[li].idx = 0;
-                            stack.pop();
-                        } else {
-                            stack.push(visibleItems[li].parent);
-                        }
-                    } else {
-                        //I am a root node, set my idx to 0
-                        visibleItems[li].idx = 0;
-                        stack.pop();
-                    }
+                    visibleItems[i].idx = (nex > visibleItems[i].idx) ? nex : visibleItems[i].idx;
+                    lin++;
                 }
             }
 
@@ -556,21 +598,26 @@ core.registerOperator("itemcluster2", {
             visibleItems.sort((a, b) => {
                 return (a.idx - b.idx) + !(a.idx - b.idx) * (a.x - b.x);
             })
-            
-            //for each item's children, sort it by x position.
-            let indexedOrder = visibleItems.map((v) => v.id);
-            visibleItems.forEach((v)=>{
-                if (v.children){
-                    v.children.sort((a,b)=>{return indexedOrder.indexOf(a)-indexedOrder.indexOf(b)});
-                }
-            })
 
-            
+            //update indexedorder to reflect new sort
+            indexedOrder = visibleItems.map((i) => {
+                return i.id
+            });
+
+            //for each item, give it a direct parent
+            for (let l = 0; l < links.length; l++) {
+                visibleItems[indexedOrder.indexOf(links[l].a)].parent = links[l].b;
+
+            }
+            //get all children of all items
+            for (let i = 0; i < visibleItems.length; i++) {
+                if (visibleItems[i].parent && indexedOrder.indexOf(visibleItems[i].parent) >= 0) visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].children.push(visibleItems[i].id);
+            }
 
             //calculate widths
             function getWidth(id) {
                 let c = visibleItems[indexedOrder.indexOf(id)].children;
-                if (!c || !c.length) {
+                if (!c.length) {
                     return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
                 } else {
                     let sum = 0;
@@ -590,29 +637,17 @@ core.registerOperator("itemcluster2", {
             // calculate total width
             let tw = 0;
             for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent==undefined) tw += visibleItems[i].width;
+                if (!visibleItems[i].parent) tw += visibleItems[i].width;
                 else break;
             }
-
-            //visible items looks like this:
-
-            /*
-            [{children: ["i78f1k"],
-            id: "buwnq5",
-            idx: 0,
-            width: 210,
-            x: -2544.984375,
-            y: 278}]
-            */
-
 
             //Start rendering!
             let currentx = e.clientX - rect.left - tw / 2;
             let currenty = e.clientY - rect.top;
 
             function render(itm, tx, ty) { // itm is a visibleItem
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
+                core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
+                core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].y = ty;
                 let ctx = tx;
                 for (let i = 0; i < itm.children.length; i++) {
                     ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
@@ -622,7 +657,7 @@ core.registerOperator("itemcluster2", {
             }
 
             for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent==undefined) currentx += render(visibleItems[i], currentx, currenty);
+                if (!visibleItems[i].parent) currentx += render(visibleItems[i], currentx, currenty);
             }
 
             for (let i in core.items) {
@@ -665,7 +700,7 @@ core.registerOperator("itemcluster2", {
             <li><input class="color" placeholder="Color"></li>
           </ul>
           </li>
-          <li class="orientation">Reorient subitems</li>
+          <li class="shead">Set Head Here</li>
           `,
             me.rootdiv,
             ".floatingItem",
@@ -774,7 +809,7 @@ core.registerOperator("itemcluster2", {
             .querySelector(".orientation")
             .addEventListener("click", e => {
                 //toggle the itemcluster orientation
-                core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation = !core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation;
+                core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation = !core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation;
                 //reupdate
                 me.arrangeItem(me.contextedElement.dataset.id);
                 me.itemContextMenu.style.display = "none";
@@ -785,7 +820,7 @@ core.registerOperator("itemcluster2", {
             .addEventListener("click", e => {
                 core.items[
                     me.contextedElement.dataset.id
-                ].itemcluster.viewName = core.items[
+                ][me.propertyName].viewName = core.items[
                     me.contextedElement.dataset.id
                 ].title;
                 me.switchView(me.contextedElement.dataset.id, true, true);
@@ -805,10 +840,10 @@ core.registerOperator("itemcluster2", {
     ], () => {
         me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
         me.arrangeItem = function (id) {
-            if (!core.items[id].itemcluster || (!core.items[id].itemcluster.viewData && !core.items[id].itemcluster.viewName))
+            if (!core.items[id][me.propertyName] || (!core.items[id][me.propertyName].viewData && !core.items[id][me.propertyName].viewName))
                 return false;
-            if (!core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
-            if (!core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+            if (!core.items[id][me.propertyName].viewData) return true; // this is not an item - its a view, but we still care about it
+            if (!core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
                 //if an item of it exists, hide the item
                 let rect = itemPointerCache[id];
                 if (rect) {
@@ -831,8 +866,8 @@ core.registerOperator("itemcluster2", {
                 itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
             }
             rect.show();
-            if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+            if (core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
+                rect.move(core.items[id][me.propertyName].viewData[me.settings.currentViewName].x, core.items[id][me.propertyName].viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
             let tta = itemPointerCache[id].node.children[0].children[0];
@@ -856,7 +891,7 @@ core.registerOperator("itemcluster2", {
             rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
 
             //add icons if necessary
-            if (core.items[id].itemcluster.viewName) {
+            if (core.items[id][me.propertyName].viewName) {
                 //this has a subview, make it known!.
                 let subviewItemCount;
                 if (rect.node.querySelector(".subviewItemCount")) {
@@ -878,7 +913,7 @@ core.registerOperator("itemcluster2", {
                 }
                 let count = 0;
                 for (let i in core.items) {
-                    if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[id]) count++;
+                    if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[id]) count++;
                 }
                 subviewItemCount.innerText = count;
             } else {
@@ -1124,8 +1159,8 @@ core.registerOperator("itemcluster2", {
             me.originalViewBox = me.svg.viewbox();
             me.dragDX = coords.x;
             me.dragDY = coords.y;
-            me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
-            me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
+            me.ocx = core.items[me.settings.currentViewName][me.propertyName].cx || 0;
+            me.ocy = core.items[me.settings.currentViewName][me.propertyName].cy || 0;
             //}
         }
     });
@@ -1139,9 +1174,9 @@ core.registerOperator("itemcluster2", {
             let cid = me.fromTray;
             //make us drag the item
             me.removeFromTray(cid);
-            if (!core.items[cid].itemcluster) core.items[cid].itemcluster = {};
-            if (!core.items[cid].itemcluster.viewData) core.items[cid].itemcluster.viewData = {};
-            core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
+            if (!core.items[cid][me.propertyName]) core.items[cid][me.propertyName] = {};
+            if (!core.items[cid][me.propertyName].viewData) core.items[cid][me.propertyName].viewData = {};
+            core.items[cid][me.propertyName].viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
             //this is probably broken now
             let divrep = {
@@ -1218,7 +1253,7 @@ core.registerOperator("itemcluster2", {
                     // delete the item from this view
                     me.movingDivs.forEach((v) => {
                         let cid = v.el.attr("data-id");
-                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                        delete core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
                         delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                         me.arrangeItem(cid);
                         me.addToTray(cid);
@@ -1258,9 +1293,9 @@ core.registerOperator("itemcluster2", {
             // shift the view by delta
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
 
-            core.items[me.settings.currentViewName].itemcluster.cx =
+            core.items[me.settings.currentViewName][me.propertyName].cx =
                 me.ocx - (coords.x - me.dragDX);
-            core.items[me.settings.currentViewName].itemcluster.cy =
+            core.items[me.settings.currentViewName][me.propertyName].cy =
                 me.ocy - (coords.y - me.dragDY);
             //arrange all items
             me.viewAdjust();
@@ -1268,7 +1303,7 @@ core.registerOperator("itemcluster2", {
     });
 
     this.viewAdjust = function () {
-        let ic = core.items[me.settings.currentViewName].itemcluster;
+        let ic = core.items[me.settings.currentViewName][me.propertyName];
         let ww = me.itemSpace.clientWidth * (ic.scale || 1);
         let hh = me.itemSpace.clientHeight * (ic.scale || 1);
         if (me.svg) {
@@ -1284,7 +1319,7 @@ core.registerOperator("itemcluster2", {
             return;
         }
         //calculate old width constant
-        let ic = core.items[me.settings.currentViewName].itemcluster;
+        let ic = core.items[me.settings.currentViewName][me.propertyName];
         let br = me.itemSpace.getBoundingClientRect();
         ic.scale = ic.scale || 1;
         let vw = me.itemSpace.clientWidth * ic.scale;
@@ -1349,19 +1384,16 @@ core.registerOperator("itemcluster2", {
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches(".floatingItem") &&
-                    elements[i].dataset.id != cid && e.ctrlKey
+                    elements[i].dataset.id != cid
                 ) {
-                    core.items[elements[i].dataset.id].itemcluster.viewName= core.items[elements[i].dataset.id].itemcluster.viewName || core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
-                    core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
+                    core.items[cid][me.propertyName].viewData[elements[i].dataset.id] = {
                         x: 0,
                         y: 0
                     };
-                    if (!e.altKey) {//push drag in.
-                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                    if (!e.ctrlKey) {
+                        delete core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
                         me.arrangeItem(cid);
-                        me.movingDivs=[];//clear movingdivs so it doesnt come back
                     }
-                    me.arrangeItem(elements[i].dataset.id);
                     //me.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
@@ -1433,9 +1465,9 @@ core.registerOperator("itemcluster2", {
     //----------item functions----------//
     this.updatePosition = function (id) {
         let it = itemPointerCache[id];
-        if (!core.items[id].itemcluster.viewData[this.settings.currentViewName]) core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
+        if (!core.items[id][me.propertyName].viewData[this.settings.currentViewName]) core.items[id][me.propertyName].viewData[this.settings.currentViewName] = {};
+        core.items[id][me.propertyName].viewData[this.settings.currentViewName].x = it.x();
+        core.items[id][me.propertyName].viewData[this.settings.currentViewName].y = it.y();
         core.fire("updateItem", {
             id: id
         });
@@ -1447,11 +1479,11 @@ core.registerOperator("itemcluster2", {
         //register it with the core
         let id = core.insertItem(itm);
         itm.title = "";
-        itm.itemcluster = {
+        itm[me.propertyName] = {
             viewData: {},
             description: ""
         };
-        itm.itemcluster.viewData[me.settings.currentViewName] = {
+        itm[me.propertyName].viewData[me.settings.currentViewName] = {
             x: x,
             y: y
         };
@@ -1467,7 +1499,7 @@ core.registerOperator("itemcluster2", {
     };
 
     this.removeItem = function (id) {
-        delete core.items[id].itemcluster.viewData[me.settings.currentViewName];
+        delete core.items[id][me.propertyName].viewData[me.settings.currentViewName];
         //hide all the lines
         for (let i in me.activeLines) {
             for (let j in me.activeLines[i]) {
@@ -1541,8 +1573,8 @@ core.registerOperator("itemcluster2", {
             me.tray.style.display = "flex";
             //also populate the tray
             for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
-                    if (!core.items[i].itemcluster.viewData[me.settings.currentViewName]) {//not in this view
+                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
+                    if (!core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {//not in this view
                         if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
                             me.addToTray(i);
                         }
@@ -1651,10 +1683,10 @@ core.registerOperator("itemcluster2", {
                 y = Math.random() * 1000;
             }
             let id = core.insertItem(item);
-            core.items[id].itemcluster = { viewData: {} };
-            core.items[id].itemcluster.viewData[me.settings.currentViewName] = {};
-            core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
-            core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
+            core.items[id][me.propertyName] = { viewData: {} };
+            core.items[id][me.propertyName].viewData[me.settings.currentViewName] = {};
+            core.items[id][me.propertyName].viewData[me.settings.currentViewName].x = x;
+            core.items[id][me.propertyName].viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
             core.fire("updateItem", { id: id, sender: me });
             return id;

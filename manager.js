@@ -25,8 +25,10 @@ var __manager_profiles = {
             ["httree", "operators/httree.js"],
             ["chat", "operators/chat.js"],
             ["synergist.2", "operators/synergist.2.js"],
+            ["turmach", "operators/turmach.js"],
             ["roundshow", "operators/know/roundshow.js"],
             ["tester", "operators/know/tester.js"],
+            ["ruigen", "operators/ruigen/rui_operator.js"],
             ["calendar2", "operators/calendar.2.js"]
         ]
     },

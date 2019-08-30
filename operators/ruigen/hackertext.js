@@ -138,10 +138,20 @@ fakeCodeSettings = {
     ]
 }
 
-
-function startHackerText() {
-    $("head").append(`
-    <style>
+function startHackerText(el) {
+    let things;
+    if (!el) things = document.getElementsByClassName("annipairs");
+    else things = [el];
+    let roots = things.map((v) => v.getRootNode());
+    for (let i = 1; i < roots.length; i++) {
+        if (roots[i] == roots[i - 1]) {
+            roots.splice(i, 1);
+            i--;
+        }
+    }
+    roots.forEach((v) => {
+        let s = document.createElement("style");
+        s.innerHTML = `
         .hackertext {
             font-family: monospace;
             color: lightgreen;
@@ -175,11 +185,10 @@ function startHackerText() {
             to {
                 width: 100%
             }
-        }
-
-        
-</style>`)
-    let things = document.getElementsByClassName("hackertext");
+        }        
+`;
+        v.appendChild(s);
+    })
     for (i = 0; i < things.length; i++) {
         e = things[i];
         dv = document.createElement("div");
@@ -198,16 +207,16 @@ function startHackerText() {
 
 function propagateHack(v, i) {
     while ((k = fakeCodeSettings.generators[Math.floor(Math.random() * fakeCodeSettings
-            .generators
-            .length)](v)) == 1);
+        .generators
+        .length)](v)) == 1);
     k.style["margin-left"] = (v.data.indent * 20) + "px";
-    $(v.div).append(k);
+    v.div.appendChild(k);
     if (v.data.post_indent) {
         v.data.indent++;
         v.data.post_indent = 0;
     }
-    while ($(v.div).children().length > 60) {
-        $(v.div).find("span:lt(1)").remove();
+    while (v.div.children.length > 60) {
+        v.div.children[v.div.children.length-1].remove();
     }
     setTimeout(() => {
         propagateHack(v, i)

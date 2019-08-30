@@ -183,14 +183,10 @@ function _core() {
         //Clean items to follow established standards here. Ideally dont do too much but sometimes necessary.
         if (core.items[itm].links) {
             //bidirectional links upgrade
-            if (!core.items[itm].from) core.items[itm].from = {};
             if (!core.items[itm].to) core.items[itm].to = {};
             for (let i in core.items[itm].links) {
-                if (!core.items[i].from) core.items[i].from = {};
                 if (!core.items[i].to) core.items[i].to = {};
-                core.items[i].from[itm] = true;
                 core.items[i].to[itm] = true;
-                core.items[itm].from[i] = true;
                 core.items[itm].to[i] = true;
             }
             delete core.items[itm].links;
@@ -199,16 +195,10 @@ function _core() {
 
     this.isLinked = function (A, B) {
         let ret = 0; //unlinked
-        if (core.items[A].to && core.items[B].from && (core.items[A].to[B] || core.items[B].from[A])) {
-            //make sure to enforce both sides of link
-            core.items[A].to[B] = core.items[A].to[B] || true;
-            core.items[B].from[A] = core.items[B].from[A] || true;
+        if (core.items[A].to && core.items[A].to[B]) {
             ret = ret + 1;// 1: there is a link FROM A to B
         }
-        if (core.items[A].from && core.items[B].to && (core.items[A].from[B] || core.items[B].to[A])) {
-            //make sure to enforce both sides of link
-            core.items[A].from[B] = core.items[A].from[B] || true;
-            core.items[B].to[A] = core.items[B].to[A] || true;
+        if (core.items[B].to && core.items[B].to[A]) {
             ret = ret + 2;// 2: there is a link FROM B to A
         }
         return ret;
@@ -216,18 +206,14 @@ function _core() {
 
     this.link = function (A, B, undirected = false) {
         core.items[A].to = core.items[A].to || {};
-        core.items[B].from = core.items[B].from || {};
         core.items[A].to[B] = core.items[A].to[B] || true;
-        core.items[B].from[A] = core.items[B].from[A] || true;
         if (undirected) {
             this.link(B, A);
         }
     }
     this.unlink = function (A, B, undirected = false) {
         core.items[A].to = core.items[A].to || {};
-        core.items[B].from = core.items[B].from || {};
         delete core.items[A].to[B];
-        delete core.items[B].from[A];
         if (undirected) {
             this.unlink(B, A);
         }
@@ -279,7 +265,7 @@ function _core() {
     //a little nicety to warn user of unsaved items.
     this.unsaved = false;
     me.on("updateView,updateItem", (e) => {
-        if (!e.load){//if event was not triggered by a loading action
+        if (!e.load) {//if event was not triggered by a loading action
             me.unsaved = true;
         }
     })

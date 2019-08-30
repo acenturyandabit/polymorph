@@ -1,19 +1,10 @@
 How links work
 
 item.to:{
-    dest:{
-        prio:{
-            guid:0
-        }
-    }
-}
-item.from:{
-    dest:{
-        prio:{
-            guid:0
-        }
-    }
+    dest:{}//not false
 }
 
 
-operators (should) enforce parent-child links wherever possible but are not obligated to.
+There is no 'from' - from can be calculated by looking at the to's on items that you care about.
+
+Undirected links are indicated by bidirected links (i.e. a->b and b->a). 

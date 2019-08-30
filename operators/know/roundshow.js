@@ -23,7 +23,7 @@ core.registerOperator("roundshow", {
             if (core.items[i].to) {
                 for (j in core.items[i].to) {
                     //dont add bidirectional links
-                    if (!(core.items[i].from && core.items[i].from[j])) {
+                    if (!(core.items[j].to && core.items[j].to[i])) {
                         links.push([i, j]);//go from i to j
                     }
                 }

@@ -73,7 +73,12 @@ core.registerOperator("terminal", {
                 if (regres[1]) {
                     state.operator = core.getOperator(regres[1]);
                 }
-                state.output(JSON.stringify(state.operator.uuid));
+                if (state.operator.uuid){
+                    state.output(JSON.stringify(state.operator.uuid));
+                }else{
+                    state.output("No operator selected.");
+                }
+                
             }
         },
         lo: {

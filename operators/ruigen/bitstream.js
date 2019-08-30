@@ -5,8 +5,10 @@ bitsettings = {
     stripcount: 6
 }
 
-function startBitStream() {
-    let things = document.getElementsByClassName("bitstream");
+function startBitStream(el){
+    let things;
+    if (!el)things=document.getElementsByClassName("bitstream");
+    else things=[el];
     for (i = 0; i < things.length; i++) {
         _e = things[i];
         e = document.createElement("canvas");

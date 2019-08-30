@@ -9,7 +9,7 @@ core.loadDocument = async function () {
         handled = true;
     } else if (window.location.search) {
         //check open flag
-        if (params.has("o")){
+        if (params.has("o")) {
             //trim the open flag
             let loc = window.location.href
             loc = loc.replace(/\?o/, "");
@@ -110,7 +110,7 @@ core.instantNewDoc = function () {
         //also hook it
         core.userData.documents[core.currentDocID].saveHooks[source] = true;
     }
-    core.isNewDoc=true;
+    core.isNewDoc = true;
     core.fire("documentCreated", id);
     core.fromSaveData(d);
     core.filescreen.baseDiv.style.display = "none";
@@ -118,7 +118,7 @@ core.instantNewDoc = function () {
     //dont care about the 
 }
 
-core.on("updateItem,updateView",()=>{core.isNewDoc=false});
+core.on("updateItem,updateView", () => { core.isNewDoc = false });
 
 core.rehookAll = function (id) {
     for (let i in core.saveSources) {
@@ -274,7 +274,8 @@ core.userSave = function () {
                 lf: core.currentDocID
             };
         }
-    }// the above realllly shouldnt happen
+    }
+    //trigger saving on all save sources
     core.fire("userSave", d);
 };
 
@@ -361,11 +362,11 @@ core.loadInnerDialog.addEventListener("input", (e) => {
         if (e.target.checked) {
             if (!core.userData.documents[core.currentDocID].saveSources[csource]) core.userData.documents[core.currentDocID].saveSources[csource] = core.currentDocID;
             if (core.saveSources[csource].hook) core.saveSources[csource].hook(core.userData.documents[core.currentDocID].saveSources[csource]);
+            core.userData.documents[core.currentDocID].saveHooks[csource] = true;
         } else {
             if (core.saveSources[csource].unhook) core.saveSources[csource].unhook(core.userData.documents[core.currentDocID].saveSources[csource]);
-            delete core.userData.documents[core.currentDocID].saveSources[csource];
+            delete core.userData.documents[core.currentDocID].saveHooks[csource];
         }
-        core.userData.documents[core.currentDocID].saveHooks[csource] = e.target.checked;
         core.saveUserData();
     }
 })

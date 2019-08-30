@@ -164,7 +164,6 @@ core.registerOperator(
           //Create a new item
           let it ={};
           it.to={};
-          it.from[e.target.parentElement.dataset.id]=true;
           //register it with the core
           let id = core.insertItem(it);
           core.items[e.target.parentElement.dataset.id].to[id]=true;

@@ -529,7 +529,7 @@ core.registerOperator("itemList", function (operator) {
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
-            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString();
+            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString() +">" +new Date(core.items[id][contextedProp].date[0].endDate).toLocaleString();
             core.items[id][contextedProp].datestring = contextedInput.value;
             me.datereparse(id);
             menu.style.display = "none";
