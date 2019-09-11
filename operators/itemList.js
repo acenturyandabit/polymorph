@@ -16,7 +16,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar = document.createElement("div");
     this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
     //top / insert 
-    this.template = htmlwrap(`<span style="display:inline-block; width:100%;">
+    this.template = htmlwrap(`<span style="display:block; width:100%;">
     <span></span>
     <button>&gt;</button>
     </span>`);
@@ -24,7 +24,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar.appendChild(this.template);
 
     //search
-    this.searchtemplate = htmlwrap(`<span style="display:inline-block; width:100%;">
+    this.searchtemplate = htmlwrap(`<span style="display:block; width:100%;">
     <span></span>
     <button disabled>&#128269;</button>
     </span>`);
@@ -32,8 +32,9 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar.appendChild(this.searchtemplate);
 
     this.taskListBar.appendChild(document.createElement("hr"));
+    this.taskListBar.style.whiteSpace = "nowrap";
     this.taskList = document.createElement("div");
-    this.taskList.style.cssText = "height:100%; overflow-y:auto";
+    this.taskList.style.cssText = "height:100%; overflow-y:auto; width:fit-content;";
     this.taskListBar.appendChild(this.taskList);
     operator.div.appendChild(htmlwrap(
         `<style>
@@ -188,7 +189,7 @@ core.registerOperator("itemList", function (operator) {
                             if (core.items[its[i].id][dateprop].date[0]) {
                                 its[i].date = core.items[its[i].id][dateprop].date[0].date;
                                 //check for repetition structure
-                                if (its[i].dt.datestring.indexOf("(")!=-1) {
+                                if (its[i].dt.datestring.indexOf("(") != -1) {
                                     //evaluate the repetition
                                     its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date())[0].date;
                                 }
@@ -457,34 +458,32 @@ core.registerOperator("itemList", function (operator) {
             for (let i in me.settings.properties) {
                 if (me.settings.properties[i] == 'date') {
                     dateprop = i;
-                    break;
+                    //specifically reparse the date on it;
+                    if (it) {
+                        core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
+                        if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
+                        //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
+                    }
+                    // get a list of Items
+                    let its = [];
+                    me.taskList.querySelectorAll("[data-id]").forEach(e => {
+                        let itm = {
+                            id: e.dataset.id
+                        };
+                        //we are going to upgrade all dates that don't match protocol)
+                        if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
+                            if (typeof core.items[itm.id][dateprop].date == "number") {
+                                core.items[itm.id][dateprop].date = [{
+                                    date: core.items[itm.id][dateprop].date
+                                }];
+                            }
+                            if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
+                            else itm.date = Date.now() * 10000;
+                        } else itm.date = Date.now() * 10000;
+                        its.push(itm);
+                    });
                 }
             }
-            if (dateprop == "") return;
-            //specifically reparse the date on it;
-            if (it) {
-                core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
-                if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
-                //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
-            }
-            // get a list of Items
-            let its = [];
-            me.taskList.querySelectorAll("[data-id]").forEach(e => {
-                let itm = {
-                    id: e.dataset.id
-                };
-                //we are going to upgrade all dates that don't match protocol)
-                if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
-                    if (typeof core.items[itm.id][dateprop].date == "number") {
-                        core.items[itm.id][dateprop].date = [{
-                            date: core.items[itm.id][dateprop].date
-                        }];
-                    }
-                    if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
-                    else itm.date = Date.now() * 10000;
-                } else itm.date = Date.now() * 10000;
-                its.push(itm);
-            });
             //sort everything
             me.sortItems();
             core.fire("dateUpdate");
@@ -529,7 +528,7 @@ core.registerOperator("itemList", function (operator) {
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
-            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString() +">" +new Date(core.items[id][contextedProp].date[0].endDate).toLocaleString();
+            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(core.items[id][contextedProp].date[0].endDate).toLocaleString();
             core.items[id][contextedProp].datestring = contextedInput.value;
             me.datereparse(id);
             menu.style.display = "none";
