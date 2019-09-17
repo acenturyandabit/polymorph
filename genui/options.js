@@ -71,10 +71,10 @@ var _option = (function () {
                 appendedElement.type = "checkbox";
                 appendedElement.addEventListener("input", (e) => {
                     let actualObject = iff(settings.object);
-                    if (typeof actualObject !="object") actualObject = {};// this doesnt always work :///
-                    if (settings.beforeInput)settings.beforeInput(e);
+                    if (typeof actualObject != "object") actualObject = {};// this doesnt always work :///
+                    if (settings.beforeInput) settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.checked;
-                    if (settings.afterInput)settings.afterInput(e);
+                    if (settings.afterInput) settings.afterInput(e);
                 })
                 break;
             case "text":
@@ -82,24 +82,60 @@ var _option = (function () {
                 appendedElement.style.display = "block";
                 appendedElement.addEventListener("input", (e) => {
                     let actualObject = iff(settings.object);
-                    if (typeof actualObject !="object") actualObject = {};
-                    if (settings.beforeInput)settings.beforeInput(e);
+                    if (typeof actualObject != "object") actualObject = {};
+                    if (settings.beforeInput) settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.value;
-                    if (settings.afterInput)settings.afterInput(e);
+                    if (settings.afterInput) settings.afterInput(e);
                 })
                 break;
             case "select":
                 appendedElement = document.createElement("select");
                 appendedElement.addEventListener("changed", (e) => {
                     let actualObject = iff(settings.object);
-                    if (typeof actualObject !="object") actualObject = {};
-                    if (settings.beforeInput)settings.beforeInput(e);
+                    if (typeof actualObject != "object") actualObject = {};
+                    if (settings.beforeInput) settings.beforeInput(e);
                     actualObject[settings["property"]] = appendedElement.value;
-                    if (settings.afterInput)settings.afterInput(e);
+                    if (settings.afterInput) settings.afterInput(e);
                 })
                 break;
+            case "array":
+                appendedElement = document.createElement("div");
+                appendedElement.style.display="flex";
+                appendedElement.style.flexDirection="column";
+                appendedElement.addEventListener("input", (e) => {
+                    let actualObject = iff(settings.object);
+                    if (!actualObject[settings["property"]]) actualObject[settings["property"]] = [];
+                    let te = e.target.parentElement;
+                    let index = 0;
+                    while (te.previousElementSibling) {
+                        te = te.previousElementSibling;
+                        index++;
+                    }
+                    actualObject[settings['property']][index] = e.target.value;
+                });
+                appendedElement.addEventListener("click", (e) => {
+                    let actualObject = iff(settings.object);
+                    if (e.target.tagName != "BUTTON") return;
+                    if (!actualObject[settings["property"]]) actualObject[settings["property"]] = [];
+                    if (e.target.innerText == "+") {
+                        let s = document.createElement("span");
+                        s.innerHTML = `<input><button>x</button>`;
+                        s.style.width = "100%";
+                        appendedElement.insertBefore(s,appendedElement.children[appendedElement.children.length-1]);
+                        actualObject[settings['property']].push("");
+                    } else {
+                        let index = 0;
+                        let te = e.target.parentElement;
+                        while (te.previousElementSibling) {
+                            te = te.previousElementSibling;
+                            index++;
+                        }
+                        actualObject[settings['property']].splice(index, 1);
+                        e.target.parentElement.remove();
+                    }
+                });
         }
-        if (!isPhone())appendedElement.style.float = "right";
+        if (!isPhone()) appendedElement.style.float = "right";
         if (settings.label) {
             let lb = document.createElement("label");
             lb.innerHTML = settings.label;
@@ -138,7 +174,20 @@ var _option = (function () {
                                 op.value = i;
                                 appendedElement.appendChild(op);
                             }
-                        if (settings["object"][settings["property"]]) appendedElement.value = settings["object"][settings["property"]];
+                        if (actualObject[settings["property"]]) appendedElement.value = actualObject[settings["property"]];
+                        break;
+                    case "array": //array of text
+                        while (appendedElement.children.length) appendedElement.children[0].remove();
+                        if (actualObject[settings["property"]]) for (let i = 0; i < actualObject[settings['property']].length; i++) {
+                            let s = document.createElement("span");
+                            s.innerHTML = `<input value="${actualObject[settings['property']][i]}"><button>x</button>`;
+                            s.style.width = "100%";
+                            appendedElement.appendChild(s);
+                        }
+                        let b = document.createElement("button");
+                        b.innerHTML = "+";
+                        b.style.width = "100%";
+                        appendedElement.appendChild(b);
                         break;
                 }
             }
@@ -146,139 +195,4 @@ var _option = (function () {
     }
 
     return _option;
-})()
-
-
-/*To integrate (when you have time)
-
-//Options manager V 0.1 A quick way of creating a standardised options menu.
-//Usage:
-//Pass an object 'userSettings' to the intialisation of optionsmanager.
-
-//userSettings detail:
-/*
-{
-    root: div; where the settings should be initailised
-    head: string; // The name to be displayed at the top of the options box.
-    opts: [
-        {
-            id: string; the name of the option
-            prompt: string; A prompt for the user.
-            type: string; one of various types of options.
-            validator: (data)=>{}; return true or false for validating an option. If left uninitialised, any value will be accepted.
-        }
-    ],
-    beforeInput:(e)=>{},
-    afterInput:(e)=>{}
-    access:{
-        read: (id,callback,data)=>{
-            //use some sort of saving system to read a key 'id'. Pass the value of 'id' as the first argument of continue.
-            if (data){
-                callback(data[id]);
-            }else{
-                callback(fetch(id));
-            }
-            //The callback function is used because data fetching may be asynchronous. No biggie if it's synchronous.
-        };
-        write: (id, val)=>{}; save a property based on a string id. It will be passed the ID for the options in opts. Self is the optionsmanager; you can probably access some property to assist in context menus.
-    }
-}
-
-Other functions:
-optionsManager.update(data){
-    Load the current form with the specified data. For each option, the read() function will be called with data as the second argument.
-}
-
-
-Different types of prompt:
-text
-textarea
-checkbox
-none
-
-Some default access types: You can pass an object with {type,params} instead of {read,write} for access if you are using these.
-(not yet implemented)
-{type: "chromeStorageLocal"} : chrome.storage.local storage system.
-{type: "localStorage",prefix:"somePrefix"}: localstorage. The prefix will be appended when fetching.
-//
-
-
-
-
-
-function _optionsManager(userSettings) {
-    this.settings = Object.assign({
-        //default settings here
-        head: "Options",
-        opts: []
-    }, userSettings);
-    //if a root is provided, setup the ui.
-    if (this.settings.root) {
-        let h1 = document.createElement("h1");
-        h1.innerText = this.settings.head;
-        this.settings.root.appendChild(h1);
-        for (let i = 0; i < this.settings.opts.length; i++) {
-            //prompt
-            let prompt = document.createElement("p");
-            prompt.innerText = this.settings.opts[i].prompt;
-            this.settings.root.append(prompt);
-            //input creation and initial read; and event handler.
-            let ini;
-            switch (this.settings.opts[i].type) {
-                case "none":
-                    break;
-                case "text":
-                case "checkbox":
-                    ini = document.createElement("input");
-                    ini.type = this.settings.opts[i].type;
-                    ini.dataset.settingID = this.settings.opts[i].id;
-                    this.settings.root.append(ini);
-                    break;
-                case "textarea":
-                    ini = document.createElement("textarea");
-                    ini.dataset.settingID = this.settings.opts[i].id;
-                    this.settings.root.append(ini);
-                    break;
-            }
-            let validator = this.settings.opts[i].validator;
-            //initial read
-            let me=this;
-            this.settings.access.read(this.settings.opts[i].id, (val) => {
-                if (val){
-                    switch (me.settings.opts[i].type) {
-                        case "none":
-                            break;
-                        case "text":
-                        case "textarea":
-                            ini.value = val;
-                            break;
-                        case "checkbox":
-                            ini.checked = val;
-                            break;
-                    }
-                }
-                //event handling
-                ini.addEventListener("change", () => {
-                    //Extract from different types of inputs.
-                    let extractedValue;
-                    switch (ini.type) {
-                        case "checkbox":
-                            extractedValue = ini.checked;
-                            break;
-                        default:
-                            extractedValue = ini.value;
-                    }
-                    //validate and write
-                    if (!(validator) || validator(extractedValue)) me.settings.access.write(ini.dataset.settingID, extractedValue);
-                });
-            });
-        }
-    }
-    //Otherwise just load all the settings.
-    this.getSetting = function (id, callback) {
-        this.settings.access.read(id, callback);
-    }
-}
-
-
-*/
+})();

@@ -7,8 +7,7 @@
             let me = this;
             me.container = operator;
             this.settings = {
-                dateproperty: "datestring",
-                dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.
+                dateproperties: ["datestring"],
                 titleproperty: 'title',
                 defaultView: "agendaWeek",
             }; // Use my date retrieval format. (others not implented yet lm.ao)
@@ -35,45 +34,11 @@
                         }
                         let tzd = new Date();
                         for (let i in core.items) {
-                            if (core.items[i][me.settings.dateproperty] && core.items[i][me.settings.dateproperty].date) {
-                                let tzd = new Date();
-                                if (me.settings.dateRetrieval == 'sDate') {
-                                    let isostring = new Date(Number(core.items[i][me.settings.dateproperty].date) - tzd.getTimezoneOffset() * 60 * 1000);
-                                    let eisostring;
-                                    //if (me.items[i].dates[0].end) eisostring = new Date(Number(me.items[i].dates[0].end) - tzd.getTimezoneOffset() * 60 * 1000);
-                                    eisostring = new Date(isostring.getTime() + 60 * 60 * 1000);
-                                    isostring = isostring.toISOString();
-                                    eisostring = eisostring.toISOString();
-                                    allList.push({
-                                        id: i,
-                                        title: core.items[i][me.settings.titleproperty],
-                                        //backgroundColor: $(e).find("input")[0].style.backgroundColor,
-                                        //textColor: $(e).find("input")[0].style.color || "black",
-                                        start: isostring,
-                                        end: eisostring
-                                    });
-                                } else if (me.settings.dateRetrieval == 'mDate') {
-                                    try {
-                                        let isostring = new Date(Number(core.items[i][me.settings.dateproperty].date[0].date) - tzd.getTimezoneOffset() * 60 * 1000);
-                                        let eisostring;
-                                        if (core.items[i][me.settings.dateproperty].date[0].endDate) eisostring = new Date(Number(core.items[i][me.settings.dateproperty].date[0].endDate) - tzd.getTimezoneOffset() * 60 * 1000);
-                                        else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000);
-                                        isostring = isostring.toISOString();
-                                        eisostring = eisostring.toISOString();
-                                        allList.push({
-                                            id: i,
-                                            title: core.items[i][me.settings.titleproperty],
-                                            //backgroundColor: $(e).find("input")[0].style.backgroundColor,
-                                            //textColor: $(e).find("input")[0].style.color || "black",
-                                            start: isostring,
-                                            end: eisostring
-                                        });
-                                    } catch (e) {
-
-                                    }
-                                } else if (me.settings.dateRetrieval == 'rDate') {
-                                    try {
-                                        let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, start, end);
+                            let tzd = new Date();
+                            try {
+                                for (let dp = 0; dp < me.settings.dateproperties.length; dp++) {
+                                    if (core.items[i][me.settings.dateproperties[dp]]) {
+                                        let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperties[dp]].date, start, end);
                                         for (let j = 0; j < result.length; j++) {
                                             me.notifstack.push({
                                                 txt: core.items[i][me.settings.titleproperty],
@@ -101,10 +66,10 @@
                                                 end: eisostring
                                             });
                                         }
-                                    } catch (e) {
-
                                     }
                                 }
+                            } catch (e) {
+
                             }
                         }
                         callback(allList);
@@ -255,50 +220,61 @@
 
             this.fromSaveData = function (d) {
                 Object.assign(this.settings, d);
+                if (this.settings.dateproperty){
+                    this.settings.dateproperties = [this.settings.dateproperty];
+                    delete this.settings.dateproperty;
+                } 
                 this.processSettings();
             }
 
 
             //Handle the settings dialog click!
             this.dialogDiv = document.createElement("div");
-            this.dialogDiv.innerHTML = `
-        <input data-role='dateproperty' placeholder="Enter the date property">
-        <input data-role='titleproperty' placeholder="Enter the property for calendar item names.">
-        `;
 
-            let ops = [new _option({
-                div: this.dialogDiv,
-                type: "bool",
-                object: this.settings,
-                property: "pushnotifs",
-                label: "Show push notifications?"
-            }),
-            new _option({
-                div: this.dialogDiv,
-                type: "bool",
-                object: this.settings,
-                property: "wsOn",
-                label: "Send events to a websocket?"
-            }),
-            new _option({
-                div: this.dialogDiv,
-                type: "text",
-                object: this.settings,
-                property: "wsurl",
-                label: "Websocket address"
-            }),
-            new _option({
-                div: this.dialogDiv,
-                type: "bool",
-                object: this.settings,
-                property: "notifWindow",
-                label: "Show Notification window"
-            })
+            let ops = [
+                new _option({
+                    div: this.dialogDiv,
+                    type: "text",
+                    object: this.settings,
+                    property: "titleproperty",
+                    label: "Enter the title property:"
+                }),
+                new _option({
+                    div: this.dialogDiv,
+                    type: "array",
+                    object: this.settings,
+                    property: "dateproperties",
+                    label: "Enter the title property:"
+                }),
+                new _option({
+                    div: this.dialogDiv,
+                    type: "bool",
+                    object: this.settings,
+                    property: "pushnotifs",
+                    label: "Show push notifications?"
+                }),
+                new _option({
+                    div: this.dialogDiv,
+                    type: "bool",
+                    object: this.settings,
+                    property: "wsOn",
+                    label: "Send events to a websocket?"
+                }),
+                new _option({
+                    div: this.dialogDiv,
+                    type: "text",
+                    object: this.settings,
+                    property: "wsurl",
+                    label: "Websocket address"
+                }),
+                new _option({
+                    div: this.dialogDiv,
+                    type: "bool",
+                    object: this.settings,
+                    property: "notifWindow",
+                    label: "Show Notification window"
+                })
             ];
-
-            this.dialogDiv.addEventListener("input", function (e) {
-                me.settings[e.target.dataset.role] = e.target.value;
-            })
 
             this.showDialog = function () {
                 // update your dialog elements with your settings
@@ -307,14 +283,6 @@
             this.dialogUpdateSettings = function () {
                 this.processSettings();
             }
-
-            core.on("createItem", (d) => {
-                try {
-                    $(me.rootdiv).fullCalendar('refetchEvents');
-                } catch (e) {
-                    console.log("JQUERY not ready yet :/");
-                }
-            })
 
             core.on("deleteItem", (d) => {
                 try {

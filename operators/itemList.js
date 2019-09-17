@@ -460,9 +460,11 @@ core.registerOperator("itemList", function (operator) {
                     dateprop = i;
                     //specifically reparse the date on it;
                     if (it) {
-                        core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
-                        if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
-                        //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
+                        if (core.items[it][dateprop]) {
+                            core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
+                            if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
+                            //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
+                        }
                     }
                     // get a list of Items
                     let its = [];

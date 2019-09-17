@@ -86,7 +86,7 @@ core.operator = function operator(_type, _rect) {
             }
             try {
                 this.baseOperator = new core.operators[this.type].constructor(this);
-                this.baseOperator.fromSaveData(data);
+                if (data)this.baseOperator.fromSaveData(data);
                 this.baseOperator.container = this;
             } catch (e) {
                 console.log(e);
@@ -107,7 +107,6 @@ core.operator = function operator(_type, _rect) {
             data: __type
         });
     };
-    this.reload(_type);
     this.toSaveData = function () {
         let obj = {};
         obj.type = this.type;
@@ -153,4 +152,6 @@ core.operator = function operator(_type, _rect) {
     this.visible = function () {
         return this.topdiv.offsetHeight != 0;
     }
+
+    this.reload(_type);
 };

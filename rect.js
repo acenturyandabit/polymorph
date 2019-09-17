@@ -218,7 +218,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     <li class="subframe">Subframe this</li>
     <li class="subframePR">Subframe parent rect</li>
     <li class="cpfr">Copy frame settings</li>
-    <li class="psfr">Paste frame settings</li>`, this.tabbar, undefined, tabfilter);
+    <li class="psfr">Paste frame settings</li>
+    <li class="xpfr">Export frame to text...</li>
+    <li class="mpfr">Import frame from text...</li>`, this.tabbar, undefined, tabfilter);
     tabmenu.querySelector(".subframePR").addEventListener("click", () => {
         // at the tab, create a new subframe operator
         let sf = (new core.operator("subframe", this.parent));
@@ -264,6 +266,31 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         this.operators[contextedOperatorIndex].fromSaveData(core.copiedFrameData);
         this.tieOperator(this.operators[contextedOperatorIndex], contextedOperatorIndex);
         core.fire("updateView", { sender: me });
+        tabmenu.style.display = "none";
+    })
+
+    tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+        let tta=htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+        tabmenu.style.display = "none";
+        core.dialog.prompt(tta);
+        tta.querySelector("textarea").value=JSON.stringify(this.operators[contextedOperatorIndex].toSaveData());
+    })
+
+    tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+        let tta=htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+        core.dialog.prompt(tta);
+        tta.querySelector("button").addEventListener("click",()=>{
+            if (tta.querySelector("textarea").value){
+                let importObject=JSON.parse(tta.querySelector("textarea").value);
+                this.operators[contextedOperatorIndex].fromSaveData(importObject);
+                this.tieOperator(this.operators[contextedOperatorIndex], contextedOperatorIndex);
+                core.fire("updateView", { sender: me });
+                //force update all items to reload the view
+                for (let i in core.items){
+                    core.fire('updateItem',{id: i});
+                }
+            }
+        })
         tabmenu.style.display = "none";
     })
 
