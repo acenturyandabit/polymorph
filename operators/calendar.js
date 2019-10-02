@@ -37,7 +37,7 @@
                             let tzd = new Date();
                             try {
                                 for (let dp = 0; dp < me.settings.dateproperties.length; dp++) {
-                                    if (core.items[i][me.settings.dateproperties[dp]]) {
+                                    if (core.items[i][me.settings.dateproperties[dp]] && core.items[i][me.settings.dateproperties[dp]].date) {
                                         let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperties[dp]].date, start, end);
                                         for (let j = 0; j < result.length; j++) {
                                             me.notifstack.push({

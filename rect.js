@@ -270,24 +270,24 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     })
 
     tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-        let tta=htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+        let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
         tabmenu.style.display = "none";
         core.dialog.prompt(tta);
-        tta.querySelector("textarea").value=JSON.stringify(this.operators[contextedOperatorIndex].toSaveData());
+        tta.querySelector("textarea").value = JSON.stringify(this.operators[contextedOperatorIndex].toSaveData());
     })
 
     tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-        let tta=htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+        let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
         core.dialog.prompt(tta);
-        tta.querySelector("button").addEventListener("click",()=>{
-            if (tta.querySelector("textarea").value){
-                let importObject=JSON.parse(tta.querySelector("textarea").value);
+        tta.querySelector("button").addEventListener("click", () => {
+            if (tta.querySelector("textarea").value) {
+                let importObject = JSON.parse(tta.querySelector("textarea").value);
                 this.operators[contextedOperatorIndex].fromSaveData(importObject);
                 this.tieOperator(this.operators[contextedOperatorIndex], contextedOperatorIndex);
                 core.fire("updateView", { sender: me });
                 //force update all items to reload the view
-                for (let i in core.items){
-                    core.fire('updateItem',{id: i});
+                for (let i in core.items) {
+                    core.fire('updateItem', { id: i });
                 }
             }
         })
@@ -296,26 +296,42 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.selectedOperator = 0;
     //And a delegated settings button handler
-    this.settingOperator = 0;
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "img") {
             //dont show settings - instead, copy the settings div onto the core settings div.
             if (this.operators[this.selectedOperator].baseOperator.dialogDiv) {
-                this.settingOperator = this.selectedOperator;
-                core.dialog.register(me, this.operators[this.selectedOperator].baseOperator);
+
+                // this.selectedOperator is an index!
+
+                this.settingsOperator = this.operators[this.selectedOperator].baseOperator;
+                this.settingsOperator.showDialog();
+                this.settingsDiv = document.createElement("div");
+                this.settingsDiv.innerHTML = `<h1>Settings</h1>
+                <h3> General settings </h3>
+                <input class="tabDisplayName" placeholder="Tab display name:"/>
+                <h3>Operator settings</h3>`;
+                this.settingsOperator.dialogDiv.style.maxWidth = "50vw";
+                this.settingsDiv.appendChild(this.settingsOperator.dialogDiv);
+                this.settingsDiv.querySelector(".tabDisplayName").value = this.tabspans[this.selectedOperator].children[0].innerText;
+                core.dialog.prompt(this.settingsDiv, (d) => {
+                    this.operators[this.selectedOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
+                    this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].tabbarName;
+                    this.settingsOperator.dialogUpdateSettings();
+                    core.fire("updateView");
+                })
+                //set the calling items.
+                core.dialog.currentBaseOperator = this.settingsOperator;
+                core.dialog.callingRect = this;
             } else {
                 //old version
                 if (this.operators[this.selectedOperator].baseOperator.showSettings) {
                     this.operators[this.selectedOperator].baseOperator.showSettings();
                 }
             }
+            //also render the datastreams if necessary.
+            this.renderDataStreams(this.operators[this.selectedOperator].baseOperator);
         }
     })
-
-    this.submitDialog = function (d) {
-        this.operators[this.settingOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
-        this.tabspans[this.settingOperator].children[0].innerText = this.operators[this.settingOperator].tabbarName;
-    }
 
     // Generate placeholder content if no content is provided.
     if (operators) {

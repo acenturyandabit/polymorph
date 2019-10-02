@@ -435,7 +435,9 @@ core.registerOperator("itemList", function (operator) {
             }
             _target.style.borderTop = "solid 3px purple";
             _target.style.borderBottom = "solid 3px purple";
-            _target.scrollIntoView({
+            let bcr = _target.parentElement.getBoundingClientRect();
+            let tcr = _target.getBoundingClientRect();
+            if (tcr.y < bcr.y || tcr.y + tcr.height > bcr.y + bcr.height) _target.scrollIntoView({
                 behavior: "smooth"
             });
         }

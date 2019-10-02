@@ -1,6 +1,6 @@
 (function () {
     let viewsets;
-    core.registerOperator("opSelect",{hidden:true}, function (operator) {
+    core.registerOperator("opSelect",{displayName: "New Operator",hidden:true}, function (operator) {
         let me = this;
         me.container = operator;
         this.settings = {};
@@ -43,7 +43,8 @@
                 b.dataset.underOperatorName = i;
                 b.addEventListener("click", () => {
                     operator.reload(b.dataset.underOperatorName);
-                    operator.tabbarName=core.operators[b.dataset.underOperatorName].options.displayName ||me.type;
+                    //change name if user has not already modified name
+                    if (operator.tabbarName=="New Operator") operator.tabbarName=core.operators[b.dataset.underOperatorName].options.displayName || me.type;
                     core.fire("updateView", {
                         sender: this
                     });
@@ -78,6 +79,12 @@
 
         //these are optional but can be used as a reference.
 
+        //Handle the settings dialog click!
+        this.dialogDiv=document.createElement("div");
+        this.dialogDiv.innerHTML=``;
+        this.showDialog=function(){
+            // update your dialog elements with your settings
+        }
 
         //////////////////Handling local changes to push to core//////////////////
 

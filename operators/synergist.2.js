@@ -453,6 +453,7 @@ core.registerOperator("itemcluster2", {
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
+        <li class="hierarchy radial">Arrange in radial hierarchy</li>
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
             if (core.shared.synergistCopyElement) {
@@ -485,7 +486,8 @@ core.registerOperator("itemcluster2", {
                 });
             }
         })
-        me.rootcontextMenu.querySelector(".hierarchy").addEventListener("click", (e) => {
+        me.rootcontextMenu.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("hierarchy"))return;
             let rect = me.itemSpace.getBoundingClientRect();
 
             //get position of items, and the links to other items
@@ -524,7 +526,7 @@ core.registerOperator("itemcluster2", {
             //figure out the idx of the item (its level in the hierarchy)
             for (let i = 0; i < visibleItems.length; i++) {
                 let stack = [];
-                if (visibleItems[i].idx==undefined) {
+                if (visibleItems[i].idx == undefined) {
                     stack.push(i);
                 }
                 while (stack.length) {
@@ -556,75 +558,122 @@ core.registerOperator("itemcluster2", {
             visibleItems.sort((a, b) => {
                 return (a.idx - b.idx) + !(a.idx - b.idx) * (a.x - b.x);
             })
-            
+
             //for each item's children, sort it by x position.
             let indexedOrder = visibleItems.map((v) => v.id);
-            visibleItems.forEach((v)=>{
-                if (v.children){
-                    v.children.sort((a,b)=>{return indexedOrder.indexOf(a)-indexedOrder.indexOf(b)});
+            visibleItems.forEach((v) => {
+                if (v.children) {
+                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
                 }
             })
 
-            
-
-            //calculate widths
-            function getWidth(id) {
-                let c = visibleItems[indexedOrder.indexOf(id)].children;
-                if (!c || !c.length) {
-                    return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
-                } else {
-                    let sum = 0;
-                    for (let i = 0; i < c.length; i++) {
-                        sum = sum + getWidth(c[i]);
+            if (!e.target.classList.contains('radial')) {
+                //normal
+                //calculate widths
+                function getWidth(id) {
+                    let c = visibleItems[indexedOrder.indexOf(id)].children;
+                    if (!c || !c.length) {
+                        return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    } else {
+                        let sum = 0;
+                        for (let i = 0; i < c.length; i++) {
+                            sum = sum + getWidth(c[i]);
+                        }
+                        let alt = Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                        if (sum < alt) sum = alt;
+                        return sum;
                     }
-                    let alt = Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
-                    if (sum < alt) sum = alt;
-                    return sum;
+                }
+                for (let i = 0; i < visibleItems.length; i++) {
+                    //this needs to be optimised with caching.
+                    visibleItems[i].width = getWidth(visibleItems[i].id);
+                }
+
+                // calculate total width
+                let tw = 0;
+                for (let i = 0; i < visibleItems.length; i++) {
+                    if (visibleItems[i].parent == undefined) tw += visibleItems[i].width;
+                    else break;
+                }
+
+                //visible items looks like this:
+
+                /*
+                [{children: ["i78f1k"],
+                id: "buwnq5",
+                idx: 0,
+                width: 210,
+                x: -2544.984375,
+                y: 278}]
+                */
+
+
+                //Start rendering!
+                let currentx = e.clientX - rect.left - tw / 2;
+                let currenty = e.clientY - rect.top;
+
+                function render(itm, tx, ty) { // itm is a visibleItem
+                    core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
+                    core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
+                    let ctx = tx;
+                    for (let i = 0; i < itm.children.length; i++) {
+                        ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
+                    }
+                    me.arrangeItem(itm.id);
+                    return itm.width;
+                }
+
+                for (let i = 0; i < visibleItems.length; i++) {
+                    if (visibleItems[i].parent == undefined) currentx += render(visibleItems[i], currentx, currenty);
+                }
+            } else {
+
+                //calculate widths
+                function getAngle(id) {
+                    let c = visibleItems[indexedOrder.indexOf(id)].children;
+                    if (!c || !c.length) {
+                        return 1;
+                    } else {
+                        let sum = 0;
+                        for (let i = 0; i < c.length; i++) {
+                            sum = sum + getAngle(c[i]);
+                        }
+                        return sum;
+                    }
+                }
+                for (let i = 0; i < visibleItems.length; i++) {
+                    //this needs to be optimised with caching.
+                    visibleItems[i].angle = getAngle(visibleItems[i].id);
+                }
+
+                // calculate total width
+                let totalAngle = 0;
+                for (let i = 0; i < visibleItems.length; i++) {
+                    if (visibleItems[i].parent == undefined) totalAngle += visibleItems[i].angle;
+                    else break;
+                }
+
+                for (let i = 0; i < visibleItems.length; i++) {
+                    visibleItems[i].angle *= Math.PI * 2 / totalAngle;
+                }
+                //Start rendering!
+                let currentT=0;
+                function render(itm, tT, dp) { // itm is a visibleItem
+                    let r=(dp)**0.9*300;
+                    core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = r * Math.cos(tT+itm.angle/2);
+                    core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = r * Math.sin(tT+itm.angle/2);
+                    let ctT = tT;
+                    for (let i = 0; i < itm.children.length; i++) {
+                        ctT += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctT, dp+1);
+                    }
+                    me.arrangeItem(itm.id);
+                    return itm.angle;
+                }
+
+                for (let i = 0; i < visibleItems.length; i++) {
+                    if (visibleItems[i].parent == undefined) currentT += render(visibleItems[i], currentT,0);
                 }
             }
-            for (let i = 0; i < visibleItems.length; i++) {
-                //this needs to be optimised with caching.
-                visibleItems[i].width = getWidth(visibleItems[i].id);
-            }
-
-            // calculate total width
-            let tw = 0;
-            for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent==undefined) tw += visibleItems[i].width;
-                else break;
-            }
-
-            //visible items looks like this:
-
-            /*
-            [{children: ["i78f1k"],
-            id: "buwnq5",
-            idx: 0,
-            width: 210,
-            x: -2544.984375,
-            y: 278}]
-            */
-
-
-            //Start rendering!
-            let currentx = e.clientX - rect.left - tw / 2;
-            let currenty = e.clientY - rect.top;
-
-            function render(itm, tx, ty) { // itm is a visibleItem
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
-                let ctx = tx;
-                for (let i = 0; i < itm.children.length; i++) {
-                    ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
-                }
-                me.arrangeItem(itm.id);
-                return itm.width;
-            }
-
-            for (let i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].parent==undefined) currentx += render(visibleItems[i], currentx, currenty);
-            }
-
             for (let i in core.items) {
                 //second update to fix lines; also alert everyone of changes.
                 core.fire("updateItem", {
@@ -1351,7 +1400,7 @@ core.registerOperator("itemcluster2", {
                     elements[i].matches(".floatingItem") &&
                     elements[i].dataset.id != cid && e.ctrlKey
                 ) {
-                    core.items[elements[i].dataset.id].itemcluster.viewName= core.items[elements[i].dataset.id].itemcluster.viewName || core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
+                    core.items[elements[i].dataset.id].itemcluster.viewName = core.items[elements[i].dataset.id].itemcluster.viewName || core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
                     core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
                         x: 0,
                         y: 0
@@ -1359,7 +1408,7 @@ core.registerOperator("itemcluster2", {
                     if (!e.altKey) {//push drag in.
                         delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
                         me.arrangeItem(cid);
-                        me.movingDivs=[];//clear movingdivs so it doesnt come back
+                        me.movingDivs = [];//clear movingdivs so it doesnt come back
                     }
                     me.arrangeItem(elements[i].dataset.id);
                     //me.switchView(elements[i].dataset.id, true, true);

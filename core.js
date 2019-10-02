@@ -66,6 +66,7 @@ function _core() {
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Starting function: this is only called once
     me.start = function () {
+        me.isNewDoc=true;
         me.fire("UIstart");
         me.resetDocument();
         me.loadDocument();
@@ -91,7 +92,7 @@ function _core() {
         ).innerText = this.currentDoc.displayName;
         document.querySelector("title").innerHTML =
             this.currentDoc.displayName + " - Polymorph";
-        me.filescreen.saveRecentDocument(me.currentDocID, undefined, me.currentDoc.displayName);
+        if (!core.isNewDoc)me.filescreen.saveRecentDocument(me.currentDocID, undefined, me.currentDoc.displayName);
         me.fire("updateSettings");
     };
 
