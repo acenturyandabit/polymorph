@@ -8,7 +8,7 @@ documentReady(() => {
         <ul class="topbar">
             <li>File
                 <ul>
-                    <li class="open">Open</li>    
+                    <li class="open">Open</li>
                     <li class="saveSources">Preferences</li> <!-- default is always localforage for now -->
                 </ul>
             </li>
@@ -17,15 +17,16 @@ documentReady(() => {
                 <ul>
                     <li class="hleptute">Operator help</li>
                     <li class="hlepdocs">Help topics</li>
+                    <li class="hlepreport">Report an issue...</li>
                 </ul>
             </li>
-            
+
             <li class="tutorial">Run the tutorial again</li>
         </ul>
     </div>`));
     document.body.appendChild(htmlwrap(`
     <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
-    
+
     </div>`));
     document.body.appendChild(htmlwrap(`
     <div class="wall"
@@ -38,7 +39,7 @@ documentReady(() => {
 })
 
 core.on("UIstart", () => {
-    
+
     document.querySelector(".topbar .open").addEventListener("click", () => {
         if (core.isNewDoc)core.filescreen.showSplash();
         else{

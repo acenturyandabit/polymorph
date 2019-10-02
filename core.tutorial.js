@@ -86,4 +86,7 @@ core.on("titleButtonsReady",()=>{
     //navigate to another help file.
     window.open(window.location.pathname+"docs","_blank");
   })
+  document.querySelector("li.hlepreport").addEventListener("click", ()=>{
+    window.open("mailto:steeven.liu2@gmail.com?subject=Polymorph - Issue");
+  })
 })
