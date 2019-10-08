@@ -29,7 +29,8 @@ var __manager_profiles = {
             ["roundshow", "operators/know/roundshow.js"],
             ["tester", "operators/know/tester.js"],
             ["ruigen", "operators/ruigen/rui_operator.js"],
-            ["calendar2", "operators/calendar.2.js"]
+            ["calendar2", "operators/calendar.2.js"],
+            ["scriptrunner", "operators/scriptrunner.js"]
         ]
     },
     saveSources: {

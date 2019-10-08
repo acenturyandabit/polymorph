@@ -19,6 +19,7 @@ core.registerOperator("itemList", function (operator) {
     this.template = htmlwrap(`<span style="display:block; width:100%;">
     <span></span>
     <button>&gt;</button>
+    <div class="subItemBox"></div>
     </span>`);
     this._template = this.template.querySelector("span");
     this.taskListBar.appendChild(this.template);
@@ -45,17 +46,23 @@ core.registerOperator("itemList", function (operator) {
         span[data-id]{
             background:white;
         }
+        div.subItemBox>span{
+            margin-left: 10px;
+        }
+        .ffocus{
+            border-top:solid 3px purple;
+            border-bottom:solid 3px purple;
+        }
         </style>`
     ));
 
     operator.div.appendChild(this.taskListBar);
 
     //Handle item creation
-    this.createItem = function () {
+    this.createItem = () => {
         let it = {};
         //clone the template and append it
         let currentItemSpan = me.template.cloneNode(true);
-        me.taskList.appendChild(currentItemSpan);
         //get data and register item
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
@@ -78,6 +85,7 @@ core.registerOperator("itemList", function (operator) {
                     it[i].datestring = currentItemSpan.querySelector("[data-role='" + i + "']").value;
                     break;
             }
+            //clear the template
             me.template.querySelector("[data-role='" + i + "']").value = "";
         }
         currentItemSpan.children[1].innerHTML = "X";
@@ -86,13 +94,43 @@ core.registerOperator("itemList", function (operator) {
         if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = Date.now();
         let id = core.insertItem(it);
         currentItemSpan.dataset.id = id;
-        //clear the template
+        if (this.shiftDown) {
+            let fi = me.taskList.querySelector(".ffocus");
+            if (fi) {
+                fi.children[fi.children.length - 1].appendChild(currentItemSpan);
+                //we are creating a subitem
+                let fiid = fi.dataset.id;
+                fi = core.items[fiid];
+                if (!fi.to) fi.to = {};
+                fi.to[id] = true;
+                core.fire("updateItem", {
+                    id: fiid,
+                    sender: me
+                });
+            }
+        }
+        if (!currentItemSpan.parentElement) {
+            me.taskList.appendChild(currentItemSpan);
+        }
+        this.renderedItemsCache=undefined;
         core.fire("updateItem", {
             id: id,
             sender: me
         });
         me.datereparse(id);
     }
+    document.body.addEventListener("keydown", (e) => {
+        if (e.getModifierState("Shift")) {
+            this.shiftDown = true;
+            me.template.children[1].innerHTML = "&#x21a9;";
+        }
+    });
+    document.body.addEventListener("keyup", (e) => {
+        if (!e.getModifierState("Shift")) {
+            this.shiftDown = false;
+            me.template.children[1].innerHTML = "&gt;";
+        }
+    });
     this.template.querySelector("button").addEventListener("click", this.createItem);
     this.template.addEventListener("keydown", (e) => {
         if (e.key == "Enter") {
@@ -102,7 +140,7 @@ core.registerOperator("itemList", function (operator) {
 
 
     //Managing the search
-    let sortCapacitor = new capacitor(300, 100, () => {
+    let searchCapacitor = new capacitor(300, 100, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
         let amSearching = false;
@@ -143,11 +181,11 @@ core.registerOperator("itemList", function (operator) {
             }
         });
     });
-    this.searchtemplate.addEventListener("keyup", sortCapacitor.submit);
+    this.searchtemplate.addEventListener("keyup", searchCapacitor.submit);
     this.searchtemplate.querySelector("button").addEventListener("click", () => {
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
         searchboxes.forEach(v => { v.value = ""; });
-        sortCapacitor.submit();
+        searchCapacitor.submit();
     })
 
     this.indexOf = function (id) {
@@ -158,7 +196,7 @@ core.registerOperator("itemList", function (operator) {
         return -1;
     }
 
-    me.sortItems = function () {
+    me._sortItems = function () {
         if (!me.container.visible()) return;
         if (me.settings.implicitOrder) {
             me.settings.sortby = me.settings.filterProp;
@@ -206,7 +244,7 @@ core.registerOperator("itemList", function (operator) {
                         if (!its[i].dt) its[i].dt = "";
                     }
                     its.sort((a, b) => {
-                        return a.dt.localeCompare(b.dt);
+                        return a.dt.toString().localeCompare(b.dt.toString());
                     });
                     break;
                 default: // probably implicit ordering
@@ -220,8 +258,10 @@ core.registerOperator("itemList", function (operator) {
             let cp;
             if (fi) cp = fi.selectionStart || 0;
             //rearrange items
+            //dont do this if subitem
             for (let i = 0; i < its.length; i++) {
-                me.taskList.appendChild(me.taskList.querySelector("[data-id='" + its[i].id + "']"));
+                let span = me.taskList.querySelector("[data-id='" + its[i].id + "']")
+                if (span.parentElement == me.taskList) me.taskList.appendChild(span);
             }
             //return focused item
             if (fi) {
@@ -234,7 +274,11 @@ core.registerOperator("itemList", function (operator) {
         }
     }
 
-    let sortcap = new capacitor(500 + isPhone() * 1000, 1000, me.sortItems);
+    let sortcap = new capacitor(500 + isPhone() * 1000, 1000, me._sortItems);
+
+    this.sortItems = function () {
+        sortcap.submit();
+    }
 
     core.on("updateItem", function (d) {
         let id = d.id;
@@ -244,7 +288,15 @@ core.registerOperator("itemList", function (operator) {
         return me.updateItem(id);
     });
 
-    this.updateItem = function (id) {
+    let getRenderedItems=()=>{//TODO: add caching to this in case it becomes a burden on processing
+        if (!this.renderedItemsCache){
+            let items = Array.from(me.taskList.querySelectorAll("span[data-id]"));
+            this.renderedItemsCache=items.map((i) => i.dataset.id);
+        }
+        return this.renderedItemsCache;
+    }
+
+    this.updateItem = (id, unbuf = false)=>{//if unbuf then we dont want to fire getRenderedItems as it would force an update.
         let it = core.items[id];
         //First check if we should show the item
         if (!mf(me.settings.filterProp, it)) {
@@ -258,15 +310,15 @@ core.registerOperator("itemList", function (operator) {
         if (!currentItemSpan) {
             currentItemSpan = me.template.cloneNode(true);
             currentItemSpan.style.display = "block";
-            me.taskList.appendChild(currentItemSpan);
             currentItemSpan.dataset.id = id;
-            currentItemSpan.querySelector("button").innerHTML = "X";
+            currentItemSpan.children[1].innerText = "X";
+            this.renderedItemsCache=undefined;
         }
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
                 case "text":
                 case "number":
-                    if (it[i]) {
+                    if (it[i] != undefined) {
                         currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i];
                     } else {
                         currentItemSpan.querySelector("[data-role='" + i + "']").value = "";
@@ -298,6 +350,27 @@ core.registerOperator("itemList", function (operator) {
         if (it.style) {
             currentItemSpan.style.background = it.style.background;
             currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
+        }
+        //then check if i have a direct and unique parent that is in the current set.
+        let uniqueParent = undefined;
+        if (!unbuf) {
+            let ri = getRenderedItems();
+            for (let _i = 0; _i < ri.length; _i++) {
+                let i = ri[_i];
+                if (core.items[i].to && core.items[i].to[id] && id != i) {
+                    if (uniqueParent == undefined) {
+                        uniqueParent = i;
+                    } else {
+                        uniqueParent = undefined;
+                        break;
+                    }
+                }
+            }
+        }
+        if (uniqueParent != undefined) {
+            me.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
+        } else {
+            me.taskList.appendChild(currentItemSpan);
         }
         return true;
     }
@@ -342,7 +415,16 @@ core.registerOperator("itemList", function (operator) {
     core.on("deletedItem", (d) => {
         me.deleteItem(d.id);
     });
-
+    this.reRenderEverything = () => {
+        this.taskList.innerHTML = "";
+        for (let i in core.items) {
+            this.updateItem(i, true);
+        }
+        //and again for links
+        for (let i in core.items) {
+            this.updateItem(i);
+        }
+    }
     this.updateSettings = function () {
         //Look at the settings and apply any relevant changes
         let htmlstring = ``
@@ -361,10 +443,7 @@ core.registerOperator("itemList", function (operator) {
         this._template.innerHTML = htmlstring;
         this._searchtemplate.innerHTML = htmlstring;
         //Recreate everything
-        this.taskList.innerHTML = "";
-        for (let i in core.items) {
-            this.updateItem(i);
-        }
+        this.reRenderEverything();
         //hide or show based on entry enabled
         if (this.settings.enableEntry == false) {
             this.template.style.display = "none";
@@ -429,12 +508,11 @@ core.registerOperator("itemList", function (operator) {
         //Highlight in purple
         let _target = me.taskList.querySelector("[data-id='" + id + "']");
         if (_target) {
-            for (let i = 0; i < me.taskList.children.length; i++) {
-                me.taskList.children[i].style.borderTop = "";
-                me.taskList.children[i].style.borderBottom = "";
+            let spans = me.taskList.querySelectorAll(`span[data-id]`);
+            for (let i = 0; i < spans.length; i++) {
+                spans[i].classList.remove("ffocus");
             }
-            _target.style.borderTop = "solid 3px purple";
-            _target.style.borderBottom = "solid 3px purple";
+            _target.classList.add("ffocus");
             let bcr = _target.parentElement.getBoundingClientRect();
             let tcr = _target.getBoundingClientRect();
             if (tcr.y < bcr.y || tcr.y + tcr.height > bcr.y + bcr.height) _target.scrollIntoView({

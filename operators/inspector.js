@@ -423,7 +423,6 @@ core.registerOperator("inspector", {
                     }
                 }
             }
-            core.fire("updateView");
         }
     });
     core.on("deleteItem", function (d) {

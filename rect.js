@@ -316,7 +316,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 core.dialog.prompt(this.settingsDiv, (d) => {
                     this.operators[this.selectedOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
                     this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].tabbarName;
-                    this.settingsOperator.dialogUpdateSettings();
+                   if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                     core.fire("updateView");
                 })
                 //set the calling items.
@@ -329,7 +329,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 }
             }
             //also render the datastreams if necessary.
-            this.renderDataStreams(this.operators[this.selectedOperator].baseOperator);
+            //this.renderDataStreams(this.operators[this.selectedOperator].baseOperator);
         }
     })
 

@@ -155,7 +155,7 @@ function solve(f, v, p, eps = 0.01, inc = 0.01, cmax = 1000) {
 function mf(obj, args) {
     let _obj = obj;
     try {
-        if (typeof obj == "string") obj = eval(obj); //danger zoonee
+        if (typeof obj == "string" && obj.includes("(")) obj = eval(obj); //danger zoonee
     } catch (e) {
         obj = _obj;
     }

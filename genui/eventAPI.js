@@ -1,6 +1,6 @@
-//v1.1
+//v1.2
 //eventapi.js: A quick event handler add-on for anything that requires an event system.
-
+//Now with optional error handling argument.
 /*
 cetch function: f(arg,status)
 called once at the start of event fire with arg=passed arguments,status=TRUE;
@@ -26,7 +26,7 @@ itm.on('event', ()=>{
 
 */
 
-function addEventAPI(itm) {
+function addEventAPI(itm,errf=console.log) {
     itm.events = {};
     itm.fire = function (e, args) {
         let _e = e.split(",");
@@ -48,7 +48,7 @@ function addEventAPI(itm) {
                             if (cnt != false) cnt = f(result)
                         });
                     } catch (er) {
-                        console.log(er);
+                        errf(er);
                     }
 
                 });
