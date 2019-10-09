@@ -53,8 +53,44 @@ core.registerOperator("itemList", function (operator) {
             border-top:solid 3px purple;
             border-bottom:solid 3px purple;
         }
+
+        .resizable-input {
+            /* make resizable */
+            overflow-x: hidden;
+            resize: horizontal;
+            display: inline-block;
+        
+            /* no extra spaces */
+            padding: 0;
+            margin: 0;
+            white-space: nowrap;
+          
+            /* default widths */
+            width: 10em;
+            min-width: 2em;
+            max-width: 30em;
+        }
+        
+        /* let <input> assume the size of the wrapper */
+        .resizable-input > input {
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+        }
+        
+        /* add a visible handle */
+        .resizable-input > span {
+            display: inline-block;
+            vertical-align: bottom;
+            margin-left: -16px;
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAJUlEQVR4AcXJRwEAIBAAIPuXxgiOW3xZYzi1Q3Nqh+bUDk1yD9sQaUG/4ehuEAAAAABJRU5ErkJggg==");
+            cursor: ew-resize;
+        }
         </style>`
     ));
+    //Resize credits to u/MoonLite on stackoverflow
 
     operator.div.appendChild(this.taskListBar);
 
@@ -112,7 +148,7 @@ core.registerOperator("itemList", function (operator) {
         if (!currentItemSpan.parentElement) {
             me.taskList.appendChild(currentItemSpan);
         }
-        this.renderedItemsCache=undefined;
+        this.renderedItemsCache = undefined;
         core.fire("updateItem", {
             id: id,
             sender: me
@@ -140,7 +176,7 @@ core.registerOperator("itemList", function (operator) {
 
 
     //Managing the search
-    let searchCapacitor = new capacitor(300, 100, () => {
+    let searchCapacitor = new capacitor(1000, 300, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
         let amSearching = false;
@@ -288,15 +324,15 @@ core.registerOperator("itemList", function (operator) {
         return me.updateItem(id);
     });
 
-    let getRenderedItems=()=>{//TODO: add caching to this in case it becomes a burden on processing
-        if (!this.renderedItemsCache){
+    let getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
+        if (!this.renderedItemsCache) {
             let items = Array.from(me.taskList.querySelectorAll("span[data-id]"));
-            this.renderedItemsCache=items.map((i) => i.dataset.id);
+            this.renderedItemsCache = items.map((i) => i.dataset.id);
         }
         return this.renderedItemsCache;
     }
 
-    this.updateItem = (id, unbuf = false)=>{//if unbuf then we dont want to fire getRenderedItems as it would force an update.
+    this.updateItem = (id, unbuf = false) => {//if unbuf then we dont want to fire getRenderedItems as it would force an update.
         let it = core.items[id];
         //First check if we should show the item
         if (!mf(me.settings.filterProp, it)) {
@@ -312,7 +348,8 @@ core.registerOperator("itemList", function (operator) {
             currentItemSpan.style.display = "block";
             currentItemSpan.dataset.id = id;
             currentItemSpan.children[1].innerText = "X";
-            this.renderedItemsCache=undefined;
+            me.taskList.appendChild(currentItemSpan);
+            this.renderedItemsCache = undefined;//this can be even further optimised by only adding / removing stuff.
         }
         for (i in me.settings.properties) {
             switch (me.settings.properties[i]) {
@@ -369,8 +406,6 @@ core.registerOperator("itemList", function (operator) {
         }
         if (uniqueParent != undefined) {
             me.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
-        } else {
-            me.taskList.appendChild(currentItemSpan);
         }
         return true;
     }
@@ -392,7 +427,7 @@ core.registerOperator("itemList", function (operator) {
                 }
             }
         }
-    }, 10000)
+    }, 10000);
 
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
@@ -425,6 +460,22 @@ core.registerOperator("itemList", function (operator) {
             this.updateItem(i);
         }
     }
+
+    //resizing
+    this.taskList.addEventListener("mousemove", (e) => {
+        if (e.buttons) {
+            for (let i=0;i<e.path.length;i++){
+                if (e.path[i].dataset.containsRole){
+                    let els=this.taskList.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
+                    for (let j=0;j<els.length;j++)els[j].style.width = e.path[i].clientWidth;
+                    break;
+                }else if (e.path[i]==this.taskList){
+                    break;
+                }
+            }
+        }
+    })
+
     this.updateSettings = function () {
         //Look at the settings and apply any relevant changes
         let htmlstring = ``
@@ -433,7 +484,7 @@ core.registerOperator("itemList", function (operator) {
                 case "text":
                 case "date":
                 case "object":
-                    htmlstring += "<input data-role='" + i + "' placeholder='" + i + "'>";
+                    htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'><span></span></span>`;
                     break;
                 case "number":
                     htmlstring += "<span>" + i + ":</span><input data-role='" + i + "' type='number'>";
@@ -465,7 +516,6 @@ core.registerOperator("itemList", function (operator) {
 
     this.taskList.addEventListener("input", (e) => {
         currentItem = core.items[e.target.parentElement.parentElement.dataset.id];
-
         switch (me.settings.properties[e.target.dataset.role]) {
             case "text":
             case "number":

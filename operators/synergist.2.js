@@ -1117,26 +1117,12 @@ core.registerOperator("itemcluster2", {
                 //style it so we can see it
                 itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
                 //adjust x indexes
-                let relements = Object.values(itemPointerCache);
-                let minzind = me.settings.maxZ;
-
-                for (let i = 0; i < relements.length; i++) {
-                    relements[i].style.border = "";
-                    let contest = Number(relements[i].style["z-index"]);
-                    if (minzind > contest) minzind = contest;
-                }
+                itemPointerCache[it.dataset.id].front();
                 core.fire("focus", {
                     id: it.dataset.id,
                     sender: me
                 });
                 //it.style.border = "3px solid #ffa2fc";
-                me.settings.maxZ -= minzind;
-                me.settings.maxZ += 1;
-                for (let i = 0; i < relements.length; i++) {
-                    let contest = Number(relements[i].style["z-index"]);
-                    relements[i].style["z-index"] = contest - minzind + 1;
-                }
-                it.style["z-index"] = ++me.settings.maxZ;
                 me.dragging = true;
                 //set relative drag coordinates
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -1148,7 +1134,7 @@ core.registerOperator("itemcluster2", {
                 if (me.prevFocusID) me.redrawLines(me.prevFocusID);
                 me.redrawLines(it.dataset.id, "red");
                 me.prevFocusID = it.dataset.id;
-                //return false;                
+                //return false;
             }
         } else if (e.target.matches(".tray textarea")) {
             me.fromTray = e.target.parentElement.dataset.id;

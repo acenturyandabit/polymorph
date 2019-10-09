@@ -30,7 +30,9 @@ core.registerOperator("scriptrunner", {
 
     //this is called when an item is updated (e.g. by another operator)
     core.on("updateItem", (d) => {
-        if (this.currentInstance)this.currentInstance.fire("updateItem", d);
+        if (d.sender!="GARBAGE_COLLECTOR"){
+            if (this.currentInstance)this.currentInstance.fire("updateItem", d);
+        }
         return false;
     });
     //Saving and loading
@@ -44,7 +46,10 @@ core.registerOperator("scriptrunner", {
             p.innerHTML = JSON.stringify(data);
             me.rootdiv.querySelector("#output").appendChild(p);
         }
-        addEventAPI(this,this.log);
+        this.logEx=(data)=>{
+            this.log(String(data))
+        }
+        addEventAPI(this,this.logEx);
     }
 
     this.execute = () => {
