@@ -1,29 +1,27 @@
 # Polymorph
-Extensible project management/idea organisation/scheduling/whatever you want really tool. Made specifically so you can extend it with your own extensions; and port others' extensions into your workflow as well!
+[acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/)
 
-Because the best things in life are shared.
+## Problem
+I like to rehash my task management tools as things come up - if I decide that there's a better way of managing my tasks that works for ME, then I want to be able to rebuild it. Sound familiar? I bet every developer or aspiring developer has a task management system that they've built or contributed to before because it just 'isn't quite right for them'.
 
-## Usage
-### For end users
-Just wanna use it because you've heard it's useful? Go to [acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/) and get started!
+## Solution
+This project's for you then. Polymorph leverages the power of javascript to enable a modular and ridiculously customisable base for making the management tool that works for you.
 
-### For webmasters
-Want to host this at your organization? Here's what you need to do.
+## The ask
 
-1. Download these files.
-2. Add or remove the operators you want, in index.html
-3. Host index.html somewhere.
-4. Enjoy!
+### I love the task management app I'm using now, but there's just a little thing on my mind...
+Let me know what you use and I'll emulate it, and put in that thing that you've always wanted! Email me at steeven.liu2@gmail.com.
 
-### For developers
-Want to extend Polymorph?
-1. Clone template.js.
-   1. Refer to reference.js and all the other operators for examples and documentation.
-2. Make your extension.
-3. Use the fantastic js.sh provided by @benjaminwy to compress your files into one single file.
-4. To use it immediately for yourself, change the index.html.
-6. To share it with us all, submit a pull request with all your source code in the extensions/ directory...
-7. ...or drop us a link where we can find your extension's minified .js file!
+### I want to get started building an organisation app and google led me here.
+I'd love for you to join the project! I know coding your own from scratch is fun but if nothing else, give Polymorph a run for its money. You can access it here, on github: [acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/)
 
-For instructions on how to make an extension, check out the template. For a full list of what you can do, check out `reference.js`. and you can use any of the existing extensions as a guide.
+### I want to help on a new project to get my foot in the door to the software industry.
+The issues page is waiting for you! Most of the tasks are optimisation tasks - trails from features i've implemented but haven't quite cleaned up yet. If you want to make a new feature or anything else, you can get in touch via email or just go for it! It's open source, it's your project now :)
+
+### Wow, I think an interface designed on the basis that you should fill your screen with functional components is great!
+I know right? How come noone else has thought of this yet?
+
+## Documentation
+I uh, should get to that. There are a trove of examples in /operators/, including `template.js` and `referenc.js`, but they may not be up to date. To really see how I get around polymorph as a developer, check out itemlist.js. If you have any recommendations, send me an email :3
+
 Happy creating!
