@@ -59,6 +59,9 @@ core.on("UIstart", () => {
             core.userSave();
             core.unsaved = false;
             //also do the server save
+            
+            // success for green notification box, alert for red box. If second parameter is left out, the box is black
+            core.showNotification('Saved', 'success');
         }
     });
 

@@ -5,3 +5,34 @@ body{
 input, button{
     border-radius: 5px;
 }
+
+#popup-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    line-height: 1;
+    background: #000;
+    color: white;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+#popup-notification.success {
+    background: green;
+}
+#popup-notification.alert {
+    background: red;
+}
+
+.showAndFadeOut {
+    transition: opacity visibility 3s;
+    animation: showAndFadeOut 3s;
+}
+
+@keyframes showAndFadeOut {
+    0% {opacity: 1; visibility: visible;}
+    80% {opacity: 1; visibility: visible;}
+    100% {opacity: 0; visibility: hidden;}
+}

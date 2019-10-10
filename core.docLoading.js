@@ -258,6 +258,23 @@ core.cetch('userSave', (data, state) => {
     }
 })
 
+core.showNotification = function (notificationMessage, notificationType = 'default') {
+    
+    if(!document.getElementById("popup-notification")) {
+        const popupNotification = document.createElement("div");
+        popupNotification.setAttribute("id", "popup-notification");
+        document.body.appendChild(popupNotification);        
+    }
+
+    const popupNotificationBox = document.getElementById("popup-notification"); 
+    popupNotificationBox.innerHTML = notificationMessage;
+    popupNotificationBox.classList.add(notificationType);
+    popupNotificationBox.classList.add('showAndFadeOut');
+    const hideNotificationBox = setTimeout(()=>{
+        popupNotificationBox.classList = '';
+    },2800)
+}
+
 core.userSave = function () {
     //save to all sources
     //upgrade older save systems
