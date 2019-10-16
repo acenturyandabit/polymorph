@@ -61,12 +61,23 @@ function _core() {
             }
         }
     }
+    if (me.userData.version == "0.2") {
+        me.userData.version = "0.3";
+        for (i in me.userData.documents) {
+            if (me.userData.documents[i].saveHooks) {
+                me.userData.documents[i].saveSources = Object.keys(me.userData.documents[i].saveHooks);
+                delete me.userData.documents[i].saveHooks;
+            }
+            me.userData.documents[i].v = 2;
+
+        }
+    }
     me.saveUserData();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Starting function: this is only called once
     me.start = function () {
-        me.isNewDoc=true;
+        me.isNewDoc = true;
         me.fire("UIstart");
         me.resetDocument();
         me.loadDocument();
@@ -92,7 +103,7 @@ function _core() {
         ).innerText = this.currentDoc.displayName;
         document.querySelector("title").innerHTML =
             this.currentDoc.displayName + " - Polymorph";
-        if (!core.isNewDoc)me.filescreen.saveRecentDocument(me.currentDocID, undefined, me.currentDoc.displayName);
+        if (!core.isNewDoc) me.filescreen.saveRecentDocument(me.currentDocID, undefined, me.currentDoc.displayName);
         me.fire("updateSettings");
     };
 

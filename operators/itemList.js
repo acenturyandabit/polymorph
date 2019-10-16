@@ -6,6 +6,7 @@ core.registerOperator("itemList", function (operator) {
         properties: {
             title: "text"
         },
+        propertyWidths:{},
         filterProp: guid(),
         enableEntry: true,
         implicitOrder: true
@@ -423,7 +424,7 @@ core.registerOperator("itemList", function (operator) {
             let listofitems = me.taskList.querySelectorAll("[data-role='" + worried + "']");
             for (let i = 0; i < listofitems.length; i++) {
                 if (listofitems[i].value.indexOf("auto") != -1) {
-                    if (me.datereparse) me.datereparse(listofitems[i].parentElement.parentElement.dataset.id);
+                    if (me.datereparse) me.datereparse(listofitems[i].parentElement.parentElement.parentElement.dataset.id);
                 }
             }
         }
@@ -468,6 +469,7 @@ core.registerOperator("itemList", function (operator) {
                 if (e.path[i].dataset.containsRole){
                     let els=this.taskList.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
                     for (let j=0;j<els.length;j++)els[j].style.width = e.path[i].clientWidth;
+                    this.settings.propertyWidths[e.path[i].dataset.containsRole]=e.path[i].clientWidth;
                     break;
                 }else if (e.path[i]==this.taskList){
                     break;
@@ -476,7 +478,7 @@ core.registerOperator("itemList", function (operator) {
         }
     })
 
-    this.updateSettings = function () {
+    this.updateSettings = ()=>{
         //Look at the settings and apply any relevant changes
         let htmlstring = ``
         for (i in this.settings.properties) {
@@ -493,6 +495,10 @@ core.registerOperator("itemList", function (operator) {
         }
         this._template.innerHTML = htmlstring;
         this._searchtemplate.innerHTML = htmlstring;
+        //resize stuff
+        for (let i in this.settings.propertyWidths){
+            this._template.querySelector(`[data-contains-role=${i}]`).style.width=this.settings.propertyWidths[i];
+        }
         //Recreate everything
         this.reRenderEverything();
         //hide or show based on entry enabled
@@ -515,7 +521,7 @@ core.registerOperator("itemList", function (operator) {
     }
 
     this.taskList.addEventListener("input", (e) => {
-        currentItem = core.items[e.target.parentElement.parentElement.dataset.id];
+        currentItem = core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
         switch (me.settings.properties[e.target.dataset.role]) {
             case "text":
             case "number":
@@ -543,14 +549,14 @@ core.registerOperator("itemList", function (operator) {
 
         //match all the item data and currentITem data
         core.fire("updateItem", {
-            id: e.target.parentElement.parentElement.dataset.id,
+            id: e.target.parentElement.parentElement.parentElement.dataset.id,
             sender: me
         });
     })
 
     this.taskList.addEventListener("keyup", (e) => {
         if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
-            me.datereparse(e.target.parentElement.parentElement.dataset.id);
+            me.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
         }
     })
 
@@ -574,10 +580,10 @@ core.registerOperator("itemList", function (operator) {
     this.taskList.addEventListener("focusin", (e) => {
         if (e.target.matches("input")) {
             core.fire("focus", {
-                id: e.target.parentElement.parentElement.dataset.id,
+                id: e.target.parentElement.parentElement.parentElement.dataset.id,
                 sender: this
             });
-            this.focusItem(e.target.parentElement.parentElement.dataset.id);
+            this.focusItem(e.target.parentElement.parentElement.parentElement.dataset.id);
         }
     })
     scriptassert([

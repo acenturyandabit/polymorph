@@ -2,7 +2,9 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
     this.createable=true;
     this.prettyName="Localforage (offline storage)";
     this.pushAll=async function(id,data){
-        localforage.setItem("__polymorph_" + id,data);
+        localforage.setItem("__polymorph_" + id,data).then(()=>{
+            core.savedOK=true; /// SUPER HACKY PLS FORMALISE
+        });
     }
     this.pullAll=async function(data){
         let d = await localforage.getItem("__polymorph_" + data);
@@ -27,7 +29,8 @@ core.registerSaveSource("lf",function(core){ // a sample save source, implementi
 
     core.on("userSave",(d)=>{
         if (this.toSave){
-            this.pushAll(core.userData.documents[core.currentDocID].saveSources['lf'],d);
+            core.savedOK=false;
+            this.pushAll(core.currentDocID,d);
             return true; //return true if we save
         }else{
             return false;

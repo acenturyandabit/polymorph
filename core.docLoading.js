@@ -34,28 +34,25 @@ core.loadDocument = async function () {
         //if the current document doesnt exist, then create it.
         if (!core.userData.documents[core.currentDocID]) {
             core.userData.documents[core.currentDocID] = {
-                v: 1,
-                saveSources: {},
-                saveHooks: {}
+                v: 2,
+                saveSources: []
             };
         }
-        if (!core.userData.documents[core.currentDocID].v) {
+        if (!core.userData.documents[core.currentDocID].v || (core.userData.documents[core.currentDocID].v < 2)&&core.userData.saveHooks) {
             let newdoc = {
-                v: 1,
-                saveSources: {},
-                saveHooks: {}
+                v: 2,
+                saveSources: [],
             };
             Object.assign(newdoc, core.userData.documents[core.currentDocID]);
+            newdoc.saveSources = Object.keys(core.userData.documents[core.currentDocID].saveHooks);
+            delete newdoc.saveHooks;
             core.userData.documents[core.currentDocID] = newdoc;
         }
-        if (!core.userData.documents[core.currentDocID].saveSources[source]) {
+        if (!(core.userData.documents[core.currentDocID].saveSources.includes(source))) {
             //this is a new document.... do stuff
             //Create a new profile for this save source and document
-            core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
-            //also hook it
-            core.userData.documents[core.currentDocID].saveHooks[source] = true;
+            core.userData.documents[core.currentDocID].saveSources.push(source);
         }
-
         //if there is a template, knock off the template from the url and remember it (discreetly)
         let template;
         if (params.has("tmp")) {
@@ -63,10 +60,9 @@ core.loadDocument = async function () {
             let loc = window.location.href
             loc = loc.replace(/&tmp=[^&]+/, "");
             history.pushState({}, "", loc);
-            console.log(window.location.href);
         }
         //Load it
-        if (!core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source], { initial: true, template: template })) {
+        if (!core.userLoad(source, core.currentDocID, { initial: true, template: template })) {
             core.instantNewDoc();
         };
     } else {
@@ -98,17 +94,12 @@ core.instantNewDoc = function () {
         core.userData.documents[core.currentDocID] = {};
     }
     if (!core.userData.documents[core.currentDocID].saveSources) {
-        core.userData.documents[core.currentDocID].saveSources = {};
+        core.userData.documents[core.currentDocID].saveSources = [];
     }
-    if (!core.userData.documents[core.currentDocID].saveHooks) {
-        core.userData.documents[core.currentDocID].saveHooks = {};
-    }
-    if (!core.userData.documents[core.currentDocID].saveSources[source]) {
+    if (!core.userData.documents[core.currentDocID].saveSources.includes(source)) {
         //this is a new document.... do stuff
         //Create a new profile for this save source and document
-        core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID;
-        //also hook it
-        core.userData.documents[core.currentDocID].saveHooks[source] = true;
+        core.userData.documents[core.currentDocID].saveSources.push(source);
     }
     core.isNewDoc = true;
     core.fire("documentCreated", id);
@@ -120,12 +111,11 @@ core.instantNewDoc = function () {
 
 core.on("updateItem,updateView", () => { core.isNewDoc = false });
 
-core.rehookAll = function (id) {
-    for (let i in core.saveSources) {
-        if (core.saveSources[i].unhook) core.saveSources[i].unhook();
-    }
-    for (let i in core.userData.documents[id].saveHooks) {
-        if (core.saveSources[i] && core.saveSources[i].hook) core.saveSources[i].hook(core.userData.documents[core.currentDocID].saveSources[i]);
+core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
+    for (let i = 0; i < core.userData.documents[id].saveSources.length; i++) {
+        let source = core.userData.documents[id].saveSources[i];
+        if (core.saveSources[source].unhook) core.saveSources[source].unhook();
+        if (core.saveSources[source].hook) core.saveSources[source].hook(core.currentDocID);
     }
 }
 
@@ -180,6 +170,30 @@ core.userLoad = async function (source, data, state) { // direct from URL
         if (!confirm("Hmm... this source seems to be storing a different document to the one you requested. Continue loading?")) {
             document.querySelector(".wall").style.display = "none";
             return false;
+        } else {
+            if (confirm("Create a new document that matches this datasource? (OK), or change the loaded data to this document name (CANCEL)?")) {
+                core.currentDocID = d.id;
+                if (!core.userData.documents[core.currentDocID] || !core.userData.documents[core.currentDocID].v || core.userData.documents[core.currentDocID].v < 2) {
+                    core.userData.documents[core.currentDocID] = {
+                        v: 2,
+                        saveSources: ['lf']
+                    };
+                }
+                //reload the page
+                core.rehookAll(core.currentDocID);
+                core.fire("userSave", d);
+                core.saveUserData();
+                function f() {
+                    if (core.savedOK) {
+                        window.location.href = `?doc=${core.currentDocID}&source=lf`;
+                    } else {
+                        setTimeout(f, 1);
+                    }
+                }
+                setTimeout(f, 1);
+            } else {
+                d.id = core.currentDocID;
+            }
         }
     }
     //Are we loading from scratch?
