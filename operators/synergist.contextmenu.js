@@ -220,16 +220,23 @@ function _synergist_extend_contextmenu  (me) {
                 radii[-1]=-300; // to make the algorithm work. yay js hacks
                 let lastLevel=0;
                 let minTheta=visibleItems[0].angle;
+                let lastLevelZero=0;
                 for (let i = 0; i < visibleItems.length; i++) {
                     if (lastLevel!=visibleItems[i].level){
+                        let tdeviation=(visibleItems[i-1]+visibleItems[lastLevelZero])/2;
+                        if (tdeviation<minTheta)minTheta=tdeviation;
                         radii[lastLevel]=Math.max(radii[lastLevel-1]+300,200/minTheta);
                         lastLevel=visibleItems[i].level;
                         minTheta=visibleItems[i].angle;
+                        adjpart=visibleItems[i].angle
                     }else{
-                        if (visibleItems[i].angle<minTheta)minTheta=visibleItems[i].angle;
+                        let tdeviation=(visibleItems[i-1]+visibleItems[i])/2;
+                        if (tdeviation<minTheta)minTheta=tdeviation;
                     }
                 }
                 //final one
+                let tdeviation=(visibleItems[visibleItems.length-1]+visibleItems[lastLevelZero])/2;
+                if (tdeviation<minTheta)minTheta=tdeviation;
                 radii[lastLevel]=Math.max(radii[lastLevel-1]+300,200/minTheta);
                 //first one
                 radii[0]=0;
