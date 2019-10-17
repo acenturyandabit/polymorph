@@ -608,6 +608,12 @@ core.registerOperator("itemList", function (operator) {
                         let itm = {
                             id: e.dataset.id
                         };
+                        if (!core.items[itm.id]){
+                            //nerf the e that spawned me, then break
+                            //idek how this happens :(
+                            e.remove();
+                            return;
+                        }
                         //we are going to upgrade all dates that don't match protocol)
                         if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
                             if (typeof core.items[itm.id][dateprop].date == "number") {

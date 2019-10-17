@@ -78,6 +78,7 @@ function _core() {
     // Starting function: this is only called once
     me.start = function () {
         me.isNewDoc = true;
+        me.fire("UIsetup");
         me.fire("UIstart");
         me.resetDocument();
         me.loadDocument();
@@ -277,7 +278,7 @@ function _core() {
     //a little nicety to warn user of unsaved items.
     this.unsaved = false;
     me.on("updateView,updateItem", (e) => {
-        if (!e.load) {//if event was not triggered by a loading action
+        if (!e || !e.load) {//if event was not triggered by a loading action
             me.unsaved = true;
         }
     })

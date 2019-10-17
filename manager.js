@@ -91,19 +91,28 @@ var __manager_profiles = {
     let mscpt = document.querySelector("script[src*='manager.js']");
     if (mscpt && mscpt.dataset.version) {
         if (__manager_profiles[mscpt.dataset.version])
-            scriptassert(expand(__manager_profiles[mscpt.dataset.version].files), () => { core.start(); });
+            scriptassert(expand(__manager_profiles[mscpt.dataset.version].files), () => {
+                document.getElementById("preloadRemove").remove();
+                core.start();
+            });
         loaded = true;
     } else {
         for (i in __manager_profiles) {
             if (__manager_profiles[i].condition && __manager_profiles[i].condition()) {
                 //load all files from phone
-                scriptassert(expand(__manager_profiles[i].files), () => { core.start(); });
+                scriptassert(expand(__manager_profiles[i].files), () => {
+                    document.getElementById("preloadRemove").remove();
+                    core.start();
+                });
                 loaded = true;
             }
         }
     }
 
     if (!loaded) {
-        scriptassert(expand(__manager_profiles['default'].files), () => { core.start(); });
+        scriptassert(expand(__manager_profiles['default'].files), () => {
+            document.getElementById("preloadRemove").remove();
+            core.start();
+        });
     }
 })()

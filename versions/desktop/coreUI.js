@@ -1,4 +1,4 @@
-documentReady(() => {
+core.on("UIsetup",() => {
     document.body.appendChild(htmlwrap(`
     <div class="banner">
         <h1 class="docName" contentEditable>Pad name</h1>
