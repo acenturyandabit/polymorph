@@ -235,16 +235,16 @@ function _synergist_extend_contextmenu(me) {
                 let lastLevel = 0;
                 let minTheta = visibleItems[0].angle;
                 let lastLevelZero = 0;
-                for (let i = 0; i < visibleItems.length; i++) {
+                for (let i = 1; i < visibleItems.length; i++) {
                     if (lastLevel != visibleItems[i].level) {
-                        let tdeviation = (visibleItems[i - 1] + visibleItems[lastLevelZero]) / 2;
+                        let tdeviation = (visibleItems[i - 1].angle + visibleItems[lastLevelZero].angle) / 2;
                         if (tdeviation < minTheta) minTheta = tdeviation;
                         radii[lastLevel] = Math.max(radii[lastLevel - 1] + 300, 200 / minTheta);
                         lastLevel = visibleItems[i].level;
                         minTheta = visibleItems[i].angle;
                         adjpart = visibleItems[i].angle
                     } else {
-                        let tdeviation = (visibleItems[i - 1] + visibleItems[i]) / 2;
+                        let tdeviation = (visibleItems[i - 1].angle + visibleItems[i].angle) / 2;
                         if (tdeviation < minTheta) minTheta = tdeviation;
                     }
                 }
@@ -350,6 +350,7 @@ function _synergist_extend_contextmenu(me) {
                     sender: me,
                     id: cid
                 });
+                me.arrangeItem(cid);
             })
         }
         me.itemContextMenu
@@ -461,7 +462,7 @@ function _synergist_extend_contextmenu(me) {
             });
         me.trayContextMenu = contextMenuManager.registerContextMenu(`
         <li class="delete">Delete</li>
-        `, me.rootdiv, "textarea", (e) => {
+        `, me.tray, "textarea", (e) => {
             me.trayContextedElement = e.target.parentElement.dataset.id;
             return true;
         });

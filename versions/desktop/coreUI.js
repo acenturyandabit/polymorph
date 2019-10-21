@@ -1,31 +1,30 @@
 core.on("UIsetup",() => {
     document.body.appendChild(htmlwrap(`
     <div class="banner">
-        <h1 class="docName" contentEditable>Pad name</h1>
         <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
         <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
         <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
         <ul class="topbar">
-            <li>File
+            <li><a class="docName" contentEditable>New Workspace</a></li>
+            <li>&#128190;
                 <ul>
                     <li class="open">Open</li>
                     <li class="saveSources">Preferences</li> <!-- default is always localforage for now -->
                 </ul>
             </li>
-            <li class="viewdialog">Views</li>
-            <li>Help
+            <li class="viewdialog">🖥️</li>
+            <li>ℹ️
                 <ul>
                     <li class="hleptute">Operator help</li>
                     <li class="hlepdocs">Help topics</li>
                     <li class="hlepreport">Report an issue...</li>
+                    <li class="tutorial">Run the tutorial again</li>
                 </ul>
             </li>
-
-            <li class="tutorial">Run the tutorial again</li>
         </ul>
     </div>`));
     document.body.appendChild(htmlwrap(`
-    <div class="rectspace" style="width:100%; flex:1 0 auto;position:relative">
+    <div class="rectspace" style="width:100%; background: url('assets/nightsky.jpg'); background-size: cover; flex:1 0 auto;position:relative">
 
     </div>`));
     document.body.appendChild(htmlwrap(`

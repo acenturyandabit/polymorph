@@ -89,7 +89,7 @@ core.registerOperator("itemcluster2", {
                 </span>
             </span>
         </div>
-        <div class="itemcluster"  style="flex: 1 1 100%;position: relative; background:grey;">
+        <div class="itemcluster"  style="flex: 1 1 100%;position: relative; background:transparent;">
         <div class="tray">
         </div>
         </div>

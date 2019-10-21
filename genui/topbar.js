@@ -38,7 +38,7 @@ function _topbarManager(userSettings) {
             list-style-type: none;
             margin: 0;
             padding: 0;
-            background-color: black;
+            background: url('assets/nightsky.jpg');
             overflow: auto;
             font-size: 1em;
             z-index: 1000;
@@ -94,6 +94,7 @@ function _topbarManager(userSettings) {
 
         ul.topbar ul>li>a{
             display:block;
+            color:white;
             padding: 0.5em;
             z-index: 1000;
         }

@@ -11,7 +11,7 @@ core.operator = function operator(_type, _rect) {
     //this.topdiv.style.overflowY = "auto";
     this.topdiv.overflow = "hidden";
     this.topdiv.position = "relative";
-    this.topdiv.style.background = "lightgrey";
+    this.topdiv.style.background = "rgba(230, 204, 255,0.1)";
 
     //inner div. for non shadow divs. has a uuid for an id.
     this.innerdiv = document.createElement("div");

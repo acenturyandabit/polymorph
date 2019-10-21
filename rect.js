@@ -8,7 +8,7 @@ const RECT_ORIENTATION_X = 0;
 const RECT_ORIENTATION_Y = 1;
 const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
-const RECT_BORDER_WIDTH = 10;
+const RECT_BORDER_WIDTH = 5;
 
 //parent is either undefined or another rect-like object
 //pseudo parents should implement following methods:
@@ -30,6 +30,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
     let me = this;
 
+    let outerdivColor="rgba(230, 204, 255,0.1)";
+    let globalBorderColor="#9A97B8";
+
     // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
     this.outerDiv.style.position = "absolute ";
@@ -38,8 +41,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.outerDiv.style.width = "100%";
     this.outerDiv.style.overflow = "hidden";
     this.outerDiv.style.display = "flex";
+    this.outerDiv.style.borderRadius="5px";
     this.outerDiv.style['flex-direction'] = "column";
-    this.outerDiv.style.background = "lightgrey";
+    this.outerDiv.style.background = outerdivColor;
 
     // For handling operators. Each operator has its own innerDiv, and a typespan (with the name, and a cross) in the tabspan bar.
     // Create the innerDivs and generator for innerDivs..
@@ -50,7 +54,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         indiv.style.height = "100%";
         indiv.style.width = "100%";
         indiv.style.overflow = "hidden";
-        indiv.style.background = "lightgrey";
+        indiv.style.background = outerdivColor;
         indiv.style.display = "none";
         return indiv;
     }
@@ -76,7 +80,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         tygear.style.display = "none";
 
         tyspan.style.cssText = `border: 1px solid black;
-        background: purple;
+        background: #8093FF;
         color: white;
         align-items: center;
         display: inline-flex;`;
@@ -135,17 +139,17 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         for (let i = 0; i < this.tabspans.length; i++) {
             this.tabspans[i].children[1].style.display = "none";
             this.tabspans[i].children[2].style.display = "none";
-            this.tabspans[i].style.background = "mediumpurple";
+            this.tabspans[i].style.background = "#C074E8";
         }
         //show buttons on this operator
         this.tabspans[index].children[1].style.display = "inline";
         this.tabspans[index].children[2].style.display = "inline";
-        this.tabspans[index].style.background = "purple";
+        this.tabspans[index].style.background = "#8093FF";
     }
 
     // The actual tabbar.
     this.tabbar = document.createElement("p");
-    this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:white`
+    this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:${outerdivColor}`
     this.plus = document.createElement("button");
     this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
     this.plus.innerText = "+";
@@ -379,7 +383,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 }
             }
             me.tabbar.style.display = "block";
-            me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
+            me.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${globalBorderColor} solid`;
         }
         core.fire('resize', {
             sender: this
@@ -387,7 +391,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
     let rectChanged = false;
     //Make draggable borders.
-    this.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
+    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${globalBorderColor} solid`;
     // If parent is body, ensure loaded, so we can create a new rect whenever.
     //hmm what if we break this
     if (this.parent) {
@@ -401,7 +405,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         //this probably doesnt need to exist?
         if (me.borderInvalidated) {
             if (!me.children.length) {
-                me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
+                me.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${globalBorderColor} solid`;
             } else {
                 me.outerDiv.style.border = "";
             }
@@ -522,7 +526,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     this.outerDiv.addEventListener("mouseleave", () => {
         if (!me.children.length) {
-            me.outerDiv.style.border = RECT_BORDER_WIDTH + "px white solid";
+            me.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${globalBorderColor} solid`;
         } else {
             me.outerDiv.style.border = "";
         }
