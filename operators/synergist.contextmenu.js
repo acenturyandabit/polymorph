@@ -1,4 +1,4 @@
-function _synergist_extend_contextmenu  (me) {
+function _synergist_extend_contextmenu(me) {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
     scriptassert([
@@ -17,16 +17,22 @@ function _synergist_extend_contextmenu  (me) {
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
             if (core.shared.synergistCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.items[core.shared.synergistCopyElement].itemcluster.viewData[me.settings.currentViewName] = {
-                    x: coords.x,
-                    y: coords.y,
+                core.shared.synergistCopyElement.forEach((v) => {
+                    core.items[v.id].itemcluster.viewData[me.settings.currentViewName] = {
+                        x: coords.x + v.x,
+                        y: coords.y + v.y,
+                    }
+                    me.arrangeItem(v.id);
+                    core.fire("updateItem", {
+                        id: v.id,
+                        sender: me
+                    });
+                });
+                //arrange everything again for new links to show up
+                for (let i in core.items) {
+                    me.arrangeItem(i);
                 }
                 me.rootcontextMenu.style.display = "none";
-                me.arrangeItem(core.shared.synergistCopyElement);
-                core.fire("updateItem", {
-                    id: core.shared.synergistCopyElement,
-                    sender: me
-                });
             }
         })
         me.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
@@ -112,12 +118,20 @@ function _synergist_extend_contextmenu  (me) {
                     }
                 }
             }
-
-            //sort by level, then x.
-            visibleItems.sort((a, b) => {
-                return (a.level - b.level) + !(a.level - b.level) * (a.x - b.x);
-            })
-
+            if (!e.target.classList.contains('radial')) {
+                //sort by level, then x.
+                visibleItems.sort((a, b) => {
+                    return (a.level - b.level) + !(a.level - b.level) * (a.x - b.x);
+                });
+            }else{
+                visibleItems.sort((a, b) => {
+                    let aa=Math.atan2(a.y,a.x);
+                    if (aa<0)aa+=Math.PI*2;
+                    let bb=Math.atan2(b.y,b.x);
+                    if (bb<0)bb+=Math.PI*2;
+                    return (a.level - b.level) + !(a.level - b.level) * (aa - bb);
+                });
+            }
             //for each item's children, sort it by x position.
             let indexedOrder = visibleItems.map((v) => v.id);
             visibleItems.forEach((v) => {
@@ -216,30 +230,30 @@ function _synergist_extend_contextmenu  (me) {
                     visibleItems[i].angle *= Math.PI * 2 / totalAngle;
                 }
                 //calculate the minimum angle deviation per level and adjust radius accordingly
-                let radii=[];
-                radii[-1]=-300; // to make the algorithm work. yay js hacks
-                let lastLevel=0;
-                let minTheta=visibleItems[0].angle;
-                let lastLevelZero=0;
+                let radii = [];
+                radii[-1] = -300; // to make the algorithm work. yay js hacks
+                let lastLevel = 0;
+                let minTheta = visibleItems[0].angle;
+                let lastLevelZero = 0;
                 for (let i = 0; i < visibleItems.length; i++) {
-                    if (lastLevel!=visibleItems[i].level){
-                        let tdeviation=(visibleItems[i-1]+visibleItems[lastLevelZero])/2;
-                        if (tdeviation<minTheta)minTheta=tdeviation;
-                        radii[lastLevel]=Math.max(radii[lastLevel-1]+300,200/minTheta);
-                        lastLevel=visibleItems[i].level;
-                        minTheta=visibleItems[i].angle;
-                        adjpart=visibleItems[i].angle
-                    }else{
-                        let tdeviation=(visibleItems[i-1]+visibleItems[i])/2;
-                        if (tdeviation<minTheta)minTheta=tdeviation;
+                    if (lastLevel != visibleItems[i].level) {
+                        let tdeviation = (visibleItems[i - 1] + visibleItems[lastLevelZero]) / 2;
+                        if (tdeviation < minTheta) minTheta = tdeviation;
+                        radii[lastLevel] = Math.max(radii[lastLevel - 1] + 300, 200 / minTheta);
+                        lastLevel = visibleItems[i].level;
+                        minTheta = visibleItems[i].angle;
+                        adjpart = visibleItems[i].angle
+                    } else {
+                        let tdeviation = (visibleItems[i - 1] + visibleItems[i]) / 2;
+                        if (tdeviation < minTheta) minTheta = tdeviation;
                     }
                 }
                 //final one
-                let tdeviation=(visibleItems[visibleItems.length-1]+visibleItems[lastLevelZero])/2;
-                if (tdeviation<minTheta)minTheta=tdeviation;
-                radii[lastLevel]=Math.max(radii[lastLevel-1]+300,200/minTheta);
+                let tdeviation = (visibleItems[visibleItems.length - 1] + visibleItems[lastLevelZero]) / 2;
+                if (tdeviation < minTheta) minTheta = tdeviation;
+                radii[lastLevel] = Math.max(radii[lastLevel - 1] + 300, 200 / minTheta);
                 //first one
-                radii[0]=0;
+                radii[0] = 0;
                 //Start rendering!
                 let currentT = 0;
                 function render(itm, tT, dp) { // itm is a visibleItem
@@ -400,7 +414,28 @@ function _synergist_extend_contextmenu  (me) {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                core.shared.synergistCopyElement = me.contextedElement.dataset.id;
+                //may be multiple
+                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+                let cids = [me.contextedElement.dataset.id];
+                let applyToAll = false;
+                me.movingDivs.forEach((v) => {
+                    if (v.el.node.dataset.id == cids[0]) {
+                        //apply to all moving divs.
+                        applyToAll = true;
+                    }
+                });
+                if (applyToAll) {
+                    cids = me.movingDivs.map((v) => v.el.node.dataset.id);
+                    me.clearOutMovingDivs();
+                }
+                let els = cids.map((v) => {
+                    return {
+                        id: v,
+                        x: core.items[v].itemcluster.viewData[me.settings.currentViewName].x - coords.x,
+                        y: core.items[v].itemcluster.viewData[me.settings.currentViewName].y - coords.y
+                    };
+                })
+                core.shared.synergistCopyElement = els;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -424,5 +459,14 @@ function _synergist_extend_contextmenu  (me) {
                 me.switchView(me.contextedElement.dataset.id, true, true);
                 me.itemContextMenu.style.display = "none";
             });
+        me.trayContextMenu = contextMenuManager.registerContextMenu(`
+        <li class="delete">Delete</li>
+        `, me.rootdiv, "textarea", (e) => {
+            me.trayContextedElement = e.target.parentElement.dataset.id;
+            return true;
+        });
+        me.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
+
+        })
     });
 }

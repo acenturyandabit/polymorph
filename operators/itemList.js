@@ -340,6 +340,7 @@ core.registerOperator("itemList", function (operator) {
             //if existent, remove
             let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
             if (currentItemSpan) currentItemSpan.remove();
+            this.renderedItemsCache=undefined;//ask to repopulate next time
             return false;
         }
         //Then check if the item already exists; if so then update it
@@ -440,6 +441,8 @@ core.registerOperator("itemList", function (operator) {
             });
         }
     })
+    /*
+    //probably wont need this anymore as updateItem handles deletion
     this.deleteItem = function (id) {
         try {
             this.taskList.querySelector("span[data-id='" + id + "']").remove();
@@ -450,7 +453,7 @@ core.registerOperator("itemList", function (operator) {
 
     core.on("deletedItem", (d) => {
         me.deleteItem(d.id);
-    });
+    });*/
     this.reRenderEverything = () => {
         this.taskList.innerHTML = "";
         for (let i in core.items) {
@@ -463,11 +466,11 @@ core.registerOperator("itemList", function (operator) {
     }
 
     //resizing
-    this.taskList.addEventListener("mousemove", (e) => {
+    operator.div.addEventListener("mousemove", (e) => {
         if (e.buttons) {
             for (let i=0;i<e.path.length;i++){
-                if (e.path[i].dataset.containsRole){
-                    let els=this.taskList.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
+                if (e.path[i].dataset && e.path[i].dataset.containsRole){
+                    let els=operator.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
                     for (let j=0;j<els.length;j++)els[j].style.width = e.path[i].clientWidth;
                     this.settings.propertyWidths[e.path[i].dataset.containsRole]=e.path[i].clientWidth;
                     break;
@@ -498,6 +501,7 @@ core.registerOperator("itemList", function (operator) {
         //resize stuff
         for (let i in this.settings.propertyWidths){
             this._template.querySelector(`[data-contains-role=${i}]`).style.width=this.settings.propertyWidths[i];
+            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width=this.settings.propertyWidths[i];
         }
         //Recreate everything
         this.reRenderEverything();
@@ -612,6 +616,7 @@ core.registerOperator("itemList", function (operator) {
                             //nerf the e that spawned me, then break
                             //idek how this happens :(
                             e.remove();
+                            me.renderedItemsCache=undefined;
                             return;
                         }
                         //we are going to upgrade all dates that don't match protocol)

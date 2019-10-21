@@ -33,7 +33,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
 
 
     //prompt
-    documentReady(() => {
+    core.on("UIstart",() => {
       try {
         document.querySelector(".gdrivePrompt").style.display = "block";
         document.querySelector(".gdrivePrompt").addEventListener("click", () => {

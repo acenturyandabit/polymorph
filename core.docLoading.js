@@ -2,34 +2,31 @@
     function upgradeSaveData(id, source) { // also handles creation of new savedatas. Just hand it an empty object or undefined .
         if (core.userData.documents[id] == undefined || Object.keys(core.userData.documents[id]).length == 0) {
             core.userData.documents[id] = {
-                v: 2,
-                saveSources: []
+                saveSources: {}
             };
         }
         if (!core.userData.documents[core.currentDocID].saveSources) {
-            core.userData.documents[core.currentDocID].saveSources = [];
+            core.userData.documents[core.currentDocID].saveSources = {};
         }
-        if (!core.userData.documents[id].v || core.userData.documents[id].v < 2) {
-            let newdoc = {
-                v: 2,
-                saveSources: [],
-            };
-            Object.assign(newdoc, core.userData.documents[id]);
-            if (core.userData.documents[id].saveHooks){
-                newdoc.saveSources = Object.keys(core.userData.documents[id].saveHooks);
-                delete newdoc.saveHooks;
+        if (core.userData.documents[core.currentDocID].saveSources.length) {//this is an array
+            let sses={};
+            for (let i=0;i<core.userData.documents[core.currentDocID].saveSources.length;i++){
+                sses[core.userData.documents[core.currentDocID].saveSources]=core.currentDocID;
             }
-            core.userData.documents[id] = newdoc;
+            core.userData.documents[core.currentDocID].saveSources = sses;
+        }
+        if (core.userData.documents[id].saveHooks) {
+            Object.assign(core.userData.documents[id].saveSources,core.userData.documents[id].saveHooks);
         }
         if (source) {
-            if (!(core.userData.documents[id].saveSources.includes(source))) {
+            if (!(core.userData.documents[id].saveSources[source])) {
                 //this is a new document.... do stuff
                 //Create a new profile for this save source and document
-                core.userData.documents[id].saveSources.push(source);
+                core.userData.documents[id].saveSources[source]=core.currentDocID;
             }
         }
-        if (!core.userData.documents[id].saveSources.length){
-            core.userData.documents[id].saveSources.push("lf");//at least you got him, eh?
+        if (!Object.keys(core.userData.documents[id].saveSources).length) {
+            core.userData.documents[id].saveSources["lf"]=core.currentDocID;//at least you got him, eh?
             core.rehookAll(id);
         }
     }
@@ -118,10 +115,9 @@
     core.on("updateItem,updateView", () => { core.isNewDoc = false });
 
     core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
-        for (let i = 0; i < core.userData.documents[id].saveSources.length; i++) {
-            let source = core.userData.documents[id].saveSources[i];
-            if (core.saveSources[source].unhook) core.saveSources[source].unhook();
-            if (core.saveSources[source].hook) core.saveSources[source].hook(core.currentDocID);
+        for (let i in core.userData.documents[id].saveSources) {
+            if (core.saveSources[i].unhook) core.saveSources[i].unhook();
+            if (core.saveSources[i].hook) core.saveSources[i].hook(core.currentDocID,core.userData.documents[id].saveSources[i]);
         }
     }
 
@@ -179,12 +175,7 @@
             } else {
                 if (confirm("Create a new document that matches this datasource? (OK), or change the loaded data to this document name (CANCEL)?")) {
                     core.currentDocID = d.id;
-                    if (!core.userData.documents[core.currentDocID] || !core.userData.documents[core.currentDocID].v || core.userData.documents[core.currentDocID].v < 2) {
-                        core.userData.documents[core.currentDocID] = {
-                            v: 2,
-                            saveSources: ['lf']
-                        };
-                    }
+                    upgradeSaveData(d.id,"lf");
                     //reload the page
                     core.rehookAll(core.currentDocID);
                     core.fire("userSave", d);
@@ -353,8 +344,9 @@
             document.querySelector(".saveSources").addEventListener("click", () => {
                 for (let i in core.saveSources)
                     if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();
-                for (let i in core.userData.documents[core.currentDocID].saveHooks) {
-                    try { core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true; }
+                for (let i in core.userData.documents[core.currentDocID].saveSources) {
+                    try { 
+                        core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true; }
                     catch (e) {
                         console.log(e);
                     }
@@ -366,6 +358,7 @@
         loadDialog.querySelector(".cb").addEventListener("click", core.saveUserData);
     })();
     core.loadInnerDialog.addEventListener("input", (e) => {
+        //save to this source checkbox checked
         if (e.target.matches("[data-role='tsync']")) {
             let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
             if (e.target.checked) {

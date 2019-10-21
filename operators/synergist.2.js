@@ -10,7 +10,9 @@ core.registerOperator("itemcluster2", {
             cx: 0,
             cy: 0,
             scale: 1
-        }
+        },
+        filter: guid(6),
+        tray: true
     };
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
@@ -186,7 +188,7 @@ core.registerOperator("itemcluster2", {
                             acp.submit();//redraw lines
                         }
                     } else {
-                        me.addToTray(id);
+                        if (!(me.settings.filter) || core.items[id][me.settings.filter]) me.addToTray(id);
                     }
                 }
             }
@@ -456,7 +458,8 @@ core.registerOperator("itemcluster2", {
                 //if an item of it exists, hide the item
                 let rect = itemPointerCache[id];
                 if (rect) {
-                    rect.hide();
+                    rect.remove();
+                    delete itemPointerCache[id];
                 }
                 return true;
             }
@@ -1184,7 +1187,7 @@ core.registerOperator("itemcluster2", {
             me.tray.style.display = "none";
         }
     }
-
+    updateSettings();
     this.refresh = function () {
         if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
         me.switchView(me.settings.currentViewName, true);
@@ -1290,7 +1293,7 @@ core.registerOperator("itemcluster2", {
             return id;
         }
     }
-    scriptassert([["synergist_contextmenu","operators/synergist.contextmenu.js"]],()=>{
+    scriptassert([["synergist_contextmenu", "operators/synergist.contextmenu.js"]], () => {
         _synergist_extend_contextmenu(this);
     })
 });

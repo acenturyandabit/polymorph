@@ -17,7 +17,6 @@ var __manager_profiles = {
             ["itemList", "operators/itemList.js"],
             ["descbox", "operators/descbox.js"],
             ["calendar", "operators/calendar.js"],
-            ["synergist", "operators/synergist.js"],
             ["stack", "operators/stack.js"],
             ["terminal", "operators/terminal.js"],
             ["inspector", "operators/inspector.js"],
@@ -40,6 +39,7 @@ var __manager_profiles = {
             ["firebase", "saveSources/firebase.js"],
             ["server", "saveSources/server.js"],
             ["gdrive", "saveSources/gdrive.js"],
+            ["websocket", "saveSources/websocket.js"],
         ]
     },
     phone: {

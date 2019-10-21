@@ -78,7 +78,7 @@ var _pwaManager = (() => {
       "manifest.json"
     ],
     CACHE_NAME: "version 8x",
-    SEARCH_SLICE:true,
+    SEARCH_SLICE: true,
     RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
     debug: false
   };
@@ -217,7 +217,7 @@ var _pwaManager = (() => {
 
           break;
         case "cacheReupdate":
-            dbglog("cacheReupdate method.");
+          dbglog("cacheReupdate method.");
           //better version with self cache matching
           if (event.request.url.startsWith(self.location.origin)) {
             if (event.request.method == "GET") {
@@ -229,15 +229,15 @@ var _pwaManager = (() => {
                   }
 
                   if (!cachedResponse && event.request.url.indexOf("?") != -1) {
-                    if (serviceWorkerSettings.SEARCH_SLICE){
-                      event.request.url=event.request.url.slice(0,event.request.url.indexOf("?"));
+                    if (serviceWorkerSettings.SEARCH_SLICE) {
+                      event.request.url = event.request.url.slice(0, event.request.url.indexOf("?"));
                       cachedResponse = await cache.match(event.request);
-                    }else{
+                    } else {
                       cachedResponse = await cache.match(event.request, {
                         ignoreSearch: event.request.url.indexOf("?") != -1
                       });
                     }
-                    
+
                   }
 
                   // Returned the cached response if we have one, otherwise return the network response.
@@ -261,7 +261,11 @@ var _pwaManager = (() => {
               event.respondWith(fetch(event.request));
             }
           } else {
-            event.respondWith(fetch(event.request));
+            try {
+              event.respondWith(fetch(event.request));
+            }catch (e){
+              return 404;
+            }
           }
 
           break;
