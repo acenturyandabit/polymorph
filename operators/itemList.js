@@ -36,13 +36,16 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar.appendChild(document.createElement("hr"));
     this.taskListBar.style.whiteSpace = "nowrap";
     this.taskList = document.createElement("div");
-    this.taskList.style.cssText = "height:100%; overflow-y:auto; width:fit-content;";
+    this.taskList.style.cssText = "height:100%; overflow-y:auto; min-width:fit-content;";
     this.taskListBar.appendChild(this.taskList);
     operator.div.appendChild(htmlwrap(
         `<style>
         input{
             background: inherit;
             color:inherit;
+        }
+        div>span{
+            background:white;
         }
         span[data-id]{
             background:white;

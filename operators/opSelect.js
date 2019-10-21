@@ -13,6 +13,7 @@
     div.views>div:hover{
         background:white;
     }
+
     `;
         operator.div.appendChild(this.style);
 
@@ -23,8 +24,8 @@
         this.rootdiv.innerHTML = `
     <div class="views">
     </div>
-    <h1>Operators</h1>
-    <p>Choose an operator for this space!</p>
+    <h1 style="color:white">Operators</h1>
+    <p style="color:white">Choose an operator for this space!</p>
     <div class="operators">
     <div class="buttons"></div>
     <div class="descriptions" style="height:5em;"></div>
