@@ -189,6 +189,9 @@ core.registerOperator("itemcluster2", {
                         }
                     } else {
                         if (!(me.settings.filter) || core.items[id][me.settings.filter]) me.addToTray(id);
+                        else{ 
+                            me.removeFromTray(id);
+                        }
                     }
                 }
             }
@@ -734,7 +737,7 @@ core.registerOperator("itemcluster2", {
                 me.prevFocusID = it.dataset.id;
                 //return false;
             }
-        } else if (e.target.matches(".tray textarea")) {
+        } else if (e.target.matches(".tray textarea") && e.buttons%2) {
             me.fromTray = e.target.parentElement.dataset.id;
         } else if (e.getModifierState("Control")) {
             //start a rectangleDrag!

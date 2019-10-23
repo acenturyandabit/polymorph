@@ -4,9 +4,9 @@ var __manager_profiles = {
             ["filescreen", "genui/filescreen.js"],
             ["templates", "templates.js"],
             ["core", "core.js"],
-            ["core_tutorial", "core.tutorial.js"],
+            ["core_tutorial", "core_modules/core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
-            ["core_docLoading", "core.docLoading.js"],
+            ["core_docLoading", "core_modules/core.docLoading.js"],
             ["core_view", "core.view.js"],
             ["operator", "operator.js"],
         ]
@@ -56,7 +56,7 @@ var __manager_profiles = {
     },
     default: {
         files: [
-            ["core_dialog", "core.dialog.js"],
+            ["core_dialog", "core_modules/core.dialog.js"],
             { r: "base" },
             ["rect", "rect.js"],
             ["coreUI", "versions/desktop/coreUI.js"],

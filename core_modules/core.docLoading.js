@@ -9,24 +9,24 @@
             core.userData.documents[core.currentDocID].saveSources = {};
         }
         if (core.userData.documents[core.currentDocID].saveSources.length) {//this is an array
-            let sses={};
-            for (let i=0;i<core.userData.documents[core.currentDocID].saveSources.length;i++){
-                sses[core.userData.documents[core.currentDocID].saveSources]=core.currentDocID;
+            let sses = {};
+            for (let i = 0; i < core.userData.documents[core.currentDocID].saveSources.length; i++) {
+                sses[core.userData.documents[core.currentDocID].saveSources] = core.currentDocID;
             }
             core.userData.documents[core.currentDocID].saveSources = sses;
         }
         if (core.userData.documents[id].saveHooks) {
-            Object.assign(core.userData.documents[id].saveSources,core.userData.documents[id].saveHooks);
+            Object.assign(core.userData.documents[id].saveSources, core.userData.documents[id].saveHooks);
         }
         if (source) {
             if (!(core.userData.documents[id].saveSources[source])) {
                 //this is a new document.... do stuff
                 //Create a new profile for this save source and document
-                core.userData.documents[id].saveSources[source]=core.currentDocID;
+                core.userData.documents[id].saveSources[source] = core.currentDocID;
             }
         }
         if (!Object.keys(core.userData.documents[id].saveSources).length) {
-            core.userData.documents[id].saveSources["lf"]=core.currentDocID;//at least you got him, eh?
+            core.userData.documents[id].saveSources["lf"] = core.currentDocID;//at least you got him, eh?
             core.rehookAll(id);
         }
     }
@@ -91,7 +91,7 @@
         let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
         let id = guid(5);
         //generate the URL
-        window.history.pushState("", "", window.location + `?doc=${id}&src=${source}`);
+        window.history.pushState("", "", window.location.origin+window.location.pathname + `?doc=${id}&src=${source}`);
         let d = {
             displayName: nm,
             currentView: "default",
@@ -103,7 +103,9 @@
         if (template != "none") {
             Object.assign(d, polymorphTemplates[template]);
         }
+        //generate the save instance
         upgradeSaveData(core.currentDocID, source);
+        core.rehookAll(core.currentDocID);
         core.isNewDoc = true;
         core.fire("documentCreated", id);
         core.fromSaveData(d);
@@ -117,7 +119,7 @@
     core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
         for (let i in core.userData.documents[id].saveSources) {
             if (core.saveSources[i].unhook) core.saveSources[i].unhook();
-            if (core.saveSources[i].hook) core.saveSources[i].hook(core.currentDocID,core.userData.documents[id].saveSources[i]);
+            if (core.saveSources[i].hook) core.saveSources[i].hook(core.currentDocID, core.userData.documents[id].saveSources[i]);
         }
     }
 
@@ -175,7 +177,7 @@
             } else {
                 if (confirm("Create a new document that matches this datasource? (OK), or change the loaded data to this document name (CANCEL)?")) {
                     core.currentDocID = d.id;
-                    upgradeSaveData(d.id,"lf");
+                    upgradeSaveData(d.id, "lf");
                     //reload the page
                     core.rehookAll(core.currentDocID);
                     core.fire("userSave", d);
@@ -327,6 +329,7 @@
         <div data-saveref='${id}'>
             <h2>${core.saveSources[id].prettyName || id}</h2>
             <span>`;
+            if (core.saveSources[id].pullAll) wrapperText += `<label>Make this the default load source<input name="defaultSource" type="radio"></input></label>`
             if (core.saveSources[id].hook) wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
             if (core.saveSources[id].pullAll) wrapperText += `<button data-role="dlg_load">Load from this source</button>`;
             if (core.saveSources[id].pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
@@ -345,8 +348,9 @@
                 for (let i in core.saveSources)
                     if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();
                 for (let i in core.userData.documents[core.currentDocID].saveSources) {
-                    try { 
-                        core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true; }
+                    try {
+                        core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
+                    }
                     catch (e) {
                         console.log(e);
                     }

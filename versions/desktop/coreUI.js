@@ -15,6 +15,7 @@ core.on("UIsetup",() => {
             <li class="viewdialog">🖥️</li>
             <li>ℹ️
                 <ul>
+                    <li class="about"><a style="text-decoration:none; color:white" href="/about" target="_blank">README</a></li>
                     <li class="hleptute">Operator help</li>
                     <li class="hlepdocs">Help topics</li>
                     <li class="hlepreport">Report an issue...</li>

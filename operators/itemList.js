@@ -6,7 +6,7 @@ core.registerOperator("itemList", function (operator) {
         properties: {
             title: "text"
         },
-        propertyWidths:{},
+        propertyWidths: {},
         filterProp: guid(),
         enableEntry: true,
         implicitOrder: true
@@ -97,6 +97,14 @@ core.registerOperator("itemList", function (operator) {
     //Resize credits to u/MoonLite on stackoverflow
 
     operator.div.appendChild(this.taskListBar);
+
+    let getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
+        if (!this.renderedItemsCache) {
+            let items = Array.from(me.taskList.querySelectorAll("span[data-id]"));
+            this.renderedItemsCache = items.map((i) => i.dataset.id);
+        }
+        return this.renderedItemsCache;
+    }
 
     //Handle item creation
     this.createItem = () => {
@@ -198,26 +206,30 @@ core.registerOperator("itemList", function (operator) {
             //dont return yet, we have to reset everything
         }
 
-        let items = Array.from(this.taskList.children);
+        let items = getRenderedItems();
+        let toShowItems=[];
         items.forEach((v) => {
-            let it = core.items[v.dataset.id];
-            v.style.display = "block";
+            let it = core.items[v];
+            let el=this.taskList.querySelector(`[data-id="${v}"]`);
+            el.style.display = "none";
             for (let i = 0; i < searchboxes.length; i++) {
                 //only search by text for now
                 if (searchboxes[i].value) {
                     switch (this.settings.properties[searchboxes[i].dataset.role]) {
                         case "text":
-                            if (!it[searchboxes[i].dataset.role] || it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) == -1) {
-                                v.style.display = "none";
-                            }
-                            break;
-                        case "object":
-                            if (v.querySelector(`[data-role="${searchboxes[i].dataset.role}"]`).value.indexOf(searchboxes[i].value) == -1) {
-                                v.style.display = "none";
+                            if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
+                                toShowItems.push(el);     
                             }
                             break;
                     }
                 }
+            }
+        });
+        toShowItems.forEach((v)=>{
+            let e = v;
+            while (e!=this.taskList){
+                e.style.display="block";
+                e=e.parentElement;
             }
         });
     });
@@ -328,14 +340,6 @@ core.registerOperator("itemList", function (operator) {
         return me.updateItem(id);
     });
 
-    let getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
-        if (!this.renderedItemsCache) {
-            let items = Array.from(me.taskList.querySelectorAll("span[data-id]"));
-            this.renderedItemsCache = items.map((i) => i.dataset.id);
-        }
-        return this.renderedItemsCache;
-    }
-
     this.updateItem = (id, unbuf = false) => {//if unbuf then we dont want to fire getRenderedItems as it would force an update.
         let it = core.items[id];
         //First check if we should show the item
@@ -343,7 +347,7 @@ core.registerOperator("itemList", function (operator) {
             //if existent, remove
             let currentItemSpan = me.taskList.querySelector("span[data-id='" + id + "']")
             if (currentItemSpan) currentItemSpan.remove();
-            this.renderedItemsCache=undefined;//ask to repopulate next time
+            this.renderedItemsCache = undefined;//ask to repopulate next time
             return false;
         }
         //Then check if the item already exists; if so then update it
@@ -471,20 +475,20 @@ core.registerOperator("itemList", function (operator) {
     //resizing
     operator.div.addEventListener("mousemove", (e) => {
         if (e.buttons) {
-            for (let i=0;i<e.path.length;i++){
-                if (e.path[i].dataset && e.path[i].dataset.containsRole){
-                    let els=operator.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
-                    for (let j=0;j<els.length;j++)els[j].style.width = e.path[i].clientWidth;
-                    this.settings.propertyWidths[e.path[i].dataset.containsRole]=e.path[i].clientWidth;
+            for (let i = 0; i < e.path.length; i++) {
+                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
+                    let els = operator.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
+                    for (let j = 0; j < els.length; j++)els[j].style.width = e.path[i].clientWidth;
+                    this.settings.propertyWidths[e.path[i].dataset.containsRole] = e.path[i].clientWidth;
                     break;
-                }else if (e.path[i]==this.taskList){
+                } else if (e.path[i] == this.taskList) {
                     break;
                 }
             }
         }
     })
 
-    this.updateSettings = ()=>{
+    this.updateSettings = () => {
         //Look at the settings and apply any relevant changes
         let htmlstring = ``
         for (i in this.settings.properties) {
@@ -502,9 +506,9 @@ core.registerOperator("itemList", function (operator) {
         this._template.innerHTML = htmlstring;
         this._searchtemplate.innerHTML = htmlstring;
         //resize stuff
-        for (let i in this.settings.propertyWidths){
-            this._template.querySelector(`[data-contains-role=${i}]`).style.width=this.settings.propertyWidths[i];
-            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width=this.settings.propertyWidths[i];
+        for (let i in this.settings.propertyWidths) {
+            this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
         }
         //Recreate everything
         this.reRenderEverything();
@@ -615,11 +619,11 @@ core.registerOperator("itemList", function (operator) {
                         let itm = {
                             id: e.dataset.id
                         };
-                        if (!core.items[itm.id]){
+                        if (!core.items[itm.id]) {
                             //nerf the e that spawned me, then break
                             //idek how this happens :(
                             e.remove();
-                            me.renderedItemsCache=undefined;
+                            me.renderedItemsCache = undefined;
                             return;
                         }
                         //we are going to upgrade all dates that don't match protocol)

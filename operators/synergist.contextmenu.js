@@ -13,6 +13,7 @@ function _synergist_extend_contextmenu(me) {
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
+        <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
             if (core.shared.synergistCopyElement) {
@@ -123,12 +124,36 @@ function _synergist_extend_contextmenu(me) {
                 visibleItems.sort((a, b) => {
                     return (a.level - b.level) + !(a.level - b.level) * (a.x - b.x);
                 });
-            }else{
+            } else {
+                if (e.target.classList.contains('stepped')) {
+                    //stepping
+                    //count levels
+                    let levelCount = [0];
+                    let lastLevel = 0;
+                    for (let i = 0; i < visibleItems.length; i++) {
+                        if (lastLevel != visibleItems[i].level) {
+                            levelCount.push(0);
+                            lastLevel = visibleItems[i].level;
+                        }
+                        levelCount[visibleItems[i].level]++;
+                    }
+                    //if tiers are too thicc, segregate them
+                    levelCount = levelCount.map((v, i) => { return Math.ceil(v / (2 * Math.PI * 300 * i / 200)) });
+                    let staggerCount = 0;
+                    for (let i = 0; i < visibleItems.length; i++) {
+                        if (levelCount[visibleItems[i].level] != 0) {
+                            visibleItems[i].level += ((staggerCount % levelCount[visibleItems[i].level]) / levelCount[visibleItems[i].level]);
+                            staggerCount++;
+                        }
+                    }
+                    //resort visibleItems
+
+                }
                 visibleItems.sort((a, b) => {
-                    let aa=Math.atan2(a.y,a.x);
-                    if (aa<0)aa+=Math.PI*2;
-                    let bb=Math.atan2(b.y,b.x);
-                    if (bb<0)bb+=Math.PI*2;
+                    let aa = Math.atan2(a.y, a.x);
+                    if (aa < 0) aa += Math.PI * 2;
+                    let bb = Math.atan2(b.y, b.x);
+                    if (bb < 0) bb += Math.PI * 2;
                     return (a.level - b.level) + !(a.level - b.level) * (aa - bb);
                 });
             }
@@ -229,20 +254,24 @@ function _synergist_extend_contextmenu(me) {
                 for (let i = 0; i < visibleItems.length; i++) {
                     visibleItems[i].angle *= Math.PI * 2 / totalAngle;
                 }
+
+
                 //calculate the minimum angle deviation per level and adjust radius accordingly
-                let radii = [];
-                radii[-1] = -300; // to make the algorithm work. yay js hacks
+                let radii = {};
+                radii[-1] = 0; // to make the algorithm work. yay js hacks
                 let lastLevel = 0;
                 let minTheta = visibleItems[0].angle;
                 let lastLevelZero = 0;
+                let previous=-1;
                 for (let i = 1; i < visibleItems.length; i++) {
                     if (lastLevel != visibleItems[i].level) {
                         let tdeviation = (visibleItems[i - 1].angle + visibleItems[lastLevelZero].angle) / 2;
                         if (tdeviation < minTheta) minTheta = tdeviation;
-                        radii[lastLevel] = Math.max(radii[lastLevel - 1] + 300, 200 / minTheta);
+                        radii[lastLevel] = Math.max(radii[previous] + 300, 200 / minTheta);
+                        previous=lastLevel;
                         lastLevel = visibleItems[i].level;
-                        minTheta = visibleItems[i].angle;
-                        adjpart = visibleItems[i].angle
+                        minTheta = Math.PI * 3;//reset
+                        lastLevelZero = i;
                     } else {
                         let tdeviation = (visibleItems[i - 1].angle + visibleItems[i].angle) / 2;
                         if (tdeviation < minTheta) minTheta = tdeviation;
@@ -467,7 +496,12 @@ function _synergist_extend_contextmenu(me) {
             return true;
         });
         me.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
-
+            if (me.settings.filter) delete core.items[me.trayContextedElement][me.settings.filter];
+            else {
+                core.items[me.trayContextedElement].itemcluster.viewData = {};//nerf it completely
+            }
+            core.fire("updateItem", { id: me.trayContextedElement });
+            me.trayContextMenu.style.display = "none";
         })
     });
 }

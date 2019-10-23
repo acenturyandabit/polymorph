@@ -30,8 +30,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
     let me = this;
 
-    let outerdivColor="rgba(230, 204, 255,0.1)";
-    let globalBorderColor="#9A97B8";
+    let outerdivColor = "rgba(230, 204, 255,0.1)";
+    let globalBorderColor = "transparent";
 
     // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
@@ -41,7 +41,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.outerDiv.style.width = "100%";
     this.outerDiv.style.overflow = "hidden";
     this.outerDiv.style.display = "flex";
-    this.outerDiv.style.borderRadius="5px";
+    this.outerDiv.style.borderRadius = "5px";
     this.outerDiv.style['flex-direction'] = "column";
     this.outerDiv.style.background = outerdivColor;
 
@@ -79,11 +79,15 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         tygear.style.cssText = "width: 1em; height:1em;"
         tygear.style.display = "none";
 
-        tyspan.style.cssText = `border: 1px solid black;
-        background: #8093FF;
+        tyspan.style.cssText = `
+        border: 1px solid black;
+        background: rgb(128, 147, 255);
         color: white;
         align-items: center;
-        display: inline-flex;`;
+        display: inline-flex;
+        margin-right: 0.1em;
+        border-radius: 3px;
+        `;
         tyspan.appendChild(tyname);
         tyspan.appendChild(tybtn);
         tyspan.appendChild(tygear);
@@ -174,7 +178,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     //Delegated cross button handler
     this.tabbar.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x") {
+        if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x" && confirm("Warning: closing operators is irreversible and may lead to data loss. Continue?")) {
             let i = this.tabspans.indexOf(e.target.parentElement);
             e.target.parentElement.remove();
             //this.outerDiv.children[i+1].remove();
@@ -320,7 +324,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 core.dialog.prompt(this.settingsDiv, (d) => {
                     this.operators[this.selectedOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
                     this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].tabbarName;
-                   if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
+                    if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                     core.fire("updateView");
                 })
                 //set the calling items.
