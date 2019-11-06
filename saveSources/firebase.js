@@ -39,11 +39,10 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
       snapshot = await root.collection("items").get();
       snapshot.forEach((doc) => {
         result.items[doc.id] = doc.data();
-      })
+      });
       //meta properties
       snapshot = await root.get();
       Object.assign(result, snapshot.data());
-      me.pulledAll = true;
       return result;
     }
 
@@ -58,52 +57,21 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
       delete copyobj.items;
       delete copyobj.views;
       root.set(copyobj);
-
     }
 
+    core.on("userSave",(d)=>{
+      //should I care?
+      //if this document does not yet exist, create it
+      //push everything to it
+
+    })
+
     this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
+      //assumption: that all changes have already been pulled,
+      //If not, we'll deal with it. 
       let root = this.db
         .collection("polymorph")
         .doc(id);
-      if (core.documentIsClean) {
-        //if the document was not loaded, also pull it.
-        me.pullAll(id).then((r) => {
-          core.fromSaveData(r);
-          me.hook(id);
-        })
-        return;
-      } else {
-        //did we pullall in the beginning?
-        if (me.pulledAll) {
-          me.pulledAll = false;
-          //carry on
-        } else {
-          let result = await root.get();
-          if (result.exists) {
-            //what does the user want? 
-            if (confirm("The local document may conflict with the remote document. Do we pull the remote document anyway?")) {
-              me.pullAll(id).then((r) => {
-                core.fromSaveData(r);
-                me.hook(id);
-              })
-              return;
-            } else {
-              if (confirm("Overwrite the remote document?")) {
-                //force push everything
-                await internalPushAll(root);
-                //then continue hooking
-              } else {
-                //do nothing
-                return;
-              }
-            }
-          } else {
-            //assume the user wants to push everything
-            await internalPushAll(root);
-          }
-        }
-      }
-
       //remote
       //items
       me.unsub['items'] = root.collection("items").onSnapshot(shot => {

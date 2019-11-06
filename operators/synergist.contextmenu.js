@@ -5,14 +5,22 @@ function _synergist_extend_contextmenu(me) {
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
         let contextMenuManager = new _contextMenuManager(me.rootdiv);
+        let centreXY = {};
         function chk(e) {
-            if (e.target.tagName.toLowerCase() == "svg") return true;//only activate on clicks to the background.
+            if (e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) return true;//only activate on clicks to the background.
+            centerXY = me.mapPageToSvgCoords(e.pageX, e.pageY);
         }
         me.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
+        <li class="search">Search
+        <ul class="submenu">
+        <li><input class="searchbox"></li>
+        <li class="searchNextResult">Next result</li>
+        </ul>
+        </li>
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
@@ -52,6 +60,7 @@ function _synergist_extend_contextmenu(me) {
                 });
             }
         })
+        //hierarchy buttons
         me.rootcontextMenu.addEventListener("click", (e) => {
             if (!e.target.classList.contains("hierarchy")) return;
             let rect = me.itemSpace.getBoundingClientRect();
@@ -262,13 +271,13 @@ function _synergist_extend_contextmenu(me) {
                 let lastLevel = 0;
                 let minTheta = visibleItems[0].angle;
                 let lastLevelZero = 0;
-                let previous=-1;
+                let previous = -1;
                 for (let i = 1; i < visibleItems.length; i++) {
                     if (lastLevel != visibleItems[i].level) {
                         let tdeviation = (visibleItems[i - 1].angle + visibleItems[lastLevelZero].angle) / 2;
                         if (tdeviation < minTheta) minTheta = tdeviation;
                         radii[lastLevel] = Math.max(radii[previous] + 300, 200 / minTheta);
-                        previous=lastLevel;
+                        previous = lastLevel;
                         lastLevel = visibleItems[i].level;
                         minTheta = Math.PI * 3;//reset
                         lastLevelZero = i;
@@ -308,6 +317,42 @@ function _synergist_extend_contextmenu(me) {
                 });
             }
 
+        })
+        me.searchArray = [];
+        let searchArrayIndex = 0;
+        function focusSearchItem(index) {
+            let id = me.searchArray[index];
+            if (!id) {
+                me.rootcontextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
+            } else {
+                me.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
+                let ic = core.items[me.settings.currentViewName].itemcluster;
+                ic.scale = 1;
+                ic.cx = core.items[id].itemcluster.viewData[me.settings.currentViewName].x;
+                ic.cy = core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
+                me.viewAdjust();
+                me.viewGrid();
+            }
+        }
+        me.rootcontextMenu.querySelector(".search input").addEventListener("input", () => {
+            //create the search array
+            me.searchArray = [];
+            for (let id in core.items) {
+                if (me.itemIsOurs(id)) {
+                    if (core.items[id].title && core.items[id].title.includes(me.rootcontextMenu.querySelector(".search input").value)) {
+                        me.searchArray.push(id);
+                    }
+                }
+            }
+            if (searchArrayIndex > me.searchArray.length) searchArrayIndex = 0;
+            focusSearchItem(searchArrayIndex);
+        });
+        me.rootcontextMenu.querySelector(".searchNextResult").addEventListener("click", () => {
+            searchArrayIndex++;
+            if (searchArrayIndex > me.searchArray.length) {
+                searchArrayIndex = 0;
+            }
+            focusSearchItem(searchArrayIndex);
         })
         me.viewContextMenu = contextMenuManager.registerContextMenu(
             `<li class="viewDeleteButton">Delete</li>

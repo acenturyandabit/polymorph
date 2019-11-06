@@ -706,25 +706,23 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         this.switchOperator(0);
     }
 
-    this.activateTargets = function () {
+    this.passthrough=function(fname,args){
+        //call at the END of a handler for a function. 
         if (me.children && me.children.length) {
-            me.children[0].activateTargets();
-            me.children[1].activateTargets();
+            me.children[0][fname](args);
+            me.children[1][fname](args);
         } else {
             for (let i = 0; i < this.operators.length; i++) {
-                this.operators[i].activateTargets();
+                this.operators[i].passthrough(fname,args);
             }
         }
     }
+
+    this.activateTargets = function () {
+        this.passthrough("activateTargets");
+    }
     this.deactivateTargets = function () {
-        if (me.children && me.children.length) {
-            me.children[0].deactivateTargets();
-            me.children[1].deactivateTargets();
-        } else {
-            for (let i = 0; i < this.operators.length; i++) {
-                this.operators[i].deactivateTargets();
-            }
-        }
+        this.passthrough("deactivateTargets");
     }
 
     this.getOperator = function (id) {

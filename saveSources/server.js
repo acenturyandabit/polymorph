@@ -3,6 +3,8 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
     //initialise here
     this.pushAll = async function (id, data) {
         //push to the source (force save)
+        let compressedData=core.datautils.IDCompress.compress(data);
+        console.log(compressedData);
         if (typeof(id)=="string"){
             id={saveTo:id, loadFrom:id};
         }
@@ -14,7 +16,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         };
         xmlhttp.open("POST", id.saveTo, true);
         xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xmlhttp.send(JSON.stringify(data));
+        xmlhttp.send(JSON.stringify(compressedData));
     }
     this.pullAll = async function (id) {
         if (typeof(id)=="string"){
@@ -24,8 +26,15 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         let p = new Promise((resolve,reject) => {
             xmlhttp.onreadystatechange = function () {
                 if (this.readyState == 4 && this.status == 200) {
-                    let obj = JSON.parse(this.responseText);
-                    resolve(obj);
+                    try{
+                        let obj = JSON.parse(this.responseText);
+                        obj=core.datautils.decompress(obj);
+                        console.log(obj);
+                        resolve(obj);
+                    }catch (e){
+                        reject("data invalid :(");
+                    }
+                    
                 } else if (this.readyState == 4) {
                     //failure; direct load or backup!
                     reject("server was unavailable :/");

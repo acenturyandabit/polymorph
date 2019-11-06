@@ -17,7 +17,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskListBar = document.createElement("div");
     this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
     //top / insert 
-    this.template = htmlwrap(`<span style="display:block; width:100%;">
+    this.template = htmlwrap(`<span style="display:block; width:fit-content;">
     <span></span>
     <button>&gt;</button>
     <div class="subItemBox"></div>
@@ -207,10 +207,10 @@ core.registerOperator("itemList", function (operator) {
         }
 
         let items = getRenderedItems();
-        let toShowItems=[];
+        let toShowItems = [];
         items.forEach((v) => {
             let it = core.items[v];
-            let el=this.taskList.querySelector(`[data-id="${v}"]`);
+            let el = this.taskList.querySelector(`[data-id="${v}"]`);
             el.style.display = "none";
             for (let i = 0; i < searchboxes.length; i++) {
                 //only search by text for now
@@ -218,18 +218,18 @@ core.registerOperator("itemList", function (operator) {
                     switch (this.settings.properties[searchboxes[i].dataset.role]) {
                         case "text":
                             if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
-                                toShowItems.push(el);     
+                                toShowItems.push(el);
                             }
                             break;
                     }
                 }
             }
         });
-        toShowItems.forEach((v)=>{
+        toShowItems.forEach((v) => {
             let e = v;
-            while (e!=this.taskList){
-                e.style.display="block";
-                e=e.parentElement;
+            while (e != this.taskList) {
+                e.style.display = "block";
+                e = e.parentElement;
             }
         });
     });
@@ -396,6 +396,10 @@ core.registerOperator("itemList", function (operator) {
         if (it.style) {
             currentItemSpan.style.background = it.style.background;
             currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
+        } else {
+            //enforce white, in case its parent is not white
+            currentItemSpan.style.background = "white";
+            currentItemSpan.style.color = "black"; //stuff error handling
         }
         //then check if i have a direct and unique parent that is in the current set.
         let uniqueParent = undefined;
@@ -413,7 +417,7 @@ core.registerOperator("itemList", function (operator) {
                 }
             }
         }
-        if (uniqueParent != undefined) {
+        if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
             me.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
         }
         return true;
@@ -558,7 +562,7 @@ core.registerOperator("itemList", function (operator) {
                 break;
         }
 
-        //match all the item data and currentITem data
+        //match all the item data and currentItem data
         core.fire("updateItem", {
             id: e.target.parentElement.parentElement.parentElement.dataset.id,
             sender: me

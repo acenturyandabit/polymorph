@@ -7,23 +7,27 @@ core.registerOperator("inspector", {
     me.container = operator;
     me.settings = {
         operationMode: "focus",
-        currentItem: ""
+        currentItem: "",
+        globalEnabled: false,// whether or not it's enabled globally
     };
-    me.internal = document.createElement("div");
     me.rootdiv = document.createElement("div");
     me.rootdiv.style.overflow = "auto";
     me.rootdiv.style.height = "100%";
-    me.rootdiv.appendChild(me.internal);
+    me.rootdiv.style.color = "white";
     let ttypes = `<select data-role="nttype">
+    <option>Auto</option>
     <option>Text</option>
     <option>Date</option>
     </select>`;
     me.rootdiv.appendChild(htmlwrap(`
+    <h3>Item: <span class="itemID"></span></h3>
+    <div></div>
         <h4>Add a property:</h4>
         <input type="text" placeholder="Name">
         <label>Type:${ttypes}</label>
         <button>Add property</button>
     `));
+    me.internal = me.rootdiv.children[0].children[1];
     let insertbtn = htmlwrap(`
     <button>Add new item</button>`);
     me.rootdiv.appendChild(insertbtn);
@@ -42,7 +46,7 @@ core.registerOperator("inspector", {
         core.fire("updateItem", { id: id });
         me.settings.currentItem = undefined;
         //clear modified class on item
-        for (let i=0;i<me.internal.children.length;i++){
+        for (let i = 0; i < me.internal.children.length; i++) {
             me.internal.children[i].classList.remove("modified");
         }
     })
@@ -55,7 +59,7 @@ core.registerOperator("inspector", {
             }
             core.fire("updateItem", { id: me.settings.currentItem });
             //clear modified class on item
-            for (let i=0;i<me.internal.children.length;i++){
+            for (let i = 0; i < me.internal.children.length; i++) {
                 me.internal.children[i].classList.remove("modified");
             }
         }
@@ -104,9 +108,9 @@ core.registerOperator("inspector", {
 
     me.internal.addEventListener("input", (e) => {
         //change this to invalidate instead of directly edit?
-        if (me.settings.commitChanges){
+        if (me.settings.commitChanges) {
             e.target.parentElement.classList.add("modified");
-        }else if (me.settings.currentItem) {
+        } else if (me.settings.currentItem) {
             let it = core.items[me.settings.currentItem];
             let i = e.target.parentElement.dataset.role;
             switch (e.target.parentElement.dataset.type) {
@@ -159,7 +163,45 @@ core.registerOperator("inspector", {
 
     //render an item on focus or on settings update.
     //must be able to handle null and "" in id
+    //also should be able to update instead of just rendering
+    function recursiveRender(obj, div) {
+        if (typeof obj == "object" && obj) {
+            for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used="false";
+            for (let i in obj) {
+                let d;
+                for (let j = 0; j < div.children.length; j++) {
+                    if (div.children[j].matches(`[data-prop="${i}"]`)) {
+                        d = div.children[j];
+                    }
+                }
+                if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
+                d.dataset.prop = i;
+                d.dataset.used="true";
+                d.style.marginLeft = "5px";
+                recursiveRender(obj[i], d.children[1]);
+                div.appendChild(d);
+            }
+            for (let j = 0; j < div.children.length; j++){
+                if (div.children[j].dataset.used=="false" && (div.children[j].tagName=="DIV" || div.children[j].tagName=="BUTTON")){
+                    div.children[j].remove();
+                }
+            }
+            div.appendChild(htmlwrap(`<button>Add property...</button>`));
+        } else {
+            let i;
+            if (div.children[0] && div.children[0].tagName == "INPUT") {
+                i = div.children[0];
+            } else {
+                while (div.children.length) div.children[0].remove();
+            }
+            if (!i) i = document.createElement("input");
+            i.value = obj;
+            div.appendChild(i);
+        }
+    }
+
     me.renderItem = function (id, soft = false) {
+        me.rootdiv.querySelector(".itemID").innerText = id;
         if (!soft) me.internal.innerHTML = "";
         //create a bunch of textareas for each different field.
         //invalidate old ones
@@ -193,6 +235,9 @@ core.registerOperator("inspector", {
                 pdiv.dataset.invalid = 0;
                 //display value
                 switch (me.settings.propsOn[i]) {
+                    case 'Auto':
+                        recursiveRender(clean_obj[i], pdiv);
+                        break;
                     case 'Text':
                         pdiv.querySelector("input").value = clean_obj[i] || "";
                         break;
@@ -325,7 +370,7 @@ core.registerOperator("inspector", {
             property: "dataEntry",
             label: "Enable data entry",
             afterInput: (e) => {
-                let i=e.currentTarget;
+                let i = e.currentTarget;
                 if (i.checked) {
                     me.settings.showNonexistent = true;
                     options.showNonexistent.load();
@@ -333,6 +378,13 @@ core.registerOperator("inspector", {
                     options.commitChanges.load();
                 }
             }
+        }),
+        dataEntry: new _option({
+            div: this.optionsDiv,
+            type: "bool",
+            object: me.settings,
+            property: "globalEnabled",
+            label: "Focus: listen for every operator (regardless of origin)",
         })
     }
     let more = document.createElement('div');
@@ -416,7 +468,7 @@ core.registerOperator("inspector", {
                 let myBaseRect = me.container.rect;
                 while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
                 //if they're the same, then update.
-                if (myBaseRect == baserectSender) {
+                if (myBaseRect == baserectSender || me.settings.globalEnabled) {
                     if (me.settings.operationMode == 'focus') {
                         me.settings.currentItem = id;
                         me.renderItem(id);

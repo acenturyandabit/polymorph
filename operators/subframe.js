@@ -1,4 +1,4 @@
-core.registerOperator("subframe", {targetForward:true},function (operator) {
+core.registerOperator("subframe", {},function (operator) {
     let me = this;
     me.container=operator;
     this.settings = {};
@@ -16,18 +16,10 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
         this.rect.pos=1;
         this.rect.refresh();
     }
-    //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
-    this.processSettings=function(){
-    }
 
     //////////////////Handling local changes to push to core//////////////////
-
-    this.forwardTarget=function(){
-        this.rect.activateTargets();
-    }
-
-    this.forwardUntarget=function(){
-        this.rect.deactivateTargets();
+    this.passthrough = function(fname, args){
+        return this.rect[fname](args);
     }
 
     //Saving and loading
@@ -40,7 +32,6 @@ core.registerOperator("subframe", {targetForward:true},function (operator) {
         Object.assign(this.settings, d);
         this.rect.fromSaveData(this.settings.rectUnderData);
         this.rect.refresh();
-        this.processSettings();
     }
 
 

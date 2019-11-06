@@ -72,12 +72,12 @@ core.operator = function operator(_type, _rect) {
             //clear the shadow and the div
             this.shadow.innerHTML = "";
             this.innerdiv.innerHTML = "";
-            if (!me.tabbarName)me.tabbarName=core.operators[me.type].options.displayName ||me.type;
+            if (!me.tabbarName) me.tabbarName = core.operators[me.type].options.displayName || me.type;
             if (me.options.noShadow) {
                 this.div = this.innerdiv;
             } else {
                 this.div = this.shadow;
-                this.shader.style.display="block";
+                this.shader.style.display = "block";
             }
             if (me.options.outerScroll) {
                 this.topdiv.style.overflowY = "auto";
@@ -86,7 +86,7 @@ core.operator = function operator(_type, _rect) {
             }
             try {
                 this.baseOperator = new core.operators[this.type].constructor(this);
-                if (data)this.baseOperator.fromSaveData(data);
+                if (data) this.baseOperator.fromSaveData(data);
                 this.baseOperator.container = this;
             } catch (e) {
                 console.log(e);
@@ -100,7 +100,7 @@ core.operator = function operator(_type, _rect) {
         let h1 = document.createElement("h1");
         h1.innerHTML = "Loading operator...";
         this.innerdiv.appendChild(h1);
-        this.shader.style.display="none";
+        this.shader.style.display = "none";
         if (!core.operatorLoadCallbacks[__type]) core.operatorLoadCallbacks[__type] = [];
         core.operatorLoadCallbacks[__type].push({
             op: me,
@@ -122,17 +122,22 @@ core.operator = function operator(_type, _rect) {
         this.reload(this.type);
         this.baseOperator.fromSaveData(obj.data);
     };
+    this.passthrough = function (fname, args) {
+        //perhaps the operator has to do some stuff too - so let it do its stuff
+        if (this[fname]) {
+            this[fname](args);
+        }
+        if (this.baseOperator.passthrough) {
+            return this.baseOperator.passthrough(fname, args);
+        }
+    }
     this.activateTargets = function () {
         // put a grey disabled div on me of the basediv.
-        if (this.options.targetForward) {
-            this.baseOperator.forwardTarget();
-        } else this.bulkhead.style.display = "block";
+        if (!this.baseOperator.passthrough) this.bulkhead.style.display = "block";
     }
     this.deactivateTargets = function () {
         // put a grey disabled div on me of the basediv.
-        if (this.options.targetForward) {
-            this.baseOperator.forwardUntarget();
-        } else this.bulkhead.style.display = "none";
+        if (!this.baseOperator.passthrough) this.bulkhead.style.display = "none";
     }
     this.getOperator = function (id) {
         if (this.uuid == id) {

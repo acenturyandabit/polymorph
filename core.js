@@ -295,15 +295,9 @@ function _core() {
     //A shared space for operators to access
     this.shared = {};
     this.resetDocument = function () {
-        me.documentIsClean = true;
         me.items = {};
         me.resetView();
         me.baseRect.refresh();
-    }
-
-    //Merging
-    me.tryMerge = function () {
-        //cry for now
     }
 }
 

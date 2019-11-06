@@ -7,6 +7,7 @@ var __manager_profiles = {
             ["core_tutorial", "core_modules/core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
             ["core_docLoading", "core_modules/core.docLoading.js"],
+            ["core_dataUtils", "core_modules/core.dataUtils.js"],
             ["core_view", "core.view.js"],
             ["operator", "operator.js"],
         ]
@@ -59,6 +60,7 @@ var __manager_profiles = {
             ["core_dialog", "core_modules/core.dialog.js"],
             { r: "base" },
             ["rect", "rect.js"],
+            ["core_palette", "core_modules/core.palette.js"],
             ["coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },
             ["subframe", "operators/subframe.js"],

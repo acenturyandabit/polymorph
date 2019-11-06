@@ -91,7 +91,7 @@
         let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
         let id = guid(5);
         //generate the URL
-        window.history.pushState("", "", window.location.origin+window.location.pathname + `?doc=${id}&src=${source}`);
+        window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${id}&src=${source}`);
         let d = {
             displayName: nm,
             currentView: "default",
@@ -146,7 +146,7 @@
             d = await core.saveSources[source].pullAll(data);
         } catch (e) {
             alert("Something went wrong with the save source: " + e);
-            document.querySelector(".wall").style.display = "block";
+            document.querySelector(".wall").style.display = "none";
             return;
         }
 
@@ -195,14 +195,7 @@
                 }
             }
         }
-        //Are we loading from scratch?
-        if (!core.documentIsClean) {
-            core.tryMerge(d, core.toSaveData());
-            core.fromSaveData(d);
-        } else {
-            //load as usualll
-            core.fromSaveData(d);
-        }
+        core.fromSaveData(d);
         core.rehookAll(core.currentDocID);
         document.querySelector(".wall").style.display = "none";
         return true;
@@ -213,7 +206,6 @@
         core.resetDocument();
         core.currentDoc = data;
         core.items = data.items;
-        core.documentIsClean = false;
         // create allll the views
         delete core.baseRects;
         core.baseRects = {};

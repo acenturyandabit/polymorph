@@ -172,14 +172,18 @@ core.registerOperator("itemcluster2", {
             }
         }
     })
-
-    core.on("updateItem", function (d) {
+    this.itemIsSynergist = (id) => {
+        return (core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName));
+    }
+    this.itemIsOurs = (id) => {
+        return this.itemIsSynergist(id) && (!(me.settings.filter) || core.items[id][me.settings.filter]);
+    }
+    core.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
 
         if (me.container.visible()) {
-            let present = false;
             if (core.items[id].itemcluster) {
                 if (core.items[id].itemcluster.viewData) {
                     if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
@@ -189,18 +193,14 @@ core.registerOperator("itemcluster2", {
                         }
                     } else {
                         if (!(me.settings.filter) || core.items[id][me.settings.filter]) me.addToTray(id);
-                        else{ 
+                        else {
                             me.removeFromTray(id);
                         }
                     }
                 }
             }
-
-            if (!present && (!(me.settings.filter) || core.items[id][me.settings.filter])) {
-
-            }
         }
-        return ((core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined);
+        return this.itemIsOurs(id);
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -546,13 +546,6 @@ core.registerOperator("itemcluster2", {
                     }
                 }
             }
-            /*
-            .fill('#0044dd')
-            .mousedown(startMove)
-            .mouseup(linkDrop)
-            .on('contextmenu',elemContext)
-            .click(selectThis);
-            */
             //also delete lines associated with it
             return true;
         }
@@ -624,6 +617,9 @@ core.registerOperator("itemcluster2", {
         //twice for lines, as some items may not have loaded yets
         for (let i in core.items) {
             me.arrangeItem(i);
+        }
+        if (me.viewGrid) {
+            me.viewGrid();
         }
     });
 
@@ -737,7 +733,7 @@ core.registerOperator("itemcluster2", {
                 me.prevFocusID = it.dataset.id;
                 //return false;
             }
-        } else if (e.target.matches(".tray textarea") && e.buttons%2) {
+        } else if (e.target.matches(".tray textarea") && e.buttons % 2) {
             me.fromTray = e.target.parentElement.dataset.id;
         } else if (e.getModifierState("Control")) {
             //start a rectangleDrag!
@@ -891,6 +887,7 @@ core.registerOperator("itemcluster2", {
                 add.path("M0,0 L0,6 L9,3 z").fill("#000");
             });
         } else if (me.globalDrag) {
+            this.actualMotion = true;
             // shift the view by delta
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
 
@@ -909,35 +906,43 @@ core.registerOperator("itemcluster2", {
         let hh = me.itemSpace.clientHeight * (ic.scale || 1);
         if (me.svg) {
             me.svg.viewbox((ic.cx || 0) - ww / 2, (ic.cy || 0) - hh / 2, ww, hh);
+            me.viewGrid();
         } else {
             setTimeout(me.viewAdjust, 200);
         }
     }
+
+
 
     this.itemSpace.addEventListener("wheel", (e) => {
         if (e.target.matches(".floatingItem") ||
             e.target.matches(".floatingItem *") || me.tray.contains(e.target)) {
             return;
         }
-        //calculate old width constant
-        let ic = core.items[me.settings.currentViewName].itemcluster;
-        let br = me.itemSpace.getBoundingClientRect();
-        ic.scale = ic.scale || 1;
-        let vw = me.itemSpace.clientWidth * ic.scale;
-        let vh = me.itemSpace.clientHeight * ic.scale;
-        let wc = ic.cx - vw / 2 + (e.clientX - br.x) / br.width * vw;
-        let hc = ic.cy - vh / 2 + (e.clientY - br.y) / br.height * vh;
-        if (e.deltaY > 0) {
-            ic.scale *= 1.1;
+        if (this.gridScroll) {
+            this.handleGridScroll(e);
         } else {
-            ic.scale *= 0.9;
+            //calculate old width constant
+            let ic = core.items[me.settings.currentViewName].itemcluster;
+            let br = me.itemSpace.getBoundingClientRect();
+            ic.scale = ic.scale || 1;
+            let vw = me.itemSpace.clientWidth * ic.scale;
+            let vh = me.itemSpace.clientHeight * ic.scale;
+            let wc = ic.cx - vw / 2 + (e.clientX - br.x) / br.width * vw;
+            let hc = ic.cy - vh / 2 + (e.clientY - br.y) / br.height * vh;
+            if (e.deltaY > 0) {
+                ic.scale *= 1.1;
+            } else {
+                ic.scale *= 0.9;
+            }
+            //correct the new view centre
+            vw = me.itemSpace.clientWidth * ic.scale;
+            vh = me.itemSpace.clientHeight * ic.scale;
+            ic.cx = wc - (e.clientX - br.x) / br.width * vw + vw / 2;
+            ic.cy = hc - (e.clientY - br.y) / br.height * vh + vh / 2;
+            me.viewAdjust();
+            me.viewGrid();
         }
-        //correct the new view centre
-        vw = me.itemSpace.clientWidth * ic.scale;
-        vh = me.itemSpace.clientHeight * ic.scale;
-        ic.cx = wc - (e.clientX - br.x) / br.width * vw + vw / 2;
-        ic.cy = hc - (e.clientY - br.y) / br.height * vh + vh / 2;
-        me.viewAdjust();
     })
 
     this.itemSpace.addEventListener("mouseup", e => {
@@ -952,6 +957,8 @@ core.registerOperator("itemcluster2", {
         if (me.globalDrag) {
             //setTimeout(me.viewAdjust, 500);
             me.globalDrag = false;
+            if (me.viewGrid && me.actualMotion) me.viewGrid();
+            me.actualMotion = false;
         }
         if (me.rectangleDragging) {
             me.rectangleDragging.rect.remove();
@@ -1051,12 +1058,9 @@ core.registerOperator("itemcluster2", {
         me.mouseStoredX = e.offsetX;
         me.mouseStoredY = e.offsetY;
     });
-    this.itemSpace.addEventListener("dblclick", function (e) {
-        if (me.possibleResize) {
-            me.possibleResize = false;
-            return;
-        }
-        if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg") {
+
+    this.itemSpace.addEventListener("dblclick", (e) => {
+        if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) {
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
             me.createItem(
                 coords.x,
@@ -1064,12 +1068,14 @@ core.registerOperator("itemcluster2", {
             );
             // Make a new item
         }
-    });
+    })
 
     //----------item functions----------//
-    this.updatePosition = function (id) {
+    this.updatePosition = (id) => {
         let it = itemPointerCache[id];
         if (!core.items[id].itemcluster.viewData[this.settings.currentViewName]) core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
+        //if there is a grid, then deal with it
+        this.alignGrid(it);
         core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
         core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         core.fire("updateItem", {
@@ -1298,5 +1304,8 @@ core.registerOperator("itemcluster2", {
     }
     scriptassert([["synergist_contextmenu", "operators/synergist.contextmenu.js"]], () => {
         _synergist_extend_contextmenu(this);
+    })
+    scriptassert([["synergist_scalegrid", "operators/synergist.scalegrid.js"]], () => {
+        _synergist_extend_scalegrid(this);
     })
 });

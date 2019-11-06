@@ -54,6 +54,7 @@ core.on("UIsetup",() => {
                     <li class="tutorial">Run the tutorial again</li>
                 </ul>
             </li>
+            <li class="palettedialog">🎨</li>
         </ul>
     </div>`));
     document.body.appendChild(htmlwrap(`

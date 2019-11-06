@@ -1,6 +1,12 @@
+//V4.1: Now with how to use
 //V4.0: now with repetition and calendar item generator
 
 /*HOW TO USE:
+
+let d = new _dateParser();
+Date dt = d.extractTime(string data,Date reference);
+
+
 -- todo lol
 
 */
