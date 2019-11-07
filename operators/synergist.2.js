@@ -173,7 +173,7 @@ core.registerOperator("itemcluster2", {
         }
     })
     this.itemIsSynergist = (id) => {
-        return (core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName));
+        return (core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined;
     }
     this.itemIsOurs = (id) => {
         return this.itemIsSynergist(id) && (!(me.settings.filter) || core.items[id][me.settings.filter]);
@@ -200,7 +200,7 @@ core.registerOperator("itemcluster2", {
                 }
             }
         }
-        return this.itemIsOurs(id);
+        return this.itemIsSynergist(id); // fix this soon pls
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -1194,6 +1194,9 @@ core.registerOperator("itemcluster2", {
         } else {
             me.emptyTray();
             me.tray.style.display = "none";
+        }
+        if (me.svg && me.viewGrid) {
+            me.viewGrid();
         }
     }
     updateSettings();

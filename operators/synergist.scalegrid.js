@@ -110,7 +110,4 @@ function _synergist_extend_scalegrid(me) {
         });
         me.tempTR = me.svg.rect(vb.width, vb.height).move(vb.x, vb.y).fill(me.tempGridPattern).back();
     }
-    if (me.svg) {
-        me.viewGrid();
-    }
 }
