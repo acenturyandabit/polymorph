@@ -1,32 +1,35 @@
-core.registerOperator("template", {
-    displayName: "Template",
-    description: "A quickstart template. Very minimal."
+core.registerOperator("layflat", {
+    displayName: "Layflat",
+    description: "An operator that facilitates organising data in a printable format."
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {};
+    this.settings = {
+        filter: undefined,
+        headingProperty: "title",
+        textProperty: undefined,
+    };
 
     this.rootdiv = document.createElement("div");
+    this.rootdiv.contentEditable = true;
     //Add content-independent HTML here.
-    this.rootdiv.innerHTML = ``;
 
     container.div.appendChild(this.rootdiv);
 
     //////////////////Handle core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", function (d) {
+    core.on("updateItem", (d) => {
         let id = d.id;
         //do stuff with the item.
-
-        //return true or false based on whether we can or cannot edit the item from this operator.
-        //otherwise your items will be deleted by the core garbage collector when the user saves.
+        //do i care about it?
+        if ((!this.settings.filter) || core.items[id][this.settings.filter]) {
+            //show it!
+            this.displayItem(id);
+            return true;
+        }
         return false;
     });
-
-    this.refresh = function () {
-        // This is called when my parent rect is resized.
-    }
 
     //Saving and loading
     this.toSaveData = function () {
@@ -39,12 +42,12 @@ core.registerOperator("template", {
     }
 
     //Handle the settings dialog click!
-    this.dialogDiv=document.createElement("div");
-    this.dialogDiv.innerHTML=``;
-    this.showDialog=function(){
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
+    this.showDialog = function () {
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings=function(){
+    this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
     }
 

@@ -1,4 +1,4 @@
-function _synergist_extend_contextmenu(me) {
+function _itemcluster_extend_contextmenu(me) {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
     scriptassert([
@@ -25,9 +25,9 @@ function _synergist_extend_contextmenu(me) {
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
-            if (core.shared.synergistCopyElement) {
+            if (core.shared.itemclusterCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.shared.synergistCopyElement.forEach((v) => {
+                core.shared.itemclusterCopyElement.forEach((v) => {
                     core.items[v.id].itemcluster.viewData[me.settings.currentViewName] = {
                         x: coords.x + v.x,
                         y: coords.y + v.y,
@@ -353,7 +353,7 @@ function _synergist_extend_contextmenu(me) {
             }
             //calculate radii - from the bottom up
             //let maxLvl = visibleItems[visibleItems.length - 1].level;
-            const itemRadius = 150;
+            const itemRadius = 100;
             for (let i = visibleItems.length - 1; i >= 0; i--) {
 
                 if (visibleItems[i].children.length == 0) {
@@ -378,6 +378,8 @@ function _synergist_extend_contextmenu(me) {
                         //so just set radius = 800 and be done with it
                         visibleItems[i].r = maxRadius + itemRadius;
                     }
+                    //Sometimes the asin in the lower line returns a NaN - prevent this by making the operand 1.
+                    if (visibleItems[i].r<maxRadius+itemRadius)visibleItems[i].r=maxRadius+itemRadius; 
                     //reported radius - includes child radii as well.
                     visibleItems[i].rr = visibleItems[i].r + maxRadius;
                 }
@@ -625,7 +627,7 @@ function _synergist_extend_contextmenu(me) {
                         y: core.items[v].itemcluster.viewData[me.settings.currentViewName].y - coords.y
                     };
                 })
-                core.shared.synergistCopyElement = els;
+                core.shared.itemclusterCopyElement = els;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu

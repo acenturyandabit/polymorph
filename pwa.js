@@ -59,7 +59,7 @@ var _pwaManager = (() => {
       "operators/descbox.js",
       "operators/calendar.js",
       //"operators/iframe.js",
-      "operators/synergist.js",
+      "operators/itemcluster.js",
       //"operators/quillbox.js",
       "operators/stack.js",
       "operators/terminal.js",

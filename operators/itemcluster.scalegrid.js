@@ -1,4 +1,4 @@
-function _synergist_extend_scalegrid(me) {
+function _itemcluster_extend_scalegrid(me) {
     ///////////////////////////////////////////////////////////////////////////////////////
     //When moving objects, if there is a grid, snap to the grid
     me.alignGrid = (it) => {

@@ -4,7 +4,7 @@ core.registerOperator("turmach", {
 }, function (container) {
     let me = this;
     addEventAPI(this);
-    me.propertyName = 'turmach';//use turmach to store our data rather than synergist...
+    me.propertyName = 'turmach';//use turmach to store our data rather than itemcluster...
 
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {
@@ -496,16 +496,16 @@ core.registerOperator("turmach", {
         <li class="hierarchy">Arrange in hierarchy</li>
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
-            if (core.shared.synergistCopyElement) {
+            if (core.shared.itemclusterCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.items[core.shared.synergistCopyElement][me.propertyName].viewData[me.settings.currentViewName] = {
+                core.items[core.shared.itemclusterCopyElement][me.propertyName].viewData[me.settings.currentViewName] = {
                     x: coords.x,
                     y: coords.y,
                 }
                 me.rootcontextMenu.style.display = "none";
-                me.arrangeItem(core.shared.synergistCopyElement);
+                me.arrangeItem(core.shared.itemclusterCopyElement);
                 core.fire("updateItem", {
-                    id: core.shared.synergistCopyElement,
+                    id: core.shared.itemclusterCopyElement,
                     sender: me
                 });
             }
@@ -802,7 +802,7 @@ core.registerOperator("turmach", {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                core.shared.synergistCopyElement = me.contextedElement.dataset.id;
+                core.shared.itemclusterCopyElement = me.contextedElement.dataset.id;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu

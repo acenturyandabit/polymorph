@@ -114,15 +114,6 @@ core.registerOperator("itemcluster2", {
         core.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
-    me.mapPageToSvgCoords = function (pageX, pageY, vb) {
-        let rels = me.svg.node.getBoundingClientRect();
-        if (!vb) vb = me.svg.viewbox();
-        let ret = {};
-        ret.x = (pageX - rels.x) / rels.width * vb.width + vb.x;
-        ret.y = (pageY - rels.y) / rels.height * vb.height + vb.y;
-        return ret;
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////
     //Tutorial
 
@@ -148,15 +139,15 @@ core.registerOperator("itemcluster2", {
     //////////////////////////// Focusing an item////////////////////
     core.on("focus", (d) => {
         if (d.sender == me) return;
-        if (itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
-            core.items[me.settings.currentViewName].itemcluster.cx = itemPointerCache[d.id].cx();
-            core.items[me.settings.currentViewName].itemcluster.cy = itemPointerCache[d.id].cy();
+        if (this.itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
+            core.items[me.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
+            core.items[me.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
             me.viewAdjust();
             if (me.preselected) {
                 me.preselected.classList.remove("selected");
                 me.preselected.classList.remove("anchored");
             }
-            me.preselected = itemPointerCache[d.id].node;
+            me.preselected = this.itemPointerCache[d.id].node;
             me.preselected.classList.add("anchored");
         }
     })
@@ -165,18 +156,18 @@ core.registerOperator("itemcluster2", {
     ////////////////////////////////////////Handle core item updates//////////////////
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
-    let acp = new capacitor(200, 1000, () => {
+    let doubleUpdateCapacitor = new capacitor(200, 1000, () => {
         for (let i in core.items) {
             if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                 me.arrangeItem(i);
             }
         }
     })
-    this.itemIsSynergist = (id) => {
+    this.itemIsitemcluster = (id) => {
         return (core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined;
     }
     this.itemIsOurs = (id) => {
-        return this.itemIsSynergist(id) && (!(me.settings.filter) || core.items[id][me.settings.filter]);
+        return this.itemIsitemcluster(id) && (!(me.settings.filter) || core.items[id][me.settings.filter]);
     }
     core.on("updateItem", (d) => {
         let id = d.id;
@@ -189,7 +180,7 @@ core.registerOperator("itemcluster2", {
                     if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                         if (me.arrangeItem) {
                             me.arrangeItem(id);
-                            acp.submit();//redraw lines
+                            doubleUpdateCapacitor.submit();//redraw lines
                         }
                     } else {
                         if (!(me.settings.filter) || core.items[id][me.settings.filter]) me.addToTray(id);
@@ -200,7 +191,7 @@ core.registerOperator("itemcluster2", {
                 }
             }
         }
-        return this.itemIsSynergist(id); // fix this soon pls
+        return this.itemIsitemcluster(id); // fix this soon pls
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -221,29 +212,15 @@ core.registerOperator("itemcluster2", {
         });
     });
 
-    /*
-    //----------View options menu----------//
-    this.viewgear.addEventListener("click", () => {
-        //show the view settings
-        me.viewSettings.style.display = "block";
-      });
-  
-      scriptassert([
-        ["dialog", "genui/dialog.js"]
-      ], () => {
-        dialogManager.checkDialogs(me.rootdiv);
-        me.viewSettings = me.rootdiv.querySelector(".dialog.backOptionsMenu");
-      });*/
-
     this.viewDropdown.addEventListener("click", function (e) {
         if (e.target.tagName.toLowerCase() == "a") {
             if (e.target.dataset.isnew) {
                 //make a new view
-                nv = me.makeNewView();
+                let nv = me.makeNewView();
                 me.switchView(nv);
             } else {
-                ln = e.target.dataset.listname;
-                me.switchView(ln);
+                let id = e.target.dataset.listname;
+                me.switchView(id);
             }
         } else {
             if (e.target.tagName.toLowerCase() == "em") {
@@ -282,9 +259,9 @@ core.registerOperator("itemcluster2", {
         }
         me.viewDropdown.style.display = "none";
     });
-    this.switchView = function (ln, assert, subview) {
-        let preview = me.settings.currentViewName;
-        me.settings.currentViewName = ln;
+    this.switchView = (id, assert, subview) => {
+        let previousView = me.settings.currentViewName;
+        me.settings.currentViewName = id;
         if (!me.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
@@ -304,43 +281,26 @@ core.registerOperator("itemcluster2", {
             }
             //Show blank
         } else {
-            if (!core.items[me.settings.currentViewName]) {
+            if (!core.items[me.settings.currentViewName] ||
+                !core.items[me.settings.currentViewName].itemcluster ||
+                !core.items[me.settings.currentViewName].itemcluster.viewName) {
                 if (assert) {
-                    core.items[me.settings.currentViewName] = {};
+                    me.switchView(me.makeNewView(me.settings.currentViewName));
                 } else {
+                    //view doesnt exist, switch to any view
                     me.switchView();
                     return;
                 }
             }
-            if (!core.items[me.settings.currentViewName].itemcluster) {
-                if (assert) {
-                    core.items[me.settings.currentViewName].itemcluster = {};
-                } else {
-                    me.switchView();
-                    return;
-                }
-            }
-            if (!core.items[me.settings.currentViewName].itemcluster.viewName) {
-                if (assert) {
-                    core.items[me.settings.currentViewName].itemcluster.viewName = core.items[ln].title || ln
-                    core.fire("updateItem", {
-                        id: me.settings.currentViewName
-                    });
-                } else {
-                    me.switchView();
-                    return;
-                }
-            }
-
             //buttons
             this.viewName.innerText =
                 core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
-            if (preview != ln && preview) {
+            if (previousView != id && previousView) {
                 if (subview) {
                     let b = document.createElement("button");
-                    b.dataset.ref = preview;
-                    b.innerText = core.items[preview].itemcluster.viewName;
+                    b.dataset.ref = previousView;
+                    b.innerText = core.items[previousView].itemcluster.viewName;
                     b.addEventListener("click", () => {
                         me.switchView(b.dataset.ref, true, false);
                         while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
@@ -379,14 +339,17 @@ core.registerOperator("itemcluster2", {
         }
     };
 
-    this.makeNewView = function () {
+    this.makeNewView = function (id) {
         //register it with the core
-        let itm = {};
-        let id = core.insertItem(itm);
-        itm.title = "New view";
-        itm.itemcluster = {
-            viewName: "New View"
-        };
+        let itm;
+        if (!id) {
+            itm = {};
+            id = core.insertItem(itm);
+        } else {
+            itm = core.items[id] || {};
+        }
+        if (!itm.itemcluster) itm.itemcluster = {};
+        itm.itemcluster.viewName = "New View"
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
@@ -395,22 +358,14 @@ core.registerOperator("itemcluster2", {
             sender: this,
             id: id
         });
-        this.switchView(id);
         return id;
     };
 
     this.cloneView = function () {
         //register it with the core
-        let itm = {};
-        let id = core.insertItem(itm);
-        itm.title = "New view";
-        itm.itemcluster = {
-            viewName: "Copy of" + core.items[me.settings.currentViewName].itemcluster.viewName
-        };
-        itm.title = core.items[me.settings.currentViewName].itemcluster.viewName;
-        if (me.settings.filter) {
-            if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
-        }
+        let newName = "Copy of " + core.items[me.settings.currentViewName].itemcluster.viewName;
+        let id = me.makeNewView();
+        core.items[id].itemcluster.viewName = newName;
         core.fire("updateItem", {
             sender: this,
             id: id
@@ -446,181 +401,15 @@ core.registerOperator("itemcluster2", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Items
-    let itemPointerCache = {};
-    let cachedStyle = {};
+    this.itemPointerCache = {};
+    this.cachedStyle = {};
     scriptassert([
         ["svg", "3pt/svg.min.js"],
         ["foreignobject", "3pt/svg.foreignobject.js"]
     ], () => {
-        me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
-        me.arrangeItem = function (id) {
-            if (!core.items[id].itemcluster || (!core.items[id].itemcluster.viewData && !core.items[id].itemcluster.viewName))
-                return false;
-            if (!core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
-            if (!core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                //if an item of it exists, hide the item
-                let rect = itemPointerCache[id];
-                if (rect) {
-                    rect.remove();
-                    delete itemPointerCache[id];
-                }
-                return true;
-            }
-            //enforce a property on it with viewName.
-            if (!core.items[id][`__itemcluster_${me.settings.currentViewName}`]) core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
-            let rect = itemPointerCache[id];
-            if (!rect) {
-                //need to make a new rectangle
-                //let _rect = rect.rect(100, 50);
-                rect = me.svg.foreignObject(100, 50).attr({
-                    "data-id": id,
-                    class: "floatingItem"
-                });
-                rect.appendChild("div");
-                itemPointerCache[id] = rect;
-                itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
-            }
-            rect.show();
-            if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
-            }
-            //fill in the textarea inside
-            let tta = itemPointerCache[id].node.children[0].children[0];
-            tta.value = core.items[id].title || "";
-            if (core.items[id].style) { // dont update this if it hasn't changed.
-                if (JSON.stringify(core.items[id].style) != JSON.stringify(cachedStyle[id])) {
-                    tta.style.background = core.items[id].style.background || "";
-                    tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
-                    cachedStyle[id] = JSON.parse(JSON.stringify(core.items[id].style));
-                }
-
-            }
-            if (!core.items[id].boxsize) {
-                core.items[id].boxsize = {
-                    w: "200px",
-                    h: "100px"
-                };
-            }
-            itemPointerCache[id].node.children[0].style.width = core.items[id].boxsize.w || "";
-            itemPointerCache[id].node.children[0].style.height = core.items[id].boxsize.h || "";
-            rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
-
-            //add icons if necessary
-            if (core.items[id].itemcluster.viewName) {
-                //this has a subview, make it known!.
-                let subviewItemCount;
-                if (rect.node.querySelector(".subviewItemCount")) {
-                    subviewItemCount = rect.node.querySelector(".subviewItemCount");
-                } else {
-                    subviewItemCount = document.createElement("p");
-                    subviewItemCount.style.cssText = `
-                    display: block;
-                    width: 1em;
-                    height: 1em;
-                    font-size: 0.7em;
-                    margin: 0px;
-                    text-align: center;
-                    background: orange;
-                    `;
-                    subviewItemCount.classList.add("subviewItemCount");
-                    rect.node.children[0].appendChild(subviewItemCount);
-                    //also count all the items in my subview and report.
-                }
-                let count = 0;
-                for (let i in core.items) {
-                    if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[id]) count++;
-                }
-                subviewItemCount.innerText = count;
-            } else {
-                if (rect.node.children[0].querySelector(".subviewItemCount")) {
-                    rect.node.children[0].querySelector(".subviewItemCount").remove();
-                }
-            }
-            //draw its lines
-            if (core.items[id].to) {
-                for (let i in core.items[id].to) {
-                    if (i == me.prevFocusID || id == me.prevFocusID) {
-                        me.enforceLine(id, i, "red");
-                    } else {
-                        me.enforceLine(id, i);
-                    }
-                }
-            }
-            //also delete lines associated with it
-            return true;
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////////////
-        //Lines
-
-
-        me.linkingLine = me.svg.line(0, 0, 0, 0).stroke({
-            width: 3
-        }).back();
-        me.activeLines = {};
-        me.toggleLine = function (start, end) {
-            //start and end is now directional. 
-            //check if linked; if linked, remove link
-            if (core.isLinked(start, end) % 2) {
-                core.unlink(start, end);
-                if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
-                delete me.activeLines[start][end];
-            } else {
-                core.link(start, end);
-                me.enforceLine(start, end);
-            }
-        };
-        me.redrawLines = function (ci, style = "black") {
-            for (let i in me.activeLines) {
-                for (let j in me.activeLines[i]) {
-                    if (i == ci || j == ci) {// this could STILL be done better
-                        me.enforceLine(i, j, style);
-                    }
-                }
-            }
-        }
-        me.enforceLine = function (start, end, style = "black") {
-            let sd = itemPointerCache[start];
-            let ed = itemPointerCache[end];
-            if (!sd || !ed) {
-                return;
-            }
-            //check if line already exists
-            if (me.activeLines[start] && me.activeLines[start][end]) {
-                //if so, remove
-                me.activeLines[start][end].remove();
-            }
-
-            //if either is not visible, then dont draw
-            if (sd.style.display == "none" || ed.style.display == "none") {
-                return;
-            } else {
-                if (!me.activeLines[start]) me.activeLines[start] = {};
-                let x = [sd.cx(), 0, ed.cx()];
-                let y = [sd.cy(), 0, ed.cy()];
-                x[1] = (x[0] + x[2]) / 2;
-                y[1] = (y[0] + y[2]) / 2;
-                let l = me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({ width: 2, color: style });
-                l.marker('mid', 9, 6, function (add) {
-                    add.path("M0,0 L0,6 L9,3 z").fill(style);
-                })
-                me.activeLines[start][end] = l;
-                l.back();
-            }
-        };
-
-
-        //arrange items 
-        for (let i in core.items) {
-            me.arrangeItem(i);
-        }
-        //twice for lines, as some items may not have loaded yets
-        for (let i in core.items) {
-            me.arrangeItem(i);
-        }
-        if (me.viewGrid) {
-            me.viewGrid();
-        }
+        scriptassert([["itemcluster_svg", "operators/itemcluster.svg.js"]], () => {
+            _itemcluster_extend_svg(this);
+        });
     });
 
     //More items shenanigans
@@ -699,7 +488,7 @@ core.registerOperator("itemcluster2", {
                 //check to see if we are already in movingDivs...
                 me.alreadyMoving = -1;
                 me.movingDivs.forEach((v, i) => {
-                    if (v.el == itemPointerCache[it.dataset.id]) {
+                    if (v.el == this.itemPointerCache[it.dataset.id]) {
                         //remove the red border
                         v.el.node.children[0].style.border = "1px solid black"
                         me.alreadyMoving = i;
@@ -707,14 +496,14 @@ core.registerOperator("itemcluster2", {
                 })
                 if (me.alreadyMoving == -1) {
                     me.movingDivs.push({
-                        el: itemPointerCache[it.dataset.id]
+                        el: this.itemPointerCache[it.dataset.id]
                     });
                 }
-                me.lastMovingDiv = itemPointerCache[it.dataset.id];
+                me.lastMovingDiv = this.itemPointerCache[it.dataset.id];
                 //style it so we can see it
-                itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
+                this.itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
                 //adjust x indexes
-                itemPointerCache[it.dataset.id].front();
+                this.itemPointerCache[it.dataset.id].front();
                 core.fire("focus", {
                     id: it.dataset.id,
                     sender: me
@@ -777,13 +566,13 @@ core.registerOperator("itemcluster2", {
             me.arrangeItem(cid);
             //this is probably broken now
             let divrep = {
-                el: itemPointerCache[cid],
+                el: this.itemPointerCache[cid],
                 dx: 30,
                 dy: 30
             };
             me.clearOutMovingDivs();
             me.movingDivs = [divrep];//overwrite the thing in the array
-            me.lastMovingDiv = itemPointerCache[cid];
+            me.lastMovingDiv = this.itemPointerCache[cid];
             // force a mousemove
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
             me.lastMovingDiv.x(coords.x - divrep.dx);
@@ -810,15 +599,15 @@ core.registerOperator("itemcluster2", {
                 me.rectangleDragging.rect.y(coords.y).height(-dy);
             }
             me.clearOutMovingDivs();
-            for (let i in itemPointerCache) {
-                if (((itemPointerCache[i].cx() > coords.x && itemPointerCache[i].cx() < me.rectangleDragging.sx) ||
-                    (itemPointerCache[i].cx() < coords.x && itemPointerCache[i].cx() > me.rectangleDragging.sx)) &&
-                    ((itemPointerCache[i].cy() > coords.y && itemPointerCache[i].cy() < me.rectangleDragging.sy) ||
-                        (itemPointerCache[i].cy() < coords.y && itemPointerCache[i].cy() > me.rectangleDragging.sy))) {
+            for (let i in this.itemPointerCache) {
+                if (((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < me.rectangleDragging.sx) ||
+                    (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > me.rectangleDragging.sx)) &&
+                    ((this.itemPointerCache[i].cy() > coords.y && this.itemPointerCache[i].cy() < me.rectangleDragging.sy) ||
+                        (this.itemPointerCache[i].cy() < coords.y && this.itemPointerCache[i].cy() > me.rectangleDragging.sy))) {
                     me.movingDivs.push({
-                        el: itemPointerCache[i]
+                        el: this.itemPointerCache[i]
                     });
-                    itemPointerCache[i].node.children[0].style.border = "1px solid red";
+                    this.itemPointerCache[i].node.children[0].style.border = "1px solid red";
                     //add to movingdivs
                 }
             }
@@ -874,7 +663,7 @@ core.registerOperator("itemcluster2", {
             }
         } else if (me.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = itemPointerCache[me.linkingDiv.dataset.id];
+            let rect = this.itemPointerCache[me.linkingDiv.dataset.id];
             let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
             me.linkingLine.plot(
                 rect.x() + rect.width() / 2,
@@ -1072,7 +861,7 @@ core.registerOperator("itemcluster2", {
 
     //----------item functions----------//
     this.updatePosition = (id) => {
-        let it = itemPointerCache[id];
+        let it = this.itemPointerCache[id];
         if (!core.items[id].itemcluster.viewData[this.settings.currentViewName]) core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
         //if there is a grid, then deal with it
         this.alignGrid(it);
@@ -1305,10 +1094,10 @@ core.registerOperator("itemcluster2", {
             return id;
         }
     }
-    scriptassert([["synergist_contextmenu", "operators/synergist.contextmenu.js"]], () => {
-        _synergist_extend_contextmenu(this);
+    scriptassert([["itemcluster_contextmenu", "operators/itemcluster.contextmenu.js"]], () => {
+        _itemcluster_extend_contextmenu(this);
     })
-    scriptassert([["synergist_scalegrid", "operators/synergist.scalegrid.js"]], () => {
-        _synergist_extend_scalegrid(this);
+    scriptassert([["itemcluster_scalegrid", "operators/itemcluster.scalegrid.js"]], () => {
+        _itemcluster_extend_scalegrid(this);
     })
 });

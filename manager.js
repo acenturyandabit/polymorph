@@ -24,7 +24,7 @@ var __manager_profiles = {
             ["sorter", "operators/sorter.js"],
             ["httree", "operators/httree.js"],
             ["chat", "operators/chat.js"],
-            ["synergist.2", "operators/synergist.2.js"],
+            ["itemcluster", "operators/itemcluster.js"],
             ["turmach", "operators/turmach.js"],
             ["roundshow", "operators/know/roundshow.js"],
             ["tester", "operators/know/tester.js"],

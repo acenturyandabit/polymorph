@@ -262,8 +262,8 @@ tutorialManager = {
     steps: [{
         type: "overlay",
         position: ["30vw", '30vh'],
-        //focusElement:()=>{return $(".synergist")[0]},
-        prompt: "Welcome to Synergist!",
+        //focusElement:()=>{return $(".itemcluster")[0]},
+        prompt: "Welcome to itemcluster!",
     }
 
 
