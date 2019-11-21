@@ -1,8 +1,8 @@
 (function () {
     let viewsets;
-    core.registerOperator("opSelect",{displayName: "New Operator",hidden:true}, function (operator) {
+    core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
         let me = this;
-        me.container = operator;
+        me.container = container;
         this.settings = {};
         this.style = document.createElement("style");
         this.style.innerHTML = `
@@ -13,9 +13,8 @@
     div.views>div:hover{
         background:white;
     }
-
     `;
-        operator.div.appendChild(this.style);
+        container.div.appendChild(this.style);
 
         this.rootdiv = document.createElement("div");
         this.rootdiv.style.height = "100%";
@@ -25,7 +24,7 @@
     <div class="views">
     </div>
     <h1 style="color:white">Operators</h1>
-    <p style="color:white">Choose an operator for this space!</p>
+    <p style="color:white">Choose an container for this space!</p>
     <div class="operators">
     <div class="buttons"></div>
     <div class="descriptions" style="height:5em;"></div>
@@ -35,21 +34,21 @@
         this.viewInnerDiv = this.rootdiv.querySelector("div.views");
         this.reloadContents = function () {
             for (let i in core.operators) {
-                if (core.operators[i].options.hidden)continue;
-                if (me.buttondiv.querySelector(`[data-under-operator-name="${i}"]`))return;
+                if (core.operators[i].options.hidden) continue;
+                if (me.buttondiv.querySelector(`[data-under-operator-name="${i}"]`)) return;
                 let b = document.createElement("button");
                 let displayText = i;
                 if (core.operators[i].options.displayName) displayText = core.operators[i].options.displayName;
                 b.innerHTML = displayText;
                 b.dataset.underOperatorName = i;
                 b.addEventListener("click", () => {
-                    operator.reload(b.dataset.underOperatorName);
+                    container.fromSaveData(b.dataset.underOperatorName);
                     //change name if user has not already modified name
-                    if (operator.tabbarName=="New Operator") operator.tabbarName=core.operators[b.dataset.underOperatorName].options.displayName || me.type;
-                    core.fire("updateView", {
+                    if (container.tabbarName == "New Operator") container.tabbarName = core.operators[b.dataset.underOperatorName].options.displayName || me.type;
+                    container.fire("updateView", {
                         sender: this
                     });
-                    operator.rect.tieOperator(operator);
+                    container.rect.tieOperator(container);
                 })
                 me.buttondiv.appendChild(b);
                 //generate the description
@@ -73,17 +72,17 @@
             }
         }
         this.reloadContents();
-        operator.div.appendChild(this.rootdiv);
-        core.on("operatorAdded", me.reloadContents);
-        this.refresh=this.reloadContents;
+        container.div.appendChild(this.rootdiv);
+        container.on("operatorAdded", me.reloadContents);
+        this.refresh = this.reloadContents;
         //////////////////Handle core item updates//////////////////
 
         //these are optional but can be used as a reference.
 
         //Handle the settings dialog click!
-        this.dialogDiv=document.createElement("div");
-        this.dialogDiv.innerHTML=``;
-        this.showDialog=function(){
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = ``;
+        this.showDialog = function () {
             // update your dialog elements with your settings
         }
 

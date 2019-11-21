@@ -26,7 +26,7 @@ itm.on('event', ()=>{
 
 */
 
-function addEventAPI(itm,errf=console.log) {
+function addEventAPI(itm, errf = console.error) {
     itm.events = {};
     itm.fire = function (e, args) {
         let _e = e.split(",");
@@ -36,16 +36,16 @@ function addEventAPI(itm,errf=console.log) {
             //prime the ketching function with a starter object to prime it.
             let cnt = true;
             if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
-                if (cnt != false) cnt = f(args, true)
+                if (cnt != false) cnt = f(args, true, e)
             });
             //fire each event
             if (itm.events[i].events) {
                 itm.events[i].events.forEach((f) => {
                     if (cnt == false) return;
                     try {
-                        result = f(args)
+                        result = f(args, e);
                         if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
-                            if (cnt != false) cnt = f(result)
+                            if (cnt != false) cnt = f(result, undefined, e)
                         });
                     } catch (er) {
                         errf(er);
@@ -53,7 +53,7 @@ function addEventAPI(itm,errf=console.log) {
 
                 });
             }
-            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, false)));
+            if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, false, e)));
         })
     };
     itm.on = function (e, f) {

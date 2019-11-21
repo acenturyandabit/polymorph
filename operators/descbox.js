@@ -1,6 +1,6 @@
-core.registerOperator("descbox", function (operator) {
+core.registerOperator("descbox", function (container) {
     let me = this;
-    me.container = operator;
+    me.container = container;
     me.settings = {
         property: "description",
         operationMode: "focus",
@@ -9,17 +9,18 @@ core.registerOperator("descbox", function (operator) {
 
     me.rootdiv = document.createElement("div");
     //Add div HTML here
-    me.rootdiv.innerHTML = `<textarea></textarea>`;
+    me.rootdiv.innerHTML = `<p></p><textarea></textarea>`;
     me.textarea = me.rootdiv.querySelector("textarea");
     me.textarea.style.width = "100%";
     me.textarea.style.height = "100%";
     me.textarea.style.resize = "none";
-    me.currentID = "";
+    me.currentIDNode = me.rootdiv.querySelector("p");
 
-    operator.div.appendChild(me.rootdiv);
+    container.div.appendChild(me.rootdiv);
 
     //Handle item updates
     me.updateItem = function (id) {
+        me.currentIDNode.innerText = id;
         //if focused, ignore
         if (me.settings.operationMode != "putter") {
             if (id == me.settings.currentID && id && core.items[id]) {
@@ -46,22 +47,16 @@ core.registerOperator("descbox", function (operator) {
         } else {
             me.textarea.disabled = false;
         }
-        //do i control this item?
-        if (me.settings.operationMode == 'static') {
-            if (id == me.settings.currentID) {
-                return true;
-            }
-        }
-        return false;
     }
 
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
-        //Check if item is shown
-        //Update item if relevant
-        return me.updateItem(id);
+        if (id == me.settings.currentID) {
+            me.updateItem(id);
+            return true;
+        }
     });
 
     //First time load
@@ -76,7 +71,7 @@ core.registerOperator("descbox", function (operator) {
                 let it = {};
                 it[me.settings.property] = "";
                 core.items[staticItem] = it;
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: this,
                     id: staticItem
                 });
@@ -102,11 +97,13 @@ core.registerOperator("descbox", function (operator) {
     }
 
     let upc = new capacitor(100, 40, (id, data) => {
-        core.items[id][me.settings.property] = data;
-        core.fire("updateItem", {
-            id: id,
-            sender: me
-        });
+        if (id && core.items[id]) {
+            core.items[id][me.settings.property] = data;
+            container.fire("updateItem", {
+                id: id,
+                sender: me
+            });
+        }
     })
     //Register changes with core
     me.somethingwaschanged = function () {
@@ -115,13 +112,15 @@ core.registerOperator("descbox", function (operator) {
         }
     }
 
+    //me.textarea.addEventListener("blur", me.somethingwaschanged);
+
     me.textarea.addEventListener("input", me.somethingwaschanged);
 
     me.textarea.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            let operator = core.getOperator(me.focusOperatorID);
-            if (operator && operator.baseOperator.quickAdd) {
-                operator.baseOperator.quickAdd(me.textarea.value);
+            let container = core.getOperator(me.focusOperatorID);
+            if (container && container.container.quickAdd) {
+                container.container.quickAdd(me.textarea.value);
                 me.textarea.value = "";
                 e.preventDefault();
             }
@@ -131,7 +130,7 @@ core.registerOperator("descbox", function (operator) {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `
-    <h1>Role</h1>
+    <p>Role</p>
     <select data-role="operationMode">
     <option value="static">Display static item</option>
     <option value="focus">Display focused item</option>
@@ -140,9 +139,9 @@ core.registerOperator("descbox", function (operator) {
     <br/>
     <input data-role="staticItem" placeholder="Static item to display...">
     <br>
-    <p> Or, click to target 'focus' events from an operator...
-    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-    <button class="targeter">Select operator</button>
+    <p> Or, click to target 'focus' events from an container...
+    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+    <button class="targeter">Select container</button>
     </br>
     <input data-role="property" placeholder="Enter the property to display...">
     <input data-role="placeholder" placeholder="Enter a placeholder...">
@@ -184,7 +183,7 @@ core.registerOperator("descbox", function (operator) {
         }
         me.textarea.placeholder = me.settings.placeholder || "";
         me.updateSettings();
-        core.fire("updateView");
+        container.fire("updateView");
     }
     me.dialogDiv.addEventListener("input", function (e) {
         if (e.target.dataset.role) {
@@ -193,15 +192,19 @@ core.registerOperator("descbox", function (operator) {
     })
 
     //Core will call me when an object is focused on from somewhere
-    core.on("focus", function (d) {
+    container.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;
+        function switchTo(id) {
+            upc.forceSend();
+            me.settings.currentID = id;
+            me.updateItem(id);
+            container.fire("updateView");
+        }
         if (me.settings.operationMode == "focus") {
             if (me.settings['focusOperatorID']) {
                 if (me.settings['focusOperatorID'] == sender.container.uuid) {
-                    me.settings.currentID = id;
-                    me.updateItem(id);
-                    core.fire("updateView");
+                    switchTo(id);
                 }
             } else {
                 if (sender) {
@@ -213,9 +216,7 @@ core.registerOperator("descbox", function (operator) {
                     while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
                     //if they're the same, then update.
                     if (myBaseRect == baserectSender) {
-                        me.settings.currentID = id;
-                        me.updateItem(id);
-                        core.fire("updateView");
+                        switchTo(id);
                     }
                 }
             }
@@ -225,7 +226,7 @@ core.registerOperator("descbox", function (operator) {
             }
         }
     });
-    core.on("deleteItem", function (d) {
+    container.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
         if (me.settings.currentID == id) {

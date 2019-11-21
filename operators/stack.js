@@ -2,9 +2,9 @@ core.registerOperator("stack", {
     displayName: "Stack",
     description: "Stack operators and scroll through them like a browseable webpage.",
     targetForward:true
-}, function (operator) {
+}, function (container) {
     let me = this;
-    me.container = operator;
+    me.container = container;
     this.settings = {};
     this.style = document.createElement("style");
     this.style.innerHTML = `
@@ -21,7 +21,7 @@ core.registerOperator("stack", {
             overflow-x: hidden;
         }
     `
-    operator.div.appendChild(this.style);
+    container.div.appendChild(this.style);
     
     this.forwardTarget=function(){
         for (let i=0;i<this.rects.length;i++){
@@ -42,7 +42,7 @@ core.registerOperator("stack", {
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `<div class="addMore"><div>+</div><div>`;
     this.more = this.rootdiv.querySelector(".addMore");
-    operator.div.appendChild(this.rootdiv);
+    container.div.appendChild(this.rootdiv);
     this.rects = [];
     this.addStack = function (r) {
         let obj = {};
@@ -89,7 +89,7 @@ core.registerOperator("stack", {
     this.rootdiv.addEventListener("mouseup",function(e){
         resizingDiv=undefined;
         // if in correct direction, resize.
-        core.fire("updateView");
+        container.fire("updateView");
     })
 
     this._remove=function(burn,obj){
@@ -100,7 +100,7 @@ core.registerOperator("stack", {
                 me.rects.splice(i,1);
             }
         }
-        core.fire("updateView",{sender:this});
+        container.fire("updateView",{sender:this});
     }
     this.more.addEventListener("click", this.addStack);
     //////////////////Handle core item updates//////////////////

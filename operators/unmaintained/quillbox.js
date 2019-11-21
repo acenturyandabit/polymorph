@@ -1,9 +1,9 @@
 core.registerOperator("quillbox", {
     displayName: "Quillbox",
     description: "A rich text editor powered by Quill.js. One up from descbox!"
-}, function (operator) {
+}, function (container) {
     let me = this;
-    me.operator = operator;
+    me.container = container;
     me.settings = {
         property: "richDescription",
         operationMode: "focus",
@@ -22,8 +22,8 @@ core.registerOperator("quillbox", {
         s.rel = "stylesheet";
         s.href = "3pt/quill.snow.css";
         s.type = "text/css";
-        operator.div.appendChild(s);
-        operator.div.appendChild(me.rootdiv);
+        container.div.appendChild(s);
+        container.div.appendChild(me.rootdiv);
         let ql=document.createElement("div");
         me.rootdiv.style.height="100%";
         me.rootdiv.style.width="100%";
@@ -55,7 +55,7 @@ core.registerOperator("quillbox", {
         me.rootdiv.addEventListener("keyup", me.somethingwaschanged);
     })
 
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
@@ -75,7 +75,7 @@ core.registerOperator("quillbox", {
                 let it = {};
                 it[me.settings.property] = "";
                 core.items[staticItem] = it;
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: this,
                     id: staticItem
                 });
@@ -102,7 +102,7 @@ core.registerOperator("quillbox", {
             return;
         }
         core.items[me.settings.currentID][me.settings.property] = me.quill.getContents();
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: me.settings.currentID,
             sender: me
         });
@@ -119,9 +119,9 @@ core.registerOperator("quillbox", {
     <br/>
     <input data-role="staticItem" placeholder="Static item to display...">
     <br>
-    <p> Or, click to target 'focus' events from an operator...
-    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-    <button class="targeter">Select operator</button>
+    <p> Or, click to target 'focus' events from an container...
+    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+    <button class="targeter">Select container</button>
     </br>
     <input data-role="property" placeholder="Enter the property to display...">`;
     this.showDialog=function(){
@@ -158,7 +158,7 @@ core.registerOperator("quillbox", {
     })
 
     //Core will call me when an object is focused on from somewhere
-    core.on("focus", function (d) {
+    container.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (me.settings['focusOperatorID']) {
@@ -168,10 +168,10 @@ core.registerOperator("quillbox", {
             }
         } else {
             //calculate the base rect of the sender
-            let baserectSender = sender.operator.rect;
+            let baserectSender = sender.container.rect;
             while (baserectSender.parent) baserectSender = baserectSender.parent;
             //calculate my base rect
-            let myBaseRect = me.operator.rect;
+            let myBaseRect = me.container.rect;
             while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
             //if they're the same, then update.
             if (myBaseRect == baserectSender) {
@@ -181,9 +181,9 @@ core.registerOperator("quillbox", {
                 }
             }
         }
-        core.fire("updateView");
+        container.fire("updateView");
     });
-    core.on("deleteItem", function (d) {
+    container.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
         if (me.settings.currentID == id) {

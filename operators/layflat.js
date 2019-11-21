@@ -1,6 +1,6 @@
 core.registerOperator("layflat", {
     displayName: "Layflat",
-    description: "An operator that facilitates organising data in a printable format."
+    description: "An container that facilitates organising data in a printable format."
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
@@ -18,8 +18,8 @@ core.registerOperator("layflat", {
 
     //////////////////Handle core item updates//////////////////
 
-    //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", (d) => {
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", (d) => {
         let id = d.id;
         //do stuff with the item.
         //do i care about it?
@@ -37,7 +37,7 @@ core.registerOperator("layflat", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
     }
 

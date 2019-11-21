@@ -2,9 +2,9 @@ core.registerOperator("calendar2", {
         displayName: "Calendar v2",
         description: "A simple calendar, courtesy of fullcalendar.js."
     },
-    function (operator) {
+    function (container) {
         let me = this;
-        me.container = operator;
+        me.container = container;
         this.settings = {
             dateproperty: "datestring",
             dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.
@@ -111,7 +111,7 @@ core.registerOperator("calendar2", {
                     callback(allList);
                 },
                 eventClick: function (calEvent, jsEvent, view) {
-                    core.fire("focus", {
+                    container.fire("focus", {
                         id: calEvent.id,
                         sender: me
                     })
@@ -127,7 +127,7 @@ core.registerOperator("calendar2", {
             this.calendar.refetchEvents();
             this.calendar.render();
         });
-        operator.div.appendChild(this.rootdiv);
+        container.div.appendChild(this.rootdiv);
         //Handle item updates
         let updateItemCapacitor=new capacitor(1000,1000,()=>{
             try {
@@ -144,10 +144,10 @@ core.registerOperator("calendar2", {
             if (!core.items[id][me.settings.dateproperty]) return;
             updateItemCapacitor.submit();
             //Check if item is shown
-            //return true or false based on whether we can or cannot edit the item from this operator
+            //return true or false based on whether we can or cannot edit the item from this container
             return false;
         }
-        core.on("dateUpdate", () => {
+        container.on("dateUpdate", () => {
             try {
                 if (me.container.visible())updateItemCapacitor.submit();
             } catch (e) {
@@ -155,7 +155,7 @@ core.registerOperator("calendar2", {
             }
         });
         
-        core.on("updateItem", (d) => {
+        container.on("updateItem", (d) => {
             this.updateItem(d.id, d.sender);
         });
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
@@ -289,7 +289,7 @@ core.registerOperator("calendar2", {
             this.processSettings();
         }
 
-        core.on("createItem", (d) => {
+        container.on("createItem", (d) => {
             try {
                 updateItemCapacitor.submit();
             } catch (e) {
@@ -297,7 +297,7 @@ core.registerOperator("calendar2", {
             }
         })
 
-        core.on("deleteItem", (d) => {
+        container.on("deleteItem", (d) => {
             try {
                 updateItemCapacitor.submit();
             } catch (e) {

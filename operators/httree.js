@@ -6,9 +6,9 @@ core.registerOperator(
   "httree", {
     outerScroll: true
   },
-  function (operator) {
+  function (container) {
     let me = this;
-    me.container = operator;
+    me.container = container;
     this.settings = {};
 
     this.style = document.createElement("style");
@@ -57,7 +57,7 @@ core.registerOperator(
     `;
 
 
-    operator.div.appendChild(this.style);
+    container.div.appendChild(this.style);
     this.rootdiv = document.createElement("div");
     this.rootdiv.style.minWidth = "100%";
     this.rootdiv.style.width = "fit-content";
@@ -70,7 +70,7 @@ core.registerOperator(
     this.secondaryDiv.classList.add("containerDiv");
     this.rootdiv.appendChild(this.secondaryDiv);
     this.settings.selected = undefined;
-    operator.div.appendChild(this.rootdiv);
+    container.div.appendChild(this.rootdiv);
     ///////////////////////////////////////////////////////////////////////////////////////
     //tutorial
     let tu = new _tutorial({
@@ -124,7 +124,7 @@ core.registerOperator(
           t = t.parentElement;
         }
         select(t.dataset.id);
-        core.fire("focus", {
+        container.fire("focus", {
           sender: me,
           id: t.dataset.id
         });
@@ -155,7 +155,7 @@ core.registerOperator(
           if (e.target.style.border) {
             core.items[e.target.parentElement.dataset.id].httree.collapsed = false;
             hide(e.target.parentElement.dataset.id);
-            core.fire("updateItem", {
+            container.fire("updateItem", {
               sender: me,
               id: e.target.parentElement.dataset.id
             });
@@ -170,7 +170,7 @@ core.registerOperator(
           if (me.settings.filter && !it[me.settings.filter]) {
             it[me.settings.filter] = true;
           }
-          core.fire("updateItem", {
+          container.fire("updateItem", {
             sender: me,
             id: id
           });
@@ -179,7 +179,7 @@ core.registerOperator(
           let id=e.target.parentElement.parentElement.dataset.id;
           if (me.settings.filter)delete core.items[id][me.settings.filter];
           else delete core.items[id].links;
-          core.fire("deleteItem", {
+          container.fire("deleteItem", {
             id: e.target.parentElement.parentElement.dataset.id,
             sender: me
           });
@@ -249,7 +249,7 @@ core.registerOperator(
       return false;
     };
 
-    core.on("updateItem", d => {
+    container.on("updateItem", d => {
       return this.drawItem(d.id);
     });
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -272,12 +272,12 @@ core.registerOperator(
     //while dragging, if hovering over a box, higlight one side
     this.rootdiv.addEventListener("drag", e => {
       //reset everyone
-      let dataids = operator.div.querySelectorAll("[data-id]");
+      let dataids = container.div.querySelectorAll("[data-id]");
       for (let i = 0; i < dataids.length; i++) {
         dataids[i].style.borderLeft = "none";
         dataids[i].style.borderRight = "none";
       }
-      let els = operator.div.elementsFromPoint(e.clientX, e.clientY);
+      let els = container.div.elementsFromPoint(e.clientX, e.clientY);
       for (let i = 0; i < els.length; i++) {
         if (els[i].matches("[data-id]")) {
           let deltaX = e.clientX - els[i].clientLeft;
@@ -292,7 +292,7 @@ core.registerOperator(
 
     //the drop itself
     this.drophandle = function (e) {
-      let dataids = operator.div.querySelectorAll("[data-id]");
+      let dataids = container.div.querySelectorAll("[data-id]");
       for (let i = 0; i < dataids.length; i++) {
         dataids[i].style.borderLeft = "none";
         dataids[i].style.borderRight = "none";
@@ -310,7 +310,7 @@ core.registerOperator(
         core.items[id].links.parent = core.items[dropLocation].links.parent;
         //insert the div itself
         divtarget.parentNode.insertBefore(draggingNode, divtarget.nextSibling);
-        core.fire("updateItem", {
+        container.fire("updateItem", {
           sender: this,
           id: id
         });
@@ -343,7 +343,7 @@ core.registerOperator(
     //This will be called for all items when the items are loaded.
     //This is also called when items are created.
 
-    core.on("focus", function (d) {
+    container.on("focus", function (d) {
       let id = d.id;
       let s = d.sender;
       if (s == me) return;
@@ -354,7 +354,7 @@ core.registerOperator(
       // An item was focused.
     });
 
-    core.on("deleteItem", function (d) {
+    container.on("deleteItem", function (d) {
       let id = d.id;
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
       if (cdiv) {
@@ -375,7 +375,7 @@ core.registerOperator(
       if (!e.target.parentElement.matches("[data-id]")) return;
       core.items[e.target.parentElement.dataset.id].title = e.target.value;
       let itemID = e.target.parentElement.dataset.id;
-      core.fire("updateItem", {
+      container.fire("updateItem", {
         id: itemID,
         sender: this
       });
@@ -393,7 +393,7 @@ core.registerOperator(
 
     //Register focus with core
     this.somethingwasfocused = function () {
-      core.fire("focus", {
+      container.fire("focus", {
         id: itemID,
         sender: this
       });
@@ -424,13 +424,13 @@ core.registerOperator(
         it[me.settings.filter] = true;
       }
       //register a change
-      core.fire("updateItem", {
+      container.fire("updateItem", {
         sender: me,
         id: id
       });
       deselect();
       select(id);
-      core.fire("updateItem", {
+      container.fire("updateItem", {
         id: id,
         sender: me
       });
@@ -475,7 +475,7 @@ core.registerOperator(
         if (!core.items[contextedElement].style)
           core.items[contextedElement].style = {};
         core.items[contextedElement].style[e.target.className] = e.target.value;
-        core.fire("updateItem", {
+        container.fire("updateItem", {
           sender: this,
           id: contextedElement
         });
@@ -575,7 +575,7 @@ core.registerOperator(
     this.dialogUpdateSettings = () => {
       this.settings.filter = this.dialogDiv.querySelector(".filterclass").value;
       // pull settings and update when your dialog is closed.
-      core.fire("updateView");
+      container.fire("updateView");
       for (let i = 0; i < this.secondaryDiv.children.length; i++) {
         this.secondaryDiv.children[i].remove();
       }

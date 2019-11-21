@@ -83,10 +83,10 @@ core.registerOperator("chat", {
         return false;
     }
 
-    //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", function (d) {
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", function (d) {
         let id = d.id;
-        //return true or false based on whether we can or cannot edit the item from this operator.
+        //return true or false based on whether we can or cannot edit the item from this container.
         //otherwise your items _may_ be deleted by the core garbage collector :/
         return update(id);
     });
@@ -110,7 +110,7 @@ core.registerOperator("chat", {
         }
         let id = core.insertItem(itm);
         this.rootdiv.querySelector(".entry>input").value = "";
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         })
@@ -124,7 +124,7 @@ core.registerOperator("chat", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
     }
 

@@ -71,7 +71,7 @@ function readyTutorial(core) {
 core.on("titleButtonsReady",()=>{
   document.querySelector("li.hleptute").addEventListener("click", ()=>{
     core.target().then((id)=>{
-      if (core.getOperator(id).baseOperator.startTutorial)core.getOperator(id).baseOperator.startTutorial();
+      if (core.getOperator(id).operator.startTutorial)core.getOperator(id).operator.startTutorial();
     })
   })
   document.querySelector("li.hlepdocs").addEventListener("click", ()=>{

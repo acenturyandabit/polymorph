@@ -112,10 +112,10 @@ function _contextMenuManager(root) {
         .contextMenu li:hover {
             background:pink;
         }
-        .contextMenu li .submenu {
+        .contextMenu li>ul {
             display:none;
         }
-        .contextMenu li:hover .submenu {
+        .contextMenu li:hover>ul {
             display: block;
             position: absolute;
             left: 100%;
@@ -123,6 +123,7 @@ function _contextMenuManager(root) {
             top: 0;
             padding: 0;
             background: white;
+            width: max-content;
         }
         `;
         thisCTXM.appendChild(s);

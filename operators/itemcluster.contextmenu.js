@@ -32,8 +32,9 @@ function _itemcluster_extend_contextmenu(me) {
                         x: coords.x + v.x,
                         y: coords.y + v.y,
                     }
+                    if (me.settings.filter)core.items[v.id][me.settings.filter]=true;
                     me.arrangeItem(v.id);
-                    core.fire("updateItem", {
+                    me.container.fire("updateItem", {
                         id: v.id,
                         sender: me
                     });
@@ -56,7 +57,7 @@ function _itemcluster_extend_contextmenu(me) {
             }
             for (let i in core.items) {
                 //second update to fix lines; also alert everyone of changes.
-                core.fire("updateItem", {
+                me.container.fire("updateItem", {
                     id: i
                 });
             }
@@ -179,7 +180,6 @@ function _itemcluster_extend_contextmenu(me) {
                 for (let i = 0; i < itm.children.length; i++) {
                     ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
                 }
-                me.arrangeItem(itm.id);
                 return itm.width;
             }
 
@@ -296,7 +296,7 @@ function _itemcluster_extend_contextmenu(me) {
                 for (let i = 0; i < itm.children.length; i++) {
                     ctT += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctT, dp + 1);
                 }
-                me.arrangeItem(itm.id);
+                //me.arrangeItem(itm.id);
                 return itm.angle;
             }
 
@@ -427,9 +427,9 @@ function _itemcluster_extend_contextmenu(me) {
             } else {
                 cartesianHierarchy(e, visibleItems);
             }
-
+            
             for (let i in core.items) {
-                core.fire("updateItem", {
+                me.container.fire("updateItem", {
                     id: i
                 });
             }
@@ -537,7 +537,7 @@ function _itemcluster_extend_contextmenu(me) {
             cids.forEach((cid) => {
                 if (!core.items[cid].style) core.items[cid].style = {};
                 core.items[cid].style[e.target.className] = e.target.value;
-                core.fire("updateItem", {
+                me.container.fire("updateItem", {
                     sender: me,
                     id: cid
                 });
@@ -568,7 +568,7 @@ function _itemcluster_extend_contextmenu(me) {
                 cids.forEach((cid) => {
                     core.items[cid].style = Object.assign({}, me.copiedStyle);
                     me.arrangeItem(cid);
-                    core.fire("updateItem", {
+                    me.container.fire("updateItem", {
                         sender: me,
                         id: cid
                     });
@@ -662,7 +662,7 @@ function _itemcluster_extend_contextmenu(me) {
             else {
                 core.items[me.trayContextedElement].itemcluster.viewData = {};//nerf it completely
             }
-            core.fire("updateItem", { id: me.trayContextedElement });
+            me.container.fire("updateItem", { id: me.trayContextedElement });
             me.trayContextMenu.style.display = "none";
         })
     });

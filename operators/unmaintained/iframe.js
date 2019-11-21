@@ -1,6 +1,6 @@
-core.registerOperator("miniBrowser", function (operator) {
+core.registerOperator("miniBrowser", function (container) {
     let me = this;
-    me.operator=operator;
+    me.container=container;
     this.settings = {};
 
     this.rootdiv = document.createElement("div");
@@ -13,9 +13,9 @@ core.registerOperator("miniBrowser", function (operator) {
     this.iframe = this.rootdiv.querySelector("iframe");
     this.goBtn = this.rootdiv.querySelector("button");
     this.input = this.rootdiv.querySelector("input");
-    operator.div.appendChild(this.rootdiv);
+    container.div.appendChild(this.rootdiv);
 
-    //hide if the operator is currently moving - just as a convenience measure?
+    //hide if the container is currently moving - just as a convenience measure?
 
 
     //////////////////Handle core item updates//////////////////
@@ -74,7 +74,7 @@ core.registerOperator("miniBrowser", function (operator) {
         //Restyle dialog to be a bit smaller
         me.dialog = me.dialog.querySelector(".dialog");
         me.innerDialog = me.dialog.querySelector(".innerDialog");
-        operator.div.appendChild(me.dialog);
+        container.div.appendChild(me.dialog);
         let d = document.createElement("div");
         d.innerHTML = `
         WHAT YOU WANT TO PUT IN YOUR DIALOG

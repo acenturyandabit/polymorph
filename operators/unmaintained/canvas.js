@@ -30,8 +30,8 @@ core.registerOperator("canvas", {
 
     //////////////////Handle core item updates//////////////////
 
-    //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", function (d) {
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
         return false;
@@ -49,7 +49,7 @@ core.registerOperator("canvas", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
     }
 

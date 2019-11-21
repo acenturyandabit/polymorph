@@ -78,6 +78,7 @@ var _option = (function () {
                 })
                 break;
             case "text":
+            case "number":
                 appendedElement = document.createElement("input");
                 appendedElement.style.display = "block";
                 appendedElement.addEventListener("input", (e) => {
@@ -157,6 +158,7 @@ var _option = (function () {
                         else appendedElement.checked = false;
                         break;
                     case "text":
+                    case "number":
                         if (actualObject[settings["property"]]) appendedElement.value = actualObject[settings["property"]] || "";
                         else appendedElement.value = "";
                         break;

@@ -111,7 +111,7 @@ core.registerOperator("turmach", {
 
     me.tray.addEventListener("input", (e) => {
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
-        core.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
+        container.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
     me.mapPageToSvgCoords = function (pageX, pageY, vb) {
@@ -185,7 +185,7 @@ core.registerOperator("turmach", {
         });*/
     }
     //////////////////////////// Focusing an item////////////////////
-    core.on("focus", (d) => {
+    container.on("focus", (d) => {
         if (d.sender == me) return;
         if (itemPointerCache[d.id] && core.items[d.id][me.propertyName].viewData[me.settings.currentViewName]) {
             core.items[me.settings.currentViewName][me.propertyName].cx = itemPointerCache[d.id].cx();
@@ -212,7 +212,7 @@ core.registerOperator("turmach", {
         }
     })
 
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
@@ -251,7 +251,7 @@ core.registerOperator("turmach", {
     this.viewName.addEventListener("keyup", function (e) {
         core.items[me.settings.currentViewName][me.propertyName].viewName =
             e.currentTarget.innerText;
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: me.settings.currentViewName,
             sender: me
         });
@@ -359,7 +359,7 @@ core.registerOperator("turmach", {
             if (!core.items[me.settings.currentViewName][me.propertyName].viewName) {
                 if (assert) {
                     core.items[me.settings.currentViewName][me.propertyName].viewName = core.items[ln].title || ln
-                    core.fire("updateItem", {
+                    container.fire("updateItem", {
                         id: me.settings.currentViewName
                     });
                 } else {
@@ -427,7 +427,7 @@ core.registerOperator("turmach", {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
         //register a change
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -447,7 +447,7 @@ core.registerOperator("turmach", {
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -465,13 +465,13 @@ core.registerOperator("turmach", {
         if (me.settings.filter) {
             delete core.items[viewName][me.settings.filter];
         }
-        core.fire("deleteItem", {
+        container.fire("deleteItem", {
             id: viewName
         });
         this.switchView();
     };
 
-    core.on("focus", (e) => {
+    container.on("focus", (e) => {
         if (e.sender == me) return;
         if (me.settings.operationMode == "focus") {
             if (e.sender.container.uuid == me.settings.focusOperatorID) {
@@ -504,7 +504,7 @@ core.registerOperator("turmach", {
                 }
                 me.rootcontextMenu.style.display = "none";
                 me.arrangeItem(core.shared.itemclusterCopyElement);
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     id: core.shared.itemclusterCopyElement,
                     sender: me
                 });
@@ -521,7 +521,7 @@ core.registerOperator("turmach", {
             }
             for (let i in core.items) {
                 //second update to fix lines; also alert everyone of changes.
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     id: i
                 });
             }
@@ -662,7 +662,7 @@ core.registerOperator("turmach", {
 
             for (let i in core.items) {
                 //second update to fix lines; also alert everyone of changes.
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     id: i
                 });
             }
@@ -734,7 +734,7 @@ core.registerOperator("turmach", {
             cids.forEach((cid) => {
                 if (!core.items[cid].style) core.items[cid].style = {};
                 core.items[cid].style[e.target.className] = e.target.value;
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: this,
                     id: cid
                 });
@@ -764,7 +764,7 @@ core.registerOperator("turmach", {
                 cids.forEach((cid) => {
                     core.items[cid].style = Object.assign({}, me.copiedStyle);
                     me.arrangeItem(cid);
-                    core.fire("updateItem", {
+                    container.fire("updateItem", {
                         sender: this,
                         id: cid
                     });
@@ -1111,7 +1111,7 @@ core.registerOperator("turmach", {
                     let contest = Number(relements[i].style["z-index"]);
                     if (minzind > contest) minzind = contest;
                 }
-                core.fire("focus", {
+                container.fire("focus", {
                     id: it.dataset.id,
                     sender: me
                 });
@@ -1257,7 +1257,7 @@ core.registerOperator("turmach", {
                         delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                         me.arrangeItem(cid);
                         me.addToTray(cid);
-                        core.fire("updateItem", { sender: me, id: cid });
+                        container.fire("updateItem", { sender: me, id: cid });
                     });
                     me.clearOutMovingDivs();
                     me.dragging = false;
@@ -1401,7 +1401,7 @@ core.registerOperator("turmach", {
             me.movingDivs.forEach((v) => {
                 me.updatePosition(v.el.node.dataset.id);
             })
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 sender: me,
                 id: cid
             });
@@ -1425,11 +1425,11 @@ core.registerOperator("turmach", {
                 //add a new line connecting the items
                 me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
                 //push the change
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: me,
                     id: me.linkingDiv.dataset.id
                 });
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: me,
                     id: linkedTo.dataset.id
                 });
@@ -1468,7 +1468,7 @@ core.registerOperator("turmach", {
         if (!core.items[id][me.propertyName].viewData[this.settings.currentViewName]) core.items[id][me.propertyName].viewData[this.settings.currentViewName] = {};
         core.items[id][me.propertyName].viewData[this.settings.currentViewName].x = it.x();
         core.items[id][me.propertyName].viewData[this.settings.currentViewName].y = it.y();
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: id
         });
         me.arrangeItem(id);
@@ -1491,7 +1491,7 @@ core.registerOperator("turmach", {
             itm[me.settings.filter] = true;
         }
         //register a change
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -1509,7 +1509,7 @@ core.registerOperator("turmach", {
             }
         }
         me.arrangeItem(id);
-        core.fire("deleteItem", {
+        container.fire("deleteItem", {
             id: id
         });
     };
@@ -1517,7 +1517,7 @@ core.registerOperator("turmach", {
     this.rootdiv.addEventListener("focus", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            core.fire("focus", {
+            container.fire("focus", {
                 id: id,
                 sender: me
             });
@@ -1531,7 +1531,7 @@ core.registerOperator("turmach", {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
             core.items[id].title = e.target.value;
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 id: id,
                 sender: this
             });
@@ -1604,7 +1604,7 @@ core.registerOperator("turmach", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
         if (this.settings.viewpath) {
             this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
@@ -1624,9 +1624,9 @@ core.registerOperator("turmach", {
       <option value="standalone">Standalone</option>
       <option value="focus">Display view from focused item</option>
       </select>
-      <h2>Operator to link focus to:<h2>
-      <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-      <button class="targeter">Select operator</button>
+      <h2>container to link focus to:<h2>
+      <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+      <button class="targeter">Select container</button>
       `;
     let options = {
         tray: new _option({
@@ -1668,7 +1668,7 @@ core.registerOperator("turmach", {
             me.settings[its[i].dataset.role] = its[i].value;
         }
         updateSettings();
-        core.fire("updateView");
+        container.fire("updateView");
         // pull settings and update when your dialog is closed.
     }
     //extension API
@@ -1688,7 +1688,7 @@ core.registerOperator("turmach", {
             core.items[id][me.propertyName].viewData[me.settings.currentViewName].x = x;
             core.items[id][me.propertyName].viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
-            core.fire("updateItem", { id: id, sender: me });
+            container.fire("updateItem", { id: id, sender: me });
             return id;
         }
     }

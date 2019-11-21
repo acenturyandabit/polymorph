@@ -94,10 +94,12 @@ function _itemcluster_extend_svg(me) { // very core functions!
         //draw its lines
         if (core.items[id].to) {
             for (let i in core.items[id].to) {
-                if (i == me.prevFocusID || id == me.prevFocusID) {
-                    me.enforceLine(id, i, "red");
-                } else {
-                    me.enforceLine(id, i);
+                if (core.items[i] && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                    if (i == me.prevFocusID || id == me.prevFocusID) {
+                        me.enforceLine(id, i, "red");
+                    } else {
+                        me.enforceLine(id, i);
+                    }
                 }
             }
         }
@@ -140,27 +142,32 @@ function _itemcluster_extend_svg(me) { // very core functions!
         if (!sd || !ed) {
             return;
         }
+
         //check if line already exists
+        let cp;
         if (me.activeLines[start] && me.activeLines[start][end]) {
-            //if so, remove
-            me.activeLines[start][end].remove();
+            //if so, edit instead of create
+            cp = me.activeLines[start][end];
+        } else {
+            if (!me.activeLines[start]) me.activeLines[start] = {};
+            cp = me.svg.path().stroke({ width: 2, color: style });;
+            cp.marker('mid', 9, 6, function (add) {
+                add.path("M0,0 L0,6 L9,3 z").fill(style);
+            })
+            me.activeLines[start][end] = cp;
         }
 
         //if either is not visible, then dont draw
         if (sd.style.display == "none" || ed.style.display == "none") {
+            cp.hide();
             return;
         } else {
-            if (!me.activeLines[start]) me.activeLines[start] = {};
             let x = [sd.cx(), 0, ed.cx()];
             let y = [sd.cy(), 0, ed.cy()];
             x[1] = (x[0] + x[2]) / 2;
             y[1] = (y[0] + y[2]) / 2;
-            let l = me.svg.path(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`).stroke({ width: 2, color: style });
-            l.marker('mid', 9, 6, function (add) {
-                add.path("M0,0 L0,6 L9,3 z").fill(style);
-            })
-            me.activeLines[start][end] = l;
-            l.back();
+            cp.plot(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`);
+            cp.back();
         }
     };
 

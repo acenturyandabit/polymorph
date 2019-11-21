@@ -1,16 +1,16 @@
-core.registerOperator("subframe", {targetForward:true, hidden:true},function (operator) {
+core.registerOperator("subframe", {targetForward:true, hidden:true},function (container) {
     let me = this;
-    me.container=operator;
+    me.container=container;
     this.settings = {};
     this.rdv= document.createElement("div");
     this.rdv.innerHTML=`
     <div style="margin-left: 10px">
     
-        <p>Add an operator...</p>
+        <p>Add an container...</p>
     </div>
     
     `
-    //issue: operator may not be tied yet-- in which case, wait.
+    //issue: container may not be tied yet-- in which case, wait.
     setTimeout(()=>{this.container.tab.appendChild(this.rdv)});
     //Add div HTML here
     this.rect=new _rect(core,undefined);

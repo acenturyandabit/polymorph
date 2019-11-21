@@ -1,6 +1,6 @@
-core.registerOperator("itemList", function (operator) {
+core.registerOperator("itemList", function (container) {
     let me = this;
-    me.container = operator;
+    me.container = container;
     //Initialise with default settings
     this.settings = {
         properties: {
@@ -38,7 +38,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskList = document.createElement("div");
     this.taskList.style.cssText = "height:100%; overflow-y:auto; min-width:fit-content;";
     this.taskListBar.appendChild(this.taskList);
-    operator.div.appendChild(htmlwrap(
+    container.div.appendChild(htmlwrap(
         `<style>
         input{
             background: inherit;
@@ -96,7 +96,7 @@ core.registerOperator("itemList", function (operator) {
     ));
     //Resize credits to u/MoonLite on stackoverflow
 
-    operator.div.appendChild(this.taskListBar);
+    container.div.appendChild(this.taskListBar);
 
     let getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
         if (!this.renderedItemsCache) {
@@ -151,7 +151,7 @@ core.registerOperator("itemList", function (operator) {
                 fi = core.items[fiid];
                 if (!fi.to) fi.to = {};
                 fi.to[id] = true;
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     id: fiid,
                     sender: me
                 });
@@ -161,7 +161,7 @@ core.registerOperator("itemList", function (operator) {
             me.taskList.appendChild(currentItemSpan);
         }
         this.renderedItemsCache = undefined;
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: id,
             sender: me
         });
@@ -332,7 +332,7 @@ core.registerOperator("itemList", function (operator) {
         sortcap.submit();
     }
 
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let s = d.sender;
         me.settings.currentID = id;
@@ -446,7 +446,7 @@ core.registerOperator("itemList", function (operator) {
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
             delete core.items[e.target.parentElement.dataset.id][me.settings.filterProp];
-            core.fire("deleteItem", {
+            container.fire("deleteItem", {
                 id: e.target.parentElement.dataset.id,
                 sender: this
             });
@@ -462,7 +462,7 @@ core.registerOperator("itemList", function (operator) {
         }
     }
 
-    core.on("deletedItem", (d) => {
+    container.on("deletedItem", (d) => {
         me.deleteItem(d.id);
     });*/
     this.reRenderEverything = () => {
@@ -477,11 +477,11 @@ core.registerOperator("itemList", function (operator) {
     }
 
     //resizing
-    operator.div.addEventListener("mousemove", (e) => {
+    container.div.addEventListener("mousemove", (e) => {
         if (e.buttons) {
             for (let i = 0; i < e.path.length; i++) {
                 if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                    let els = operator.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
+                    let els = container.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
                     for (let j = 0; j < els.length; j++)els[j].style.width = e.path[i].clientWidth;
                     this.settings.propertyWidths[e.path[i].dataset.containsRole] = e.path[i].clientWidth;
                     break;
@@ -563,7 +563,7 @@ core.registerOperator("itemList", function (operator) {
         }
 
         //match all the item data and currentItem data
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: e.target.parentElement.parentElement.parentElement.dataset.id,
             sender: me
         });
@@ -594,7 +594,7 @@ core.registerOperator("itemList", function (operator) {
 
     this.taskList.addEventListener("focusin", (e) => {
         if (e.target.matches("input")) {
-            core.fire("focus", {
+            container.fire("focus", {
                 id: e.target.parentElement.parentElement.parentElement.dataset.id,
                 sender: this
             });
@@ -646,7 +646,7 @@ core.registerOperator("itemList", function (operator) {
             }
             //sort everything
             me.sortItems();
-            core.fire("dateUpdate");
+            container.fire("dateUpdate");
         }
         me.datereparse();
     })
@@ -654,7 +654,7 @@ core.registerOperator("itemList", function (operator) {
     scriptassert([
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
-        let ctm = new _contextMenuManager(operator.div);
+        let ctm = new _contextMenuManager(container.div);
         let contextedItem;
         let contextedInput;
         let contextedProp;
@@ -699,7 +699,7 @@ core.registerOperator("itemList", function (operator) {
 
             if (!core.items[cid].style) core.items[cid].style = {};
             core.items[cid].style[e.target.className] = e.target.value;
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 sender: this,
                 id: cid
             });
@@ -729,13 +729,13 @@ core.registerOperator("itemList", function (operator) {
     <select data-role="operationMode">
     <option value="static">Display static list</option>
     <option value="focus">Display focused list</option>
-    <option value="iface">Link to another operator...</option>
+    <option value="iface">Link to another container...</option>
     </select>
     <p>View items with the following property:</p> 
     <input data-role='filterProp' placeholder = 'Property name'></input>
-    <p>Operator to focus on:</p> 
-    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-    <button class="targeter">Select operator</button>
+    <p>container to focus on:</p> 
+    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+    <button class="targeter">Select container</button>
     `;
     let options = {
         entryok: new _option({
@@ -833,7 +833,7 @@ core.registerOperator("itemList", function (operator) {
         // pull settings and update when your dialog is closed.
         me.updateSettings();
         me.sortItems();
-        core.fire("updateView");
+        container.fire("updateView");
     }
 
     //adding new buttons
@@ -882,7 +882,7 @@ core.registerOperator("itemList", function (operator) {
     //sort by date checkbox
     //Style tags button
 
-    core.on("focus", function (data) {
+    container.on("focus", function (data) {
         if (me.settings.operationMode == "focus") {
             if (data.sender.container.container.uuid == me.settings.focusOperatorID) {
                 me.settings.filterProp = data.id;
@@ -901,7 +901,7 @@ core.registerOperator("itemList", function (operator) {
                     obj = v;
                 }
                 let id = core.insertItem(obj);
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     id: id
                 });
                 createdIDs.push(id);

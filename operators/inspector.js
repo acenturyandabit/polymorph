@@ -2,9 +2,9 @@
 core.registerOperator("inspector", {
     displayName: "Inspector",
     description: "Inspect all properties of a given element."
-}, function (operator) {
+}, function (container) {
     let me = this;
-    me.container = operator;
+    me.container = container;
     me.settings = {
         operationMode: "focus",
         currentItem: "",
@@ -43,7 +43,7 @@ core.registerOperator("inspector", {
             item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
         }
         let id = core.insertItem(item)
-        core.fire("updateItem", { id: id });
+        container.fire("updateItem", { id: id });
         me.settings.currentItem = undefined;
         //clear modified class on item
         for (let i = 0; i < me.internal.children.length; i++) {
@@ -57,7 +57,7 @@ core.registerOperator("inspector", {
             for (let i = 0; i < me.internal.children.length; i++) {
                 item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
             }
-            core.fire("updateItem", { id: me.settings.currentItem });
+            container.fire("updateItem", { id: me.settings.currentItem });
             //clear modified class on item
             for (let i = 0; i < me.internal.children.length; i++) {
                 me.internal.children[i].classList.remove("modified");
@@ -76,14 +76,14 @@ core.registerOperator("inspector", {
             if (me.settings.propsOn) me.settings.propsOn[e.target.value] = me.rootdiv.querySelector("[data-role='nttype']").value;
             me.renderItem(me.settings.currentItem);
             e.target.value = "";
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 sender: me,
                 id: me.settings.currentItem
             });
 
         }
     })
-    operator.div.appendChild(htmlwrap(
+    container.div.appendChild(htmlwrap(
         `
         <style>
         h4{
@@ -95,12 +95,12 @@ core.registerOperator("inspector", {
         </style>
     `
     ));
-    operator.div.appendChild(me.rootdiv);
+    container.div.appendChild(me.rootdiv);
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Actual editing the item
     let upc = new capacitor(300, 40, (id) => {
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: id,
             sender: me
         });
@@ -136,14 +136,14 @@ core.registerOperator("inspector", {
         me.datereparse = function (it, i) {
             it[i].date = dateParser.richExtractTime(it[i].datestring);
             if (!it[i].date.length) it[i].date = undefined;
-            core.fire("dateUpdate");
+            container.fire("dateUpdate");
         }
     });
 
     scriptassert([
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
-        let ctm = new _contextMenuManager(operator.div);
+        let ctm = new _contextMenuManager(container.div);
         let contextedItem;
         let menu;
 
@@ -261,7 +261,7 @@ core.registerOperator("inspector", {
     //First time load
     me.renderItem(me.settings.currentItem);
 
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
@@ -281,7 +281,7 @@ core.registerOperator("inspector", {
             if (!core.items[staticItem]) {
                 let it = {};
                 core.items[staticItem] = it;
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: this,
                     id: staticItem
                 });
@@ -340,7 +340,7 @@ core.registerOperator("inspector", {
             type: "text",
             object: me.settings,
             property: "focusOperatorID",
-            label: "Set operator UID to focus from:"
+            label: "Set container UID to focus from:"
         }),
         orientation: new _option({
             div: this.optionsDiv,
@@ -384,14 +384,14 @@ core.registerOperator("inspector", {
             type: "bool",
             object: me.settings,
             property: "globalEnabled",
-            label: "Focus: listen for every operator (regardless of origin)",
+            label: "Focus: listen for every container (regardless of origin)",
         })
     }
     let more = document.createElement('div');
     more.innerHTML = `
-    <p> Or, click to target 'focus' events from an operator...
-    <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-    <button class="targeter">Select operator</button>
+    <p> Or, click to target 'focus' events from an container...
+    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+    <button class="targeter">Select container</button>
     </br>
     `;
     this.dialogDiv.appendChild(more);
@@ -451,7 +451,7 @@ core.registerOperator("inspector", {
     })
 
     //Core will call me when an object is focused on from somewhere
-    core.on("focus", function (d) {
+    container.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (me.settings.operationMode == "focus") {
@@ -477,7 +477,7 @@ core.registerOperator("inspector", {
             }
         }
     });
-    core.on("deleteItem", function (d) {
+    container.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
         if (me.settings.currentItem == id) {

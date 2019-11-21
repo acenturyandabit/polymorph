@@ -111,7 +111,7 @@ core.registerOperator("itemcluster2", {
 
     me.tray.addEventListener("input", (e) => {
         core.items[e.target.parentElement.dataset.id].title = e.target.value;
-        core.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
+        container.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +137,7 @@ core.registerOperator("itemcluster2", {
         });*/
     }
     //////////////////////////// Focusing an item////////////////////
-    core.on("focus", (d) => {
+    container.on("focus", (d) => {
         if (d.sender == me) return;
         if (this.itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
             core.items[me.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
@@ -163,13 +163,21 @@ core.registerOperator("itemcluster2", {
             }
         }
     })
-    this.itemIsitemcluster = (id) => {
-        return (core.items[id].itemcluster && (core.items[id].itemcluster.viewData || core.items[id].itemcluster.viewName)) != undefined;
-    }
     this.itemIsOurs = (id) => {
-        return this.itemIsitemcluster(id) && (!(me.settings.filter) || core.items[id][me.settings.filter]);
+        // I will be shown at some point by this container
+        let isFiltered = (core.items[id][this.settings.filter] != undefined);
+        let hasView = core.items[id].itemcluster != undefined && core.items[id].itemcluster.viewName != undefined;
+        if (core.items[id].itemcluster && core.items[id].itemcluster.viewData) {
+            for (let i in core.items[id].itemcluster.viewData) {
+                if (core.items[i] && ((!this.settings.filter) || (core.items[i][this.settings.filter] != undefined))) {
+                    hasView = true;
+                }
+            }
+        }
+        return (hasView || this.settings.tray) && (!(this.settings.filter) || isFiltered);
+
     }
-    core.on("updateItem", (d) => {
+    container.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
@@ -191,7 +199,7 @@ core.registerOperator("itemcluster2", {
                 }
             }
         }
-        return this.itemIsitemcluster(id); // fix this soon pls
+        return this.itemIsOurs(id); // fix this soon pls
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -206,7 +214,7 @@ core.registerOperator("itemcluster2", {
     this.viewName.addEventListener("keyup", function (e) {
         core.items[me.settings.currentViewName].itemcluster.viewName =
             e.currentTarget.innerText;
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: me.settings.currentViewName,
             sender: me
         });
@@ -353,8 +361,9 @@ core.registerOperator("itemcluster2", {
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
+        core.items[id] = itm;//in case we are creating from scratch
         //register a change
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -366,7 +375,7 @@ core.registerOperator("itemcluster2", {
         let newName = "Copy of " + core.items[me.settings.currentViewName].itemcluster.viewName;
         let id = me.makeNewView();
         core.items[id].itemcluster.viewName = newName;
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -380,17 +389,15 @@ core.registerOperator("itemcluster2", {
     };
     this.destroyView = function (viewName, auto) {
         // Destroy the itemcluster property of the item but otherwise leave it alone
-        delete core.items[viewName].itemcluster.viewName;
         if (me.settings.filter) {
             delete core.items[viewName][me.settings.filter];
+        } else {
+            delete core.items[viewName].itemcluster.viewName;
         }
-        core.fire("deleteItem", {
-            id: viewName
-        });
         this.switchView();
     };
 
-    core.on("focus", (e) => {
+    container.on("focus", (e) => {
         if (e.sender == me) return;
         if (me.settings.operationMode == "focus") {
             if (e.sender.container.uuid == me.settings.focusOperatorID) {
@@ -438,7 +445,7 @@ core.registerOperator("itemcluster2", {
         }
     });
 
-    this.itemSpace.addEventListener("dblclick", function (e) {
+    this.itemSpace.addEventListener("dblclick", (e) => {
         if (me.preselected) {
             me.preselected.classList.remove("selected");
             me.preselected.classList.remove("anchored");
@@ -464,7 +471,7 @@ core.registerOperator("itemcluster2", {
         me.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
         me.movingDivs = [];//empty them
     }
-    this.itemSpace.addEventListener("mousedown", function (e) {
+    this.itemSpace.addEventListener("mousedown", (e) => {
         if (e.target.matches(".floatingItem") || e.target.matches(".floatingItem *")) {
             // If we are clicking on an item:
             if (e.which != 1) return;
@@ -504,7 +511,7 @@ core.registerOperator("itemcluster2", {
                 this.itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
                 //adjust x indexes
                 this.itemPointerCache[it.dataset.id].front();
-                core.fire("focus", {
+                container.fire("focus", {
                     id: it.dataset.id,
                     sender: me
                 });
@@ -551,7 +558,7 @@ core.registerOperator("itemcluster2", {
         }
     });
 
-    this.itemSpace.addEventListener("mousemove", function (e) {
+    this.itemSpace.addEventListener("mousemove", (e) => {
         //stop from creating an item if we are resizing another item
         if (Math.abs(e.offsetX - me.mouseStoredX) > 5 || Math.abs(e.offsetY - me.mouseStoredY) > 5) {
             me.possibleResize = true;
@@ -643,7 +650,7 @@ core.registerOperator("itemcluster2", {
                         delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                         me.arrangeItem(cid);
                         me.addToTray(cid);
-                        core.fire("updateItem", { sender: me, id: cid });
+                        container.fire("updateItem", { sender: me, id: cid });
                     });
                     me.clearOutMovingDivs();
                     me.dragging = false;
@@ -801,7 +808,7 @@ core.registerOperator("itemcluster2", {
             me.movingDivs.forEach((v) => {
                 me.updatePosition(v.el.node.dataset.id);
             })
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 sender: me,
                 id: cid
             });
@@ -825,11 +832,11 @@ core.registerOperator("itemcluster2", {
                 //add a new line connecting the items
                 me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
                 //push the change
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: me,
                     id: me.linkingDiv.dataset.id
                 });
-                core.fire("updateItem", {
+                container.fire("updateItem", {
                     sender: me,
                     id: linkedTo.dataset.id
                 });
@@ -867,7 +874,7 @@ core.registerOperator("itemcluster2", {
         this.alignGrid(it);
         core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
         core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: id
         });
         me.arrangeItem(id);
@@ -890,7 +897,7 @@ core.registerOperator("itemcluster2", {
             itm[me.settings.filter] = true;
         }
         //register a change
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -908,7 +915,7 @@ core.registerOperator("itemcluster2", {
             }
         }
         me.arrangeItem(id);
-        core.fire("deleteItem", {
+        container.fire("deleteItem", {
             id: id
         });
     };
@@ -916,7 +923,7 @@ core.registerOperator("itemcluster2", {
     this.rootdiv.addEventListener("focus", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            core.fire("focus", {
+            container.fire("focus", {
                 id: id,
                 sender: me
             });
@@ -930,7 +937,7 @@ core.registerOperator("itemcluster2", {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
             core.items[id].title = e.target.value;
-            core.fire("updateItem", {
+            container.fire("updateItem", {
                 id: id,
                 sender: this
             });
@@ -970,6 +977,9 @@ core.registerOperator("itemcluster2", {
             //show the tray
             me.emptyTray();
             me.tray.style.display = "flex";
+            if (me.settings.filter && core.items[me.settings.currentViewName] && !core.items[me.settings.currentViewName][me.settings.filter]) {
+                core.items[me.settings.currentViewName][me.settings.filter] = true; // quick upgrade - to remove in future once things have settled
+            }
             //also populate the tray
             for (let i in core.items) {
                 if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
@@ -988,7 +998,6 @@ core.registerOperator("itemcluster2", {
             me.viewGrid();
         }
     }
-    updateSettings();
     this.refresh = function () {
         if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
         me.switchView(me.settings.currentViewName, true);
@@ -1006,7 +1015,7 @@ core.registerOperator("itemcluster2", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
         if (this.settings.viewpath) {
             this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
@@ -1026,9 +1035,9 @@ core.registerOperator("itemcluster2", {
       <option value="standalone">Standalone</option>
       <option value="focus">Display view from focused item</option>
       </select>
-      <h2>Operator to link focus to:<h2>
-      <input data-role="focusOperatorID" placeholder="Operator UID (use the button)">
-      <button class="targeter">Select operator</button>
+      <h2>container to link focus to:<h2>
+      <input data-role="focusOperatorID" placeholder="container UID (use the button)">
+      <button class="targeter">Select container</button>
       `;
     let options = {
         tray: new _option({
@@ -1070,7 +1079,7 @@ core.registerOperator("itemcluster2", {
             me.settings[its[i].dataset.role] = its[i].value;
         }
         updateSettings();
-        core.fire("updateView");
+        container.fire("updateView");
         // pull settings and update when your dialog is closed.
     }
     //extension API
@@ -1090,7 +1099,7 @@ core.registerOperator("itemcluster2", {
             core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
             core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
-            core.fire("updateItem", { id: id, sender: me });
+            container.fire("updateItem", { id: id, sender: me });
             return id;
         }
     }

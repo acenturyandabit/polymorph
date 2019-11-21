@@ -31,7 +31,7 @@ core.changePalette = function (palette) {
     }
 }
 
-core.operator.prototype.changePalette = function (palette) {
+core.container.prototype.changePalette = function (palette) {
     this.topdiv.style.background = palette.containerInnerColour;
 }
 

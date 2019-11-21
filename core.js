@@ -133,7 +133,7 @@ function _core() {
             type: type
         });
         for (let i = 0; i < this.operatorLoadCallbacks[type]; i++) {
-            this.operatorLoadCallbacks[type][i].op.reload(
+            this.operatorLoadCallbacks[type][i].op.fromSaveData(
                 this.operatorLoadCallbacks[type][i].data
             );
         }

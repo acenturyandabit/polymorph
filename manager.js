@@ -9,7 +9,7 @@ var __manager_profiles = {
             ["core_docLoading", "core_modules/core.docLoading.js"],
             ["core_dataUtils", "core_modules/core.dataUtils.js"],
             ["core_view", "core.view.js"],
-            ["operator", "operator.js"],
+            ["container", "container.js"],
         ]
     },
     operators: {

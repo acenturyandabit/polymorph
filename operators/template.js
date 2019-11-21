@@ -14,12 +14,12 @@ core.registerOperator("template", {
 
     //////////////////Handle core item updates//////////////////
 
-    //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", function (d) {
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
 
-        //return true or false based on whether we can or cannot edit the item from this operator.
+        //return true or false based on whether we can or cannot edit the item from this container.
         //otherwise your items will be deleted by the core garbage collector when the user saves.
         return false;
     });
@@ -34,7 +34,7 @@ core.registerOperator("template", {
     }
 
     this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
     }
 
@@ -45,7 +45,7 @@ core.registerOperator("template", {
         // update your dialog elements with your settings
     }
     this.dialogUpdateSettings=function(){
-        // pull settings and update when your dialog is closed.
+        // This is called when your dialog is closed. Use it to update your container!
     }
 
 });

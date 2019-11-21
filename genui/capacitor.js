@@ -2,6 +2,14 @@
 //Capacitor: for storing calls to an external api which shouldn't be called frequently (e.g. a firebase backend or XHR!)
 //arguments: t: time between requests. load: the number of requests after which to submit the request. send: function to send the data to.
 //call function: submit(uuid(optional), data(optional)): submit some data to the capacitor.
+/*
+How to use: 
+
+let c = new capacitor();
+c.submit(uuid,data);
+c.forceSend();
+*/
+
 function capacitor(t, limit, send, settings={}, checkInterval = 100) {
     let options={
         fireFirst: false,

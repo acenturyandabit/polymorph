@@ -9,9 +9,9 @@ core.registerOperator("timeline", {
         displayName: "Timeline",
         description: "A timeline based on vis.js. Pretty clean, for the most part."
     },
-    function (operator) {
+    function (container) {
         let me = this;
-        me.container = operator;
+        me.container = container;
         this.settings = {
             dateproperty: "datestring",
             dateRetrieval: "rDate", // "mDate", //"sDate", // now second iteration of date. Change to sdate to fallback to old version.
@@ -28,7 +28,7 @@ core.registerOperator("timeline", {
         this.rootdiv.appendChild(this.cstyle);
         this.timediv=document.createElement("div");
         this.rootdiv.appendChild(this.timediv);
-        operator.div.appendChild(this.rootdiv);
+        container.div.appendChild(this.rootdiv);
         //Add div HTML here
         scriptassert([
             ['timeline', '3pt/timeline.js'],
@@ -54,7 +54,7 @@ core.registerOperator("timeline", {
                     }
                 }
             }
-            core.on("updateItem", (d) => {
+            container.on("updateItem", (d) => {
                 me.updateItem(d.id);
             })
             let timeline = new timeline.Timeline(me.timediv, me.dataset,{});
@@ -62,12 +62,12 @@ core.registerOperator("timeline", {
             
             timeline.on('select', (e) => {
                 //console.log(Object.keys[e.items]);
-                core.fire("focus", {
+                container.fire("focus", {
                     id: e.items[0],
                     sender: me
                 });
             })
-            core.on("dateUpdate", me.updateItem);
+            container.on("dateUpdate", me.updateItem);
         });
 
         

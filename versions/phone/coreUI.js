@@ -95,7 +95,7 @@ core.on("documentCreated", (id) => {
 core.showOperator = function (op) {
     if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
     document.body.querySelector("#body").appendChild(op.topdiv);
-    if (op.baseOperator && op.baseOperator.refresh) op.baseOperator.refresh();
+    if (op.operator && op.operator.refresh) op.operator.refresh();
     core.currentOperator = op;
     core.fire("operatorChanged");
 }

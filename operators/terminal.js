@@ -3,7 +3,7 @@ core.registerOperator("terminal", {
     description: "A command-line way of interacting with polymorph. Designed to facilitate integrations with other clients!"
 }, function (container) {
     let me = this;
-    me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
+    me.container = container; //you can delete this line - but remember that this is enforced by the container.
     this.settings = {
         opmode: "console"
     };
@@ -68,17 +68,17 @@ core.registerOperator("terminal", {
         },
         co: {
             regex: /^co(?: (.+))*$/ig,
-            help: "This command can be thought of an equivalent to cd, for operators. Type co $1 to focus on an operator, or simply co to output the current operator.",
+            help: "This command can be thought of an equivalent to cd, for operators. Type co $1 to focus on an container, or simply co to output the current container.",
             operate: function (regres, state) {
                 if (regres[1]) {
-                    state.operator = core.getOperator(regres[1]);
+                    state.container = core.getOperator(regres[1]);
                 }
-                if (state.operator.uuid){
-                    state.output(JSON.stringify(state.operator.uuid));
-                }else{
-                    state.output("No operator selected.");
+                if (state.container.uuid) {
+                    state.output(JSON.stringify(state.container.uuid));
+                } else {
+                    state.output("No container selected.");
                 }
-                
+
             }
         },
         lo: {
@@ -160,7 +160,7 @@ core.registerOperator("terminal", {
         },
         no: {
             regex: /^no (.+?) \"(.+?)\"$/ig,
-            help: "This command can be thought of as an equivalent to nano, for items. Type no $1 \"$2\" to set property $1 on the current operator to $2.",
+            help: "This command can be thought of as an equivalent to nano, for items. Type no $1 \"$2\" to set property $1 on the current container to $2.",
             operate: function (regres, state) {
                 let cit = core.items[regres[1]];
                 if (!cit) {
@@ -223,6 +223,21 @@ core.registerOperator("terminal", {
                 id = core.insertItem(itm);
                 state.output("Item created with id " + id);
                 //query "https://www.ycombinator.com/companies/" "tr"
+                container.fire("updateItem", { id: id });
+            }
+        },
+        upii: {
+            regex: /^upii (\w+) (.+?)$/ig,
+            name: "upii",
+            help: "Update an item from JSON.",
+            operate: function (regres, state) {
+                let itm = {};
+                let _itm = JSON.parse(regres[2]);
+                if (!core.items[regres[1]]) core.items[regres[1]] = {};
+                Object.assign(core.items[regres[1]], _itm);
+                state.output("Item updated with id " + regres[1]);
+                //query "https://www.ycombinator.com/companies/" "tr"
+                container.fire("updateItem", { id: regres[1] });
             }
         },
         cron: {
@@ -242,36 +257,36 @@ core.registerOperator("terminal", {
         },
         call: {
             name: "call",
-            help: "Call a callable function on the current operator.",
+            help: "Call a callable function on the current container.",
             regex: /^call (.+?)\((.+)\)$/ig,
             operate: function (regres, state) {
-                if (!state.operator) {
-                    state.output("No operator selected!");
+                if (!state.container) {
+                    state.output("No container selected!");
                     return;
                 }
-                if (state.operator.baseOperator.callables[regres[1]]) {
+                if (state.container.container.callables[regres[1]]) {
                     try {
-                        state.output(state.operator.baseOperator.callables[regres[1]](JSON.parse(regres[2])));
+                        state.output(state.container.container.callables[regres[1]](JSON.parse(regres[2])));
                     } catch (e) {
                         state.output(e);
                     }
                 } else {
-                    state.output("This operator does not have a function called " + regres[1] + " :/");
+                    state.output("This container does not have a function called " + regres[1] + " :/");
                 }
             }
         },
         fx: {
             regex: /^fx$/ig,
-            help: "List callable functions on the currently selected operator.",
+            help: "List callable functions on the currently selected container.",
             operate: function (regres, state) {
-                if (!state.operator) {
-                    state.output("No operator selected!");
+                if (!state.container) {
+                    state.output("No container selected!");
                     return;
                 }
-                if (state.operator.baseOperator.callables) {
-                    state.output(Object.keys(state.operator.baseOperator.callables));
+                if (state.container.container.callables) {
+                    state.output(Object.keys(state.container.container.callables));
                 } else {
-                    state.output("This operator does not have callable functions :/ Contact the dev and make some suggestions!");
+                    state.output("This container does not have callable functions :/ Contact the dev and make some suggestions!");
                 }
             }
         }
@@ -429,10 +444,11 @@ core.registerOperator("terminal", {
         }
     }
 
-    this.fromSaveData = function (d) {
-        //this is called when your operator is started OR your operator loads for the first time
+    this.fromSaveData = (d) => {
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
         me.textarea.value = this.settings.record;
+        if (this.settings.wsthru || this.settings.wsautocon) this.tryEstablishWS();
     }
 
     this.tryEstablishWS = function () {
@@ -459,7 +475,13 @@ core.registerOperator("terminal", {
                         me.storedCommand = undefined;
                     }
                 }
+                this.ws.onclose = function (e) {
+                    if (me.settings.wsautocon) {
+                        setTimeout(me.tryEstablishWS, 1000);
+                    }
+                }
             } catch (e) {
+                if (me.settings.wsautocon) setTimeout(me.tryEstablishWS, 1000);
                 me.state.outputToUser('Failed to connect.');
                 console.log(e);
             }

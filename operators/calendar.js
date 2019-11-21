@@ -3,9 +3,9 @@
         displayName: "Calendar",
         description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
     },
-        function (operator) {
+        function (container) {
             let me = this;
-            me.container = operator;
+            me.container = container;
             this.settings = {
                 dateproperties: ["datestring"],
                 titleproperty: 'title',
@@ -75,7 +75,7 @@
                         callback(allList);
                     },
                     eventClick: function (calEvent, jsEvent, view) {
-                        core.fire("focus", {
+                        container.fire("focus", {
                             id: calEvent.id,
                             sender: me
                         })
@@ -89,7 +89,7 @@
                     height: "parent"
                 });
             });
-            operator.div.appendChild(this.rootdiv);
+            container.div.appendChild(this.rootdiv);
             //Handle item updates
             let updateItemCapacitor = new capacitor(1000, 1000, () => {
                 try {
@@ -103,10 +103,10 @@
                 if (!core.items[id][me.settings.dateproperty]) return;
                 updateItemCapacitor.submit();
                 //Check if item is shown
-                //return true or false based on whether we can or cannot edit the item from this operator
+                //return true or false based on whether we can or cannot edit the item from this container
                 return false;
             }
-            core.on("dateUpdate", () => {
+            container.on("dateUpdate", () => {
                 try {
                     if (me.container.visible()) $(me.rootdiv).fullCalendar('refetchEvents');
                 } catch (e) {
@@ -114,7 +114,7 @@
                 }
             });
 
-            core.on("updateItem", (d) => {
+            container.on("updateItem", (d) => {
                 this.updateItem(d.id, d.sender);
             });
             //Handle a change in settings (either from load or from the settings dialog or somewhere else)
@@ -284,7 +284,7 @@
                 this.processSettings();
             }
 
-            core.on("deleteItem", (d) => {
+            container.on("deleteItem", (d) => {
                 try {
                     $(me.rootdiv).fullCalendar('refetchEvents');
                 } catch (e) {

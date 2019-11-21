@@ -128,7 +128,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             //just refresh the tabspan.
         }
         operator.rect = this;
-        if (operator.baseOperator && operator.baseOperator.refresh) operator.baseOperator.refresh();
+        if (operator.operator && operator.operator.refresh) operator.operator.refresh();
     }
 
     //Callback for tab clicks to switch between operators.
@@ -138,7 +138,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.innerDivs[i].style.display = "none";
         }
         if (this.innerDivs[index]) this.innerDivs[index].style.display = "block";
-        if (this.operators[index] && this.operators[index].baseOperator && this.operators[index].baseOperator.refresh) this.operators[index].baseOperator.refresh();
+        if (this.operators[index] && this.operators[index].operator && this.operators[index].operator.refresh) this.operators[index].operator.refresh();
         // hide buttons on previous operator
         for (let i = 0; i < this.tabspans.length; i++) {
             this.tabspans[i].children[1].style.display = "none";
@@ -161,7 +161,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
 
     //operator creation
     this.plus.addEventListener("click", () => {
-        this.tieOperator(new core.operator("opSelect", this));
+        this.tieOperator(new core.container("opSelect", this));
         this.switchOperator(this.operators.length - 1);
     })
 
@@ -223,17 +223,27 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         return true;
     }
     tabmenu = c.registerContextMenu(`
-    <li class="subframe">Subframe this</li>
-    <li class="subframePR">Subframe parent rect</li>
-    <li class="cpfr">Copy frame settings</li>
-    <li class="psfr">Paste frame settings</li>
-    <li class="xpfr">Export frame to text...</li>
-    <li class="mpfr">Import frame from text...</li>`, this.tabbar, undefined, tabfilter);
+    <li>Subframing
+        <ul class="submenu">
+            <li class="subframe">Subframe Contents</li>
+            <li class="subframePR">Subframe this</li>
+        </ul>
+    </li>
+    <li>Export/Import
+    <ul class="submenu">
+        <li class="cpfr">Copy frame settings</li>
+        <li class="psfr">Paste frame settings</li>
+        <li class="xpfr">Export frame to text...</li>
+        <li class="mpfr">Import frame from text...</li>
+        <li class="xdoc">Export frame as document...</li>
+    </ul>
+    </li>
+    `, this.tabbar, undefined, tabfilter);
     tabmenu.querySelector(".subframePR").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new core.operator("subframe", this.parent));
-        let pcp = new _rect(core, sf.baseOperator.rootdiv, RECT_ORIENTATION_X, 1, 0);
-        sf.baseOperator.rect = pcp;
+        let sf = (new core.container("subframe", this.parent));
+        let pcp = new _rect(core, sf.operator.rootdiv, RECT_ORIENTATION_X, 1, 0);
+        sf.operator.rect = pcp;
         let oldParent = this.parent;
         pcp.children = this.parent.children;
         pcp.outerDiv.children[pcp.outerDiv.children.length - 1].remove();//remove rect, just to clean up
@@ -253,11 +263,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     })
     tabmenu.querySelector(".subframe").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new core.operator("subframe", this));
+        let sf = (new core.container("subframe", this));
         let oop = this.operators[contextedOperatorIndex];
         sf.tabbarName = oop.tabbarName;
         this.tieOperator(sf, contextedOperatorIndex);
-        sf.baseOperator.rect.tieOperator(oop, 0);
+        sf.operator.rect.tieOperator(oop, 0);
         core.fire("updateView", { sender: me });
         tabmenu.style.display = "none";
     })
@@ -267,6 +277,17 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         core.copiedFrameData = this.operators[contextedOperatorIndex].toSaveData();
         core.fire("updateView", { sender: me });
         tabmenu.style.display = "none";
+    })
+    tabmenu.querySelector(".xdoc").addEventListener("click", () => {
+        //export as a whole doc! how generous
+        let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+        tabmenu.style.display = "none";
+        core.dialog.prompt(tta);
+        //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
+        //or even better for future security: create a separate core instance, and get it to GC itself. TODO!
+        let collatedItems = core.items;
+        tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${guid(5)}","views":{"default":{
+        "o":[${JSON.stringify(this.operators[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
     })
 
     tabmenu.querySelector(".psfr").addEventListener("click", () => {
@@ -307,11 +328,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "img") {
             //dont show settings - instead, copy the settings div onto the core settings div.
-            if (this.operators[this.selectedOperator].baseOperator.dialogDiv) {
+            if (this.operators[this.selectedOperator].operator.dialogDiv) {
 
                 // this.selectedOperator is an index!
 
-                this.settingsOperator = this.operators[this.selectedOperator].baseOperator;
+                this.settingsOperator = this.operators[this.selectedOperator].operator;
                 this.settingsOperator.showDialog();
                 this.settingsDiv = document.createElement("div");
                 this.settingsDiv.innerHTML = `<h1>Settings</h1>
@@ -321,23 +342,25 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 this.settingsOperator.dialogDiv.style.maxWidth = "50vw";
                 this.settingsDiv.appendChild(this.settingsOperator.dialogDiv);
                 this.settingsDiv.querySelector(".tabDisplayName").value = this.tabspans[this.selectedOperator].children[0].innerText;
+                //add remapping by the operator
+                this.operators[this.selectedOperator].readyRemappingDiv();
+                this.settingsDiv.appendChild(this.operators[this.selectedOperator].remappingDiv);
+
                 core.dialog.prompt(this.settingsDiv, (d) => {
                     this.operators[this.selectedOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
                     this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].tabbarName;
                     if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
+                    this.operators[this.selectedOperator].processRemappingDiv();
                     core.fire("updateView");
                 })
-                //set the calling items.
-                core.dialog.currentBaseOperator = this.settingsOperator;
-                core.dialog.callingRect = this;
             } else {
                 //old version
-                if (this.operators[this.selectedOperator].baseOperator.showSettings) {
-                    this.operators[this.selectedOperator].baseOperator.showSettings();
+                if (this.operators[this.selectedOperator].operator.showSettings) {
+                    this.operators[this.selectedOperator].operator.showSettings();
                 }
             }
             //also render the datastreams if necessary.
-            //this.renderDataStreams(this.operators[this.selectedOperator].baseOperator);
+            //this.renderDataStreams(this.operators[this.selectedOperator].operator);
         }
     })
 
@@ -346,7 +369,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         for (let i = 0; i < operators.length; i++) this.tieOperator(operators[i]);
         this.switchOperator(0);
     } else {
-        this.tieOperator(new core.operator("opSelect", this));
+        this.tieOperator(new core.container("opSelect", this));
         this.switchOperator(0);
     }
 
@@ -383,7 +406,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         } else {
             if (this.operators) {
                 for (let i = 0; i < this.operators.length; i++) {
-                    if (this.operators[i].baseOperator && this.operators[i].baseOperator.refresh) this.operators[i].baseOperator.refresh();
+                    if (this.operators[i].operator && this.operators[i].operator.refresh) this.operators[i].operator.refresh();
                 }
             }
             me.tabbar.style.display = "block";
@@ -632,7 +655,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 if (obj.operators[i].opdata) {
                     let op;
                     try {
-                        op = new me.core.operator(obj.operators[i].opdata, me);
+                        op = new me.core.container(obj.operators[i].opdata, me);
                         this.tieOperator(op);
                         this.tabspans[this.tabspans.length - 1].children[0].innerText = obj.operators[i].name
                     } catch (e) {
@@ -640,7 +663,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                         //aborttt
                     }
                 } else {
-                    let op = new me.core.operator(obj.operators[i], me)
+                    let op = new me.core.container(obj.operators[i], me)
                     this.tieOperator(op);
                 }
             }
@@ -649,7 +672,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             this.switchOperator(this.selectedOperator);
         } else if (obj.operator) {
             //legacy support
-            this.tieOperator(new me.core.operator(obj.operator, me));
+            this.tieOperator(new me.core.container(obj.operator, me));
             this.switchOperator(this.selectedOperator);
         } else {
             for (let i = 0; i < this.outerDiv.children.length; i++) {
@@ -666,7 +689,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
             //Clear everything; reinstantiate topbar
             //show opselect if it does not already exist
             this.operators = [];
-            this.tieOperator(new me.core.operator("opSelect", me));
+            this.tieOperator(new me.core.container("opSelect", me));
             this.switchOperator(0);
         }
     }
@@ -706,14 +729,14 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         this.switchOperator(0);
     }
 
-    this.passthrough=function(fname,args){
+    this.passthrough = function (fname, args) {
         //call at the END of a handler for a function. 
         if (me.children && me.children.length) {
-            me.children[0][fname](args);
-            me.children[1][fname](args);
+            return me.children[0][fname](args) || me.children[1][fname](args);
         } else {
             for (let i = 0; i < this.operators.length; i++) {
-                this.operators[i].passthrough(fname,args);
+                let result = this.operators[i].passthrough(fname, args);
+                if (result) return result;
             }
         }
     }
@@ -726,21 +749,9 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
     }
 
     this.getOperator = function (id) {
-        let result = undefined;
-        let iterable;
-        if (this.operators) iterable = this.operators;
-        else iterable = this.children;
-        for (let i = 0; i < iterable.length; i++) {
-            result = result || iterable[i].getOperator(id)
-        }
-        return result;
+        return this.passThrough("getOperator",id);
     }
     this.listOperators = function (list) {
-        let iterable;
-        if (this.operators) iterable = this.operators;
-        else iterable = this.children;
-        for (let i = 0; i < iterable.length; i++) {
-            iterable[i].listOperators(list)
-        }
+        this.passThrough("listOperators",list);
     }
 }

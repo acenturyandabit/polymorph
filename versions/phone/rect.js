@@ -7,7 +7,7 @@ function _rect(core, parent, data) {
     let me = this;
     //manage the internal object if we are importing from e.g. a desktop file
     this.intlobj = {};
-    this.outerDiv=document.createElement("div");
+    this.outerDiv = document.createElement("div");
 
     this.split = function () {
         // if i have children, delegate the task to my children
@@ -16,25 +16,25 @@ function _rect(core, parent, data) {
             return;
         }
         //otherwise, create and tie a new operator
-        let newop = new core.operator("opSelect", me);
+        let newop = new core.container("opSelect", me);
         me.operators.push(newop);
         me.tieOperator(newop);
     }
 
-    this.removeOperator=function(op){
-        for (i=0;i<me.operators.length;i++){
-            if (me.operators[i]==op){
-                me.operators.splice(i,1);
-                core.fire("updateView",{sender:me});
+    this.removeOperator = function (op) {
+        for (i = 0; i < me.operators.length; i++) {
+            if (me.operators[i] == op) {
+                me.operators.splice(i, 1);
+                core.fire("updateView", { sender: me });
                 break;
             }
         }
     }
 
-    this.tieOperator = function (op,rectponsible) {
-        if (!rectponsible)rectponsible=me;
+    this.tieOperator = function (op, rectponsible) {
+        if (!rectponsible) rectponsible = me;
         if (!me.isRoot) {
-            me.parent.tieOperator(op,rectponsible);
+            me.parent.tieOperator(op, rectponsible);
         } else {
             if (!op.tab) {
                 // create a div for it
@@ -44,11 +44,11 @@ function _rect(core, parent, data) {
                 me.outerDiv.insertBefore(d, me.outerDiv.children[me.outerDiv.children.length - 1]);
                 d.addEventListener("click", (e) => {
                     if (d.children[0].contains(e.target)) {
-                        if (e.target.matches("button.remove")){
+                        if (e.target.matches("button.remove")) {
                             //deregister the operator
                             d.remove();
                             rectponsible.removeOperator(op);
-                        }else{
+                        } else {
                             core.toggleMenu(false);
                             core.showOperator(op);
                         }
@@ -64,14 +64,14 @@ function _rect(core, parent, data) {
         if (!op) op = core.currentOperator;
         if (me.operators) {
             for (let i = 0; i < me.operators.length; i++) {
-                if (me.operators[i]==op)return i;
-                else if (me.operators[i].baseOperator.getOperatorPath){
-                    if (me.operators[i].baseOperator.getOperatorPath(op)!=-1)return i;
+                if (me.operators[i] == op) return i;
+                else if (me.operators[i].operator.getOperatorPath) {
+                    if (me.operators[i].operator.getOperatorPath(op) != -1) return i;
                 }
             }
-        }else if (me.children){
+        } else if (me.children) {
             for (let i = 0; i < me.children.length; i++) {
-                if (me.children[i].getOperatorPath(op)!=-1)return i;
+                if (me.children[i].getOperatorPath(op) != -1) return i;
             }
         }
         return -1; // not found
@@ -101,7 +101,7 @@ function _rect(core, parent, data) {
         }
         //find a 'path' to the currently focused operator
         let path = me.getOperatorPath();
-        me.intlobj.path=path;
+        me.intlobj.path = path;
 
         me.intlobj = transcopy(me.intlobj, {
             remap: {
@@ -119,12 +119,12 @@ function _rect(core, parent, data) {
     this.fromSaveData = function (obj) {
         //children first!
         if (!obj) return;
-        if (!obj.x){
+        if (!obj.x) {
             //this is a new object... generate it
-            Object.assign(obj,{
-                x:0,
-                p:0,
-                f:1,
+            Object.assign(obj, {
+                x: 0,
+                p: 0,
+                f: 1,
             })
         }
         obj = transcopy(obj, {
@@ -138,7 +138,7 @@ function _rect(core, parent, data) {
             }, reverse: true
         });
         me.intlobj = obj;
-        if (obj.path)me.pathBias=obj.path;
+        if (obj.path) me.pathBias = obj.path;
         if (obj.children) {
             //children are not recognised formally in phone mode, but to preserve the data structure, we honor this and create a new rect in memory.
             me.children = [new _rect(core, me, obj.children[0]), new _rect(core, me, obj.children[1])];
@@ -146,7 +146,7 @@ function _rect(core, parent, data) {
             if (!me.operators) me.operators = [];
             for (let i in obj.operators) {
                 //create the operator
-                let newop = new core.operator(obj.operators[i].opdata, me);
+                let newop = new core.container(obj.operators[i].opdata, me);
                 me.operators.push(newop);
                 me.tieOperator(newop);
             }
@@ -156,23 +156,23 @@ function _rect(core, parent, data) {
     }
     if (data) this.fromSaveData(data);
     this.refresh = function () {
-        let path=-1;
-        if (me.pathBias!=undefined){
-            if (me.pathBias==-1)return;
-            path=me.pathBias;
+        let path = -1;
+        if (me.pathBias != undefined) {
+            if (me.pathBias == -1) return;
+            path = me.pathBias;
             delete me.pathBias;
         }
-        if (path==-1 || path==undefined)path=0;
+        if (path == -1 || path == undefined) path = 0;
         if (me.children && me.children.length) {
             me.children[path].refresh();
         } else if (me.operators) {
             core.showOperator(me.operators[path]);
         } else {
             if (!me.operators) me.operators = [];
-            let newop = new core.operator('opSelect', me);
+            let newop = new core.container('opSelect', me);
             me.operators.push(newop);
             me.tieOperator(newop);
             core.showOperator(newop);
-        } 
+        }
     }
 }

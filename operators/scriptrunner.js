@@ -28,8 +28,8 @@ core.registerOperator("scriptrunner", {
 
     //////////////////Handle core item updates//////////////////
 
-    //this is called when an item is updated (e.g. by another operator)
-    core.on("updateItem", (d) => {
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", (d) => {
         if (d.sender!="GARBAGE_COLLECTOR"){
             if (this.currentInstance)this.currentInstance.fire("updateItem", d);
         }
@@ -61,7 +61,7 @@ core.registerOperator("scriptrunner", {
     }
 
     this.fromSaveData = (d) => {
-        //this is called when your operator is started OR your operator loads for the first time
+        //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
         this.rootdiv.querySelector("textarea").value = this.settings.script || "";
         //don't execute, just flag this as needing attention

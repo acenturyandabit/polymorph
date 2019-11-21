@@ -1,11 +1,11 @@
-core.registerOperator("drawio", function (operator) {
+core.registerOperator("drawio", function (container) {
     let me = this;
     this.settings = {};
     //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
     this.style = document.createElement("style");
     this.style.innerHTML = `
     `
-    operator.div.appendChild(this.style);
+    container.div.appendChild(this.style);
 
 
     this.rootdiv = document.createElement("div");
@@ -13,12 +13,12 @@ core.registerOperator("drawio", function (operator) {
     this.iframe=document.createElement("iframe");
     this.iframe.setAttribute('frameborder','0');
     
-    operator.div.appendChild(this.rootdiv);
+    container.div.appendChild(this.rootdiv);
 
     //////////////////Handle core item updates//////////////////
 
     //these are optional but can be used as a reference.
-    core.on("updateItem", function (d) {
+    container.on("updateItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (sender == me) return;
@@ -28,20 +28,20 @@ core.registerOperator("drawio", function (operator) {
         //This is also called when items are created.
     });
 
-    core.on("focus", function (d) {
+    container.on("focus", function (d) {
         let id = d.id;
         let s = d.sender;
         // An item was focused.
     });
 
-    core.on("deleteItem", function (d) {
+    container.on("deleteItem", function (d) {
         let id = d.id;
         let s = d.sender;
         if (sender == me) return;
         // An item was deleted.
     });
 
-    core.on("dateUpdate", function (d) {
+    container.on("dateUpdate", function (d) {
         let id = d.id;
         let s = d.sender;
         if (sender == me) return;
@@ -67,7 +67,7 @@ core.registerOperator("drawio", function (operator) {
 
         //register a change
 
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             sender: this,
             id: id
         });
@@ -75,7 +75,7 @@ core.registerOperator("drawio", function (operator) {
 
     //Register changes with core
     this.somethingwaschanged = function () {
-        core.fire("updateItem", {
+        container.fire("updateItem", {
             id: itemID,
             sender: this
         });
@@ -83,14 +83,14 @@ core.registerOperator("drawio", function (operator) {
 
     //Register focus with core
     this.somethingwasfocused = function () {
-        core.fire("focus", {
+        container.fire("focus", {
             id: itemID,
             sender: this
         });
     }
 
     this.somethingwasdeleted = function () {
-        core.fire("deleteItem", {
+        container.fire("deleteItem", {
             id: itemID,
             sender: this
         });
@@ -127,7 +127,7 @@ core.registerOperator("drawio", function (operator) {
         //Restyle dialog to be a bit smaller
         me.dialog = me.dialog.querySelector(".dialog");
         me.innerDialog = me.dialog.querySelector(".innerDialog");
-        operator.div.appendChild(me.dialog);
+        container.div.appendChild(me.dialog);
         let d = document.createElement("div");
         d.innerHTML = `
         WHAT YOU WANT TO PUT IN YOUR DIALOG
