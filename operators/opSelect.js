@@ -44,7 +44,7 @@
                 b.addEventListener("click", () => {
                     container.fromSaveData(b.dataset.underOperatorName);
                     //change name if user has not already modified name
-                    if (container.tabbarName == "New Operator") container.tabbarName = core.operators[b.dataset.underOperatorName].options.displayName || me.type;
+                    if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = core.operators[b.dataset.underOperatorName].options.displayName || me.type;
                     container.fire("updateView", {
                         sender: this
                     });

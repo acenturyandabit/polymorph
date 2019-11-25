@@ -10,16 +10,17 @@ core.registerOperator("descbox", function (container) {
     me.rootdiv = document.createElement("div");
     //Add div HTML here
     me.rootdiv.innerHTML = `<p></p><textarea></textarea>`;
+    me.rootdiv.style.cssText="height:100%; display:flex; flex-direction: column;"
     me.textarea = me.rootdiv.querySelector("textarea");
     me.textarea.style.width = "100%";
-    me.textarea.style.height = "100%";
+    me.textarea.style.flex = "1 0 auto";
     me.textarea.style.resize = "none";
     me.currentIDNode = me.rootdiv.querySelector("p");
 
     container.div.appendChild(me.rootdiv);
 
     //Handle item updates
-    me.updateItem = function (id) {
+    me.updateItem = (id) => {
         me.currentIDNode.innerText = id;
         //if focused, ignore
         if (me.settings.operationMode != "putter") {
@@ -27,8 +28,13 @@ core.registerOperator("descbox", function (container) {
                 if (me.textarea.matches(":focus")) {
                     setTimeout(() => me.updateItem(id), 500);
                 } else {
-                    if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
-                    else me.textarea.value = "";
+                    if (this.changed) {
+                        //someone else just called this so i'll have to save my modifications discreetly.
+                        core.items[id][me.settings.property] = me.textarea.value;
+                    } else {
+                        if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
+                        else me.textarea.value = "";
+                    }
                     me.textarea.disabled = false;
                     if (core.items[id].style) {
                         me.textarea.style.background = core.items[id].style.background;
@@ -97,12 +103,17 @@ core.registerOperator("descbox", function (container) {
     }
 
     let upc = new capacitor(100, 40, (id, data) => {
-        if (id && core.items[id]) {
+        if (id && core.items[id] && this.changed) {
             core.items[id][me.settings.property] = data;
             container.fire("updateItem", {
                 id: id,
                 sender: me
             });
+            this.changed = false;
+        }
+    }, {
+        presubmit: () => {
+            this.changed = true;
         }
     })
     //Register changes with core
@@ -112,9 +123,10 @@ core.registerOperator("descbox", function (container) {
         }
     }
 
-    //me.textarea.addEventListener("blur", me.somethingwaschanged);
+    me.textarea.addEventListener("blur", () => { upc.forceSend() });
 
     me.textarea.addEventListener("input", me.somethingwaschanged);
+    me.textarea.addEventListener("keyup", me.somethingwaschanged);
 
     me.textarea.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && this.settings.operationMode == "putter") {
@@ -126,6 +138,7 @@ core.registerOperator("descbox", function (container) {
             }
         }
     });
+
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
@@ -231,7 +244,7 @@ core.registerOperator("descbox", function (container) {
         let s = d.sender;
         if (me.settings.currentID == id) {
             me.settings.currentID = undefined;
+            me.updateItem(undefined);
         };
-        me.updateItem(undefined);
     });
 });

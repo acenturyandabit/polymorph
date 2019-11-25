@@ -206,6 +206,7 @@
         core.resetDocument();
         core.currentDoc = data;
         core.items = data.items;
+        core.datautils.linkSanitize();
         // create allll the views
         delete core.baseRects;
         core.baseRects = {};

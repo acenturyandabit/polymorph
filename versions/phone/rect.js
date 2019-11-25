@@ -39,7 +39,7 @@ function _rect(core, parent, data) {
             if (!op.tab) {
                 // create a div for it
                 let d = document.createElement('div');
-                d.innerHTML = `<p><span>${op.tabbarName}</span><button class="remove">X</button></p>`
+                d.innerHTML = `<p><span>${op.settings.tabbarName}</span><button class="remove">X</button></p>`
                 // add the name to the list.
                 me.outerDiv.insertBefore(d, me.outerDiv.children[me.outerDiv.children.length - 1]);
                 d.addEventListener("click", (e) => {
@@ -56,7 +56,7 @@ function _rect(core, parent, data) {
                 })
                 op.tab = d;
             } else {
-                op.tab.children[0].innerText = op.tabbarName;
+                op.tab.children[0].innerText = op.settings.tabbarName;
             }
         }
     }

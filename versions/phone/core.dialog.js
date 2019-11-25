@@ -29,7 +29,7 @@ function dialogSystemManager(core) {
         core.dialog.register = function (operator) {
             let operator=operator.operator;
             //Fill in the tab display name
-            core.dialog.standardOptions.querySelector(".tabDisplayName").value=operator.tabbarName;
+            core.dialog.standardOptions.querySelector(".tabDisplayName").value=operator.settings.tabbarName;
             //Get it to prepare its dialog
             operator.showDialog(); 
             // remove any existing innerdialog children.
@@ -47,8 +47,8 @@ function dialogSystemManager(core) {
         core.dialog.div.querySelector(".cb").addEventListener("click", function () {
             //also forward close event to the operator
             core.dialog.currentoperator.dialogUpdateSettings();
-            core.dialog.currentOperator.tabbarName=core.dialog.standardOptions.querySelector(".tabDisplayName").value;
-            core.dialog.currentOperator.tab.children[0].innerText=core.dialog.currentOperator.tabbarName;
+            core.dialog.currentOperator.settings.tabbarName=core.dialog.standardOptions.querySelector(".tabDisplayName").value;
+            core.dialog.currentOperator.tab.children[0].innerText=core.dialog.currentOperator.settings.tabbarName;
             core.fire("updateView", {sender:core.dialog});
         })
     })

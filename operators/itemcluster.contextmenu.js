@@ -32,7 +32,7 @@ function _itemcluster_extend_contextmenu(me) {
                         x: coords.x + v.x,
                         y: coords.y + v.y,
                     }
-                    if (me.settings.filter)core.items[v.id][me.settings.filter]=true;
+                    if (me.settings.filter) core.items[v.id][me.settings.filter] = true;
                     me.arrangeItem(v.id);
                     me.container.fire("updateItem", {
                         id: v.id,
@@ -379,7 +379,7 @@ function _itemcluster_extend_contextmenu(me) {
                         visibleItems[i].r = maxRadius + itemRadius;
                     }
                     //Sometimes the asin in the lower line returns a NaN - prevent this by making the operand 1.
-                    if (visibleItems[i].r<maxRadius+itemRadius)visibleItems[i].r=maxRadius+itemRadius; 
+                    if (visibleItems[i].r < maxRadius + itemRadius) visibleItems[i].r = maxRadius + itemRadius;
                     //reported radius - includes child radii as well.
                     visibleItems[i].rr = visibleItems[i].r + maxRadius;
                 }
@@ -427,7 +427,7 @@ function _itemcluster_extend_contextmenu(me) {
             } else {
                 cartesianHierarchy(e, visibleItems);
             }
-            
+
             for (let i in core.items) {
                 me.container.fire("updateItem", {
                     id: i
@@ -473,21 +473,23 @@ function _itemcluster_extend_contextmenu(me) {
         })
         me.viewContextMenu = contextMenuManager.registerContextMenu(
             `<li class="viewDeleteButton">Delete</li>
-                  <li class="viewCloneButton">Clone view</li>`,
+            <li class="viewCloneButton">Clone view</li>
+            <li class="viewAsItemButton">Copy view as item</li>`,
             me.viewDropdownContainer
         );
-        me.viewDeleteButton = me.viewContextMenu.querySelector(
-            ".viewDeleteButton"
-        );
-        me.viewDeleteButton.addEventListener("click", e => {
-            //delete the view
+        me.viewContextMenu.querySelector(".viewAsItemButton").addEventListener("click", e => {
+            core.shared.itemclusterCopyElement = [{ id: me.settings.currentViewName, x: 0, y: 0 }];
+            core.items[me.settings.currentViewName].itemcluster.viewData = {};
+            me.viewContextMenu.style.display = "none";
+        });
+
+        me.viewContextMenu.querySelector(".viewDeleteButton").addEventListener("click", e => {
             me.destroyView(me.settings.currentViewName);
             me.viewContextMenu.style.display = "none";
         });
 
         me.viewCloneButton = me.viewContextMenu.querySelector(".viewCloneButton");
         me.viewCloneButton.addEventListener("click", e => {
-            //delete the view
             me.cloneView(me.settings.currentViewName);
             me.viewContextMenu.style.display = "none";
         });

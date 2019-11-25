@@ -12,7 +12,8 @@ core.registerOperator("tester", {
         inputParent: "",
         testingParent: "",
         cardAProp: "title",
-        cardBProp: "description"
+        cardBProp: "description",
+        leafNodesOnly: true
     };
 
 
@@ -27,14 +28,32 @@ core.registerOperator("tester", {
     .buttonContainer>*{
         flex: 1 1 auto;
     }
+    .below{
+        display:flex;
+        flex-wrap:wrap;
+        align-content:flex-start;
+    }
+    .below input{
+        display:block;
+        flex: 1 0 50%;
+    }
     </style>
 
-    <button data-role="toggleMode">Toggle mode</button>
+    <button data-role="toggleMode">Toggle mode</button><button data-role="resetMode">Reset mode</button>
     <h1>Enter a new item</h1>
     <h2 class="uparent"><span class="l2">Currently under topic:</span><span class="parentName"></span></h2>
     <textarea class="above" placeholder="Card A" style="width:100%; height: 30%; resize:none"></textarea>
-    <textarea class="below" placeholder="Card B" style="width:100%; height: 30%; resize:none"></textarea>
-    <div class="buttonContainer"><button class="submit">Add</button><button class="wrong">Wrong</button></div>
+    <div class="below" style="width:100%; height: 30%; resize:none">
+        <input>
+        <input>
+        <input>
+        <input>
+        <input>
+        <input>
+        <input>
+        <input>
+    </div>
+    <div class="buttonContainer"><button class="buttonA">Add</button><button class="buttonB">Wrong</button></div>
     `;
 
     container.div.appendChild(this.rootdiv);
@@ -43,61 +62,180 @@ core.registerOperator("tester", {
     ///internal updating
 
     this.rootdiv.querySelector("[data-role='toggleMode']").addEventListener("click", () => {
-        this.toggleMode();
+        if (testing != undefined) this.settings.testing = testing;
+        else this.settings.testing = !this.settings.testing;
+        this.updateUI();
+    })
+
+    this.rootdiv.querySelector("[data-role='resetMode']").addEventListener("click", () => {
+        this.state = "readyState";
+        this.updateUI();
     })
 
     this.updateUI = () => {
-        if (this.settings.testing) {// True means test testing
+        if (this.settings.testing) {
             this.rootdiv.querySelector("h1").innerText = "Test mode";
             this.rootdiv.querySelector(".l2").innerText = "Currently testing topic:";
-            this.rootdiv.querySelector(".parentName").innerText = this.settings.testingParent;
+            this.rootdiv.querySelector(".parentName").innerText = core.items[this.settings.testingParent].title;
             this.rootdiv.querySelector("textarea.above").disabled = true;
-            this.rootdiv.querySelector(".submit").innerText = "Correct";
-            this.rootdiv.querySelector(".wrong").style.display = "block";
-            this.generateQuestion();
+            switch (this.state) {
+                case "showingQuestion":
+                    this.rootdiv.querySelector(".buttonA").innerText = "Show answer";
+                    this.rootdiv.querySelector(".buttonB").style.display = "none";
+                    this.generateQuestion();
+                    break;
+                case "waitCorrect":
+                    this.rootdiv.querySelector(".buttonA").innerText = "Correct";
+                    this.rootdiv.querySelector(".buttonB").style.display = "block";
+                    break;
+                case "readyState":
+                    this.rootdiv.querySelector(".buttonA").innerText = "Start";
+                    this.rootdiv.querySelector(".buttonB").style.display = "none";
+            }
         } else {
             this.rootdiv.querySelector("h1").innerText = "Enter a new item";
             this.rootdiv.querySelector(".l2").innerText = "Currently under topic:";
             this.rootdiv.querySelector(".parentName").innerText = this.settings.inputParent;
             this.rootdiv.querySelector("textarea.above").disabled = false;
             this.rootdiv.querySelector("textarea.above").value = "";
-            this.rootdiv.querySelector("textarea.below").value = "";
-            this.rootdiv.querySelector(".submit").innerText = "Add";
-            this.rootdiv.querySelector(".wrong").style.display = "none";
+            //this.rootdiv.querySelector("textarea.below").value = "";
+            this.rootdiv.querySelector(".buttonA").innerText = "Add";
+            this.rootdiv.querySelector(".buttonB").style.display = "none";
         }
     }
-
-    this.toggleMode = function (testing) {
-        if (testing != undefined) this.settings.testing = testing;
-        else this.settings.testing = !this.settings.testing;
-        this.updateUI();
-    }
-
-
-
 
 
     ////////////////Testing
-
-    this.rootdiv.querySelector(".submit").addEventListener("click", () => {
-        let action = this.rootdiv.querySelector(".submit").innerText;
+    let clearBottomBoxes = () => {
+        let below = this.rootdiv.querySelector("div.below");
+        for (let i = 0; i < below.children.length; i++) {
+            below.children[i].style.backgroundColor = "white";
+            below.children[i].dataset.used = false;
+            below.children[i].value = "";
+        }
+    }
+    function removeIf(arr, f) {
+        for (let i = 0; i < arr.length; i++) {
+            if (f(arr[i])) {
+                arr.splice(i, 1);
+                i--;
+            }
+        }
+    }
+    function isSimilar(sentA, sentB) {
+        let splitA = sentA.split(/\W+/ig);
+        let splitB = sentB.split(/\W+/ig);
+        removeIf(splitA, (i) => { return i.length <= 3; })
+        removeIf(splitB, (i) => { return i.length <= 3; })
+        splitA = splitA.map((i => i.toLowerCase()));
+        splitB = splitB.map((i => i.toLowerCase()));
+        for (let i in splitA) {
+            for (let j in splitB) {
+                if (splitA[i] == splitB[j]) {
+                    splitB.splice(j, 1);
+                    break;
+                }
+            }
+        }
+        return (splitB.length == 0);
+    }
+    this.rootdiv.querySelector(".buttonA").addEventListener("click", () => {
+        let action = this.rootdiv.querySelector(".buttonA").innerText;
         switch (action) {
+            case "Show answer":
+                let below = this.rootdiv.querySelector("div.below");
+                //record the bottom box answers
+                let trueAnswers;
+                if (core.items[this.currentTested][this.settings.cardBProp]) {
+                    trueAnswers = core.items[this.currentTested][this.settings.cardBProp].split(/\n/ig);
+                    removeIf(trueAnswers, (i) => i == "");
+                    for (let i = 0; i < trueAnswers.length; i++) {
+                        for (let j = 0; j < below.children.length; j++) {
+                            if (isSimilar(below.children[j].value, trueAnswers[i])) {
+                                //green the box
+                                below.children[j].style.backgroundColor = "lightgreen";
+                                below.children[j].dataset.used = true;
+                                trueAnswers.splice(i, 1);
+                                i--;
+                                break;
+                            }
+                        }
+                    }
+                }
+                //yellow all user answers
+                for (let j = 0; j < below.children.length; j++) {
+                    if (below.children[j].dataset.used != "true" && below.children[j].value.length) {
+                        below.children[j].style.backgroundColor = "orange";
+                        below.children[j].dataset.used = true;
+
+                    }
+                }
+                if (core.items[this.currentTested][this.settings.cardBProp]) {
+                    //add the remaining
+                    for (let i = 0; i < trueAnswers.length; i++) {
+                        let existingBox = false;
+                        for (let j = 0; j < below.children.length; j++) {
+                            if (below.children[j].dataset.used != "true") {
+                                below.children[j].value = trueAnswers[i];
+                                below.children[j].dataset.used = true;
+                                existingBox = true;
+                                break;
+                            }
+                        }
+                        if (!existingBox) {
+                            let newInput = htmlwrap(`<input>`);
+                            newInput.value = trueAnswers[i];
+                            below.appendChild(newInput);
+                        }
+                    }
+                }
+                this.state = "waitCorrect";
+                break;
             case "Correct":
                 this.controller.update(true);
-                this.revealAnswer();
+                this.state = "showingQuestion";
                 break;
-            case "Next":
-                this.generateQuestion();
+            case "Start":
+                this.state = "showingQuestion";
                 break;
         }
+        this.updateUI();
     })
 
-    this.rootdiv.querySelector(".wrong").addEventListener("click", () => {
+    this.rootdiv.querySelector(".buttonB").addEventListener("click", () => {
         this.controller.update(false);
-        this.revealAnswer();
+        this.state = "showingQuestion";
+        this.updateUI();
     })
 
-    this.generateQuestion = function () {
+
+    function toProabilityArray(arr, freqname = "frequency", startName = "start") {
+        let newArray = [];
+        let totalFrequency = 0;
+        for (let j = 0; j < arr.length; j++) {
+            let newObj = {};
+            Object.assign(newObj, arr[j]);
+            newObj[startName] = totalFrequency;
+            newArray.push(newObj);
+            totalFrequency += arr[j][freqname];
+        }
+        for (let j = 0; j < newArray.length; j++) {
+            newArray[j][startName] /= totalFrequency;
+        }
+        return newArray;
+    }
+
+    function sampleProbabilityArray(arr, startName = "start") {
+        let findex = Math.random();
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i][startName] > findex) {
+                return arr[i - 1];
+            }
+        }
+        return arr[arr.length - 1];
+    }
+
+    this.generateQuestion = () => {
         //generate a question
         //pick out every item I care about - for now. later cache a list of things
         //only add children, so that our recursive confidence update makes sense
@@ -106,44 +244,40 @@ core.registerOperator("tester", {
             let stack = [this.settings.testingParent];
             for (let i = 0; i < stack.length; i++) {
                 let ci = stack[i];
-                for (let i in core.items[ci].to) {
-                    if (!(core.items[i].to) || (core.items[i].to == {})) this.activeList.push(i);
-                    else {
-                        if (!stack.includes(i)) stack.push(i);
-                    }
+                for (let it in core.items[ci].to) {
+                    if (!this.settings.leafNodesOnly || (!(core.items[it].to) || (Object.keys(core.items[it].to).length == 0))) this.activeList.push(it);
+                    if (!stack.includes(it)) stack.push(it);
                 }
             }
         } else {
             for (let i in core.items) {
                 //();
                 if ((!this.filter) || core.items[i][this.settings.filter]) {
-                    if (!(core.items[i].to) || (core.items[i].to == {})) this.activeList.push(i);
+                    if (!(core.items[i].to) || (Object.keys(core.items[i].to).length == 0)) this.activeList.push(i);
                 }
             }
         }
+        this.activeList = this.activeList.map((i) => {
+            return { id: i, chance: 1 - (core.items[i].selfConfidence || 0), cv: core.items[i].selfConfidence };
+        })
+        this.activeList = toProabilityArray(this.activeList, "chance");
+
 
         //pick a node
-        let toTest = this.activeList[Math.floor(Math.random() * this.activeList.length)];
+        let toTest = sampleProbabilityArray(this.activeList).id;
         if (!toTest) {
             this.rootdiv.querySelector("textarea.above").value = "No items to test!"
-            this.rootdiv.querySelector(".submit").innerText = "Add Items";
-            this.rootdiv.querySelector(".wrong").style.display = "none";
+            this.rootdiv.querySelector(".buttonA").innerText = "Add Items";
+            this.rootdiv.querySelector(".buttonB").style.display = "none";
 
         } else {
             this.currentTested = toTest;
             this.rootdiv.querySelector("textarea.above").value = core.items[toTest][this.settings.cardAProp];
-            this.rootdiv.querySelector("textarea.below").value = "";
-            this.rootdiv.querySelector(".submit").innerText = "Correct";
-            this.rootdiv.querySelector(".wrong").style.display = "block";
+            clearBottomBoxes();
         }
         container.fire("focus", { id: toTest, sender: this });
     }
 
-    this.revealAnswer = function () {
-        this.rootdiv.querySelector("textarea.below").value = core.items[this.currentTested][this.settings.cardBProp];
-        this.rootdiv.querySelector(".submit").innerText = "Next";
-        this.rootdiv.querySelector(".wrong").style.display = "none";
-    }
     //////////////////////////////
     // The controller...
     this.controller = {
@@ -153,11 +287,25 @@ core.registerOperator("tester", {
                 if (!seenbunch.includes(id)) {
                     seenbunch.push(id);
                     let totalScore = 0;
-                    let nItems = Object.keys(core.items[id]).length;
-                    for (let i in core.items[id].to) {
-                        totalScore += (core.items[i].confidence || 0) / nItems;
+                    let nItems;
+                    if (core.items[id].to) {
+                        nItems = Object.keys(core.items[id].to).length;
+                    } else {
+                        nItems = 0;
                     }
-                    core.items[id].confidence = totalScore;
+                    if (nItems > 0) {
+                        let isTestable = (!me.settings.leafNodesOnly && core.items[id][me.settings.cardAProp].includes("?"));
+                        if (isTestable) nItems++;
+                        for (let i in core.items[id].to) {
+                            totalScore += (core.items[i].confidence || 0) / nItems;
+                        }
+                        if (isTestable) {
+                            totalScore += (core.items[id].selfConfidence || 0) / nItems;
+                        }
+                        core.items[id].confidence = totalScore;
+                    } else {
+                        core.items[this.currentTested].confidence = core.items[this.currentTested].selfConfidence;
+                    }
                     container.fire("updateItem", { id: id });
                     for (let i in core.items) {
                         if (core.items[i].to && core.items[i].to[id]) {
@@ -166,23 +314,20 @@ core.registerOperator("tester", {
                     }
                 }
             }
-            if (!core.items[this.currentTested].confidence) {
-                if (correct) core.items[this.currentTested].confidence = 0.5;
-                else core.items[this.currentTested].confidence = 0;
+            if (!core.items[this.currentTested].selfConfidence) {
+                if (correct) core.items[this.currentTested].selfConfidence = 0.5;
+                else core.items[this.currentTested].selfConfidence = 0;
+            } else {
+                core.items[this.currentTested].selfConfidence = (core.items[this.currentTested].selfConfidence) * 0.5 + (correct * 0.5);
             }
-            core.items[this.currentTested].confidence = (core.items[this.currentTested].confidence) * 0.5 + (correct * 0.5);
-            for (let i in core.items) {
-                if (core.items[i].to && core.items[i].to[this.currentTested]) {
-                    calculateConfidence(i);
-                }
-            }
+            calculateConfidence(this.currentTested);
             //do nothing for nowwww
         }
     }
 
     ///////////////Adding items
-    this.rootdiv.querySelector(".submit").addEventListener("click", () => {
-        let action = this.rootdiv.querySelector(".submit").innerText;
+    this.rootdiv.querySelector(".buttonA").addEventListener("click", () => {
+        let action = this.rootdiv.querySelector(".buttonA").innerText;
         switch (action) {
             case "Add":
                 let itm = {
@@ -225,7 +370,7 @@ core.registerOperator("tester", {
         if (d.sender == this) return;
         if (this.settings.testing) {
             me.settings.testingParent = id;
-            this.generateQuestion();
+            this.state = 'showingQuestion';
             //alt focus testing for editing
         } else {
             me.settings.inputParent = id;
@@ -247,6 +392,7 @@ core.registerOperator("tester", {
     this.fromSaveData = function (d) {
         //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
+        this.state = "readyState";
         this.updateUI();
     }
 
@@ -293,6 +439,13 @@ core.registerOperator("tester", {
         object: this.settings,
         property: "cardBProp",
         label: "Card B property"
+    }),
+    new _option({
+        div: this.dialogDiv,
+        type: "bool",
+        object: this.settings,
+        property: "leafNodesOnly",
+        label: "Only show leaf nodes"
     })
     ];
     this.showDialog = function () {

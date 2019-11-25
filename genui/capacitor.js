@@ -10,15 +10,15 @@ c.submit(uuid,data);
 c.forceSend();
 */
 
-function capacitor(t, limit, send, settings={}, checkInterval = 100) {
-    let options={
+function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
+    let options = {
         fireFirst: false,
-        afterLast:true
+        afterLast: true,
     };
-    if (typeof(settings)=="boolean"){
-        options.fireFirst=settings;
-    }else{
-        Object.assign(options,settings);
+    if (typeof (settings) == "boolean") {
+        options.fireFirst = settings;
+    } else {
+        Object.assign(options, settings);
     }
     let me = this;
     let lastUID;
@@ -44,6 +44,7 @@ function capacitor(t, limit, send, settings={}, checkInterval = 100) {
         }
     }
     this.submit = function (UID, data) {
+        if (options.presubmit) options.presubmit();
         if (lastUID != UID && lastUID) {
             me.forceSend();
         } else {
@@ -59,9 +60,9 @@ function capacitor(t, limit, send, settings={}, checkInterval = 100) {
                 me.forceSend();
                 rqcount = 1;
             }
-            if (options.afterLast && pid){
+            if (options.afterLast && pid) {
                 clearTimeout(pid);
-                pid=undefined;
+                pid = undefined;
             }
             if (!pid) {
                 tcount = t;
@@ -73,13 +74,13 @@ function capacitor(t, limit, send, settings={}, checkInterval = 100) {
     }
 }
 
-function tryUntilSuccess(f, times = 5, separation=500) {
+function tryUntilSuccess(f, times = 5, separation = 500) {
     try {
         f();
     } catch (e) {
         console.log(e);
         if (times != 0) {
-            setTimeout(()=>{tryUntilSuccess(f, times - 1, separation)}, separation);
+            setTimeout(() => { tryUntilSuccess(f, times - 1, separation) }, separation);
         }
     }
 }

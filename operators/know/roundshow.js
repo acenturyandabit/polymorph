@@ -17,7 +17,7 @@ core.registerOperator("roundshow", {
     this.rootdiv.innerHTML = `<div class="svg" style="width:100%;height:100%;"></div>`;
 
     container.div.appendChild(this.rootdiv);
-
+    let opacity=0.7;
     ////////////////////////////////////////////////////////////
     // Tree function
     function createTree(root) {
@@ -106,6 +106,33 @@ core.registerOperator("roundshow", {
     me.renderTree = function (tree) {
         me.storedTree = tree;
     }
+    let preID;
+    me.showCentre = (e) => {
+        let id = me.settings.currentRoot;
+        if (e && e.target) {
+            let et = e.target;
+            while (et.tagName.toLocaleUpperCase() != "SVG") {
+                if ((et.tagName.toLocaleUpperCase() == "TEXT" || et.tagName.toLocaleUpperCase() == "PATH") && et.dataset.item) {
+                    id = et.dataset.item;
+                    break;
+                }
+                else et = et.parentElement;
+            }
+        }
+        if (id==preID)return;
+        let smallerW = Math.min(this.rootdiv.offsetWidth, this.rootdiv.offsetHeight) - 5;
+        let centre = smallerW / 2;
+        let innerR = smallerW / 6;
+        me.coreText.font({ size: 30, anchor: "middle" }).text((add) => {
+            add.tspan(core.items[id][this.settings.nameProp]);
+            add.tspan((core.items[id][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
+        }).x(centre).cy(centre).front();
+        let cols = hslToRgb(((core.items[id][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+        me.centreItem.cx(centre).cy(centre).radius(innerR).attr({
+            fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
+        }).data('item', me.settings.currentRoot);
+        preID=id;
+    }
 
     scriptassert([["svg", "3pt/svg.min.js"]], () => {
         me.svg = SVG(me.rootdiv.querySelector(".svg"));
@@ -141,19 +168,26 @@ core.registerOperator("roundshow", {
                 L ${innerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${innerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 Z
                 `).attr({
-                    fill: `rgba(${cols[0]},${cols[1]},${cols[2]},0.5)`
+                    fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
                     , stroke: '#000'
                     , 'stroke-width': 1
-                }).data('item', i));
+                }).data('item', i));//.mouseover((e) => { me.showCentre(e) }).mouseout(() => { me.showCentre() }));
                 //label it
-                if (core.items[i][this.settings.nameProp]) me.arcs.push(me.svg.text(core.items[i][this.settings.nameProp]).cx((innerR + (middleR - innerR) / 2) * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre).cy(
+                //upside down text is hard to read.
+                let rotationAngle = 360 * (c2c + itemsToRender[i].arcsize / 2) / l2c;
+                if (rotationAngle > 270) rotationAngle = rotationAngle - 360;
+                if (rotationAngle > 90) rotationAngle = -(180 - rotationAngle);
+                //limit the text so we dont print everything
+                let printableText = core.items[i][this.settings.nameProp];
+                if (printableText) printableText = printableText.slice(0, 30);
+                if (core.items[i][this.settings.nameProp]) me.arcs.push(me.svg.text(printableText.slice(0, 15) + "\n" + printableText.slice(15, 30)).cx((innerR + (middleR - innerR) / 2) * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre).cy(
                     (innerR + (middleR - innerR) / 2) * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre
                 ).attr({
                     fill: '#000'
-                    , 'fill-opacity': 0.5
                     , stroke: '#000'
                     , 'stroke-width': 1
-                }).data('item', i));
+                }).data('item', i).rotate(rotationAngle)
+                );
                 //draw a sector for its children
                 if (Object.keys(itemsToRender[i].children).length) {
                     for (j in itemsToRender[i].children) {
@@ -166,19 +200,26 @@ core.registerOperator("roundshow", {
                             L ${middleR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                             Z
                             `).attr({
-                            fill: `rgba(${cols[0]},${cols[1]},${cols[2]},0.5)`
+                            fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
                             , stroke: '#000'
                             , 'stroke-width': 1
-                        }).data('item', j));
+                        }).data('item', j));//.mouseover((e) => { me.showCentre(e) }).mouseout(() => { me.showCentre() }));
+                        //label it
+                        //upside down text is hard to read.
+                        let rotationAngle = 360 * (c2c + 0.5) / l2c;
+                        if (rotationAngle > 270) rotationAngle = rotationAngle - 360;
+                        if (rotationAngle > 90) rotationAngle = -(180 - rotationAngle);
+                        //limit the text so we dont print everything
+                        let printableText = core.items[j][this.settings.nameProp];
+                        if (printableText) printableText = printableText.slice(0, 15);
                         if (core.items[j][this.settings.nameProp])
-                            me.arcs.push(me.svg.text(core.items[j][this.settings.nameProp]).cx((middleR + (outerR - middleR) / 2) * Math.cos(2 * Math.PI * (c2c + 0.5) / l2c) + centre).cy(
+                            me.arcs.push(me.svg.text(printableText.slice(0, 15)).cx((middleR + (outerR - middleR) / 2) * Math.cos(2 * Math.PI * (c2c + 0.5) / l2c) + centre).cy(
                                 (middleR + (outerR - middleR) / 2) * Math.sin(2 * Math.PI * (c2c + 0.5) / l2c) + centre
                             ).attr({
                                 fill: '#000'
-                                , 'fill-opacity': 0.5
                                 , stroke: '#000'
                                 , 'stroke-width': 1
-                            }).data('item', i));
+                            }).data('item', j).rotate(rotationAngle));
                         c2c += 1;
                     }
                 } else {
@@ -188,17 +229,21 @@ core.registerOperator("roundshow", {
             }
             //draw the centre as well
             if (!me.coreText) {
-                me.coreText = me.svg.text("Root");
+                me.coreText = me.svg.text("");
             }
-            me.coreText.cx(centre).cy(centre);
             if (!me.centreItem) {
-                me.centreItem = me.svg.circle(innerR).attr({
-                    fill: '#f06'
-                    , 'fill-opacity': 0.5
-                }).data('item', me.settings.currentRoot)
+                me.centreItem = me.svg.circle(innerR)
                     .data('role', 'return');
             }
-            me.centreItem.cx(centre).cy(centre).radius(innerR);
+            me.coreText.font({ size: 30, anchor: "middle" }).text((add) => {
+                add.tspan(core.items[me.settings.currentRoot][this.settings.nameProp]);
+                add.tspan((core.items[me.settings.currentRoot][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
+            }).x(centre).cy(centre).front();
+            let cols = hslToRgb(((core.items[me.settings.currentRoot][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+            me.centreItem.cx(centre).cy(centre).radius(innerR).attr({
+                fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
+            }).data('item', me.settings.currentRoot);
+            me.svg.mouseover(me.showCentre).mouseout(() => me.showCentre());
         }
         //add some click handlers
         me.rootdiv.querySelector(".svg").addEventListener("click", (e) => {
@@ -210,7 +255,9 @@ core.registerOperator("roundshow", {
                 container.fire("focus", { id: currentItem });
             }
         })
+
         if (me.storedTree) me.renderTree(me.storedTree);
+
         me.rootdiv.querySelector(".svg [data-role='return']").addEventListener("click", (e) => {
             if (me.centreItem.data('return') == me.settings.currentRoot) {
                 me.centreItem.data('return', null);
@@ -229,6 +276,7 @@ core.registerOperator("roundshow", {
         //Show the item at the centre
         me.coreText.text(core.items[id][this.settings.nameProp]);
         me.coreText.cx(200).cy(200);
+        me.settings.currentRoot = id;
         //render the subtree
         let tree = createTree(id);
         me.renderTree(tree);

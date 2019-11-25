@@ -120,11 +120,11 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 innrd.children[0].remove();
             }
             //Create a button for it
-            ts.children[0].innerText = operator.tabbarName || operator.type;
+            ts.children[0].innerText = operator.settings.tabbarName || operator.type;
             //Hook it up
             innrd.appendChild(operator.topdiv);
         } else {
-            this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.tabbarName || operator.type;
+            this.tabspans[this.operators.indexOf(operator)].children[0].innerText = operator.settings.tabbarName || operator.type;
             //just refresh the tabspan.
         }
         operator.rect = this;
@@ -265,7 +265,7 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
         // at the tab, create a new subframe operator
         let sf = (new core.container("subframe", this));
         let oop = this.operators[contextedOperatorIndex];
-        sf.tabbarName = oop.tabbarName;
+        sf.settings.tabbarName = oop.settings.tabbarName;
         this.tieOperator(sf, contextedOperatorIndex);
         sf.operator.rect.tieOperator(oop, 0);
         core.fire("updateView", { sender: me });
@@ -347,8 +347,8 @@ function _rect(core, parent, XorY, pos, firstOrSecond, operators) {
                 this.settingsDiv.appendChild(this.operators[this.selectedOperator].remappingDiv);
 
                 core.dialog.prompt(this.settingsDiv, (d) => {
-                    this.operators[this.selectedOperator].tabbarName = d.querySelector("input.tabDisplayName").value;
-                    this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].tabbarName;
+                    this.operators[this.selectedOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
+                    this.tabspans[this.selectedOperator].children[0].innerText = this.operators[this.selectedOperator].settings.tabbarName;
                     if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                     this.operators[this.selectedOperator].processRemappingDiv();
                     core.fire("updateView");

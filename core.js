@@ -10,6 +10,9 @@ core.userData={
     uniqueStyle=some style
 }
 
+//startup
+
+
 */
 
 // Items are just native objects now 

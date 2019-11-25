@@ -25,17 +25,15 @@ core.registerOperator("inspector", {
         <h4>Add a property:</h4>
         <input type="text" placeholder="Name">
         <label>Type:${ttypes}</label>
-        <button>Add property</button>
+        <button class="ap">Add property</button>
     `));
     me.internal = me.rootdiv.children[0].children[1];
+
+
     let insertbtn = htmlwrap(`
     <button>Add new item</button>`);
     me.rootdiv.appendChild(insertbtn);
     insertbtn.style.display = "none";
-    let commitbtn = htmlwrap(`
-    <button>Commit changes</button>`);
-    me.rootdiv.appendChild(commitbtn);
-    commitbtn.style.display = "none";
     insertbtn.addEventListener("click", () => {
         //create a new element with the stated specs
         let item = {};
@@ -50,6 +48,12 @@ core.registerOperator("inspector", {
             me.internal.children[i].classList.remove("modified");
         }
     })
+
+
+    let commitbtn = htmlwrap(`
+    <button>Commit changes</button>`);
+    me.rootdiv.appendChild(commitbtn);
+    commitbtn.style.display = "none";
     commitbtn.addEventListener("click", () => {
         //commit changes
         if (me.settings.currentItem) {
@@ -70,19 +74,26 @@ core.registerOperator("inspector", {
     insertbtn.addEventListener("click",()=>{
         //create a new element with the stated specs
     })*/
+    let newProp = (prop) => {
+        if (me.settings.currentItem) core.items[me.settings.currentItem][prop] = " ";
+        if (me.settings.propsOn) me.settings.propsOn[prop] = me.rootdiv.querySelector("[data-role='nttype']").value;
+        me.renderItem(me.settings.currentItem);
+        container.fire("updateItem", {
+            sender: me,
+            id: me.settings.currentItem
+        });
+    }
     me.rootdiv.querySelector("input[placeholder='Name']").addEventListener("keyup", (e) => {
         if (e.key == "Enter") {
-            if (me.settings.currentItem) core.items[me.settings.currentItem][e.target.value] = " ";
-            if (me.settings.propsOn) me.settings.propsOn[e.target.value] = me.rootdiv.querySelector("[data-role='nttype']").value;
-            me.renderItem(me.settings.currentItem);
+            newProp(e.target.value);
             e.target.value = "";
-            container.fire("updateItem", {
-                sender: me,
-                id: me.settings.currentItem
-            });
-
         }
     })
+    me.rootdiv.querySelector(".ap").addEventListener("click", (e) => {
+        newProp(me.rootdiv.querySelector("input[placeholder='Name']").value);
+        me.rootdiv.querySelector("input[placeholder='Name']").value = "";
+    })
+
     container.div.appendChild(htmlwrap(
         `
         <style>
@@ -126,6 +137,10 @@ core.registerOperator("inspector", {
                     it[i].datestring = e.target.value;
                     if (me.datereparse) me.datereparse(it, i);
                     break;
+                case 'Auto':
+                    it[i] = e.target.value;
+                    upc.submit(me.settings.currentItem);
+                    break;
             }
         }
     })
@@ -166,7 +181,7 @@ core.registerOperator("inspector", {
     //also should be able to update instead of just rendering
     function recursiveRender(obj, div) {
         if (typeof obj == "object" && obj) {
-            for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used="false";
+            for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used = "false";
             for (let i in obj) {
                 let d;
                 for (let j = 0; j < div.children.length; j++) {
@@ -176,13 +191,13 @@ core.registerOperator("inspector", {
                 }
                 if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
                 d.dataset.prop = i;
-                d.dataset.used="true";
+                d.dataset.used = "true";
                 d.style.marginLeft = "5px";
                 recursiveRender(obj[i], d.children[1]);
                 div.appendChild(d);
             }
-            for (let j = 0; j < div.children.length; j++){
-                if (div.children[j].dataset.used=="false" && (div.children[j].tagName=="DIV" || div.children[j].tagName=="BUTTON")){
+            for (let j = 0; j < div.children.length; j++) {
+                if (div.children[j].dataset.used == "false" && (div.children[j].tagName == "DIV" || div.children[j].tagName == "BUTTON")) {
                     div.children[j].remove();
                 }
             }
@@ -227,7 +242,7 @@ core.registerOperator("inspector", {
                     switch (me.settings.propsOn[i]) {
                         case 'Text':
                         case 'Date':
-                            ihtml += `<input>`;
+                            ihtml += `<p>${i}:</p><input>`;
                     }
                     pdiv.innerHTML = ihtml;
                     me.internal.appendChild(pdiv);
@@ -236,8 +251,13 @@ core.registerOperator("inspector", {
                 //display value
                 switch (me.settings.propsOn[i]) {
                     case 'Auto':
-                        recursiveRender(clean_obj[i], pdiv);
-                        break;
+                        if (typeof (clean_obj[i]) == "object") {
+                            recursiveRender(clean_obj[i], pdiv);
+                            break;
+                        } else {
+                            pdiv.innerHTML = `<p>${i}:</p><input>`;
+                            //fall through
+                        }
                     case 'Text':
                         pdiv.querySelector("input").value = clean_obj[i] || "";
                         break;
