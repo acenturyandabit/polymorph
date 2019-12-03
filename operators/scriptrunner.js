@@ -4,7 +4,10 @@ core.registerOperator("scriptrunner", {
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {};
+    this.settings = {
+        autorun: false,
+        reallyAutorun: false
+    };
 
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here.
@@ -30,8 +33,8 @@ core.registerOperator("scriptrunner", {
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", (d) => {
-        if (d.sender!="GARBAGE_COLLECTOR"){
-            if (this.currentInstance)this.currentInstance.fire("updateItem", d);
+        if (d.sender != "GARBAGE_COLLECTOR") {
+            if (this.currentInstance) this.currentInstance.fire("updateItem", d);
         }
         return false;
     });
@@ -46,10 +49,10 @@ core.registerOperator("scriptrunner", {
             p.innerHTML = JSON.stringify(data);
             me.rootdiv.querySelector("#output").appendChild(p);
         }
-        this.logEx=(data)=>{
+        this.logEx = (data) => {
             this.log(String(data))
         }
-        addEventAPI(this,this.logEx);
+        addEventAPI(this, this.logEx);
     }
 
     this.execute = () => {
@@ -64,11 +67,16 @@ core.registerOperator("scriptrunner", {
         //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
         this.rootdiv.querySelector("textarea").value = this.settings.script || "";
-        //don't execute, just flag this as needing attention
-        textarea.style.background="green";
+        if (this.settings.autorun && this.settings.reallyAutorun) {
+            this.execute();
+        } else {
+            //don't execute, just flag this as needing attention
+            textarea.style.background = "green";
+        }
+
     }
     this.rootdiv.querySelector("button").addEventListener("click", () => {
-        textarea.style.background="white";
+        textarea.style.background = "white";
         this.settings.script = this.rootdiv.querySelector("textarea").value;
         this.execute();
     })
@@ -77,8 +85,24 @@ core.registerOperator("scriptrunner", {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS IN GENERAL!`;
+    let ops = [
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "autorun",
+            label: "Autorun on start"
+        }), new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "reallyAutorun",
+            label: "Confirm autorun on start"
+        })
+    ];
+
     this.showDialog = function () {
-        // update your dialog elements with your settings
+        ops.forEach((op) => { op.load(); });
     }
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
@@ -87,7 +111,7 @@ core.registerOperator("scriptrunner", {
     //Allow tab to work
     let textarea = this.rootdiv.querySelector('textarea');
     textarea.addEventListener("keydown", (e) => {
-        textarea.style.background="lightgreen";
+        textarea.style.background = "lightgreen";
         if (e.keyCode == 9 || e.which == 9) {
             e.preventDefault();
             var s = e.target.selectionStart;

@@ -328,6 +328,14 @@ core.registerOperator("inspector", {
 
     me.fromSaveData = function (d) {
         Object.assign(me.settings, d);
+        if (!me.settings.propsOn) {
+            me.settings.propsOn={};
+            for (let i in core.items) {
+                for (let j in core.items[i]) {
+                    me.settings.propsOn[j] = "Auto";
+                }
+            }
+        }
         me.updateSettings();
     }
 

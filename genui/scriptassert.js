@@ -14,9 +14,13 @@ done: some function.
 
 For consistency, the module name should be in all lowercase and not include the extension name e.g. fullCalendar.js should be just fullcalendar.
 */
+window.addEventListener('error', function (e) {
+    if (e.target.tagName == "SCRIPT") e.target.onclick();//click the script element to push an event to it
+}, true);
 
 var __assert_states = {};
 function scriptassert(list, done, sroot) {//shadow root option
+    if (!sroot) sroot = window; // TODO: add 404 support, auto detect 
     let _list = [];
     if (list.length == undefined) {
         for (i in list) {
@@ -53,7 +57,6 @@ function scriptassert(list, done, sroot) {//shadow root option
                 l.type = "text/css";
                 document.head.appendChild(l);
             }
-
             let s = document.createElement("script");
             document.head.appendChild(s);
             s.onload = function () {
@@ -63,14 +66,20 @@ function scriptassert(list, done, sroot) {//shadow root option
                     //console.log("done");
                 }
             }
-            try{s.src = path;
-            }catch(e){
-                console.log(e);
-                __assert_states[varname].state='failed'
+            s.onclick = () => {
+                console.log("scriptassert: ERROR 404 from " + varname);
+                //something went wrong
+                __assert_states[varname].state = 'failed'
                 for (var i = 0; i < __assert_states[varname].callbacks.length; i++) {
                     __assert_states[varname].callbacks[i]();
                     //console.log("done");
                 }
+            }
+
+            try {
+                s.src = path;
+            } catch (e) {
+                console.log(e);
             }
             //while(waiting);
             //console.log("started...");

@@ -23,13 +23,13 @@ var __manager_profiles = {
             ["inspector", "operators/inspector.js"],
             ["sorter", "operators/sorter.js"],
             ["httree", "operators/httree.js"],
-            ["chat", "operators/chat.js"],
+            //["chat", "operators/chat.js"],
             ["itemcluster", "operators/itemcluster.js"],
-            ["turmach", "operators/turmach.js"],
+            //["turmach", "operators/turmach.js"],
             ["roundshow", "operators/know/roundshow.js"],
             ["tester", "operators/know/tester.js"],
             ["ruigen", "operators/ruigen/rui_operator.js"],
-            ["calendar2", "operators/calendar.2.js"],
+            //["calendar2", "operators/calendar.2.js"],
             ["scriptrunner", "operators/scriptrunner.js"]
         ]
     },

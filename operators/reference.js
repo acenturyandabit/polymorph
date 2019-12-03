@@ -123,9 +123,33 @@ core.registerOperator("reference", {
     //Handle the settings dialog click!
     this.dialogDiv=document.createElement("div");
     this.dialogDiv.innerHTML=`Some html`;
-    this.showDialog=function(){
-        // update your dialog elements with your settings
+    //Sample options using our _options in house options settings
+    let ops = [
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "echoOn",
+            label: "Echo commands"
+        }), new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "wsautocon",
+            label: "Autoconnect websocket on disconnect"
+        }), new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "wsthru",
+            label: "Use as dedicated websocket interface"
+        })
+    ];
+
+    this.showDialog = function () {
+        ops.forEach((op) => { op.load(); });
     }
+
     this.dialogUpdateSettings=function(){
         // pull settings and update when your dialog is closed.
     }
