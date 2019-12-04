@@ -94,7 +94,7 @@ function _itemcluster_extend_svg(me) { // very core functions!
         //draw its lines
         if (core.items[id].to) {
             for (let i in core.items[id].to) {
-                if (core.items[i] && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                if (core.items[i] && core.items[i].itemcluster && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                     if (i == me.prevFocusID || id == me.prevFocusID) {
                         me.enforceLine(id, i, "red");
                     } else {
