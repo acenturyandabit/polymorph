@@ -10,7 +10,7 @@ core.registerOperator("descbox", function (container) {
     me.rootdiv = document.createElement("div");
     //Add div HTML here
     me.rootdiv.innerHTML = `<p></p><textarea></textarea>`;
-    me.rootdiv.style.cssText="height:100%; display:flex; flex-direction: column;"
+    me.rootdiv.style.cssText = "height:100%; display:flex; flex-direction: column;"
     me.textarea = me.rootdiv.querySelector("textarea");
     me.textarea.style.width = "100%";
     me.textarea.style.flex = "1 0 auto";

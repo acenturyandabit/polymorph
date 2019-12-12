@@ -15,63 +15,33 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
         messagingSenderId: "894862693076"
       });
       this.db = firebase.firestore();
-      me.db.settings({
-        timestampsInSnapshots: true
-      });
     } catch (e) {
+      //Firebase is already loaded
+      console.log("Firebase error:")
       console.log(e);
+      this.db = firebase.firestore();
     }
-    this.pullAll = async function (data) {
-      let id = data;
+
+    this.pullAll = async function () {
       if (!this.db) return;
       let root = this.db
         .collection("polymorph")
-        .doc(id);
-      //load items; load views, package, send
-      let result = {
-        views: {},
-        items: {}
-      };
-      let snapshot = await root.collection("views").get();
-      snapshot.forEach((doc) => {
-        result.views[doc.id] = doc.data();
-      });
-      snapshot = await root.collection("items").get();
-      snapshot.forEach((doc) => {
-        result.items[doc.id] = doc.data();
-      });
-      //meta properties
+        .doc(core.currentDocID);
+      //Just send the thing (yay new save structure!)
       snapshot = await root.get();
-      Object.assign(result, snapshot.data());
-      return result;
+      return snapshot;
     }
 
-    async function internalPushAll(root) {
-      for (let i in core.items) {
-        root.collection('items').doc(i).set(JSON.parse(JSON.stringify(core.items[i])));
-      }
-      for (let i in core.baseRects) {
-        root.collection('views').doc(i).set(JSON.parse(JSON.stringify(core.baseRects[i].toSaveData())));
-      }
-      let copyobj = Object.assign({}, core.currentDoc);
-      delete copyobj.items;
-      delete copyobj.views;
-      root.set(copyobj);
-    }
-
-    core.on("userSave",(d)=>{
-      //should I care?
-      //if this document does not yet exist, create it
-      //push everything to it
-
-    })
-
-    this.hook = async function (id) { // just comment out if you can't subscribe to live updates.
-      //assumption: that all changes have already been pulled,
-      //If not, we'll deal with it. 
+    this.hook = async function (id) {
+      //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
       let root = this.db
         .collection("polymorph")
-        .doc(id);
+        .doc(core.currentDocID);
+
+      // just comment out if you can't subscribe to live updates.
+      //assumption: that all changes have already been pulled,
+      //If not, we'll deal with it. 
+
       //remote
       //items
       me.unsub['items'] = root.collection("items").onSnapshot(shot => {

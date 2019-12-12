@@ -14,7 +14,7 @@ Palette looks like this:
 
 */
 
-_rect.prototype.changePalette = function (palette) {
+core.rect.prototype.changePalette = function (palette) {
     this.outerDiv.style.background = palette.rectOuterDivColour;
     this.innerDivs.forEach((v) => {
         v.style.background = palette.rectInnerDivColour || palette.rectOuterDivColour;

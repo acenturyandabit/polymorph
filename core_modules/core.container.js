@@ -1,89 +1,52 @@
 //container. Wrapper around an operator.
 //child is this.operator.
-core.container = function container(_type, _rect) {
-    this.rect = _rect;
-    let me = this;
+core.container = function container(containerID) {
+    this.id = containerID;// necessary when rect passes container down to chilren.
+    core.containers[containerID] = this;
+    //settings and data management
+    //#region
+    //regions are a vscode thing that allow you to hide stuff without putting it in blocks. It's great. Get vscode.
 
-    //options, settings, whatnot
-    this.settings = {
-        uuid: guid(6),
+    Object.defineProperty(this, "settings", {
+        get: () => {
+            return core.items[containerID]._od;
+        }
+    })
+
+    //with our new getter model, default settings are a little harder.
+    let defaultSettings = {
+        t: "opSelect",
+        data: {},
         inputRemaps: {},
         outputRemaps: {},
-        type: "opSelect",
         tabbarName: "New Operator"
-    }
-    //the options are for operators and are transient.
-    this.options = {};
+    };
+    Object.assign(defaultSettings, this.settings);
+    core.items[containerID]._od = defaultSettings;
+
+    Object.defineProperty(this, "rect", {
+        get: () => {
+            return core.rects[this.settings.p];
+        }
+    })
+
     //topmost 'root' div.
-    this.topdiv = htmlwrap(`<div style="width:100%;height:100%; background:rgba(230, 204, 255,0.1)"></div>`);
+    this.outerDiv = htmlwrap(`<div style="width:100%;height:100%; background:rgba(230, 204, 255,0.1)"></div>`);
 
     //inner div. for non shadow divs. has a uuid for an id so that it can be referred to uniquely by the operator. (this is pretty redundant imo)
     this.innerdiv = document.createElement("div");
-    this.topdiv.appendChild(this.innerdiv);
+    this.outerDiv.appendChild(this.innerdiv);
     this.innerdiv.id = guid(12);
 
     //shadow root.
     this.shader = document.createElement("div");
     this.shader.style.width = "100%";
     this.shader.style.height = "100%";
-    this.topdiv.appendChild(this.shader);
+    this.outerDiv.appendChild(this.shader);
     this.shadow = this.shader.attachShadow({
         mode: "open"
     });
-
-    this.toSaveData = () => {
-        let obj = {};
-        Object.assign(obj, this.settings);
-        if (this.operator) obj.data = this.operator.toSaveData();
-        else obj.data = {};
-        return obj;
-    };
-    this.fromSaveData = (__type) => {
-        let data;
-        this.options = {
-            noShadow: false
-        };
-        if (typeof __type == "string") {
-            this.settings.type = __type;
-            this.settings.uuid = guid(6); //make a guid!
-        } else {
-            Object.assign(this.settings, __type);
-            delete this.settings.data;
-            this.settings.inputRemaps = __type.remaps || this.settings.inputRemaps;
-            delete this.settings.remaps;
-            data = __type.data;
-        }
-
-        //parse options and decide what to do re: a div
-        if (core.operators[this.settings.type]) {
-            if (core.operators[this.settings.type].options)
-                Object.assign(this.options, core.operators[this.settings.type].options);
-            //clear the shadow and the div
-            this.shadow.innerHTML = "";
-            this.innerdiv.innerHTML = "";
-            if (!this.tabbarName) this.tabbarName = core.operators[this.settings.type].options.displayName || this.settings.type;
-            if (this.options.noShadow) {
-                this.div = this.innerdiv;
-            } else {
-                this.div = this.shadow;
-                this.shader.style.display = "block";
-            }
-            if (this.options.outerScroll) {
-                this.topdiv.style.overflowY = "auto";
-            } else {
-                this.topdiv.style.overflowY = "hidden";
-            }
-            try {
-                this.operator = new core.operators[this.settings.type].constructor(this);
-                if (data) this.operator.fromSaveData(data);
-                if (!this.operator.container) this.operator.container = this;
-            } catch (e) {
-                console.log(e);
-            }
-        } else {
-            this.waitOperatorReady(this.settings.type, __type);
-        }
-    };
+    //#endregion
 
     this.waitOperatorReady = (type, data) => {
         let h1 = document.createElement("h1");
@@ -97,52 +60,21 @@ core.container = function container(_type, _rect) {
         });
     };
 
-    this.passthrough = (fName, args) => {
-        //perhaps the operator has to do sothis stuff too - so let it do its stuff
-        let result;
-        if (this[fName]) {
-            result = this[fName](args);
-        }
-        if (this.operator.passthrough) {
-            result = result || this.operator.passthrough(fName, args);
-        }
-        return result;
-    }
-
     //bulkhead for item selection.
     this.bulkhead = document.createElement("div");
     this.bulkhead.style.cssText = `display: none; background: rgba(0,0,0,0.5); width: 100%; height: 100%; position: absolute; zIndex: 100`
     //bulkhead styling
     this.bulkhead.innerHTML = `<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white"></p></div>`
-    this.topdiv.appendChild(this.bulkhead);
+    this.outerDiv.appendChild(this.bulkhead);
     this.bulkhead.addEventListener("click", (e) => {
         this.bulkhead.style.display = "none";
-        core.submitTarget(this.settings.uuid);
+        core.submitTarget(containerID);
         e.stopPropagation();
     })
 
-    this.activateTargets = () => {
-        // put a grey disabled div on this of the basediv.
-        // also put sothis info about the underlying operator, i.e. what events it fires.
-        this.bulkhead.children[0].children[0].innerHTML = "The following events are available from this operator:";
-        while (this.bulkhead.children[0].children.length > 1) this.bulkhead.children[1].remove();
-        if (!this.operator.passthrough) this.bulkhead.style.display = "block";
-    }
-    this.deactivateTargets = () => {
-        if (!this.operator.passthrough) this.bulkhead.style.display = "none";
-    }
-    this.getOperator = (id) => {
-        if (this.settings.uuid == id) {
-            return this;
-        }
-    }
-    this.listOperators = (list) => {
-        list.push({ id: this.settings.uuid, type: this.settings.type });
-    }
-
     //Interfacing with the underlying operator
     this.visible = () => {
-        return this.topdiv.offsetHeight != 0;
+        return this.outerDiv.offsetHeight != 0;
     }
 
     //event remapping
@@ -161,7 +93,7 @@ core.container = function container(_type, _rect) {
 
         if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
         else {
-            e = [e, e + "_" + this.settings.uuid];
+            e = [e, e + "_" + containerID];
         }
 
         e.forEach((v) => {
@@ -179,13 +111,13 @@ core.container = function container(_type, _rect) {
         this.incomingEvents.pop();
     })
 
-    //input remaps
-
+    //Input event remapping
+    //#region
     this.remappingDiv = document.createElement("div");
     this.remappingDiv.innerHTML = `
     <h3>Input Remaps</h3>
     <p>Remap calls from the core to internal calls, to change operator behaviour.</p>
-    <p>This operator's ID: ${this.settings.uuid}</p>
+    <p>This operator's ID: ${containerID}</p>
     <div>
     </div>
     <button>Add another input remap...</button>
@@ -227,7 +159,7 @@ core.container = function container(_type, _rect) {
         })
     }
     this.readyRemappingDiv = () => {
-        this.remappingDiv.children[2].innerText = `This operator's ID: ${this.settings.uuid}`;
+        this.remappingDiv.children[2].innerText = `This operator's ID: ${containerID}`;
         for (let i = 0; i < 2; i++) {
             let div = this.remappingDiv.querySelectorAll("div")[i];
             while (div.children.length) div.children[0].remove();
@@ -265,7 +197,80 @@ core.container = function container(_type, _rect) {
             this.settings.outputRemaps[row.children[0].value].push(row.children[1].value);
         }
     }
+    //#endregion
 
-    //initilisation
-    this.fromSaveData(_type);
+    //saving and loading
+    //#region
+    this.toSaveData = () => {
+        this.settings.data = this.operator.toSaveData();
+        return this.settings;
+    };
+
+    //parse options and decide what to do re: a div
+    if (core.operators[this.settings.t]) {
+        let options = core.operators[this.settings.t].options;
+        //clear the shadow and the div
+        if (options.noShadow) {
+            this.div = this.innerdiv;
+        } else {
+            this.div = this.shadow;
+        }
+        if (options.outerScroll) {
+            this.outerDiv.style.overflowY = "auto";
+        } else {
+            this.outerDiv.style.overflowY = "hidden";
+        }
+        try {
+            this.operator = new core.operators[this.settings.t].constructor(this);
+            if (this.settings.data) this.operator.fromSaveData(this.settings.data); // though we might as well do this in instantiation
+            if (!this.operator.container) this.operator.container = this;
+        } catch (e) {
+            console.log(e);
+        }
+    } else {
+        this.waitOperatorReady(this.settings.t, this.settings._data);
+    }
+    //#endregion
+
+    //Attach myself to a rect
+    if (this.settings.p && core.items[this.settings.p]._rd) {
+        //there is or will be a rect for it.
+        if (core.rects[this.settings.p]) {
+            core.rects[this.settings.p].tieContainer(containerID);
+        } else {
+            if (!core.rectLoadCallbacks[this.settings.p]) core.rectLoadCallbacks[this.settings.p] = [];
+            core.rectLoadCallbacks[this.settings.p].push(rectID);
+        }
+    }
+
 };
+
+
+
+// targeter
+core.targeter = undefined;
+core.dialoghide = false;
+core.submitTarget = function (id) {
+    if (me.targeter) {
+        me.targeter(id); //resolves promise
+        me.targeter = undefined;
+        //untarget everything
+        me.baseRect.deactivateTargets();
+        if (core.dialoghide) {
+            me.dialog.div.style.display = "block";
+            core.dialoghide = false;
+        }
+    }
+}
+core.target = function () {
+    // activate targeting
+    me.baseRect.activateTargets();
+    if (me.dialog.div.style.display == "block") {
+        core.dialoghide = true;
+        me.dialog.div.style.display = "none";
+    }
+    let promise = new Promise((resolve) => {
+        me.targeter = resolve;
+    })
+    return promise;
+}

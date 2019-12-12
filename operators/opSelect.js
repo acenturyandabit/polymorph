@@ -42,13 +42,16 @@
                 b.innerHTML = displayText;
                 b.dataset.underOperatorName = i;
                 b.addEventListener("click", () => {
-                    container.fromSaveData(b.dataset.underOperatorName);
+                    //get out of the way
+                    while (container.div.children.length) container.div.children[0].remove();
+                    container.settings.type = b.dataset.underOperatorName;
+                    container.operator = new core.operators[b.dataset.underOperatorName].constructor(container);
+                    //change the operator potato.
                     //change name if user has not already modified name
                     if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = core.operators[b.dataset.underOperatorName].options.displayName || me.type;
                     container.fire("updateView", {
                         sender: this
                     });
-                    container.rect.tieOperator(container);
                 })
                 me.buttondiv.appendChild(b);
                 //generate the description

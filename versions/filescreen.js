@@ -23,11 +23,20 @@ core.on("UIstart", () => {
     }
     for (let i in core.saveSources) {
         if (core.saveSources[i].createable) {
-            core.filescreen.baseDiv.querySelector(".source" ).appendChild(htmlwrap(`<option value="${i}">${core.saveSources[i].prettyName || i}</option>`));
+            core.filescreen.baseDiv.querySelector(".source").appendChild(htmlwrap(`<option value="${i}">${core.saveSources[i].prettyName || i}</option>`));
         }
     }
 })
 
 core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click", () => {
-    core.instantNewDoc();
+    let template = core.filescreen.baseDiv.querySelector(".tmplt").value;
+    let source = core.filescreen.baseDiv.querySelector(".source").value;
+    let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
+    let id = guid(5);
+    core.currentDocID = id;
+    core.datautils.upgradeSaveData(id, source);
+    core.rehookAll(id);
+    let doc = core.sanityCheckDoc({}, { template: template, name: nm });
+    core.fromSaveData(doc);
+    core.filescreen.baseDiv.style.display = "none";
 })

@@ -3,8 +3,8 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
   this.prettyName = "Google drive integration";
   //firebase things
   me.unsub = {};
-  scriptassert([["firebase", "https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"], ["firestore", "https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"]], () => {
-    try {
+  scriptassert([["firebase", "https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"], ["firestore", "https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"]], () => {  
+  try {
       firebase.initializeApp({
         apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
         authDomain: "backbits-567dd.firebaseapp.com",
@@ -14,11 +14,10 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
         messagingSenderId: "894862693076"
       });
       this.db = firebase.firestore();
-      me.db.settings({
-        timestampsInSnapshots: true
-      });
     } catch (e) {
       //firebase is probably already loaded
+      console.log("Firebase error:");
+      console.log(e);
       this.db = firebase.firestore();
     }
 
@@ -33,7 +32,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
 
 
     //prompt
-    core.on("UIstart",() => {
+    core.on("UIstart", () => {
       try {
         document.querySelector(".gdrivePrompt").style.display = "block";
         document.querySelector(".gdrivePrompt").addEventListener("click", () => {

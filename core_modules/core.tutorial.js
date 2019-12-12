@@ -1,6 +1,7 @@
 if (!core.userData.tutorialData) {
   core.userData.tutorialData = { main: {} };
 }
+
 core.tutorial = new _tutorial({
   data: () => { return core.userData.tutorialData.main },
   saveData: () => { core.saveUserData() }
@@ -67,8 +68,8 @@ core.on("UIstart", () => {
     }
   ]);
   //wait for a baserect to show before continuing the tutorial
-  core.on("viewReady",()=>{
-    core.tutorial.continueStart(()=>{core.tutorial.start();});
+  core.on("viewReady", () => {
+    core.tutorial.continueStart(() => { core.tutorial.start(); });
   })
 })
 
@@ -76,17 +77,17 @@ core.on("UIstart", () => {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Also handle individual tutorials.
-core.on("titleButtonsReady",()=>{
-  document.querySelector("li.hleptute").addEventListener("click", ()=>{
-    core.target().then((id)=>{
-      if (core.getOperator(id).operator.startTutorial)core.getOperator(id).operator.startTutorial();
+core.on("titleButtonsReady", () => {
+  document.querySelector("li.hleptute").addEventListener("click", () => {
+    core.target().then((id) => {
+      if (core.getOperator(id).operator.startTutorial) core.getOperator(id).operator.startTutorial();
     })
   })
-  document.querySelector("li.hlepdocs").addEventListener("click", ()=>{
+  document.querySelector("li.hlepdocs").addEventListener("click", () => {
     //navigate to another help file.
-    window.open(window.location.pathname+"docs","_blank");
+    window.open(window.location.pathname + "docs", "_blank");
   })
-  document.querySelector("li.hlepreport").addEventListener("click", ()=>{
+  document.querySelector("li.hlepreport").addEventListener("click", () => {
     window.open("mailto:steeven.liu2@gmail.com?subject=Polymorph - Issue");
   })
 })

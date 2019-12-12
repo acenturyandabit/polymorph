@@ -5,22 +5,15 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
     <span>
     <textarea placeholder="Output"></textarea>
     <br>
-    <button class="snow">Save now</button>
-    <button class="sfile">Save to file</button>
-    <button class="lfs">Load from text</button>
+    <button class="sfile">Save text to file</button>
     <button class="mfs">Merge from text</button>
     </span>
     `;
     function saveToFile() {
         saveJSON(core.toSaveData(), core.currentDoc.displayName + "_" + Date.now() + ".json");
     }
-    this.dialog.querySelector(".snow").addEventListener("click", () => {
-        this.pushAll(undefined, core.toSaveData());
-    })
-    this.dialog.querySelector(".lfs").addEventListener("click", () => {
-        core.userLoad("toText", this.id);
-    })
     this.dialog.querySelector(".mfs").addEventListener("click", () => {
+        /*
         let i = JSON.parse(this.dialog.querySelector("textarea").value);
         i = core.datautils.decompress(i);
         //dont do anything with views for now
@@ -30,7 +23,7 @@ core.registerSaveSource("toText", function (core) { // a sample save source, imp
             } else {
                 core.items[d] = i.items[d];
             }
-        }
+        }*/
     })
     this.dialog.querySelector(".sfile").addEventListener("click", () => {
         saveToFile();

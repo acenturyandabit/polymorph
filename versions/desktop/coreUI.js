@@ -1,4 +1,4 @@
-core.on("UIsetup",() => {
+core.on("UIsetup", () => {
     document.body.appendChild(htmlwrap(`
     <style>
     #popup-notification {
@@ -72,12 +72,8 @@ core.on("UIsetup",() => {
 })
 
 core.on("UIstart", () => {
-
     document.querySelector(".topbar .open").addEventListener("click", () => {
-        if (core.isNewDoc)core.filescreen.showSplash();
-        else{
-            window.open(window.location.pathname+"?o","_blank");
-        }
+        window.open(window.location.pathname + "?o", "_blank");
     })
     document.querySelector(".topbar .tutorial").addEventListener("click", () => {
         core.resetTutorial();
@@ -92,7 +88,7 @@ core.on("UIstart", () => {
             core.userSave();
             core.unsaved = false;
             //also do the server save
-            
+
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
             core.showNotification('Saved', 'success');
         }
@@ -111,18 +107,18 @@ core.on("UIstart", () => {
 });
 
 core.showNotification = function (notificationMessage, notificationType = 'default') {
-    
-    if(!document.getElementById("popup-notification")) {
+
+    if (!document.getElementById("popup-notification")) {
         const popupNotification = document.createElement("div");
         popupNotification.setAttribute("id", "popup-notification");
-        document.body.appendChild(popupNotification);        
+        document.body.appendChild(popupNotification);
     }
 
-    const popupNotificationBox = document.getElementById("popup-notification"); 
+    const popupNotificationBox = document.getElementById("popup-notification");
     popupNotificationBox.innerHTML = notificationMessage;
     popupNotificationBox.classList.add(notificationType);
     popupNotificationBox.classList.add('showAndFadeOut');
-    const hideNotificationBox = setTimeout(()=>{
+    const hideNotificationBox = setTimeout(() => {
         popupNotificationBox.classList = '';
-    },2800)
+    }, 2800)
 }

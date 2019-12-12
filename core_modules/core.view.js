@@ -1,30 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////////////
 //View level functions
 
-core.presentView = function (view) {
+core.switchView = function (view) {
+    core.items._meta.currentView = view;
+    while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
+    document.body.querySelector(".rectspace").appendChild(core.rects[core.items._meta.currentView].outerDiv);
     //reset and present a view
-    core.resetView();
-    if (view == undefined || core.baseRects[view] == undefined) {
-        //create a new view
-        if (!view) view = "default";
-        core.baseRect = new _rect(core,
-            undefined,
-            0,
-            0,
-            1);
-        core.baseRects[view] = core.baseRect;
-    }
-    core.baseRects[view].pos = 0;
-    core.baseRects[view].firstOrSecond = 1;
-    document.body.querySelector(".rectspace").innerHTML = "";
-    document.body.querySelector(".rectspace").appendChild(core.baseRects[view].outerDiv);
-    core.baseRect = core.baseRects[view];//set the ref so everyone can access it as before
-    //set user's current view
-    core.baseRect.refresh();
-    core.fire("viewReady");
-    core.userData.documents[core.currentDocID].currentView = view;
-    core.saveUserData();
-    core.unsaved = false;
+    core.rects[core.items._meta.currentView].refresh();
 };
 
 
@@ -58,13 +40,13 @@ core.on("UIstart", () => {
 `;
     d.querySelector(".acvu").addEventListener("click", () => {
         core.presentView(d.querySelector(".views").value);
-        core.isSaving=true;//prevent autosave from firing repeatedly
+        core.isSaving = true;//prevent autosave from firing repeatedly
         for (let i in core.items) {
             core.fire("updateItem", {
                 id: i
             });
         }
-        core.isSaving=false;
+        core.isSaving = false;
         core.baseRect.refresh();
     })
     d.querySelector(".nvu").addEventListener("click", () => {
