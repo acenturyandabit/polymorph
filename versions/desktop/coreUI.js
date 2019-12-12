@@ -1,4 +1,4 @@
-core.on("UIsetup", () => {
+polymorph_core.on("UIsetup", () => {
     document.body.appendChild(htmlwrap(`
     <style>
     #popup-notification {
@@ -68,29 +68,29 @@ core.on("UIsetup", () => {
             <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>
     </div>`));
-    core.fire("titleButtonsReady");
+    polymorph_core.fire("titleButtonsReady");
 })
 
-core.on("UIstart", () => {
+polymorph_core.on("UIstart", () => {
     document.querySelector(".topbar .open").addEventListener("click", () => {
         window.open(window.location.pathname + "?o", "_blank");
     })
     document.querySelector(".topbar .tutorial").addEventListener("click", () => {
-        core.resetTutorial();
+        polymorph_core.resetTutorial();
     })
     //register some handlers
     window.addEventListener("resize", () => {
-        core.baseRect.refresh();
+        polymorph_core.baseRect.refresh();
     })
     document.body.addEventListener("keydown", e => {
         if (e.ctrlKey && e.key == "s") {
             e.preventDefault();
-            core.userSave();
-            core.unsaved = false;
+            polymorph_core.userSave();
+            polymorph_core.unsaved = false;
             //also do the server save
 
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
-            core.showNotification('Saved', 'success');
+            polymorph_core.showNotification('Saved', 'success');
         }
     });
 
@@ -106,7 +106,7 @@ core.on("UIstart", () => {
     tbman.checkTopbars();
 });
 
-core.showNotification = function (notificationMessage, notificationType = 'default') {
+polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {
 
     if (!document.getElementById("popup-notification")) {
         const popupNotification = document.createElement("div");

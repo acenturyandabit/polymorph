@@ -1,15 +1,15 @@
 //container. Wrapper around an operator.
 //child is this.operator.
-core.container = function container(containerID) {
+polymorph_core.container = function container(containerID) {
     this.id = containerID;// necessary when rect passes container down to chilren.
-    core.containers[containerID] = this;
+    polymorph_core.containers[containerID] = this;
     //settings and data management
     //#region
     //regions are a vscode thing that allow you to hide stuff without putting it in blocks. It's great. Get vscode.
 
     Object.defineProperty(this, "settings", {
         get: () => {
-            return core.items[containerID]._od;
+            return polymorph_core.items[containerID]._od;
         }
     })
 
@@ -22,11 +22,11 @@ core.container = function container(containerID) {
         tabbarName: "New Operator"
     };
     Object.assign(defaultSettings, this.settings);
-    core.items[containerID]._od = defaultSettings;
+    polymorph_core.items[containerID]._od = defaultSettings;
 
     Object.defineProperty(this, "rect", {
         get: () => {
-            return core.rects[this.settings.p];
+            return polymorph_core.rects[this.settings.p];
         }
     })
 
@@ -53,8 +53,8 @@ core.container = function container(containerID) {
         h1.innerHTML = "Loading operator...";
         this.innerdiv.appendChild(h1);
         this.shader.style.display = "none";
-        if (!core.operatorLoadCallbacks[type]) core.operatorLoadCallbacks[type] = [];
-        core.operatorLoadCallbacks[type].push({
+        if (!polymorph_core.operatorLoadCallbacks[type]) polymorph_core.operatorLoadCallbacks[type] = [];
+        polymorph_core.operatorLoadCallbacks[type].push({
             op: this,
             data: data
         });
@@ -68,7 +68,7 @@ core.container = function container(containerID) {
     this.outerDiv.appendChild(this.bulkhead);
     this.bulkhead.addEventListener("click", (e) => {
         this.bulkhead.style.display = "none";
-        core.submitTarget(containerID);
+        polymorph_core.submitTarget(containerID);
         e.stopPropagation();
     })
 
@@ -77,16 +77,21 @@ core.container = function container(containerID) {
         return this.outerDiv.offsetHeight != 0;
     }
 
+    this.refresh = function () {
+        if (this.operator.refresh) this.operator.refresh();
+    }
+
     //event remapping
     addEventAPI(this);
     this._on = this.on;
     //we need the garbagecollector to work still
     this.on = (e, f) => {
-        if (e == "updateItem") core.on("updateItem", f);
+        if (e == "updateItem") polymorph_core.on("updateItem", f);
         else (this._on(e, f));
     }
     this.incomingEvents = [];
     this.on("*", (args, e) => {
+
         for (let i = 0; i < this.incomingEvents.length; i++) {
             if (this.incomingEvents[i].e == e && this.incomingEvents[i].args == args) return;
         }
@@ -97,12 +102,18 @@ core.container = function container(containerID) {
         }
 
         e.forEach((v) => {
-            core.fire(v, args);
+            if (v=="updateItem" && args.id==this.id){
+                //occasionally this is called during load, in which case this.operator is still undefined
+                if (this.operator){
+                    polymorph_core.items[this.id]._od.data=this.operator.toSaveData();
+                }
+            }
+            polymorph_core.fire(v, args);
         })
 
     })
 
-    core.on("*", (args, e) => {
+    polymorph_core.on("*", (args, e) => {
         //with this setup, updateItem will be called twice - so dont handle updateItem
         if (e == "updateItem") return;
         this.incomingEvents.push({ e: e, args: args });
@@ -116,7 +127,7 @@ core.container = function container(containerID) {
     this.remappingDiv = document.createElement("div");
     this.remappingDiv.innerHTML = `
     <h3>Input Remaps</h3>
-    <p>Remap calls from the core to internal calls, to change operator behaviour.</p>
+    <p>Remap calls from the polymorph_core to internal calls, to change operator behaviour.</p>
     <p>This operator's ID: ${containerID}</p>
     <div>
     </div>
@@ -131,7 +142,7 @@ core.container = function container(containerID) {
         if (io) {
             elem = htmlwrap(`<p>we fire <input>, send out <input><button>x</button></p>`);
         } else {
-            elem = htmlwrap(`<p>core fires <input>, we process<select></select><button>x</button></p>`);
+            elem = htmlwrap(`<p>polymorph_core fires <input>, we process<select></select><button>x</button></p>`);
             for (let i in this.events) {
                 if (i == "*") i = "";//replace any with none
                 elem.querySelector("select").appendChild(htmlwrap(`<option>${i}</option>`));
@@ -207,8 +218,8 @@ core.container = function container(containerID) {
     };
 
     //parse options and decide what to do re: a div
-    if (core.operators[this.settings.t]) {
-        let options = core.operators[this.settings.t].options;
+    if (polymorph_core.operators[this.settings.t]) {
+        let options = polymorph_core.operators[this.settings.t].options;
         //clear the shadow and the div
         if (options.noShadow) {
             this.div = this.innerdiv;
@@ -221,7 +232,7 @@ core.container = function container(containerID) {
             this.outerDiv.style.overflowY = "hidden";
         }
         try {
-            this.operator = new core.operators[this.settings.t].constructor(this);
+            this.operator = new polymorph_core.operators[this.settings.t].constructor(this);
             if (this.settings.data) this.operator.fromSaveData(this.settings.data); // though we might as well do this in instantiation
             if (!this.operator.container) this.operator.container = this;
         } catch (e) {
@@ -233,13 +244,13 @@ core.container = function container(containerID) {
     //#endregion
 
     //Attach myself to a rect
-    if (this.settings.p && core.items[this.settings.p]._rd) {
+    if (this.settings.p && polymorph_core.items[this.settings.p]._rd) {
         //there is or will be a rect for it.
-        if (core.rects[this.settings.p]) {
-            core.rects[this.settings.p].tieContainer(containerID);
+        if (polymorph_core.rects[this.settings.p]) {
+            polymorph_core.rects[this.settings.p].tieContainer(containerID);
         } else {
-            if (!core.rectLoadCallbacks[this.settings.p]) core.rectLoadCallbacks[this.settings.p] = [];
-            core.rectLoadCallbacks[this.settings.p].push(rectID);
+            if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+            polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
     }
 
@@ -248,25 +259,25 @@ core.container = function container(containerID) {
 
 
 // targeter
-core.targeter = undefined;
-core.dialoghide = false;
-core.submitTarget = function (id) {
+polymorph_core.targeter = undefined;
+polymorph_core.dialoghide = false;
+polymorph_core.submitTarget = function (id) {
     if (me.targeter) {
         me.targeter(id); //resolves promise
         me.targeter = undefined;
         //untarget everything
         me.baseRect.deactivateTargets();
-        if (core.dialoghide) {
+        if (polymorph_core.dialoghide) {
             me.dialog.div.style.display = "block";
-            core.dialoghide = false;
+            polymorph_core.dialoghide = false;
         }
     }
 }
-core.target = function () {
+polymorph_core.target = function () {
     // activate targeting
     me.baseRect.activateTargets();
     if (me.dialog.div.style.display == "block") {
-        core.dialoghide = true;
+        polymorph_core.dialoghide = true;
         me.dialog.div.style.display = "none";
     }
     let promise = new Promise((resolve) => {

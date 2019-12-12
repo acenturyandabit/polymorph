@@ -1,9 +1,9 @@
-core.registerSaveSource("srv", function (core) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("srv", function (polymorph_core) { // a sample save source, implementing a number of functions.
     this.prettyName="Save to server";
     //initialise here
     this.pushAll = async function (id, data) {
         //push to the source (force save)
-        let compressedData=core.datautils.IDCompress.compress(data);
+        let compressedData=polymorph_core.datautils.IDCompress.compress(data);
         console.log(compressedData);
         if (typeof(id)=="string"){
             id={saveTo:id, loadFrom:id};
@@ -28,7 +28,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
                 if (this.readyState == 4 && this.status == 200) {
                     try{
                         let obj = JSON.parse(this.responseText);
-                        obj=core.datautils.decompress(obj);
+                        obj=polymorph_core.datautils.decompress(obj);
                         console.log(obj);
                         resolve(obj);
                     }catch (e){
@@ -51,14 +51,14 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
     }
     this.hook = async function () { 
         //hook to pull changes and push changes. 
-        //To subscribe to live updates, you need to manually use core.on("updateItem",handler) to listen to item updates and core.on("updateView",handler) as well.
+        //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
         this.toSave=true;
     }
 
-    core.on("userSave",(d)=>{
+    polymorph_core.on("userSave",(d)=>{
         if (this.toSave){
-            this.pushAll(core.userData.documents[core.currentDocID].saveSources['srv'],d);
+            this.pushAll(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['srv'],d);
             return true; //return true if we save
         }else{
             return false;
@@ -76,7 +76,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         div: this.dialog,
         type: "text",
         object: () => {
-            return core.userData.documents[core.currentDocID].saveSources.srv
+            return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv
         },
         property: "saveTo",
         label: "Full server save address (include document name)"
@@ -85,14 +85,14 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         div: this.dialog,
         type: "text",
         object: () => {
-            return core.userData.documents[core.currentDocID].saveSources.srv
+            return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv
         },
         property: "loadFrom",
         label: "Full server load address (include document name)"
     });
     this.showDialog = function () {
-        if (!core.userData.documents[core.currentDocID].saveSources.srv || typeof core.userData.documents[core.currentDocID].saveSources.srv!="object"){
-            core.userData.documents[core.currentDocID].saveSources.srv={};
+        if (!polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv || typeof polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv!="object"){
+            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv={};
         }
         addrop.load();
         loop.load();

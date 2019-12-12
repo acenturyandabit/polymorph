@@ -2,7 +2,7 @@
 Operators are interchangeable UI components that display items, and which are contained in rects. 
 
 ## Life cycle
-When an operator is added by including its .js file, it will be added to `core.operators={}`, using `core.registerOperator()`.
+When an operator is added by including its .js file, it will be added to `polymorph_core.operators={}`, using `polymorph_core.registerOperator()`.
 
 ## Storage considerations
 Operators are stored as regular items, except they contain a property `item._od`.

@@ -1,4 +1,4 @@
-core.registerOperator("timer", {
+polymorph_core.registerOperator("timer", {
     displayName: "Timer",
     description: "A set of timers."
 }, function (container) {
@@ -12,20 +12,20 @@ core.registerOperator("timer", {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
         let id = d.id;
         //do stuff with the item.
         //does it have a timer element?
-        if (core.items[id].timer){
+        if (polymorph_core.items[id].timer){
             //the timer should be a dateTime
             //if the datetime exists, then render it.
             //hold on, i can use the internal scripting engine to do this...    
         }
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items will be deleted by the core garbage collector when the user saves.
+        //otherwise your items will be deleted by the polymorph_core garbage collector when the user saves.
         return false;
     });
 

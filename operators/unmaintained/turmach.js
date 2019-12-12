@@ -1,4 +1,4 @@
-core.registerOperator("turmach", {
+polymorph_core.registerOperator("turmach", {
     displayName: "Turmach",
     description: "A turn based state machine. For emulating very simple consciousnesses...?"
 }, function (container) {
@@ -110,7 +110,7 @@ core.registerOperator("turmach", {
     })
 
     me.tray.addEventListener("input", (e) => {
-        core.items[e.target.parentElement.dataset.id].title = e.target.value;
+        polymorph_core.items[e.target.parentElement.dataset.id].title = e.target.value;
         container.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
@@ -168,9 +168,9 @@ core.registerOperator("turmach", {
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
         if (d.sender == me) return;
-        if (itemPointerCache[d.id] && core.items[d.id][me.propertyName].viewData[me.settings.currentViewName]) {
-            core.items[me.settings.currentViewName][me.propertyName].cx = itemPointerCache[d.id].cx();
-            core.items[me.settings.currentViewName][me.propertyName].cy = itemPointerCache[d.id].cy();
+        if (itemPointerCache[d.id] && polymorph_core.items[d.id][me.propertyName].viewData[me.settings.currentViewName]) {
+            polymorph_core.items[me.settings.currentViewName][me.propertyName].cx = itemPointerCache[d.id].cx();
+            polymorph_core.items[me.settings.currentViewName][me.propertyName].cy = itemPointerCache[d.id].cy();
             me.viewAdjust();
             if (me.preselected) {
                 me.preselected.classList.remove("selected");
@@ -182,12 +182,12 @@ core.registerOperator("turmach", {
     })
 
 
-    ////////////////////////////////////////Handle core item updates//////////////////
+    ////////////////////////////////////////Handle polymorph_core item updates//////////////////
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
     let acp = new capacitor(200, 1000, () => {
-        for (let i in core.items) {
-            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData && polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
                 me.arrangeItem(i);
             }
         }
@@ -200,9 +200,9 @@ core.registerOperator("turmach", {
 
         if (me.container.visible()) {
             let present = false;
-            if (core.items[id][me.propertyName]) {
-                if (core.items[id][me.propertyName].viewData) {
-                    if (core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
+            if (polymorph_core.items[id][me.propertyName]) {
+                if (polymorph_core.items[id][me.propertyName].viewData) {
+                    if (polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
                         if (me.arrangeItem) {
                             me.arrangeItem(id);
                             acp.submit();//redraw lines
@@ -213,11 +213,11 @@ core.registerOperator("turmach", {
                 }
             }
 
-            if (!present && (!(me.settings.filter) || core.items[id][me.settings.filter])) {
+            if (!present && (!(me.settings.filter) || polymorph_core.items[id][me.settings.filter])) {
 
             }
         }
-        return ((core.items[id][me.propertyName] && (core.items[id][me.propertyName].viewData || core.items[id][me.propertyName].viewName)) != undefined);
+        return ((polymorph_core.items[id][me.propertyName] && (polymorph_core.items[id][me.propertyName].viewData || polymorph_core.items[id][me.propertyName].viewName)) != undefined);
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -230,7 +230,7 @@ core.registerOperator("turmach", {
 
     //Editing the name of a view
     this.viewName.addEventListener("keyup", function (e) {
-        core.items[me.settings.currentViewName][me.propertyName].viewName =
+        polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName =
             e.currentTarget.innerText;
         container.fire("updateItem", {
             id: me.settings.currentViewName,
@@ -275,12 +275,12 @@ core.registerOperator("turmach", {
 
     this.viewDropdownButton.addEventListener("click", function () {
         me.viewDropdown.innerHTML = "";
-        for (i in core.items) {
-            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewName) {
-                if (me.settings.filter && !(core.items[i][me.settings.filter])) continue;//apply filter to views
+        for (i in polymorph_core.items) {
+            if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewName) {
+                if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) continue;//apply filter to views
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
-                aa.innerHTML = core.items[i][me.propertyName].viewName;
+                aa.innerHTML = polymorph_core.items[i][me.propertyName].viewName;
                 me.viewDropdown.appendChild(aa);
             }
             //v = itemcluster.views[i].name;
@@ -305,9 +305,9 @@ core.registerOperator("turmach", {
         if (!me.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
-            for (let i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewName) {
-                    if (me.settings.filter && !(core.items[i][me.settings.filter])) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewName) {
+                    if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) {
                         continue;
                     }
                     this.switchView(i);
@@ -321,25 +321,25 @@ core.registerOperator("turmach", {
             }
             //Show blank
         } else {
-            if (!core.items[me.settings.currentViewName]) {
+            if (!polymorph_core.items[me.settings.currentViewName]) {
                 if (assert) {
-                    core.items[me.settings.currentViewName] = {};
+                    polymorph_core.items[me.settings.currentViewName] = {};
                 } else {
                     me.switchView();
                     return;
                 }
             }
-            if (!core.items[me.settings.currentViewName][me.propertyName]) {
+            if (!polymorph_core.items[me.settings.currentViewName][me.propertyName]) {
                 if (assert) {
-                    core.items[me.settings.currentViewName][me.propertyName] = {};
+                    polymorph_core.items[me.settings.currentViewName][me.propertyName] = {};
                 } else {
                     me.switchView();
                     return;
                 }
             }
-            if (!core.items[me.settings.currentViewName][me.propertyName].viewName) {
+            if (!polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName) {
                 if (assert) {
-                    core.items[me.settings.currentViewName][me.propertyName].viewName = core.items[ln].title || ln
+                    polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName = polymorph_core.items[ln].title || ln
                     container.fire("updateItem", {
                         id: me.settings.currentViewName
                     });
@@ -351,13 +351,13 @@ core.registerOperator("turmach", {
 
             //buttons
             this.viewName.innerText =
-                core.items[me.settings.currentViewName][me.propertyName].viewName.replace(/\n/ig, "");
+                polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (preview != ln && preview) {
                 if (subview) {
                     let b = document.createElement("button");
                     b.dataset.ref = preview;
-                    b.innerText = core.items[preview][me.propertyName].viewName;
+                    b.innerText = polymorph_core.items[preview][me.propertyName].viewName;
                     b.addEventListener("click", () => {
                         me.switchView(b.dataset.ref, true, false);
                         while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
@@ -380,14 +380,14 @@ core.registerOperator("turmach", {
                 }
             }
             //reposition all items, also updating viewbox
-            for (i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
+            for (i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //position the item appropriately.
                 }
             }
-            for (i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
+            for (i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //twice so that all lines show up. How efficient.
                 }
@@ -397,9 +397,9 @@ core.registerOperator("turmach", {
     };
 
     this.makeNewView = function () {
-        //register it with the core
+        //register it with the polymorph_core
         let itm = {};
-        let id = core.insertItem(itm);
+        let id = polymorph_core.insertItem(itm);
         itm.title = "New view";
         itm[me.propertyName] = {
             viewName: "New View"
@@ -417,14 +417,14 @@ core.registerOperator("turmach", {
     };
 
     this.cloneView = function () {
-        //register it with the core
+        //register it with the polymorph_core
         let itm = {};
-        let id = core.insertItem(itm);
+        let id = polymorph_core.insertItem(itm);
         itm.title = "New view";
         itm[me.propertyName] = {
-            viewName: "Copy of" + core.items[me.settings.currentViewName][me.propertyName].viewName
+            viewName: "Copy of" + polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName
         };
-        itm.title = core.items[me.settings.currentViewName][me.propertyName].viewName;
+        itm.title = polymorph_core.items[me.settings.currentViewName][me.propertyName].viewName;
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
@@ -433,18 +433,18 @@ core.registerOperator("turmach", {
             id: id
         });
         //clone positions as well
-        for (let i in core.items) {
-            if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
-                core.items[i][me.propertyName].viewData[id] = core.items[i][me.propertyName].viewData[me.settings.currentViewName];
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData && polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+                polymorph_core.items[i][me.propertyName].viewData[id] = polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName];
             }
         }
         this.switchView(id);
     };
     this.destroyView = function (viewName, auto) {
         // Destroy the itemcluster property of the item but otherwise leave it alone
-        delete core.items[viewName][me.propertyName].viewName;
+        delete polymorph_core.items[viewName][me.propertyName].viewName;
         if (me.settings.filter) {
-            delete core.items[viewName][me.settings.filter];
+            delete polymorph_core.items[viewName][me.settings.filter];
         }
         container.fire("deleteItem", {
             id: viewName
@@ -477,30 +477,30 @@ core.registerOperator("turmach", {
         <li class="hierarchy">Arrange in hierarchy</li>
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
-            if (core.shared.itemclusterCopyElement) {
+            if (polymorph_core.shared.itemclusterCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.items[core.shared.itemclusterCopyElement][me.propertyName].viewData[me.settings.currentViewName] = {
+                polymorph_core.items[polymorph_core.shared.itemclusterCopyElement][me.propertyName].viewData[me.settings.currentViewName] = {
                     x: coords.x,
                     y: coords.y,
                 }
                 me.rootcontextMenu.style.display = "none";
-                me.arrangeItem(core.shared.itemclusterCopyElement);
+                me.arrangeItem(polymorph_core.shared.itemclusterCopyElement);
                 container.fire("updateItem", {
-                    id: core.shared.itemclusterCopyElement,
+                    id: polymorph_core.shared.itemclusterCopyElement,
                     sender: me
                 });
             }
         })
         me.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
             let rect = me.itemSpace.getBoundingClientRect();
-            for (let i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
-                    core.items[i][me.propertyName].viewData[me.settings.currentViewName].x = e.clientX - rect.left;
-                    core.items[i][me.propertyName].viewData[me.settings.currentViewName].y = e.clientY - rect.top;
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData && polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+                    polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName].x = e.clientX - rect.left;
+                    polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName].y = e.clientY - rect.top;
                     me.arrangeItem(i);
                 }
             }
-            for (let i in core.items) {
+            for (let i in polymorph_core.items) {
                 //second update to fix lines; also alert everyone of changes.
                 container.fire("updateItem", {
                     id: i
@@ -511,12 +511,12 @@ core.registerOperator("turmach", {
             let rect = me.itemSpace.getBoundingClientRect();
             //order items
             let visibleItems = [];
-            for (let i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData && polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {
                     visibleItems.push({
                         id: i,
-                        x: core.items[i][me.propertyName].viewData[me.settings.currentViewName].x,
-                        y: core.items[i][me.propertyName].viewData[me.settings.currentViewName].y,
+                        x: polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName].x,
+                        y: polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName].y,
                         children: []
                     });
                 }
@@ -530,7 +530,7 @@ core.registerOperator("turmach", {
             //make a list of links
             let links = [];
             for (let i = 0; i < visibleItems.length; i++) {
-                for (let j in core.items[visibleItems[i].id].to) {
+                for (let j in polymorph_core.items[visibleItems[i].id].to) {
                     links.push({
                         a: visibleItems[i].id,
                         b: j
@@ -599,13 +599,13 @@ core.registerOperator("turmach", {
             function getWidth(id) {
                 let c = visibleItems[indexedOrder.indexOf(id)].children;
                 if (!c.length) {
-                    return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    return Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
                 } else {
                     let sum = 0;
                     for (let i = 0; i < c.length; i++) {
                         sum = sum + getWidth(c[i]);
                     }
-                    let alt = Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    let alt = Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
                     if (sum < alt) sum = alt;
                     return sum;
                 }
@@ -627,8 +627,8 @@ core.registerOperator("turmach", {
             let currenty = e.clientY - rect.top;
 
             function render(itm, tx, ty) { // itm is a visibleItem
-                core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
-                core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].y = ty;
+                polymorph_core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(polymorph_core.items[itm.id].boxsize.w))) / 2;
+                polymorph_core.items[itm.id][me.propertyName].viewData[me.settings.currentViewName].y = ty;
                 let ctx = tx;
                 for (let i = 0; i < itm.children.length; i++) {
                     ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
@@ -641,7 +641,7 @@ core.registerOperator("turmach", {
                 if (!visibleItems[i].parent) currentx += render(visibleItems[i], currentx, currenty);
             }
 
-            for (let i in core.items) {
+            for (let i in polymorph_core.items) {
                 //second update to fix lines; also alert everyone of changes.
                 container.fire("updateItem", {
                     id: i
@@ -689,9 +689,9 @@ core.registerOperator("turmach", {
                 let cte = e.target;
                 while (!cte.matches(".floatingItem")) cte = cte.parentElement;
                 me.contextedElement = cte;
-                if (core.items[cte.dataset.id].style) {
-                    me.itemContextMenu.querySelector(".background").value = core.items[cte.dataset.id].style.background || "";
-                    me.itemContextMenu.querySelector(".color").value = core.items[cte.dataset.id].style.color || "";
+                if (polymorph_core.items[cte.dataset.id].style) {
+                    me.itemContextMenu.querySelector(".background").value = polymorph_core.items[cte.dataset.id].style.background || "";
+                    me.itemContextMenu.querySelector(".color").value = polymorph_core.items[cte.dataset.id].style.color || "";
                 } else {
                     me.itemContextMenu.querySelector(".background").value = "";
                     me.itemContextMenu.querySelector(".color").value = "";
@@ -713,8 +713,8 @@ core.registerOperator("turmach", {
                 cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
             }
             cids.forEach((cid) => {
-                if (!core.items[cid].style) core.items[cid].style = {};
-                core.items[cid].style[e.target.className] = e.target.value;
+                if (!polymorph_core.items[cid].style) polymorph_core.items[cid].style = {};
+                polymorph_core.items[cid].style[e.target.className] = e.target.value;
                 container.fire("updateItem", {
                     sender: this,
                     id: cid
@@ -725,7 +725,7 @@ core.registerOperator("turmach", {
             .querySelector(".cstyl")
             .addEventListener("click", () => {
                 let cid = me.contextedElement.dataset.id;
-                me.copiedStyle = Object.assign({}, core.items[cid].style);
+                me.copiedStyle = Object.assign({}, polymorph_core.items[cid].style);
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -743,7 +743,7 @@ core.registerOperator("turmach", {
                     cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
                 }
                 cids.forEach((cid) => {
-                    core.items[cid].style = Object.assign({}, me.copiedStyle);
+                    polymorph_core.items[cid].style = Object.assign({}, me.copiedStyle);
                     me.arrangeItem(cid);
                     container.fire("updateItem", {
                         sender: this,
@@ -783,14 +783,14 @@ core.registerOperator("turmach", {
         me.itemContextMenu
             .querySelector(".cpybtn")
             .addEventListener("click", e => {
-                core.shared.itemclusterCopyElement = me.contextedElement.dataset.id;
+                polymorph_core.shared.itemclusterCopyElement = me.contextedElement.dataset.id;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
             .querySelector(".orientation")
             .addEventListener("click", e => {
                 //toggle the itemcluster orientation
-                core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation = !core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation;
+                polymorph_core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation = !polymorph_core.items[me.contextedElement.dataset.id][me.propertyName].subitemOrientation;
                 //reupdate
                 me.arrangeItem(me.contextedElement.dataset.id);
                 me.itemContextMenu.style.display = "none";
@@ -799,9 +799,9 @@ core.registerOperator("turmach", {
         me.itemContextMenu
             .querySelector(".subView")
             .addEventListener("click", e => {
-                core.items[
+                polymorph_core.items[
                     me.contextedElement.dataset.id
-                ][me.propertyName].viewName = core.items[
+                ][me.propertyName].viewName = polymorph_core.items[
                     me.contextedElement.dataset.id
                 ].title;
                 me.switchView(me.contextedElement.dataset.id, true, true);
@@ -821,10 +821,10 @@ core.registerOperator("turmach", {
     ], () => {
         me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
         me.arrangeItem = function (id) {
-            if (!core.items[id][me.propertyName] || (!core.items[id][me.propertyName].viewData && !core.items[id][me.propertyName].viewName))
+            if (!polymorph_core.items[id][me.propertyName] || (!polymorph_core.items[id][me.propertyName].viewData && !polymorph_core.items[id][me.propertyName].viewName))
                 return false;
-            if (!core.items[id][me.propertyName].viewData) return true; // this is not an item - its a view, but we still care about it
-            if (!core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
+            if (!polymorph_core.items[id][me.propertyName].viewData) return true; // this is not an item - its a view, but we still care about it
+            if (!polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
                 //if an item of it exists, hide the item
                 let rect = itemPointerCache[id];
                 if (rect) {
@@ -833,7 +833,7 @@ core.registerOperator("turmach", {
                 return true;
             }
             //enforce a property on it with viewName.
-            if (!core.items[id][`__itemcluster_${me.settings.currentViewName}`]) core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
+            if (!polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`]) polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
             let rect = itemPointerCache[id];
             if (!rect) {
                 //need to make a new rectangle
@@ -847,32 +847,32 @@ core.registerOperator("turmach", {
                 itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
             }
             rect.show();
-            if (core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
-                rect.move(core.items[id][me.propertyName].viewData[me.settings.currentViewName].x, core.items[id][me.propertyName].viewData[me.settings.currentViewName].y);
+            if (polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName]) {
+                rect.move(polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName].x, polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName].y);
             }
             //fill in the textarea inside
             let tta = itemPointerCache[id].node.children[0].children[0];
-            tta.value = core.items[id].title || "";
-            if (core.items[id].style) { // dont update this if it hasn't changed.
-                if (JSON.stringify(core.items[id].style) != JSON.stringify(cachedStyle[id])) {
-                    tta.style.background = core.items[id].style.background || "";
-                    tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
-                    cachedStyle[id] = JSON.parse(JSON.stringify(core.items[id].style));
+            tta.value = polymorph_core.items[id].title || "";
+            if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
+                if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(cachedStyle[id])) {
+                    tta.style.background = polymorph_core.items[id].style.background || "";
+                    tta.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+                    cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
 
             }
-            if (!core.items[id].boxsize) {
-                core.items[id].boxsize = {
+            if (!polymorph_core.items[id].boxsize) {
+                polymorph_core.items[id].boxsize = {
                     w: "200px",
                     h: "100px"
                 };
             }
-            itemPointerCache[id].node.children[0].style.width = core.items[id].boxsize.w || "";
-            itemPointerCache[id].node.children[0].style.height = core.items[id].boxsize.h || "";
-            rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
+            itemPointerCache[id].node.children[0].style.width = polymorph_core.items[id].boxsize.w || "";
+            itemPointerCache[id].node.children[0].style.height = polymorph_core.items[id].boxsize.h || "";
+            rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
             //add icons if necessary
-            if (core.items[id][me.propertyName].viewName) {
+            if (polymorph_core.items[id][me.propertyName].viewName) {
                 //this has a subview, make it known!.
                 let subviewItemCount;
                 if (rect.node.querySelector(".subviewItemCount")) {
@@ -893,8 +893,8 @@ core.registerOperator("turmach", {
                     //also count all the items in my subview and report.
                 }
                 let count = 0;
-                for (let i in core.items) {
-                    if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData && core.items[i][me.propertyName].viewData[id]) count++;
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData && polymorph_core.items[i][me.propertyName].viewData[id]) count++;
                 }
                 subviewItemCount.innerText = count;
             } else {
@@ -903,8 +903,8 @@ core.registerOperator("turmach", {
                 }
             }
             //draw its lines
-            if (core.items[id].to) {
-                for (let i in core.items[id].to) {
+            if (polymorph_core.items[id].to) {
+                for (let i in polymorph_core.items[id].to) {
                     if (i == me.prevFocusID || id == me.prevFocusID) {
                         me.enforceLine(id, i, "red");
                     } else {
@@ -934,12 +934,12 @@ core.registerOperator("turmach", {
         me.toggleLine = function (start, end) {
             //start and end is now directional. 
             //check if linked; if linked, remove link
-            if (core.isLinked(start, end) % 2) {
-                core.unlink(start, end);
+            if (polymorph_core.isLinked(start, end) % 2) {
+                polymorph_core.unlink(start, end);
                 if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
                 delete me.activeLines[start][end];
             } else {
-                core.link(start, end);
+                polymorph_core.link(start, end);
                 me.enforceLine(start, end);
             }
         };
@@ -984,11 +984,11 @@ core.registerOperator("turmach", {
 
 
         //arrange items 
-        for (let i in core.items) {
+        for (let i in polymorph_core.items) {
             me.arrangeItem(i);
         }
         //twice for lines, as some items may not have loaded yets
-        for (let i in core.items) {
+        for (let i in polymorph_core.items) {
             me.arrangeItem(i);
         }
     });
@@ -1140,8 +1140,8 @@ core.registerOperator("turmach", {
             me.originalViewBox = me.svg.viewbox();
             me.dragDX = coords.x;
             me.dragDY = coords.y;
-            me.ocx = core.items[me.settings.currentViewName][me.propertyName].cx || 0;
-            me.ocy = core.items[me.settings.currentViewName][me.propertyName].cy || 0;
+            me.ocx = polymorph_core.items[me.settings.currentViewName][me.propertyName].cx || 0;
+            me.ocy = polymorph_core.items[me.settings.currentViewName][me.propertyName].cy || 0;
             //}
         }
     });
@@ -1155,9 +1155,9 @@ core.registerOperator("turmach", {
             let cid = me.fromTray;
             //make us drag the item
             me.removeFromTray(cid);
-            if (!core.items[cid][me.propertyName]) core.items[cid][me.propertyName] = {};
-            if (!core.items[cid][me.propertyName].viewData) core.items[cid][me.propertyName].viewData = {};
-            core.items[cid][me.propertyName].viewData[me.settings.currentViewName] = { x: 0, y: 0 };
+            if (!polymorph_core.items[cid][me.propertyName]) polymorph_core.items[cid][me.propertyName] = {};
+            if (!polymorph_core.items[cid][me.propertyName].viewData) polymorph_core.items[cid][me.propertyName].viewData = {};
+            polymorph_core.items[cid][me.propertyName].viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
             //this is probably broken now
             let divrep = {
@@ -1234,8 +1234,8 @@ core.registerOperator("turmach", {
                     // delete the item from this view
                     me.movingDivs.forEach((v) => {
                         let cid = v.el.attr("data-id");
-                        delete core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
-                        delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
+                        delete polymorph_core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
+                        delete polymorph_core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                         me.arrangeItem(cid);
                         me.addToTray(cid);
                         container.fire("updateItem", { sender: me, id: cid });
@@ -1274,9 +1274,9 @@ core.registerOperator("turmach", {
             // shift the view by delta
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
 
-            core.items[me.settings.currentViewName][me.propertyName].cx =
+            polymorph_core.items[me.settings.currentViewName][me.propertyName].cx =
                 me.ocx - (coords.x - me.dragDX);
-            core.items[me.settings.currentViewName][me.propertyName].cy =
+            polymorph_core.items[me.settings.currentViewName][me.propertyName].cy =
                 me.ocy - (coords.y - me.dragDY);
             //arrange all items
             me.viewAdjust();
@@ -1284,7 +1284,7 @@ core.registerOperator("turmach", {
     });
 
     this.viewAdjust = function () {
-        let ic = core.items[me.settings.currentViewName][me.propertyName];
+        let ic = polymorph_core.items[me.settings.currentViewName][me.propertyName];
         let ww = me.itemSpace.clientWidth * (ic.scale || 1);
         let hh = me.itemSpace.clientHeight * (ic.scale || 1);
         if (me.svg) {
@@ -1300,7 +1300,7 @@ core.registerOperator("turmach", {
             return;
         }
         //calculate old width constant
-        let ic = core.items[me.settings.currentViewName][me.propertyName];
+        let ic = polymorph_core.items[me.settings.currentViewName][me.propertyName];
         let br = me.itemSpace.getBoundingClientRect();
         ic.scale = ic.scale || 1;
         let vw = me.itemSpace.clientWidth * ic.scale;
@@ -1367,12 +1367,12 @@ core.registerOperator("turmach", {
                     elements[i].matches(".floatingItem") &&
                     elements[i].dataset.id != cid
                 ) {
-                    core.items[cid][me.propertyName].viewData[elements[i].dataset.id] = {
+                    polymorph_core.items[cid][me.propertyName].viewData[elements[i].dataset.id] = {
                         x: 0,
                         y: 0
                     };
                     if (!e.ctrlKey) {
-                        delete core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
+                        delete polymorph_core.items[cid][me.propertyName].viewData[me.settings.currentViewName];
                         me.arrangeItem(cid);
                     }
                     //me.switchView(elements[i].dataset.id, true, true);
@@ -1416,8 +1416,8 @@ core.registerOperator("turmach", {
                 });
             }
         } else if (me.preselected) {
-            if (!core.items[me.preselected.dataset.id].boxsize) core.items[me.preselected.dataset.id].boxsize = {};
-            bs = core.items[me.preselected.dataset.id].boxsize;
+            if (!polymorph_core.items[me.preselected.dataset.id].boxsize) polymorph_core.items[me.preselected.dataset.id].boxsize = {};
+            bs = polymorph_core.items[me.preselected.dataset.id].boxsize;
             bs.w = me.preselected.children[0].style.width;
             bs.h = me.preselected.children[0].style.height;
             me.arrangeItem(me.preselected.dataset.id); // handle resizes
@@ -1446,9 +1446,9 @@ core.registerOperator("turmach", {
     //----------item functions----------//
     this.updatePosition = function (id) {
         let it = itemPointerCache[id];
-        if (!core.items[id][me.propertyName].viewData[this.settings.currentViewName]) core.items[id][me.propertyName].viewData[this.settings.currentViewName] = {};
-        core.items[id][me.propertyName].viewData[this.settings.currentViewName].x = it.x();
-        core.items[id][me.propertyName].viewData[this.settings.currentViewName].y = it.y();
+        if (!polymorph_core.items[id][me.propertyName].viewData[this.settings.currentViewName]) polymorph_core.items[id][me.propertyName].viewData[this.settings.currentViewName] = {};
+        polymorph_core.items[id][me.propertyName].viewData[this.settings.currentViewName].x = it.x();
+        polymorph_core.items[id][me.propertyName].viewData[this.settings.currentViewName].y = it.y();
         container.fire("updateItem", {
             id: id
         });
@@ -1457,8 +1457,8 @@ core.registerOperator("turmach", {
 
     this.createItem = function (x, y) {
         let itm = {};
-        //register it with the core
-        let id = core.insertItem(itm);
+        //register it with the polymorph_core
+        let id = polymorph_core.insertItem(itm);
         itm.title = "";
         itm[me.propertyName] = {
             viewData: {},
@@ -1480,7 +1480,7 @@ core.registerOperator("turmach", {
     };
 
     this.removeItem = function (id) {
-        delete core.items[id][me.propertyName].viewData[me.settings.currentViewName];
+        delete polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName];
         //hide all the lines
         for (let i in me.activeLines) {
             for (let j in me.activeLines[i]) {
@@ -1511,7 +1511,7 @@ core.registerOperator("turmach", {
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            core.items[id].title = e.target.value;
+            polymorph_core.items[id].title = e.target.value;
             container.fire("updateItem", {
                 id: id,
                 sender: this
@@ -1531,7 +1531,7 @@ core.registerOperator("turmach", {
             `);
             me.tray.appendChild(cti);
         }
-        cti.querySelector("textarea").value = core.items[id].title;
+        cti.querySelector("textarea").value = polymorph_core.items[id].title;
     }
 
     me.removeFromTray = function (id) {
@@ -1545,7 +1545,7 @@ core.registerOperator("turmach", {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    //Core interactions
+    //polymorph_core interactions
 
     function updateSettings() {
         if (me.settings.tray) {
@@ -1553,10 +1553,10 @@ core.registerOperator("turmach", {
             me.emptyTray();
             me.tray.style.display = "flex";
             //also populate the tray
-            for (let i in core.items) {
-                if (core.items[i][me.propertyName] && core.items[i][me.propertyName].viewData) {
-                    if (!core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {//not in this view
-                        if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i][me.propertyName] && polymorph_core.items[i][me.propertyName].viewData) {
+                    if (!polymorph_core.items[i][me.propertyName].viewData[me.settings.currentViewName]) {//not in this view
+                        if (!(me.settings.filter) || polymorph_core.items[i][me.settings.filter]) {
                             me.addToTray(i);
                         }
                     }
@@ -1627,7 +1627,7 @@ core.registerOperator("turmach", {
     }
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
+        polymorph_core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
             me.focusOperatorID = me.settings['focusOperatorID'];
@@ -1663,11 +1663,11 @@ core.registerOperator("turmach", {
                 x = Math.random() * 1000;
                 y = Math.random() * 1000;
             }
-            let id = core.insertItem(item);
-            core.items[id][me.propertyName] = { viewData: {} };
-            core.items[id][me.propertyName].viewData[me.settings.currentViewName] = {};
-            core.items[id][me.propertyName].viewData[me.settings.currentViewName].x = x;
-            core.items[id][me.propertyName].viewData[me.settings.currentViewName].y = y;
+            let id = polymorph_core.insertItem(item);
+            polymorph_core.items[id][me.propertyName] = { viewData: {} };
+            polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName] = {};
+            polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName].x = x;
+            polymorph_core.items[id][me.propertyName].viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
             container.fire("updateItem", { id: id, sender: me });
             return id;

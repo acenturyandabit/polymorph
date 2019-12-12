@@ -1,5 +1,5 @@
 // Items are just native objects now 
-function _core() {
+function _polymorph_core() {
     //Event API. pretty important, it turns out.
     addEventAPI(this);
 
@@ -26,7 +26,7 @@ function _core() {
         this.loadDocument();
     }
 
-    this.currentDoc = 0; // a getter fn that points to core.items._meta.
+    this.currentDoc = 0; // a getter fn that points to polymorph_core.items._meta.
 
     //Document level functions
     //#region
@@ -41,7 +41,7 @@ function _core() {
     };
 
     let tc = new capacitor(1000, 10, () => {
-        core.fire("updateDoc");
+        polymorph_core.fire("updateDoc");
     })
     //title updates
     this.on("UIstart", () => {
@@ -101,4 +101,4 @@ function _core() {
     this.shared = {};
 }
 
-var core = new _core();
+var polymorph_core = new _polymorph_core();

@@ -1,4 +1,4 @@
-core.registerOperator("treant", function (container) {
+polymorph_core.registerOperator("treant", function (container) {
     let me = this;
     this.settings = {};
 
@@ -13,7 +13,7 @@ core.registerOperator("treant", function (container) {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //these are optional but can be used as a reference.
     container.on("updateItem", function (d) {
@@ -52,15 +52,15 @@ core.registerOperator("treant", function (container) {
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
 
-    //////////////////Handling local changes to push to core//////////////////
+    //////////////////Handling local changes to push to polymorph_core//////////////////
 
     //Handle item creation, locally
     this.createItem = function () {
         //Create a new item
         let it = {};
 
-        //register it with the core
-        let id = core.insertItem(it);
+        //register it with the polymorph_core
+        let id = polymorph_core.insertItem(it);
 
         //register a change
         container.fire("updateItem", {
@@ -69,7 +69,7 @@ core.registerOperator("treant", function (container) {
         });
     }
 
-    //Register changes with core
+    //Register changes with polymorph_core
     this.somethingwaschanged = function () {
         container.fire("updateItem", {
             id: itemID,
@@ -77,7 +77,7 @@ core.registerOperator("treant", function (container) {
         });
     }
 
-    //Register focus with core
+    //Register focus with polymorph_core
     this.somethingwasfocused = function () {
         container.fire("focus", {
             id: itemID,
@@ -90,7 +90,7 @@ core.registerOperator("treant", function (container) {
             id: itemID,
             sender: this
         });
-        //Don't actually delete() the item! core will manage that.
+        //Don't actually delete() the item! polymorph_core will manage that.
     }
 
     //Saving and loading

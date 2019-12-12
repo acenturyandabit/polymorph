@@ -1,5 +1,5 @@
 //Instantiate filemanager
-core.filescreen = new _filescreen({
+polymorph_core.filescreen = new _filescreen({
     headprompt: htmlwrap(`
     <h1>Polymorph: Effective Organisation</h1>
     <p style="margin:0">v 1.1</p>
@@ -16,27 +16,27 @@ core.filescreen = new _filescreen({
     savePrefix: "polymorph"
 });
 
-core.on("UIstart", () => {
-    core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="none">None</option>`));
+polymorph_core.on("UIstart", () => {
+    polymorph_core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="none">None</option>`));
     for (let i in polymorphTemplates) {
-        core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="${i}">${i}</option>`));
+        polymorph_core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="${i}">${i}</option>`));
     }
-    for (let i in core.saveSources) {
-        if (core.saveSources[i].createable) {
-            core.filescreen.baseDiv.querySelector(".source").appendChild(htmlwrap(`<option value="${i}">${core.saveSources[i].prettyName || i}</option>`));
+    for (let i in polymorph_core.saveSources) {
+        if (polymorph_core.saveSources[i].createable) {
+            polymorph_core.filescreen.baseDiv.querySelector(".source").appendChild(htmlwrap(`<option value="${i}">${polymorph_core.saveSources[i].prettyName || i}</option>`));
         }
     }
 })
 
-core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click", () => {
-    let template = core.filescreen.baseDiv.querySelector(".tmplt").value;
-    let source = core.filescreen.baseDiv.querySelector(".source").value;
-    let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
+polymorph_core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click", () => {
+    let template = polymorph_core.filescreen.baseDiv.querySelector(".tmplt").value;
+    let source = polymorph_core.filescreen.baseDiv.querySelector(".source").value;
+    let nm = polymorph_core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
     let id = guid(5);
-    core.currentDocID = id;
-    core.datautils.upgradeSaveData(id, source);
-    core.rehookAll(id);
-    let doc = core.sanityCheckDoc({}, { template: template, name: nm });
-    core.fromSaveData(doc);
-    core.filescreen.baseDiv.style.display = "none";
+    polymorph_core.currentDocID = id;
+    polymorph_core.datautils.upgradeSaveData(id, source);
+    polymorph_core.rehookAll(id);
+    let doc = polymorph_core.sanityCheckDoc({}, { template: template, name: nm });
+    polymorph_core.fromSaveData(doc);
+    polymorph_core.filescreen.baseDiv.style.display = "none";
 })

@@ -9,12 +9,12 @@ Since savesources are standalone, their properties can be declared as `this.prop
 ## Methods
 You can implement any number of the following methods, if not all of them.
 
-In each case, the current document ID can be accessed via core.currentDocID, and the data associated with your particular savesource can be accessed through `core.userData.documents[core.currentDocID].saveSources[your_savesource]`, or the much prettier macro `core.saveSourceData[your_savesource]`.
+In each case, the current document ID can be accessed via polymorph_core.currentDocID, and the data associated with your particular savesource can be accessed through `polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[your_savesource]`, or the much prettier macro `polymorph_core.saveSourceData[your_savesource]`.
 
 - async this.hook(): Sync the existing document with the one in the savesource (if necessary). Then:
-    - If you do not handle live sync (e.g. a local storage), get ready to handle core.on('userSave',(data)=>{});
-    - If you do handle live sync (e.g. through a database), get ready to handle core.on('updateItemSave',(id)=>{}). This will be called once core is satisfied that the item has been updated.
-        - Additionally, fire core.fire('updateItemRemote',{d:id}) when you recieve and post an update. Core will keep track of updateItemRemote and updateItemSave to ensure there are no infinite loops.
+    - If you do not handle live sync (e.g. a local storage), get ready to handle polymorph_core.on('userSave',(data)=>{});
+    - If you do handle live sync (e.g. through a database), get ready to handle polymorph_core.on('updateItemSave',(id)=>{}). This will be called once polymorph_core is satisfied that the item has been updated.
+        - Additionally, fire polymorph_core.fire('updateItemRemote',{d:id}) when you recieve and post an update. polymorph_core will keep track of updateItemRemote and updateItemSave to ensure there are no infinite loops.
 - async this.unhook(): Unsync the existing document, so that you don't respond to all the triggers you do above.
 - async this.pullAll(): Get a complete copy of the data from storage, and return it.
 - async this.pushAll(data): Push a complete copy of the data to storage. This is only called by the dialog, but you can use it for internal operations too.
@@ -22,4 +22,4 @@ In each case, the current document ID can be accessed via core.currentDocID, and
 This is a little tricky to get right the first time - if you need help or inspiration, check out localforage2.js.
 
 ## Possible refactors
-Manage hooks within core - will save some overhead in the files.
+Manage hooks within polymorph_core - will save some overhead in the files.

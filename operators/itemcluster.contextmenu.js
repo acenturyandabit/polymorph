@@ -25,14 +25,14 @@ function _itemcluster_extend_contextmenu(me) {
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, me.rootdiv, undefined, chk);
         me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
-            if (core.shared.itemclusterCopyElement) {
+            if (polymorph_core.shared.itemclusterCopyElement) {
                 let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                core.shared.itemclusterCopyElement.forEach((v) => {
-                    core.items[v.id].itemcluster.viewData[me.settings.currentViewName] = {
+                polymorph_core.shared.itemclusterCopyElement.forEach((v) => {
+                    polymorph_core.items[v.id].itemcluster.viewData[me.settings.currentViewName] = {
                         x: coords.x + v.x,
                         y: coords.y + v.y,
                     }
-                    if (me.settings.filter) core.items[v.id][me.settings.filter] = true;
+                    if (me.settings.filter) polymorph_core.items[v.id][me.settings.filter] = true;
                     me.arrangeItem(v.id);
                     me.container.fire("updateItem", {
                         id: v.id,
@@ -40,7 +40,7 @@ function _itemcluster_extend_contextmenu(me) {
                     });
                 });
                 //arrange everything again for new links to show up
-                for (let i in core.items) {
+                for (let i in polymorph_core.items) {
                     me.arrangeItem(i);
                 }
                 me.rootcontextMenu.style.display = "none";
@@ -48,14 +48,14 @@ function _itemcluster_extend_contextmenu(me) {
         })
         me.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
             let rect = me.itemSpace.getBoundingClientRect();
-            for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left;
-                    core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top;
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                    polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left;
+                    polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top;
                     me.arrangeItem(i);
                 }
             }
-            for (let i in core.items) {
+            for (let i in polymorph_core.items) {
                 //second update to fix lines; also alert everyone of changes.
                 me.container.fire("updateItem", {
                     id: i
@@ -67,13 +67,13 @@ function _itemcluster_extend_contextmenu(me) {
         function generateHierarchy() {
             //get position of items, and the links to other items
             let visibleItems = [];
-            for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                     visibleItems.push({
                         id: i,
-                        x: core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
-                        y: core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
-                        children: Object.keys(core.items[i].to || {}),
+                        x: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
+                        y: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
+                        children: Object.keys(polymorph_core.items[i].to || {}),
                     });
                 }
             }
@@ -88,7 +88,7 @@ function _itemcluster_extend_contextmenu(me) {
                         if (pos == -1) {
                             v.children.splice(i, 1);
                             i--;
-                        } else if (core.items[visibleItems[pos].id].to && Object.keys(core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) {//bidirectional links
+                        } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) {//bidirectional links
                             v.children.splice(i, 1);
                             i--;
                         } else {
@@ -147,13 +147,13 @@ function _itemcluster_extend_contextmenu(me) {
             function getWidth(id) {
                 let c = visibleItems[indexedOrder.indexOf(id)].children;
                 if (!c || !c.length) {
-                    return Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    return Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
                 } else {
                     let sum = 0;
                     for (let i = 0; i < c.length; i++) {
                         sum = sum + getWidth(c[i]);
                     }
-                    let alt = Number(/\d+/.exec(core.items[id].boxsize.w)) + 10;
+                    let alt = Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
                     if (sum < alt) sum = alt;
                     return sum;
                 }
@@ -174,8 +174,8 @@ function _itemcluster_extend_contextmenu(me) {
             let currenty = e.clientY - rect.top;
 
             function render(itm, tx, ty) { // itm is a visibleItem
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(core.items[itm.id].boxsize.w))) / 2;
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
+                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(polymorph_core.items[itm.id].boxsize.w))) / 2;
+                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
                 let ctx = tx;
                 for (let i = 0; i < itm.children.length; i++) {
                     ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
@@ -290,8 +290,8 @@ function _itemcluster_extend_contextmenu(me) {
             let currentT = 0;
             function render(itm, tT, dp) { // itm is a visibleItem
                 let r = radii[itm.level];
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = r * Math.cos(tT + itm.angle / 2);
-                core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = r * Math.sin(tT + itm.angle / 2);
+                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = r * Math.cos(tT + itm.angle / 2);
+                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = r * Math.sin(tT + itm.angle / 2);
                 let ctT = tT;
                 for (let i = 0; i < itm.children.length; i++) {
                     ctT += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctT, dp + 1);
@@ -395,13 +395,13 @@ function _itemcluster_extend_contextmenu(me) {
             for (let i = 0; i < visibleItems.length; i++) {
                 visibleItems[i].cumulativeAngle = 0;
                 if (visibleItems[i].level == 0) {
-                    core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = 0;
-                    core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = 0;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = 0;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = 0;
                 } else {
                     visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle += visibleItems[i].angle / 2;
-                    core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].x +
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].x +
                         Math.cos(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
-                    core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].y +
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].y +
                         Math.sin(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
                     visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle += visibleItems[i].angle / 2;
                 }
@@ -428,7 +428,7 @@ function _itemcluster_extend_contextmenu(me) {
                 cartesianHierarchy(e, visibleItems);
             }
 
-            for (let i in core.items) {
+            for (let i in polymorph_core.items) {
                 me.container.fire("updateItem", {
                     id: i
                 });
@@ -443,10 +443,10 @@ function _itemcluster_extend_contextmenu(me) {
                 me.rootcontextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
             } else {
                 me.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
-                let ic = core.items[me.settings.currentViewName].itemcluster;
+                let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
                 ic.scale = 1;
-                ic.cx = core.items[id].itemcluster.viewData[me.settings.currentViewName].x;
-                ic.cy = core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
+                ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x;
+                ic.cy = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
                 me.viewAdjust();
                 me.viewGrid();
             }
@@ -454,9 +454,9 @@ function _itemcluster_extend_contextmenu(me) {
         me.rootcontextMenu.querySelector(".search input").addEventListener("input", () => {
             //create the search array
             me.searchArray = [];
-            for (let id in core.items) {
+            for (let id in polymorph_core.items) {
                 if (me.itemIsOurs(id)) {
-                    if (core.items[id].title && core.items[id].title.includes(me.rootcontextMenu.querySelector(".search input").value)) {
+                    if (polymorph_core.items[id].title && polymorph_core.items[id].title.includes(me.rootcontextMenu.querySelector(".search input").value)) {
                         me.searchArray.push(id);
                     }
                 }
@@ -478,8 +478,8 @@ function _itemcluster_extend_contextmenu(me) {
             me.viewDropdownContainer
         );
         me.viewContextMenu.querySelector(".viewAsItemButton").addEventListener("click", e => {
-            core.shared.itemclusterCopyElement = [{ id: me.settings.currentViewName, x: 0, y: 0 }];
-            core.items[me.settings.currentViewName].itemcluster.viewData = {};
+            polymorph_core.shared.itemclusterCopyElement = [{ id: me.settings.currentViewName, x: 0, y: 0 }];
+            polymorph_core.items[me.settings.currentViewName].itemcluster.viewData = {};
             me.viewContextMenu.style.display = "none";
         });
 
@@ -513,9 +513,9 @@ function _itemcluster_extend_contextmenu(me) {
                 let cte = e.target;
                 while (!cte.matches(".floatingItem")) cte = cte.parentElement;
                 me.contextedElement = cte;
-                if (core.items[cte.dataset.id].style) {
-                    me.itemContextMenu.querySelector(".background").value = core.items[cte.dataset.id].style.background || "";
-                    me.itemContextMenu.querySelector(".color").value = core.items[cte.dataset.id].style.color || "";
+                if (polymorph_core.items[cte.dataset.id].style) {
+                    me.itemContextMenu.querySelector(".background").value = polymorph_core.items[cte.dataset.id].style.background || "";
+                    me.itemContextMenu.querySelector(".color").value = polymorph_core.items[cte.dataset.id].style.color || "";
                 } else {
                     me.itemContextMenu.querySelector(".background").value = "";
                     me.itemContextMenu.querySelector(".color").value = "";
@@ -537,8 +537,8 @@ function _itemcluster_extend_contextmenu(me) {
                 cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
             }
             cids.forEach((cid) => {
-                if (!core.items[cid].style) core.items[cid].style = {};
-                core.items[cid].style[e.target.className] = e.target.value;
+                if (!polymorph_core.items[cid].style) polymorph_core.items[cid].style = {};
+                polymorph_core.items[cid].style[e.target.className] = e.target.value;
                 me.container.fire("updateItem", {
                     sender: me,
                     id: cid
@@ -550,7 +550,7 @@ function _itemcluster_extend_contextmenu(me) {
             .querySelector(".cstyl")
             .addEventListener("click", () => {
                 let cid = me.contextedElement.dataset.id;
-                me.copiedStyle = Object.assign({}, core.items[cid].style);
+                me.copiedStyle = Object.assign({}, polymorph_core.items[cid].style);
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
@@ -568,7 +568,7 @@ function _itemcluster_extend_contextmenu(me) {
                     cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
                 }
                 cids.forEach((cid) => {
-                    core.items[cid].style = Object.assign({}, me.copiedStyle);
+                    polymorph_core.items[cid].style = Object.assign({}, me.copiedStyle);
                     me.arrangeItem(cid);
                     me.container.fire("updateItem", {
                         sender: me,
@@ -625,18 +625,18 @@ function _itemcluster_extend_contextmenu(me) {
                 let els = cids.map((v) => {
                     return {
                         id: v,
-                        x: core.items[v].itemcluster.viewData[me.settings.currentViewName].x - coords.x,
-                        y: core.items[v].itemcluster.viewData[me.settings.currentViewName].y - coords.y
+                        x: polymorph_core.items[v].itemcluster.viewData[me.settings.currentViewName].x - coords.x,
+                        y: polymorph_core.items[v].itemcluster.viewData[me.settings.currentViewName].y - coords.y
                     };
                 })
-                core.shared.itemclusterCopyElement = els;
+                polymorph_core.shared.itemclusterCopyElement = els;
                 me.itemContextMenu.style.display = "none";
             });
         me.itemContextMenu
             .querySelector(".orientation")
             .addEventListener("click", e => {
                 //toggle the itemcluster orientation
-                core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation = !core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation;
+                polymorph_core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation = !polymorph_core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation;
                 //reupdate
                 me.arrangeItem(me.contextedElement.dataset.id);
                 me.itemContextMenu.style.display = "none";
@@ -645,9 +645,9 @@ function _itemcluster_extend_contextmenu(me) {
         me.itemContextMenu
             .querySelector(".subView")
             .addEventListener("click", e => {
-                core.items[
+                polymorph_core.items[
                     me.contextedElement.dataset.id
-                ].itemcluster.viewName = core.items[
+                ].itemcluster.viewName = polymorph_core.items[
                     me.contextedElement.dataset.id
                 ].title;
                 me.switchView(me.contextedElement.dataset.id, true, true);
@@ -660,9 +660,9 @@ function _itemcluster_extend_contextmenu(me) {
             return true;
         });
         me.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
-            if (me.settings.filter) delete core.items[me.trayContextedElement][me.settings.filter];
+            if (me.settings.filter) delete polymorph_core.items[me.trayContextedElement][me.settings.filter];
             else {
-                core.items[me.trayContextedElement].itemcluster.viewData = {};//nerf it completely
+                polymorph_core.items[me.trayContextedElement].itemcluster.viewData = {};//nerf it completely
             }
             me.container.fire("updateItem", { id: me.trayContextedElement });
             me.trayContextMenu.style.display = "none";

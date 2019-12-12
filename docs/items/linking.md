@@ -4,7 +4,7 @@ In polymorph, I store links as parent->child relations only. The decision is lar
 
 ## How it currently works
 ```javascript
-core.items[id].to={
+polymorph_core.items[id].to={
     other_id:true,
     other_id_2:true
 }
@@ -13,7 +13,7 @@ An undirected link is indicated by a->b and b->a both being enforced.
 
 ## How it could work
 ### Parent only
-Instead of to, I could have core.from. 
+Instead of to, I could have polymorph_core.from. 
 - Advantage: tree children add themselves
 - Disadvantage: need to keep a cache of parents 
 

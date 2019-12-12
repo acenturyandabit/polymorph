@@ -1,6 +1,6 @@
 //todo: add filter
 
-core.registerOperator("roundshow", {
+polymorph_core.registerOperator("roundshow", {
     displayName: "Roundshow",
     description: "A method of showing hierarchical data with circles. For use with the knowledge base."
 }, function (container) {
@@ -23,11 +23,11 @@ core.registerOperator("roundshow", {
     function createTree(root) {
         me.settings.currentRoot = root;
         let links = [];
-        for (let i in core.items) {
-            if (core.items[i].to) {
-                for (j in core.items[i].to) {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i].to) {
+                for (j in polymorph_core.items[i].to) {
                     //dont add bidirectional links
-                    if (!(core.items[j].to && core.items[j].to[i])) {
+                    if (!(polymorph_core.items[j].to && polymorph_core.items[j].to[i])) {
                         links.push([i, j]);//go from i to j
                     }
                 }
@@ -50,8 +50,8 @@ core.registerOperator("roundshow", {
             links[i][1] = enmap(links[i][1]);
         }
         //also enmap things we care about but dont have links
-        for (let i in core.items) {
-            if (core.items[i][me.settings.filter]) {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i][me.settings.filter]) {
                 enmap(i);
             }
         }
@@ -123,11 +123,11 @@ core.registerOperator("roundshow", {
         let smallerW = Math.min(this.rootdiv.offsetWidth, this.rootdiv.offsetHeight) - 5;
         let centre = smallerW / 2;
         let innerR = smallerW / 6;
-        me.coreText.font({ size: 30, anchor: "middle" }).text((add) => {
-            add.tspan(core.items[id][this.settings.nameProp]);
-            add.tspan((core.items[id][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
+        me.polymorph_coreText.font({ size: 30, anchor: "middle" }).text((add) => {
+            add.tspan(polymorph_core.items[id][this.settings.nameProp]);
+            add.tspan((polymorph_core.items[id][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
         }).x(centre).cy(centre).front();
-        let cols = hslToRgb(((core.items[id][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+        let cols = hslToRgb(((polymorph_core.items[id][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
         me.centreItem.cx(centre).cy(centre).radius(innerR).attr({
             fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
         }).data('item', me.settings.currentRoot);
@@ -159,7 +159,7 @@ core.registerOperator("roundshow", {
             let centre = smallerW / 2;
             for (i in itemsToRender) {
                 //draw a sector for it
-                let cols = hslToRgb(((core.items[i][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+                let cols = hslToRgb(((polymorph_core.items[i][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
                 me.arcs.push(me.svg.path(`
                 M ${innerR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${innerR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                 A ${innerR} ${innerR} 0 ${(itemsToRender[i].arcsize / l2c) > 0.5 ? 1 : 0} 1 ${innerR * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c - 0.001) + centre} ${innerR * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize) / l2c - 0.001) + centre}
@@ -178,9 +178,9 @@ core.registerOperator("roundshow", {
                 if (rotationAngle > 270) rotationAngle = rotationAngle - 360;
                 if (rotationAngle > 90) rotationAngle = -(180 - rotationAngle);
                 //limit the text so we dont print everything
-                let printableText = core.items[i][this.settings.nameProp];
+                let printableText = polymorph_core.items[i][this.settings.nameProp];
                 if (printableText) printableText = printableText.slice(0, 30);
-                if (core.items[i][this.settings.nameProp]) me.arcs.push(me.svg.text(printableText.slice(0, 15) + "\n" + printableText.slice(15, 30)).cx((innerR + (middleR - innerR) / 2) * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre).cy(
+                if (polymorph_core.items[i][this.settings.nameProp]) me.arcs.push(me.svg.text(printableText.slice(0, 15) + "\n" + printableText.slice(15, 30)).cx((innerR + (middleR - innerR) / 2) * Math.cos(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre).cy(
                     (innerR + (middleR - innerR) / 2) * Math.sin(2 * Math.PI * (c2c + itemsToRender[i].arcsize / 2) / l2c) + centre
                 ).attr({
                     fill: '#000'
@@ -191,7 +191,7 @@ core.registerOperator("roundshow", {
                 //draw a sector for its children
                 if (Object.keys(itemsToRender[i].children).length) {
                     for (j in itemsToRender[i].children) {
-                        let cols = hslToRgb(((core.items[j][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+                        let cols = hslToRgb(((polymorph_core.items[j][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
                         me.arcs.push(me.svg.path(`
                             M ${middleR * Math.cos(2 * Math.PI * c2c / l2c) + centre} ${middleR * Math.sin(2 * Math.PI * c2c / l2c) + centre}
                             A ${middleR} ${middleR} 0 ${l2c == 1 ? 1 : 0} 1 ${middleR * Math.cos(2 * Math.PI * (c2c + 1) / l2c - 0.001) + centre} ${middleR * Math.sin(2 * Math.PI * (c2c + 1) / l2c - 0.001) + centre}
@@ -210,9 +210,9 @@ core.registerOperator("roundshow", {
                         if (rotationAngle > 270) rotationAngle = rotationAngle - 360;
                         if (rotationAngle > 90) rotationAngle = -(180 - rotationAngle);
                         //limit the text so we dont print everything
-                        let printableText = core.items[j][this.settings.nameProp];
+                        let printableText = polymorph_core.items[j][this.settings.nameProp];
                         if (printableText) printableText = printableText.slice(0, 15);
-                        if (core.items[j][this.settings.nameProp])
+                        if (polymorph_core.items[j][this.settings.nameProp])
                             me.arcs.push(me.svg.text(printableText.slice(0, 15)).cx((middleR + (outerR - middleR) / 2) * Math.cos(2 * Math.PI * (c2c + 0.5) / l2c) + centre).cy(
                                 (middleR + (outerR - middleR) / 2) * Math.sin(2 * Math.PI * (c2c + 0.5) / l2c) + centre
                             ).attr({
@@ -228,18 +228,18 @@ core.registerOperator("roundshow", {
                 //draw an arc for its children
             }
             //draw the centre as well
-            if (!me.coreText) {
-                me.coreText = me.svg.text("");
+            if (!me.polymorph_coreText) {
+                me.polymorph_coreText = me.svg.text("");
             }
             if (!me.centreItem) {
                 me.centreItem = me.svg.circle(innerR)
                     .data('role', 'return');
             }
-            me.coreText.font({ size: 30, anchor: "middle" }).text((add) => {
-                add.tspan(core.items[me.settings.currentRoot][this.settings.nameProp]);
-                add.tspan((core.items[me.settings.currentRoot][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
+            me.polymorph_coreText.font({ size: 30, anchor: "middle" }).text((add) => {
+                add.tspan(polymorph_core.items[me.settings.currentRoot][this.settings.nameProp]);
+                add.tspan((polymorph_core.items[me.settings.currentRoot][this.settings.confidenceProp] * 100).toFixed(2) + "%").newLine();
             }).x(centre).cy(centre).front();
-            let cols = hslToRgb(((core.items[me.settings.currentRoot][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
+            let cols = hslToRgb(((polymorph_core.items[me.settings.currentRoot][this.settings.confidenceProp] || 0)) * 0.3, 1, 0.5);
             me.centreItem.cx(centre).cy(centre).radius(innerR).attr({
                 fill: `rgba(${cols[0]},${cols[1]},${cols[2]},${opacity})`
             }).data('item', me.settings.currentRoot);
@@ -266,23 +266,23 @@ core.registerOperator("roundshow", {
             let tree = createTree(itm);
             me.renderTree(tree);
             container.fire("focus", { sender: this, id: itm });
-            if (itm) me.coreText.text(core.items[itm][this.settings.nameProp] || "Root").cx(200).cy(200);
-            else me.coreText.text("Root").cx(200).cy(200);
+            if (itm) me.polymorph_coreText.text(polymorph_core.items[itm][this.settings.nameProp] || "Root").cx(200).cy(200);
+            else me.polymorph_coreText.text("Root").cx(200).cy(200);
         })
     })
 
     container.on("focus", (d) => {
         let id = d.id;
         //Show the item at the centre
-        me.coreText.text(core.items[id][this.settings.nameProp]);
-        me.coreText.cx(200).cy(200);
+        me.polymorph_coreText.text(polymorph_core.items[id][this.settings.nameProp]);
+        me.polymorph_coreText.cx(200).cy(200);
         me.settings.currentRoot = id;
         //render the subtree
         let tree = createTree(id);
         me.renderTree(tree);
     })
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
@@ -294,7 +294,7 @@ core.registerOperator("roundshow", {
             me.renderTree(tree);
         }
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items _may_ be deleted by the core garbage collector :/
+        //otherwise your items _may_ be deleted by the polymorph_core garbage collector :/
         return false;
     });
 

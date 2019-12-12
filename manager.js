@@ -3,15 +3,15 @@ var __manager_profiles = {
         files: [
             ["filescreen", "genui/filescreen.js"],
             ["templates", "templates.js"],
-            ["core", "core.js"],
-            ["core_dialog", "core_modules/core.dialog.js"],
-            ["core_tutorial", "core_modules/core.tutorial.js"],
+            ["polymorph_core", "core.js"],
+            ["polymorph_core_dialog", "core_modules/core.dialog.js"],
+            ["polymorph_core_tutorial", "core_modules/core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
-            ["core_docLoading", "core_modules/core.docLoading.js"],
-            ["core_dataUtils", "core_modules/core.dataUtils.js"],
-            ["core_view", "core_modules/core.view.js"],
-            ["core_container", "core_modules/core.container.js"],
-            ["core_itemfx", "core_modules/core.itemfx.js"],
+            ["polymorph_core_docLoading", "core_modules/core.docLoading.js"],
+            ["polymorph_core_dataUtils", "core_modules/core.dataUtils.js"],
+            ["polymorph_core_view", "core_modules/core.view.js"],
+            ["polymorph_core_container", "core_modules/core.container.js"],
+            ["polymorph_core_itemfx", "core_modules/core.itemfx.js"],
         ]
     },
     operators: {
@@ -39,7 +39,7 @@ var __manager_profiles = {
         files: [
             ["outputToText", "saveSources/outputToText.js"],
             ["localforage2", "saveSources/localforage2.js"],
-            ["firebase", "saveSources/firebase.js"],
+            ["firebase_savesource", "saveSources/firebase.js"],
             ["server", "saveSources/server.js"],
             ["gdrive", "saveSources/gdrive.js"],
             ["websocket", "saveSources/websocket.js"],
@@ -48,9 +48,9 @@ var __manager_profiles = {
     phone: {
         condition: () => { return isPhone() },
         files: [
-            ["core_dialog", "versions/phone/core.dialog.js"],
+            ["polymorph_core_dialog", "versions/phone/core.dialog.js"],
             { r: "base" },
-            ["coreUI", "versions/phone/coreUI.js"],
+            ["polymorph_coreUI", "versions/phone/coreUI.js"],
             ["rect", "versions/phone/rect.js"],
             ["subframe", "operators/phone/subframe.js"],
             { r: "operators" },
@@ -60,9 +60,9 @@ var __manager_profiles = {
     default: {
         files: [
             { r: "base" },
-            ["core_rect", "core_modules/core.rect.js"],
-            ["core_palette", "core_modules/core.palette.js"],
-            ["coreUI", "versions/desktop/coreUI.js"],
+            ["polymorph_core_rect", "core_modules/core.rect.js"],
+            ["polymorph_core_palette", "core_modules/core.palette.js"],
+            ["polymorph_coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },
             ["subframe", "operators/subframe.js"],
             { r: "saveSources" },
@@ -96,7 +96,7 @@ var __manager_profiles = {
         if (__manager_profiles[mscpt.dataset.version])
             scriptassert(expand(__manager_profiles[mscpt.dataset.version].files), () => {
                 document.getElementById("preloadRemove").remove();
-                core.start();
+                polymorph_core.start();
             });
         loaded = true;
     } else {
@@ -105,7 +105,7 @@ var __manager_profiles = {
                 //load all files from phone
                 scriptassert(expand(__manager_profiles[i].files), () => {
                     document.getElementById("preloadRemove").remove();
-                    core.start();
+                    polymorph_core.start();
                 });
                 loaded = true;
             }
@@ -115,7 +115,7 @@ var __manager_profiles = {
     if (!loaded) {
         scriptassert(expand(__manager_profiles['default'].files), () => {
             document.getElementById("preloadRemove").remove();
-            core.start();
+            polymorph_core.start();
         });
     }
 })()

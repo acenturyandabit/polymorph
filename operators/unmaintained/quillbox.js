@@ -1,4 +1,4 @@
-core.registerOperator("quillbox", {
+polymorph_core.registerOperator("quillbox", {
     displayName: "Quillbox",
     description: "A rich text editor powered by Quill.js. One up from descbox!"
 }, function (container) {
@@ -39,7 +39,7 @@ core.registerOperator("quillbox", {
         //Handle item updates
         me.updateItem = function (id) {
             if (id == me.settings.currentID && id) {
-                if (core.items[id] && core.items[id][me.settings.property]) me.quill.setContents(core.items[id][me.settings.property]);
+                if (polymorph_core.items[id] && polymorph_core.items[id][me.settings.property]) me.quill.setContents(polymorph_core.items[id][me.settings.property]);
                 else me.quill.setText("");
                 me.quill.enable();
             } else {
@@ -71,10 +71,10 @@ core.registerOperator("quillbox", {
     me.updateSettings = function () {
         if (me.settings.operationMode == 'static') {
             me.settings.currentID = me.settings.staticItem;
-            if (!core.items[staticItem]) {
+            if (!polymorph_core.items[staticItem]) {
                 let it = {};
                 it[me.settings.property] = "";
-                core.items[staticItem] = it;
+                polymorph_core.items[staticItem] = it;
                 container.fire("updateItem", {
                     sender: this,
                     id: staticItem
@@ -95,13 +95,13 @@ core.registerOperator("quillbox", {
         if (me.updateItem)me.updateItem(me.settings.currentID);
     }
 
-    //Register changes with core
+    //Register changes with polymorph_core
     me.somethingwaschanged = function () {
         if (me.self_set) {
             me.self_set = false;
             return;
         }
-        core.items[me.settings.currentID][me.settings.property] = me.quill.getContents();
+        polymorph_core.items[me.settings.currentID][me.settings.property] = me.quill.getContents();
         container.fire("updateItem", {
             id: me.settings.currentID,
             sender: me
@@ -142,7 +142,7 @@ core.registerOperator("quillbox", {
     let d= this.dialogDiv;
     let targeter = d.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
+        polymorph_core.target().then((id) => {
             d.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
         })
@@ -157,7 +157,7 @@ core.registerOperator("quillbox", {
         }
     })
 
-    //Core will call me when an object is focused on from somewhere
+    //polymorph_core will call me when an object is focused on from somewhere
     container.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;

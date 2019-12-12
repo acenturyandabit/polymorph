@@ -1,4 +1,4 @@
-core.registerOperator("canvas", {
+polymorph_core.registerOperator("canvas", {
     displayName: "Canvas",
     description: "A canvas you can draw on."
 }, function (container) {
@@ -28,7 +28,7 @@ core.registerOperator("canvas", {
     })
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {

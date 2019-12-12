@@ -1,4 +1,4 @@
-core.registerSaveSource("template", function () { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("template", function () { // a sample save source, implementing a number of functions.
 
     //initialise here
     this.prettyName="NAME_TO_DISPLAY_IN_DIALOG"
@@ -12,7 +12,7 @@ core.registerSaveSource("template", function () { // a sample save source, imple
     }
 
     //ID will be a string if the object is loaded; otherwise a custom object that you have set in the past
-    //Set custom objects by using core.userData.documents[core.currentDocID].saveSources['your_savesource_name'].
+    //Set custom objects by using polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['your_savesource_name'].
 
     this.pushAll = async function (id, data) {
         //push to the source (force save)
@@ -23,14 +23,14 @@ core.registerSaveSource("template", function () { // a sample save source, imple
 
     this.hook = async function (id) { 
         //hook to pull changes and push changes. 
-        //To subscribe to live updates, you need to manually use core.on("updateItem",handler) to listen to item updates and core.on("updateView",handler) as well.
+        //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
         this.toSave=true;
     }
 
-    core.on("userSave",(d)=>{
+    polymorph_core.on("userSave",(d)=>{
         if (this.toSave){
-            this.pushAll(core.userData.documents[core.currentDocID].saveSources['template'],d);
+            this.pushAll(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['template'],d);
             return true; //return true if we save
         }else{
             return false;

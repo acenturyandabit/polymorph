@@ -1,7 +1,7 @@
-function _rect(core, parent, data) {
+function _rect(polymorph_core, parent, data) {
     //Putting all the variables here for quick reference.
     this.parent = parent; // parent is either a DOM element or another rect. The DOM element is the one in the sidebar that contains the label for the operators.
-    this.core = core; // allows us to load even if there is no other stuff around.
+    this.polymorph_core = polymorph_core; // allows us to load even if there is no other stuff around.
     this.isRoot = !((this.parent) && true); // if parent is not a rect, then this is a root rect.
     this.children = [];
     let me = this;
@@ -16,7 +16,7 @@ function _rect(core, parent, data) {
             return;
         }
         //otherwise, create and tie a new operator
-        let newop = new core.container("opSelect", me);
+        let newop = new polymorph_core.container("opSelect", me);
         me.operators.push(newop);
         me.tieOperator(newop);
     }
@@ -25,7 +25,7 @@ function _rect(core, parent, data) {
         for (i = 0; i < me.operators.length; i++) {
             if (me.operators[i] == op) {
                 me.operators.splice(i, 1);
-                core.fire("updateView", { sender: me });
+                polymorph_core.fire("updateView", { sender: me });
                 break;
             }
         }
@@ -49,8 +49,8 @@ function _rect(core, parent, data) {
                             d.remove();
                             rectponsible.removeOperator(op);
                         } else {
-                            core.toggleMenu(false);
-                            core.showOperator(op);
+                            polymorph_core.toggleMenu(false);
+                            polymorph_core.showOperator(op);
                         }
                     }
                 })
@@ -61,7 +61,7 @@ function _rect(core, parent, data) {
         }
     }
     this.getOperatorPath = function (op) {
-        if (!op) op = core.currentOperator;
+        if (!op) op = polymorph_core.currentOperator;
         if (me.operators) {
             for (let i = 0; i < me.operators.length; i++) {
                 if (me.operators[i] == op) return i;
@@ -141,12 +141,12 @@ function _rect(core, parent, data) {
         if (obj.path) me.pathBias = obj.path;
         if (obj.children) {
             //children are not recognised formally in phone mode, but to preserve the data structure, we honor this and create a new rect in memory.
-            me.children = [new _rect(core, me, obj.children[0]), new _rect(core, me, obj.children[1])];
+            me.children = [new _rect(polymorph_core, me, obj.children[0]), new _rect(polymorph_core, me, obj.children[1])];
         } else if (obj.operators) {
             if (!me.operators) me.operators = [];
             for (let i in obj.operators) {
                 //create the operator
-                let newop = new core.container(obj.operators[i].opdata, me);
+                let newop = new polymorph_core.container(obj.operators[i].opdata, me);
                 me.operators.push(newop);
                 me.tieOperator(newop);
             }
@@ -166,13 +166,13 @@ function _rect(core, parent, data) {
         if (me.children && me.children.length) {
             me.children[path].refresh();
         } else if (me.operators) {
-            core.showOperator(me.operators[path]);
+            polymorph_core.showOperator(me.operators[path]);
         } else {
             if (!me.operators) me.operators = [];
-            let newop = new core.container('opSelect', me);
+            let newop = new polymorph_core.container('opSelect', me);
             me.operators.push(newop);
             me.tieOperator(newop);
-            core.showOperator(newop);
+            polymorph_core.showOperator(newop);
         }
     }
 }

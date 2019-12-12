@@ -2,8 +2,8 @@ function _itemcluster_extend_scalegrid(me) {
     ///////////////////////////////////////////////////////////////////////////////////////
     //When moving objects, if there is a grid, snap to the grid
     me.alignGrid = (it) => {
-        if (core.items[me.settings.currentViewName].itemcluster.grid) {
-            let g = core.items[me.settings.currentViewName].itemcluster.grid;
+        if (polymorph_core.items[me.settings.currentViewName].itemcluster.grid) {
+            let g = polymorph_core.items[me.settings.currentViewName].itemcluster.grid;
             if (it.x() > 0) {
                 if (it.x() % g > g / 2) it.x(it.x() + (g - it.x() % g));
                 else it.x(it.x() - it.x() % g);
@@ -45,10 +45,10 @@ function _itemcluster_extend_scalegrid(me) {
         }
     })
     me.handleGridScroll = (e) => {
-        if (!core.items[me.settings.currentViewName].itemcluster.grid) {
-            core.items[me.settings.currentViewName].itemcluster.grid = 0;
+        if (!polymorph_core.items[me.settings.currentViewName].itemcluster.grid) {
+            polymorph_core.items[me.settings.currentViewName].itemcluster.grid = 0;
         }
-        let g = core.items[me.settings.currentViewName].itemcluster.grid;
+        let g = polymorph_core.items[me.settings.currentViewName].itemcluster.grid;
         let dg = 1;
         if (e.deltaY > 0) {
             switch (g / 10 ** Math.floor(Math.log10(g))) {
@@ -84,9 +84,9 @@ function _itemcluster_extend_scalegrid(me) {
         }
 
         if (g == 0 && dg != 0) g = 1;
-        else g = core.items[me.settings.currentViewName].itemcluster.grid;
+        else g = polymorph_core.items[me.settings.currentViewName].itemcluster.grid;
 
-        core.items[me.settings.currentViewName].itemcluster.grid = dg * 10 ** Math.floor(Math.log10(g));
+        polymorph_core.items[me.settings.currentViewName].itemcluster.grid = dg * 10 ** Math.floor(Math.log10(g));
 
         me.viewGrid();
     }
@@ -100,7 +100,7 @@ function _itemcluster_extend_scalegrid(me) {
         }
     }
     me.viewGrid = () => {
-        let g = core.items[me.settings.currentViewName].itemcluster.grid;
+        let g = polymorph_core.items[me.settings.currentViewName].itemcluster.grid;
         //also draw on the grid - and hide it later
         me.hideGrid();
         let vb = me.svg.viewbox();

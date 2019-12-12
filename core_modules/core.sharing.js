@@ -1,5 +1,5 @@
 let rc = randCSSCol();
-Object.assign(core.userData, {
+Object.assign(polymorph_core.userData, {
     uniqueStyle: {
         background: rc,
         color: matchContrast(rc)

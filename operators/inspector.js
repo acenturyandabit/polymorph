@@ -1,5 +1,5 @@
 //todo: putter mode for inspector
-core.registerOperator("inspector", {
+polymorph_core.registerOperator("inspector", {
     displayName: "Inspector",
     description: "Inspect all properties of a given element."
 }, function (container) {
@@ -40,7 +40,7 @@ core.registerOperator("inspector", {
         for (let i = 0; i < me.internal.children.length; i++) {
             item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
         }
-        let id = core.insertItem(item)
+        let id = polymorph_core.insertItem(item)
         container.fire("updateItem", { id: id });
         me.settings.currentItem = undefined;
         //clear modified class on item
@@ -57,7 +57,7 @@ core.registerOperator("inspector", {
     commitbtn.addEventListener("click", () => {
         //commit changes
         if (me.settings.currentItem) {
-            let item = core.items[me.settings.currentItem];
+            let item = polymorph_core.items[me.settings.currentItem];
             for (let i = 0; i < me.internal.children.length; i++) {
                 item[me.internal.children[i].dataset.role] = me.internal.children[i].querySelector("input").value;
             }
@@ -75,7 +75,7 @@ core.registerOperator("inspector", {
         //create a new element with the stated specs
     })*/
     let newProp = (prop) => {
-        if (me.settings.currentItem) core.items[me.settings.currentItem][prop] = " ";
+        if (me.settings.currentItem) polymorph_core.items[me.settings.currentItem][prop] = " ";
         if (me.settings.propsOn) me.settings.propsOn[prop] = me.rootdiv.querySelector("[data-role='nttype']").value;
         me.renderItem(me.settings.currentItem);
         container.fire("updateItem", {
@@ -122,7 +122,7 @@ core.registerOperator("inspector", {
         if (me.settings.commitChanges) {
             e.target.parentElement.classList.add("modified");
         } else if (me.settings.currentItem) {
-            let it = core.items[me.settings.currentItem];
+            let it = polymorph_core.items[me.settings.currentItem];
             let i = e.target.parentElement.dataset.role;
             switch (e.target.parentElement.dataset.type) {
                 case 'Text':
@@ -168,10 +168,10 @@ core.registerOperator("inspector", {
         }
         menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, me.rootdiv, "[data-type='Date'] input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
-            if (!core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date) me.datereparse(core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
-            contextedItem.value = new Date(core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date[0].date).toLocaleString();
-            core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].datestring = contextedItem.value;
-            me.datereparse(core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
+            if (!polymorph_core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date) me.datereparse(polymorph_core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
+            contextedItem.value = new Date(polymorph_core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].date[0].date).toLocaleString();
+            polymorph_core.items[me.settings.currentItem][contextedItem.parentElement.dataset.role].datestring = contextedItem.value;
+            me.datereparse(polymorph_core.items[me.settings.currentItem], contextedItem.parentElement.dataset.role);
             menu.style.display = "none";
         })
     })
@@ -224,9 +224,9 @@ core.registerOperator("inspector", {
             me.internal.children[i].dataset.invalid = 1;
         }
         let clean_obj = {};
-        if (core.items[id]) {
+        if (polymorph_core.items[id]) {
             //clean the object
-            clean_obj = JSON.parse(JSON.stringify(core.items[id]));
+            clean_obj = JSON.parse(JSON.stringify(polymorph_core.items[id]));
         }
         for (let i in me.settings.propsOn) {
             if (me.settings.propsOn[i] && (clean_obj[i] || me.settings.showNonexistent)) {
@@ -298,9 +298,9 @@ core.registerOperator("inspector", {
     me.updateSettings = function () {
         if (me.settings.operationMode == 'static') {
             //create if it does not exist
-            if (!core.items[staticItem]) {
+            if (!polymorph_core.items[staticItem]) {
                 let it = {};
-                core.items[staticItem] = it;
+                polymorph_core.items[staticItem] = it;
                 container.fire("updateItem", {
                     sender: this,
                     id: staticItem
@@ -330,8 +330,8 @@ core.registerOperator("inspector", {
         Object.assign(me.settings, d);
         if (!me.settings.propsOn) {
             me.settings.propsOn={};
-            for (let i in core.items) {
-                for (let j in core.items[i]) {
+            for (let i in polymorph_core.items) {
+                for (let j in polymorph_core.items[i]) {
                     me.settings.propsOn[j] = "Auto";
                 }
             }
@@ -431,7 +431,7 @@ core.registerOperator("inspector", {
     this.dialogDiv.appendChild(fields);
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
+        polymorph_core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
             me.focusOperatorID = me.settings['focusOperatorID'];
@@ -443,8 +443,8 @@ core.registerOperator("inspector", {
         let app = fields.querySelector(".apropos");
         app.innerHTML = "";
         let props = {};
-        for (let i in core.items) {
-            for (let j in core.items[i]) props[j] = true;
+        for (let i in polymorph_core.items) {
+            for (let j in polymorph_core.items[i]) props[j] = true;
         }
         if (!this.settings.propsOn) this.settings.propsOn = props;
         for (let j in props) {
@@ -478,7 +478,7 @@ core.registerOperator("inspector", {
         }
     })
 
-    //Core will call me when an object is focused on from somewhere
+    //polymorph_core will call me when an object is focused on from somewhere
     container.on("focus", function (d) {
         let id = d.id;
         let sender = d.sender;

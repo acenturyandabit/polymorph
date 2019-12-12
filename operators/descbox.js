@@ -1,4 +1,4 @@
-core.registerOperator("descbox", function (container) {
+polymorph_core.registerOperator("descbox", function (container) {
     let me = this;
     me.container = container;
     me.settings = {
@@ -24,21 +24,21 @@ core.registerOperator("descbox", function (container) {
         me.currentIDNode.innerText = id;
         //if focused, ignore
         if (me.settings.operationMode != "putter") {
-            if (id == me.settings.currentID && id && core.items[id]) {
+            if (id == me.settings.currentID && id && polymorph_core.items[id]) {
                 if (me.textarea.matches(":focus")) {
                     setTimeout(() => me.updateItem(id), 500);
                 } else {
                     if (this.changed) {
                         //someone else just called this so i'll have to save my modifications discreetly.
-                        core.items[id][me.settings.property] = me.textarea.value;
+                        polymorph_core.items[id][me.settings.property] = me.textarea.value;
                     } else {
-                        if (core.items[id] && core.items[id][me.settings.property]) me.textarea.value = core.items[id][me.settings.property];
+                        if (polymorph_core.items[id] && polymorph_core.items[id][me.settings.property]) me.textarea.value = polymorph_core.items[id][me.settings.property];
                         else me.textarea.value = "";
                     }
                     me.textarea.disabled = false;
-                    if (core.items[id].style) {
-                        me.textarea.style.background = core.items[id].style.background;
-                        me.textarea.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
+                    if (polymorph_core.items[id].style) {
+                        me.textarea.style.background = polymorph_core.items[id].style.background;
+                        me.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
                     } else {
                         me.textarea.style.background = "";
                         me.textarea.style.color = "";
@@ -73,10 +73,10 @@ core.registerOperator("descbox", function (container) {
         if (me.settings.operationMode == 'static') {
             let staticItem = me.settings.staticItem;
             me.settings.currentID = me.settings.staticItem;
-            if (!core.items[staticItem]) {
+            if (!polymorph_core.items[staticItem]) {
                 let it = {};
                 it[me.settings.property] = "";
-                core.items[staticItem] = it;
+                polymorph_core.items[staticItem] = it;
                 container.fire("updateItem", {
                     sender: this,
                     id: staticItem
@@ -103,8 +103,8 @@ core.registerOperator("descbox", function (container) {
     }
 
     let upc = new capacitor(100, 40, (id, data) => {
-        if (id && core.items[id] && this.changed) {
-            core.items[id][me.settings.property] = data;
+        if (id && polymorph_core.items[id] && this.changed) {
+            polymorph_core.items[id][me.settings.property] = data;
             container.fire("updateItem", {
                 id: id,
                 sender: me
@@ -116,7 +116,7 @@ core.registerOperator("descbox", function (container) {
             this.changed = true;
         }
     })
-    //Register changes with core
+    //Register changes with polymorph_core
     me.somethingwaschanged = function () {
         if (me.settings.operationMode != "putter") {
             upc.submit(me.settings.currentID, me.textarea.value);
@@ -130,7 +130,7 @@ core.registerOperator("descbox", function (container) {
 
     me.textarea.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            let container = core.getOperator(me.focusOperatorID);
+            let container = polymorph_core.getOperator(me.focusOperatorID);
             if (container && container.container.quickAdd) {
                 container.container.quickAdd(me.textarea.value);
                 me.textarea.value = "";
@@ -171,7 +171,7 @@ core.registerOperator("descbox", function (container) {
     };
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
+        polymorph_core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
             me.focusOperatorID = me.settings['focusOperatorID'];
@@ -188,7 +188,7 @@ core.registerOperator("descbox", function (container) {
             if (it) it.value = me.settings[i];
         }
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = () => {
         // pull settings and update when your dialog is closed.
         let its = me.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
@@ -196,7 +196,7 @@ core.registerOperator("descbox", function (container) {
         }
         me.textarea.placeholder = me.settings.placeholder || "";
         me.updateSettings();
-        container.fire("updateView");
+        container.fire("updateItem", { id: this.container.id });
     }
     me.dialogDiv.addEventListener("input", function (e) {
         if (e.target.dataset.role) {
@@ -204,15 +204,15 @@ core.registerOperator("descbox", function (container) {
         }
     })
 
-    //Core will call me when an object is focused on from somewhere
-    container.on("focus", function (d) {
+    //polymorph_core will call me when an object is focused on from somewhere
+    container.on("focus", (d) => {
         let id = d.id;
         let sender = d.sender;
         function switchTo(id) {
             upc.forceSend();
             me.settings.currentID = id;
             me.updateItem(id);
-            container.fire("updateView");
+            container.fire("updateItem", { id: this.container.id });
         }
         if (me.settings.operationMode == "focus") {
             if (me.settings['focusOperatorID']) {

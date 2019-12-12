@@ -1,13 +1,13 @@
 (() => {
 
-    core.loadDocument = async function () {
+    polymorph_core.loadDocument = async function () {
         let params = new URLSearchParams(window.location.search);
         let handled = false;
         let source;
         if (params.has("doc")) {
-            //Load from core.userData
+            //Load from polymorph_core.userData
             source = params.get("src") || 'lf';
-            core.currentDocID = params.get("doc");
+            polymorph_core.currentDocID = params.get("doc");
             handled = true;
         } else if (window.location.search) {
             //check open flag
@@ -17,15 +17,15 @@
                 loc = loc.replace(/\?o/, "");
                 history.pushState({}, "", loc);
 
-                core.filescreen.showSplash();
+                polymorph_core.filescreen.showSplash();
                 return;
             }
             //For non-polymorph links (without doc), like drive links
             //try each save source to see if it can handle this kind of request
-            for (let i in core.saveSources) {
-                if (core.saveSources[i].canHandle) {
-                    core.currentDocID = await core.saveSources[i].canHandle(params);
-                    if (core.currentDocID) {
+            for (let i in polymorph_core.saveSources) {
+                if (polymorph_core.saveSources[i].canHandle) {
+                    polymorph_core.currentDocID = await polymorph_core.saveSources[i].canHandle(params);
+                    if (polymorph_core.currentDocID) {
                         source = i;
                         handled = true;
                         break;
@@ -35,23 +35,23 @@
         }
         let d;
 
-        if (!handled) core.currentDocID = guid(6, core.userData.documents);
+        if (!handled) polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
 
 
 
 
 
-        core.datautils.upgradeSaveData(core.currentDocID, source);
-        core.rehookAll(core.currentDocID);
+        polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, source);
+        polymorph_core.rehookAll(polymorph_core.currentDocID);
 
         if (handled) {
             //fetch it, if it exists
-            d = await core.fetchDoc(source, core.currentDocID);
+            d = await polymorph_core.fetchDoc(source, polymorph_core.currentDocID);
         } else {
             source = "lf";
         }
 
-        window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${core.currentDocID}&src=${source}`);
+        window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}&src=${source}`);
 
         //if the current document userData doesnt exist, then create it.
         // e.g. user starts, user presses new, we get redirected to ?doc=etc&src=lf, but there is no entry.
@@ -66,33 +66,33 @@
         }
         //Create a doc if not created, also add at least one baserect.
         //TODO: add document name to 2nd argument
-        d = core.sanityCheckDoc(d, { template: template });
+        d = polymorph_core.sanityCheckDoc(d, { template: template });
 
-        core.fromSaveData(d);
+        polymorph_core.fromSaveData(d);
     }
 
-    //This is called by core.loadDocument and the filescreen.
-    core.sanityCheckDoc = function (data, settings) {
+    //This is called by polymorph_core.loadDocument and the filescreen.
+    polymorph_core.sanityCheckDoc = function (data, settings) {
         //if none then create new
         if (!data) {
             data = {
                 _meta: {
-                    displayName: settings.name || core.currentDocID,
-                    id: core.currentDocID
+                    displayName: settings.name || polymorph_core.currentDocID,
+                    id: polymorph_core.currentDocID
                 }
             };
             if (settings.template) {
                 Object.assign(data, polymorphTemplates[template]);
             }
-            core.fire("documentCreated", { id: core.currentDocID, data: data });
+            polymorph_core.fire("documentCreated", { id: polymorph_core.currentDocID, data: data });
         }
 
         //Decompress
-        data = core.datautils.decompress(data);
+        data = polymorph_core.datautils.decompress(data);
 
         //Upgrade if necessary
         if (!data._meta) {
-            data = core.datautils.viewToItems(data);
+            data = polymorph_core.datautils.viewToItems(data);
         }
 
         //Do some sanity checks 
@@ -120,34 +120,34 @@
         return data;
     }
 
-    core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
-        for (let i in core.userData.documents[id].saveHooks) {
-            if (core.saveSources[i].unhook) core.saveSources[i].unhook();
-            if (core.saveSources[i].hook) core.saveSources[i].hook();
+    polymorph_core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
+        for (let i in polymorph_core.userData.documents[id].saveHooks) {
+            if (polymorph_core.saveSources[i].unhook) polymorph_core.saveSources[i].unhook();
+            if (polymorph_core.saveSources[i].hook) polymorph_core.saveSources[i].hook();
         }
     }
 
-    core.resetDocument = function () {
-        core.items = {};
-        core.containers = {};
-        for (let i in core.rects) {
-            core.rects[i].outerDiv.remove();
-            delete core.rects[i];
+    polymorph_core.resetDocument = function () {
+        polymorph_core.items = {};
+        polymorph_core.containers = {};
+        for (let i in polymorph_core.rects) {
+            polymorph_core.rects[i].outerDiv.remove();
+            delete polymorph_core.rects[i];
         }
     }
 
-    core.saveSources = [];
+    polymorph_core.saveSources = [];
 
-    core.registerSaveSource = function (id, f) {
-        core.saveSources[id] = new f(core);
+    polymorph_core.registerSaveSource = function (id, f) {
+        polymorph_core.saveSources[id] = new f(polymorph_core);
         //create a wrapper for it in the loading dialog
-        core.addToDialog(id);
+        polymorph_core.addToDialog(id);
     }
 
-    core.fetchDoc = async function (source, data, state) {
+    polymorph_core.fetchDoc = async function (source, data, state) {
         if (!state) state = {};
         //do some checks before we do any lasting damage
-        if (!core.saveSources[source]) {
+        if (!polymorph_core.saveSources[source]) {
             //save source does not exist, alert the user
             alert("Ack! Looks like this save source is not working right now.");
             return false;
@@ -155,7 +155,7 @@
         document.querySelector(".wall").style.display = "block";
         let d;
         try {
-            d = await core.saveSources[source].pullAll(data);
+            d = await polymorph_core.saveSources[source].pullAll();
         } catch (e) {
             alert("Something went wrong with the save source: " + e);
             document.querySelector(".wall").style.display = "none";
@@ -168,93 +168,93 @@
         return d;
     }
 
-    core.fromSaveData = function (data) {
+    polymorph_core.fromSaveData = function (data) {
 
         //Does the current document match the current document? 
-        if (data._meta.id != core.currentDocID) {
+        if (data._meta.id != polymorph_core.currentDocID) {
             //Alert the user
             if (!confirm("Hmm... this source seems to be storing a different document to the one you requested. Continue loading?")) {
                 document.querySelector(".wall").style.display = "none";
                 return false;
             } else {
                 if (confirm("Create a new document that matches this datasource? (OK), or change the loaded data to this document name (CANCEL)?")) {
-                    core.currentDocID = data._meta.id;
-                    upgradeSaveData(data._meta.id, "lf");
+                    polymorph_core.currentDocID = data._meta.id;
+                    polymorph_core.datautils.upgradeSaveData(data._meta.id, "lf");
                     //reload the page
-                    core.rehookAll(core.currentDocID);
-                    core.fire("userSave", data);
-                    core.saveUserData();
+                    polymorph_core.rehookAll(polymorph_core.currentDocID);
+                    polymorph_core.fire("userSave", data);
+                    polymorph_core.saveUserData();
                     function f() {
-                        if (core.savedOK) {
-                            window.location.href = `?doc=${core.currentDocID}&source=lf`;
+                        if (polymorph_core.savedOK) {
+                            window.location.href = `?doc=${polymorph_core.currentDocID}&source=lf`;
                         } else {
                             setTimeout(f, 1);
                         }
                     }
                     setTimeout(f, 1);
                 } else {
-                    data._meta.id = core.currentDocID;
+                    data._meta.id = polymorph_core.currentDocID;
                 }
             }
         }
-        core.resetDocument();
+        polymorph_core.resetDocument();
 
-        core.items = data;
+        polymorph_core.items = data;
 
         //Create all the rects
-        core.rects = {};//live rects
-        for (let i in core.items) {
-            if (core.items[i]._rd) {
-                core.rects[i] = new core.rect(i);
+        polymorph_core.rects = {};//live rects
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i]._rd) {
+                polymorph_core.rects[i] = new polymorph_core.rect(i);
             }
         }
         //show the prevailing rect.
-        core.switchView(core.items._meta.currentView);
+        polymorph_core.switchView(polymorph_core.items._meta.currentView);
 
 
 
         //Create all the operators, to go into the rects
-        core.containers = {};//live rects
-        for (let i in core.items) {
-            if (core.items[i]._od) {
-                core.containers[i] = new core.container(i);
+        polymorph_core.containers = {};//live rects
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i]._od) {
+                polymorph_core.containers[i] = new polymorph_core.container(i);
             }
         }
 
-        core.unsaved = false;
-        core.datautils.linkSanitize();
-        core.updateSettings();
+        polymorph_core.unsaved = false;
+        polymorph_core.datautils.linkSanitize();
+        polymorph_core.updateSettings();
         document.querySelector(".wall").style.display = "none";
     }
 
-    core.toSaveData = function () {
+    polymorph_core.toSaveData = function () {
         //politely ask the operators and rects to update their items
-        for (let i in core.rects) {
-            core.items[i]._rd = core.rects[i].toSaveData();
+        for (let i in polymorph_core.rects) {
+            polymorph_core.items[i]._rd = polymorph_core.rects[i].toSaveData();
         }
-        for (let i in core.containers) {
-            core.items[i]._od = core.containers[i].toSaveData();
+        for (let i in polymorph_core.containers) {
+            polymorph_core.items[i]._od = polymorph_core.containers[i].toSaveData();
         }
-        return core.items;
+        return polymorph_core.items;
     }
 
-    core.cetch('userSave', (data, state) => {
+    polymorph_core.cetch('userSave', (data, state) => {
         if (state == undefined) {
             if (data) {
                 //ok we saved
-                core.unsaved = false;
+                polymorph_core.unsaved = false;
             }
         }
     })
 
-    core.userSave = function () {
+    polymorph_core.userSave = function () {
         //save to all sources
         //upgrade older save systems
-        let d = core.toSaveData();
-        core.datautils.upgradeSaveData(core.currentDocID);
-        core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.items._meta.displayName);
+        let d = polymorph_core.toSaveData();
+        polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
+        polymorph_core.filescreen.saveRecentDocument(polymorph_core.currentDocID, undefined, polymorph_core.items._meta.displayName);
         //trigger saving on all save sources
-        core.fire("userSave", d);
+        polymorph_core.fire("userSave", d);
     };
 
     (() => {
@@ -264,10 +264,10 @@
         loadDialog.classList.add("dialog");
         loadDialog = dialogManager.checkDialogs(loadDialog)[0];
 
-        core.loadInnerDialog = document.createElement("div");
-        loadDialog.querySelector(".innerDialog").appendChild(core.loadInnerDialog);
-        core.loadInnerDialog.classList.add("loadInnerDialog")
-        core.loadInnerDialog.innerHTML = `
+        polymorph_core.loadInnerDialog = document.createElement("div");
+        loadDialog.querySelector(".innerDialog").appendChild(polymorph_core.loadInnerDialog);
+        polymorph_core.loadInnerDialog.classList.add("loadInnerDialog")
+        polymorph_core.loadInnerDialog.innerHTML = `
     <style>
     .loadInnerDialog>div{
         border: 1px solid;
@@ -280,19 +280,19 @@
           <h1>Load/Save settings</h1>
           `;
         let autosaveOp = new _option({
-            div: core.loadInnerDialog,
+            div: polymorph_core.loadInnerDialog,
             type: "bool",
             object: () => {
-                return core.userData.documents[core.currentDocID]
+                return polymorph_core.userData.documents[polymorph_core.currentDocID]
             },
             property: "autosave",
             label: "Autosave all changes"
         });
         //----------Autosave----------//
-        core.autosaveCapacitor = new capacitor(200, 20, core.userSave);
-        core.on("updateView,updateItem", function (d) {
-            if (core.userData.documents[core.currentDocID].autosave && !core.isSaving) {
-                core.autosaveCapacitor.submit();
+        polymorph_core.autosaveCapacitor = new capacitor(200, 20, polymorph_core.userSave);
+        polymorph_core.on("updateItem", function (d) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+                polymorph_core.autosaveCapacitor.submit();
             }
         });
 
@@ -300,32 +300,32 @@
 
         //delegate toggle event handlers
 
-        core.addToDialog = function (id) {
+        polymorph_core.addToDialog = function (id) {
             let wrapperText = `
         <div data-saveref='${id}'>
-            <h2>${core.saveSources[id].prettyName || id}</h2>
+            <h2>${polymorph_core.saveSources[id].prettyName || id}</h2>
             <span>`;
-            if (core.saveSources[id].pullAll) wrapperText += `<label>Make this the default load source<input name="defaultSource" type="radio"></input></label>`
-            if (core.saveSources[id].hook) wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
-            if (core.saveSources[id].pullAll) wrapperText += `<button data-role="dlg_load">Load from this source</button>`;
-            if (core.saveSources[id].pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
+            if (polymorph_core.saveSources[id].pullAll) wrapperText += `<label>Make this the default load source<input name="defaultSource" type="radio"></input></label>`
+            if (polymorph_core.saveSources[id].hook) wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
+            if (polymorph_core.saveSources[id].pullAll) wrapperText += `<button data-role="dlg_load">Load from this source</button>`;
+            if (polymorph_core.saveSources[id].pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
             wrapperText += `</span>
         </div>
         `;
             let wrapper = htmlwrap(wrapperText);
             //also register its settings in the save dialog
-            if (core.saveSources[id].dialog) wrapper.appendChild(core.saveSources[id].dialog);
-            core.loadInnerDialog.appendChild(wrapper);
+            if (polymorph_core.saveSources[id].dialog) wrapper.appendChild(polymorph_core.saveSources[id].dialog);
+            polymorph_core.loadInnerDialog.appendChild(wrapper);
         }
 
-        core.on("titleButtonsReady", () => {
+        polymorph_core.on("titleButtonsReady", () => {
             document.body.appendChild(loadDialog);
             document.querySelector(".saveSources").addEventListener("click", () => {
-                for (let i in core.saveSources)
-                    if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();
-                for (let i in core.userData.documents[core.currentDocID].saveHooks) {
+                for (let i in polymorph_core.saveSources)
+                    if (polymorph_core.saveSources[i].showDialog) polymorph_core.saveSources[i].showDialog();
+                for (let i in polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks) {
                     try {
-                        core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
+                        polymorph_core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
                     }
                     catch (e) {
                         console.log(e);
@@ -335,58 +335,58 @@
                 loadDialog.style.display = "block";
             });
         });
-        loadDialog.querySelector(".cb").addEventListener("click", core.saveUserData);
+        loadDialog.querySelector(".cb").addEventListener("click", polymorph_core.saveUserData);
     })();
 
-    core.loadInnerDialog.addEventListener("input", (e) => {
+    polymorph_core.loadInnerDialog.addEventListener("input", (e) => {
         //save to this source checkbox checked
         if (e.target.matches("[data-role='tsync']")) {
             let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
             if (e.target.checked) {
-                if (!core.userData.documents[core.currentDocID].saveSources[csource]) core.userData.documents[core.currentDocID].saveSources[csource] = core.currentDocID;
-                if (core.saveSources[csource].hook) core.saveSources[csource].hook();
-                core.userData.documents[core.currentDocID].saveHooks[csource] = true;
+                if (!polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[csource]) polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[csource] = polymorph_core.currentDocID;
+                if (polymorph_core.saveSources[csource].hook) polymorph_core.saveSources[csource].hook();
+                polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks[csource] = true;
             } else {
-                if (core.saveSources[csource].unhook) core.saveSources[csource].unhook();
-                delete core.userData.documents[core.currentDocID].saveHooks[csource];
+                if (polymorph_core.saveSources[csource].unhook) polymorph_core.saveSources[csource].unhook();
+                delete polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks[csource];
             }
-            core.saveUserData();
+            polymorph_core.saveUserData();
         }
     })
 
-    core.loadInnerDialog.addEventListener("click", async (e) => {
+    polymorph_core.loadInnerDialog.addEventListener("click", async (e) => {
         if (e.target.matches("[data-role='dlg_save']")) {
             //Get the save source to save now
             let src = e.target.parentElement.parentElement.dataset.saveref;
-            core.saveSources[src].pushAll(core.userData.documents[core.currentDocID].saveSources[src], core.toSaveData());
+            polymorph_core.saveSources[src].pushAll(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[src], polymorph_core.toSaveData());
         } else if (e.target.matches("[data-role='dlg_load']")) {
             //Load from the save source
             let source = e.target.parentElement.parentElement.dataset.saveref;
-            let d = await core.fetchDoc(source, core.currentDocID, core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID);
-            d = core.sanityCheckDoc(d, core.currentDocID);
-            core.fromSaveData(d);
+            let d = await polymorph_core.fetchDoc(source, polymorph_core.currentDocID, polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[source] || polymorph_core.currentDocID);
+            d = polymorph_core.sanityCheckDoc(d, polymorph_core.currentDocID);
+            polymorph_core.fromSaveData(d);
         }
     })
 
     //a little nicety to warn user of unsaved items.
     //#region
-    core.unsaved = false;
-    core.on("updateView,updateItem", (e) => {
+    polymorph_core.unsaved = false;
+    polymorph_core.on("updateItem", (e) => {
         if (!e || !e.load) {//if event was not triggered by a loading action
-            core.unsaved = true;
+            polymorph_core.unsaved = true;
         }
     })
     window.addEventListener("beforeunload", (e) => {
-        if (core.unsaved) {
+        if (polymorph_core.unsaved) {
             e.preventDefault();
             e.returnValue = "Hold up, you seem to have some unsaved changes. Are you sure you want to close this window?";
         }
     })
     //#endregion
 
-    Object.defineProperty(core, "saveSourceData", {
+    Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
-            return core.userData.documents[core.currentDocID];
+            return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
         }
     })
 

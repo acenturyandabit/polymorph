@@ -1,4 +1,4 @@
-core.registerOperator("layflat", {
+polymorph_core.registerOperator("layflat", {
     displayName: "Layflat",
     description: "An container that facilitates organising data in a printable format."
 }, function (container) {
@@ -16,14 +16,14 @@ core.registerOperator("layflat", {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", (d) => {
         let id = d.id;
         //do stuff with the item.
         //do i care about it?
-        if ((!this.settings.filter) || core.items[id][this.settings.filter]) {
+        if ((!this.settings.filter) || polymorph_core.items[id][this.settings.filter]) {
             //show it!
             this.displayItem(id);
             return true;

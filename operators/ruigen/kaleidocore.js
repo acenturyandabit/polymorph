@@ -1,5 +1,5 @@
 /*
-kaleidoCoreSettings{
+kaleidopolymorph_coreSettings{
   sinusoidal: true or false.
   raidalScalingFactor: how much the shape dilates as it goes out. 10 is a nice number for phones.
 }
@@ -47,7 +47,7 @@ function randcol() {
   output += "00";
   return output;
 }
-var kaleidoCoreDefaultSettings = {
+var kaleidopolymorph_coreDefaultSettings = {
   factor: 8,
   angularAmplitude: 0.1,
   colorGenerator: randcol,
@@ -56,30 +56,30 @@ var kaleidoCoreDefaultSettings = {
   maxVertices: 8,
   radialAmplitude: 1
 };
-var kaleidoCoreSettings;
-if (!kaleidoCoreSettings) kaleidoCoreSettings = kaleidoCoreDefaultSettings;
+var kaleidopolymorph_coreSettings;
+if (!kaleidopolymorph_coreSettings) kaleidopolymorph_coreSettings = kaleidopolymorph_coreDefaultSettings;
 else
-  kaleidoCoreSettings = Object.assign(
-    kaleidoCoreDefaultSettings,
-    kaleidoCoreSettings
+  kaleidopolymorph_coreSettings = Object.assign(
+    kaleidopolymorph_coreDefaultSettings,
+    kaleidopolymorph_coreSettings
   );
 
-kaleidoCore = [];
+kaleidopolymorph_core = [];
 
 function shape(maxR, ramR) {
-  this.factor = kaleidoCoreSettings.factor; //Math.round(Math.random()*2+3);//how many times it repeats
-  this.tRate = (Math.random() * 2 - 1) * kaleidoCoreSettings.angularAmplitude; //rate of rotation
-  this.rRate = (Math.random() * 4 + 1) * kaleidoCoreSettings.radialAmplitude; //rate of radius increase
+  this.factor = kaleidopolymorph_coreSettings.factor; //Math.round(Math.random()*2+3);//how many times it repeats
+  this.tRate = (Math.random() * 2 - 1) * kaleidopolymorph_coreSettings.angularAmplitude; //rate of rotation
+  this.rRate = (Math.random() * 4 + 1) * kaleidopolymorph_coreSettings.radialAmplitude; //rate of radius increase
   //for sinusoidal radius
-  if (kaleidoCoreSettings.sinusoidal) {
+  if (kaleidopolymorph_coreSettings.sinusoidal) {
     this.ram = (Math.random() * 0.5 + 0.5) * ramR; // the radius at which the sin function peaks.
     this.rsin = 0; //term in the sin function for sinusoidal radius
   }
   //end sinusoidal radius
   this.r = 0; //radius
   this.t = Math.random() * Math.PI; //theta
-  this.color = kaleidoCoreSettings.colorGenerator(); //this color
-  var p = Math.floor(Math.random() * (kaleidoCoreSettings.maxVertices - 3) + 3);
+  this.color = kaleidopolymorph_coreSettings.colorGenerator(); //this color
+  var p = Math.floor(Math.random() * (kaleidopolymorph_coreSettings.maxVertices - 3) + 3);
   this.bits = [];
   for (var i = 0; i < p; i++) this.bits.push(new bit(maxR));
   this.bitT = 0;
@@ -91,9 +91,9 @@ function bit(maxR) {
   this.dr = Math.random() * maxR;
 }
 
-///////Kaleiocore
-function startKaleidoCore() {
-  let things = document.getElementsByClassName("kaleidocore");
+///////Kaleiopolymorph_core
+function startKaleidopolymorph_core() {
+  let things = document.getElementsByClassName("kaleidopolymorph_core");
   for (i = 0; i < things.length; i++) {
     e = things[i];
     kaleidoCanvas = document.createElement("canvas");
@@ -101,7 +101,7 @@ function startKaleidoCore() {
     kaleidoCanvas.height = e.clientHeight;
     e.appendChild(kaleidoCanvas);
     ctx = kaleidoCanvas.getContext("2d");
-    kaleidoCore.push({
+    kaleidopolymorph_core.push({
       ctx: ctx,
       e: kaleidoCanvas,
       phase: 0,
@@ -113,8 +113,8 @@ function startKaleidoCore() {
     });
   };
   setInterval(() => {
-    kaleidoCore.forEach((v, i) => {
-      v.ctx.fillStyle = kaleidoCoreSettings.backgroundFillColor;
+    kaleidopolymorph_core.forEach((v, i) => {
+      v.ctx.fillStyle = kaleidopolymorph_coreSettings.backgroundFillColor;
       v.ctx.fillRect(0, 0, v.e.width, v.e.height);
       //make new shapes, in waves
       if (Math.random() * 1 < 0.15) {
@@ -132,7 +132,7 @@ function startKaleidoCore() {
       //shift everything outwards
       for (var i = 0; i < v.data.shapes.length; i++) {
         s = v.data.shapes[i];
-        if (kaleidoCoreSettings.sinusoidal) {
+        if (kaleidopolymorph_coreSettings.sinusoidal) {
           s.rsin += s.rRate;
           s.r = s.ram * Math.sin(s.rsin / 100) ** 1.8;
         } else {
@@ -150,7 +150,7 @@ function startKaleidoCore() {
           var ist = true;
           for (var j = 0; j < s.bits.length; j++) {
             b = s.bits[j];
-            kr = b.dr * (1 + s.r / v.e.height * kaleidoCoreSettings.radialScalingFactor);
+            kr = b.dr * (1 + s.r / v.e.height * kaleidopolymorph_coreSettings.radialScalingFactor);
             kd = b.dt + s.bitT;
             xx =
               s.r * Math.cos(s.t + (i * Math.PI * 2) / s.factor) +
@@ -186,4 +186,4 @@ function startKaleidoCore() {
   }, 100);
 }
 
-if (document.readyState != "loading") startKaleidoCore(); else document.addEventListener("DOMContentLoaded", startKaleidoCore);
+if (document.readyState != "loading") startKaleidopolymorph_core(); else document.addEventListener("DOMContentLoaded", startKaleidopolymorph_core);

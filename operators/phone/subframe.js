@@ -1,4 +1,4 @@
-core.registerOperator("subframe", {targetForward:true, hidden:true},function (container) {
+polymorph_core.registerOperator("subframe", {targetForward:true, hidden:true},function (container) {
     let me = this;
     me.container=container;
     this.settings = {};
@@ -13,9 +13,9 @@ core.registerOperator("subframe", {targetForward:true, hidden:true},function (co
     //issue: container may not be tied yet-- in which case, wait.
     setTimeout(()=>{this.container.tab.appendChild(this.rdv)});
     //Add div HTML here
-    this.rect=new _rect(core,undefined);
+    this.rect=new _rect(polymorph_core,undefined);
     this.rdv.querySelector("div").appendChild(this.rect.outerDiv);
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     this.refresh=function(){
         this.rect.refresh();
@@ -24,7 +24,7 @@ core.registerOperator("subframe", {targetForward:true, hidden:true},function (co
     this.processSettings=function(){
     }
 
-    //////////////////Handling local changes to push to core//////////////////
+    //////////////////Handling local changes to push to polymorph_core//////////////////
 
     this.forwardTarget=function(){
         this.rect.activateTargets();

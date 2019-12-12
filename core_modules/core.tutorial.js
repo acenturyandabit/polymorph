@@ -1,17 +1,17 @@
-if (!core.userData.tutorialData) {
-  core.userData.tutorialData = { main: {} };
+if (!polymorph_core.userData.tutorialData) {
+  polymorph_core.userData.tutorialData = { main: {} };
 }
 
-core.tutorial = new _tutorial({
-  data: () => { return core.userData.tutorialData.main },
-  saveData: () => { core.saveUserData() }
+polymorph_core.tutorial = new _tutorial({
+  data: () => { return polymorph_core.userData.tutorialData.main },
+  saveData: () => { polymorph_core.saveUserData() }
 });
-core.resetTutorial = function () {
-  core.userData.tutorialData = { main: {} };
-  core.tutorial.start();
+polymorph_core.resetTutorial = function () {
+  polymorph_core.userData.tutorialData = { main: {} };
+  polymorph_core.tutorial.start();
 }
-core.on("UIstart", () => {
-  core.tutorial.addSteps([
+polymorph_core.on("UIstart", () => {
+  polymorph_core.tutorial.addSteps([
     {
       target: document.body,
       type: "shader",
@@ -20,14 +20,14 @@ core.on("UIstart", () => {
     },
     {
       id: "cnd",
-      target: () => { return core.baseRect.outerDiv },
+      target: () => { return polymorph_core.baseRect.outerDiv },
       type: "internal",
       location: 'left',
       contents: `<p>&lt;---Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
       to: [["Next", "clickop"], ["Skip"]]
     }, {
       id: "clickop",
-      target: () => { return core.baseRect.outerDiv },
+      target: () => { return polymorph_core.baseRect.outerDiv },
       type: "internal",
       location: 'center',
       contents: `<p>These boxes contain operators. Click an operator type to get started!</p>`,
@@ -46,14 +46,14 @@ core.on("UIstart", () => {
       to: [["Next", "idlist"], ["Skip"]]
     }, {
       id: "idlist",
-      target: () => { return core.getOperator("nvd5b4").topdiv },
+      target: () => { return polymorph_core.getOperator("nvd5b4").topdiv },
       type: "internal",
       location: 'center',
       contents: `<p>Here's a list of ideas! Click an idea to view more detail about it.</p>`,
       to: [["Next", "idfs"], ["Skip"]]
     }, {
       id: "idfs",
-      target: () => { return core.baseRect.children[1].outerDiv },
+      target: () => { return polymorph_core.baseRect.children[1].outerDiv },
       type: "internal",
       location: 'top',
       contents: `<p>This frame contains various aspects of a project. You can click any of the purple tabs to switch between frames!</p>`,
@@ -68,8 +68,8 @@ core.on("UIstart", () => {
     }
   ]);
   //wait for a baserect to show before continuing the tutorial
-  core.on("viewReady", () => {
-    core.tutorial.continueStart(() => { core.tutorial.start(); });
+  polymorph_core.on("viewReady", () => {
+    polymorph_core.tutorial.continueStart(() => { polymorph_core.tutorial.start(); });
   })
 })
 
@@ -77,10 +77,10 @@ core.on("UIstart", () => {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Also handle individual tutorials.
-core.on("titleButtonsReady", () => {
+polymorph_core.on("titleButtonsReady", () => {
   document.querySelector("li.hleptute").addEventListener("click", () => {
-    core.target().then((id) => {
-      if (core.getOperator(id).operator.startTutorial) core.getOperator(id).operator.startTutorial();
+    polymorph_core.target().then((id) => {
+      if (polymorph_core.getOperator(id).operator.startTutorial) polymorph_core.getOperator(id).operator.startTutorial();
     })
   })
   document.querySelector("li.hlepdocs").addEventListener("click", () => {

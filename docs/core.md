@@ -1,5 +1,5 @@
-# Default parts of core
+# Default parts of polymorph_core
 
 | Attribute | Defined in | Role |
 |-----------|------------|----- |
-|`core.currentDocID` | `core.docLoading.js (core.loadDocument)`| Keeps track of the current document ID, and hence allows pointing to `core.userData.documents[core.currentDocID]`.
+|`polymorph_core.currentDocID` | `core.docLoading.js (polymorph_core.loadDocument)`| Keeps track of the current document ID, and hence allows pointing to `polymorph_core.userData.documents[polymorph_core.currentDocID]`.

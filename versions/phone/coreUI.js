@@ -1,20 +1,20 @@
 /*
 Data storage reference
-core.currentDoc={
+polymorph_core.currentDoc={
     views:{rect:rectData},
     items:[],
     displayName: "whatever"
 }
 
-core.userData={
+polymorph_core.userData={
     uniqueStyle=some style
 }
 
 */
 
 
-core.on("UIstart", () => {
-    core.toggleMenu = function (visible) {
+polymorph_core.on("UIstart", () => {
+    polymorph_core.toggleMenu = function (visible) {
         if (visible == undefined) {
             visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
         }
@@ -25,21 +25,21 @@ core.on("UIstart", () => {
         }
     }
     document.body.querySelector("#menu").addEventListener("click", () => {
-        core.toggleMenu(true);
+        polymorph_core.toggleMenu(true);
     });
     document.body.querySelector("#newoperator").addEventListener("click", () => {
-        core.baseRect.split();
+        polymorph_core.baseRect.split();
     });
     document.body.querySelector("#menulist").parentElement.addEventListener("click", (e) => {
         if (e.currentTarget == e.target) {
-            core.toggleMenu(false);//hide on direct taps
+            polymorph_core.toggleMenu(false);//hide on direct taps
         }
     });
     document.querySelector(".open").addEventListener("click", () => {
         window.open(window.location.pathname);
     })
     document.querySelector("#opop").addEventListener("click", () => {
-        core.dialog.register(core.currentOperator);
+        polymorph_core.dialog.register(polymorph_core.currentOperator);
     })
 });
 documentReady(() => {
@@ -83,21 +83,21 @@ documentReady(() => {
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
 })
-core.on("documentCreated", (id) => {
-    core.userData.documents[id] = { saveSources: {} };
-    core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
+polymorph_core.on("documentCreated", (id) => {
+    polymorph_core.userData.documents[id] = { saveSources: {} };
+    polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Operator conveinence functions
 //Add showOperator
 
-core.showOperator = function (op) {
+polymorph_core.showOperator = function (op) {
     if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
     document.body.querySelector("#body").appendChild(op.topdiv);
     if (op.operator && op.operator.refresh) op.operator.refresh();
-    core.currentOperator = op;
-    core.fire("operatorChanged");
+    polymorph_core.currentOperator = op;
+    polymorph_core.fire("operatorChanged");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -110,15 +110,15 @@ core.showOperator = function (op) {
 })*/
 
 
-core.resetView = function () {
+polymorph_core.resetView = function () {
     if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
-    core.baseRect = new _rect(core,
+    polymorph_core.baseRect = new _rect(polymorph_core,
         undefined, {});
-    core.baseRect.refresh();
+    polymorph_core.baseRect.refresh();
 }
 
-core.on("operatorChanged", function (d) {
-    if (core.userData.documents[core.currentDocID] && core.userData.documents[core.currentDocID].autosave && !core.isSaving) {
-        core.autosaveCapacitor.submit();
+polymorph_core.on("operatorChanged", function (d) {
+    if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+        polymorph_core.autosaveCapacitor.submit();
     }
 });

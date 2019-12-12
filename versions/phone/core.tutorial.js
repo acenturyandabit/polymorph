@@ -1,5 +1,5 @@
-function readyTutorial(core) {
-  let t = core.tutorial;
+function readyTutorial(polymorph_core) {
+  let t = polymorph_core.tutorial;
   documentReady(() => {
     t.push({
       target: document.body,
@@ -9,7 +9,7 @@ function readyTutorial(core) {
     });
     t.push({
       id:"cnd",
-      target: ()=>{return core.baseRect.outerDiv},
+      target: ()=>{return polymorph_core.baseRect.outerDiv},
       type: "internal",
       location:'left',
       contents: `<p>Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
@@ -17,7 +17,7 @@ function readyTutorial(core) {
     });
     t.push({
       id:"clickop",
-      target: ()=>{return core.baseRect.outerDiv},
+      target: ()=>{return polymorph_core.baseRect.outerDiv},
       type: "internal",
       location:'bottom',
       contents: `<p>These boxes contain operators. Click an operator type to get started!</p>`,
@@ -40,7 +40,7 @@ function readyTutorial(core) {
     });
     t.push({
       id:"idlist",
-      target: ()=>{return core.getOperator("nvd5b4").topdiv},
+      target: ()=>{return polymorph_core.getOperator("nvd5b4").topdiv},
       type: "internal",
       location:'center',
       contents: `<p>Here's a list of ideas! Click an idea to view more detail about it.</p>`,
@@ -48,7 +48,7 @@ function readyTutorial(core) {
     });
     t.push({
       id:"idfs",
-      target: ()=>{return core.baseRect.children[1].outerDiv},
+      target: ()=>{return polymorph_core.baseRect.children[1].outerDiv},
       type: "internal",
       location:'top',
       contents: `<p>This frame contains various aspects of a project. You can click any of the purple tabs to switch between frames!</p>`,
@@ -68,10 +68,10 @@ function readyTutorial(core) {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Also handle individual tutorials.
-core.on("titleButtonsReady",()=>{
+polymorph_core.on("titleButtonsReady",()=>{
   document.querySelector("li.hleptute").addEventListener("click", ()=>{
-    core.target().then((id)=>{
-      if (core.getOperator(id).operator.startTutorial)core.getOperator(id).operator.startTutorial();
+    polymorph_core.target().then((id)=>{
+      if (polymorph_core.getOperator(id).operator.startTutorial)polymorph_core.getOperator(id).operator.startTutorial();
     })
   })
   document.querySelector("li.hlepdocs").addEventListener("click", ()=>{

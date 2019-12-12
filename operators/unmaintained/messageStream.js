@@ -1,4 +1,4 @@
-core.registerOperator("messageStream", {
+polymorph_core.registerOperator("messageStream", {
     displayName: "Message stream",
     description: "Useful for displaying streams of messages."
 }, function (container) {
@@ -36,14 +36,14 @@ core.registerOperator("messageStream", {
         for (let i = 0; i < mb.children.length; i++) {
             mb.children[i].classList.add("remove");
         }
-        for (let i in core.items) {
-            if (core.items[i][this.settings.filter]) {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i][this.settings.filter]) {
                 let ci = mb.querySelector(`[data-id='${i}']`);
                 if (!ci) {
                     ci = htmlwrap(`<div></div>`);
                 }
                 ci.classList.remove("remove");
-                ci.innerText=core.items[i][me.settings.messageprop];
+                ci.innerText=polymorph_core.items[i][me.settings.messageprop];
             }
         }
         for (let i = 0; i < mb.children.length; i++) {
@@ -66,7 +66,7 @@ core.registerOperator("messageStream", {
         }
     })
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
@@ -74,7 +74,7 @@ core.registerOperator("messageStream", {
         //do stuff with the item.
 
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items will be deleted by the core garbage collector when the user saves.
+        //otherwise your items will be deleted by the polymorph_core garbage collector when the user saves.
         return false;
     });
 

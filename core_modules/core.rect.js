@@ -14,26 +14,26 @@ const RECT_BORDER_COLOR = "transparent";
 
 //parent is either undefined or another rect-like object
 //pseudo parents should implement following methods:
-//.core property
+//.polymorph_core property
 //
 
-core.newRect = function (parent) {
-    let ID = core.insertItem({
+polymorph_core.newRect = function (parent) {
+    let ID = polymorph_core.insertItem({
         p: parent,
         f: RECT_FIRST_SIBLING,
         x: RECT_ORIENTATION_X,
         ps: 1
     });
-    core.rects[ID] = new core.rect(ID);
+    polymorph_core.rects[ID] = new polymorph_core.rect(ID);
     return ID;
 }
 
-core.rect = function (rectID) {
+polymorph_core.rect = function (rectID) {
     this.id = rectID;//might be helpful
-    core.rects[rectID] = this;
+    polymorph_core.rects[rectID] = this;
     Object.defineProperty(this, "settings", {
         get: () => {
-            return core.items[rectID]._rd;
+            return polymorph_core.items[rectID]._rd;
         }
     })
 
@@ -45,13 +45,13 @@ core.rect = function (rectID) {
             }
             //if i dont have two good children, return none
             if (this._childrenIDs.length == 2 &&
-                core.items[this._childrenIDs[0]] && core.items[this._childrenIDs[0]]._rd &&
-                core.items[this._childrenIDs[1]] && core.items[this._childrenIDs[1]]._rd) {
+                polymorph_core.items[this._childrenIDs[0]] && polymorph_core.items[this._childrenIDs[0]]._rd &&
+                polymorph_core.items[this._childrenIDs[1]] && polymorph_core.items[this._childrenIDs[1]]._rd) {
                 return this._childrenIDs;
             } else {
                 this._childrenIDs = [];
-                for (let i in core.items) {
-                    if (core.items[i]._rd && core.items[i]._rd.p == rectID) {
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i]._rd && polymorph_core.items[i]._rd.p == rectID) {
                         this._childrenIDs.push(i);
                     }
                 }
@@ -64,8 +64,8 @@ core.rect = function (rectID) {
     Object.defineProperty(this, "children", {
         get: () => {
             if (this.childrenIDs) {
-                if (core.rects[this.childrenIDs[0]] && core.rects[this.childrenIDs[1]])
-                    return [core.rects[this.childrenIDs[0]], core.rects[this.childrenIDs[1]]];
+                if (polymorph_core.rects[this.childrenIDs[0]] && polymorph_core.rects[this.childrenIDs[1]])
+                    return [polymorph_core.rects[this.childrenIDs[0]], polymorph_core.rects[this.childrenIDs[1]]];
             }
             return undefined;
         }
@@ -74,8 +74,8 @@ core.rect = function (rectID) {
     Object.defineProperty(this, "containerIDs", {
         get: () => {
             this._containerIDs = [];
-            for (let i in core.items) {
-                if (core.items[i]._od && core.items[i]._od.p == rectID) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i]._od && polymorph_core.items[i]._od.p == rectID) {
                     this._containerIDs.push(i);
                 }
             }
@@ -86,7 +86,7 @@ core.rect = function (rectID) {
     Object.defineProperty(this, "containers", {
         get: () => {
             if (this.containerIDs) {
-                return this.containerIDs.map((v) => core.containers[v]);
+                return this.containerIDs.map((v) => polymorph_core.containers[v]);
             }
             return undefined;
         }
@@ -94,8 +94,8 @@ core.rect = function (rectID) {
 
     Object.defineProperty(this, "parent", {
         get: () => {
-            if (this.settings.p) return core.rects[this.settings.p];
-            else return core;
+            if (this.settings.p) return polymorph_core.rects[this.settings.p];
+            else return polymorph_core;
         }
     })
 
@@ -181,7 +181,7 @@ core.rect = function (rectID) {
     //Function for adding an operator to this rect. Operator must already exist.
     //This function is called: on operator create by operator; OR inernally by rearranging tabspans (later).
     this.tieContainer = (containerID, index) => {
-        let container = core.containers[containerID];
+        let container = polymorph_core.containers[containerID];
         if (!container) {
             console.log("Ack!");
             return;
@@ -209,6 +209,7 @@ core.rect = function (rectID) {
 
     //Callback for tab clicks to switch between operators.
     this.switchOperator = (containerID) => {
+        if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerID}"]`)) return false;//we cant do that
         this.settings.s = containerID;
         for (let i = 0; i < this.innerDivContainer.children.length; i++) {
             this.innerDivContainer.children[i].style.display = "none";
@@ -225,15 +226,17 @@ core.rect = function (rectID) {
         currentTab.children[1].style.display = "inline";
         currentTab.children[2].style.display = "inline";
         currentTab.style.background = "#8093FF";
-        if (core.containers[containerID].operator.refresh) core.containers[containerID].operator.refresh();
+        if (polymorph_core.containers[containerID].operator.refresh) polymorph_core.containers[containerID].operator.refresh();
         //Overall refresh because borders are dodgy
+        polymorph_core.containers[this.settings.s].refresh();
+        return true;
     }
 
     //operator creation
     this.plus.addEventListener("click", () => {
         let newContainer = { _od: { t: "opSelect", p: rectID } };
-        let newContainerID = core.insertItem(newContainer);
-        core.containers[newContainerID] = new core.container(newContainerID);
+        let newContainerID = polymorph_core.insertItem(newContainer);
+        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
         this.switchOperator(newContainerID);
     })
 
@@ -263,7 +266,7 @@ core.rect = function (rectID) {
 
             this.switchOperator(switchToID);
             //nerf the item
-            core.destroyItem(conatinerID);
+            polymorph_core.destroyItem(conatinerID);
         }
     })
 
@@ -282,7 +285,7 @@ core.rect = function (rectID) {
         }
         contextedOperatorIndex = t.dataset.containerid;
         let tp = t.parentElement;
-        if (this.parent && this.parent.constructor.name == "core.rect") {
+        if (this.parent && this.parent.constructor.name == "polymorph_core.rect") {
             //i have a prent, show subframe parent button
             tabmenu.querySelector(".subframePR").style.display = "block";
         } else {
@@ -309,8 +312,8 @@ core.rect = function (rectID) {
     `, this.tabbar, undefined, tabfilter);
     tabmenu.querySelector(".subframePR").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new core.container("subframe", this.parent));
-        let pcp = new core.rect(core, sf.operator.rootdiv, RECT_ORIENTATION_X, 1, 0);
+        let sf = (new polymorph_core.container("subframe", this.parent));
+        let pcp = new polymorph_core.rect(polymorph_core, sf.operator.rootdiv, RECT_ORIENTATION_X, 1, 0);
         sf.operator.rect = pcp;
         let oldParent = this.parent;
         pcp.children = this.parent.children;
@@ -326,65 +329,65 @@ core.rect = function (rectID) {
         oldParent.innerDivs[0].style.display = "block";
         oldParent.refresh();
         oldParent.refresh();// could probably be more efficient than calling resize twice...
-        core.fire("updateView", { sender: this });
+        polymorph_core.fire("updateItem", { id: rectID, sender: this });
         tabmenu.style.display = "none";
     })
     tabmenu.querySelector(".subframe").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new core.container("subframe", this));
+        let sf = (new polymorph_core.container("subframe", this));
         let oop = this.containers[contextedOperatorIndex];
         sf.settings.tabbarName = oop.settings.tabbarName;
         this.tieContainer(sf, contextedOperatorIndex);
         sf.operator.rect.tieContainer(oop, 0);
-        core.fire("updateView", { sender: this });
+        polymorph_core.fire("updateItem", { id: rectID, sender: this });
         tabmenu.style.display = "none";
     })
 
     tabmenu.querySelector(".cpfr").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        core.copiedFrameData = this.containers[contextedOperatorIndex].toSaveData();
-        core.fire("updateView", { sender: this });
+        polymorph_core.copiedFrameData = this.containers[contextedOperatorIndex].toSaveData();
+        polymorph_core.fire("updateItem", { id: rectID, sender: this });
         tabmenu.style.display = "none";
     })
     tabmenu.querySelector(".xdoc").addEventListener("click", () => {
         //export as a whole doc! how generous
         let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
         tabmenu.style.display = "none";
-        core.dialog.prompt(tta);
+        polymorph_core.dialog.prompt(tta);
         //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
-        //or even better for future security: create a separate core instance, and get it to GC itself. TODO!
-        let collatedItems = core.items;
+        //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
+        let collatedItems = polymorph_core.items;
         tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${guid(5)}","views":{"default":{
         "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
     })
 
     tabmenu.querySelector(".psfr").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        this.containers[contextedOperatorIndex].fromSaveData(core.copiedFrameData);
+        this.containers[contextedOperatorIndex].fromSaveData(polymorph_core.copiedFrameData);
         this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-        core.fire("updateView", { sender: this });
+        polymorph_core.fire("updateItem", {id:rectID, sender: this });
         tabmenu.style.display = "none";
     })
 
     tabmenu.querySelector(".xpfr").addEventListener("click", () => {
         let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
         tabmenu.style.display = "none";
-        core.dialog.prompt(tta);
+        polymorph_core.dialog.prompt(tta);
         tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
     })
 
     tabmenu.querySelector(".mpfr").addEventListener("click", () => {
         let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-        core.dialog.prompt(tta);
+        polymorph_core.dialog.prompt(tta);
         tta.querySelector("button").addEventListener("click", () => {
             if (tta.querySelector("textarea").value) {
                 let importObject = JSON.parse(tta.querySelector("textarea").value);
                 this.containers[contextedOperatorIndex].fromSaveData(importObject);
                 this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                core.fire("updateView", { sender: this });
+                polymorph_core.fire("updateItem", {id:rectID, sender: this });
                 //force update all items to reload the view
-                for (let i in core.items) {
-                    core.fire('updateItem', { id: i });
+                for (let i in polymorph_core.items) {
+                    polymorph_core.fire('updateItem', { id: i });
                 }
             }
         })
@@ -394,9 +397,9 @@ core.rect = function (rectID) {
     //And a delegated settings button handler
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "img") {
-            //dont show settings - instead, copy the settings div onto the core settings div.
-            if (core.containers[this.settings.s].operator.dialogDiv) {
-                this.settingsOperator = core.containers[this.settings.s].operator;
+            //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
+            if (polymorph_core.containers[this.settings.s].operator.dialogDiv) {
+                this.settingsOperator = polymorph_core.containers[this.settings.s].operator;
                 this.settingsOperator.showDialog();
                 this.settingsDiv = document.createElement("div");
                 this.settingsDiv.innerHTML = `<h1>Settings</h1>
@@ -407,20 +410,20 @@ core.rect = function (rectID) {
                 this.settingsDiv.appendChild(this.settingsOperator.dialogDiv);
                 this.settingsDiv.querySelector(".tabDisplayName").value = this.tabbar.querySelector(`[data-containerid="${this.settings.s}"]`).children[0].innerText;
                 //add remapping by the operator
-                core.containers[this.settings.s].readyRemappingDiv();
-                this.settingsDiv.appendChild(core.containers[this.settings.s].remappingDiv);
+                polymorph_core.containers[this.settings.s].readyRemappingDiv();
+                this.settingsDiv.appendChild(polymorph_core.containers[this.settings.s].remappingDiv);
 
-                core.dialog.prompt(this.settingsDiv, (d) => {
-                    core.containers[this.settings.s].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
-                    this.tabbar.querySelector(`[data-containerid="${this.settings.s}"]`).children[0].innerText = core.containers[this.settings.s].settings.tabbarName;
+                polymorph_core.dialog.prompt(this.settingsDiv, (d) => {
+                    polymorph_core.containers[this.settings.s].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
+                    this.tabbar.querySelector(`[data-containerid="${this.settings.s}"]`).children[0].innerText = polymorph_core.containers[this.settings.s].settings.tabbarName;
                     if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
-                    core.containers[this.settings.s].processRemappingDiv();
-                    core.fire("updateView");
+                    polymorph_core.containers[this.settings.s].processRemappingDiv();
+                    polymorph_core.fire("updateItem",{id:rectID});
                 })
             } else {
                 //old version
-                if (core.containers[this.settings.s].operator.showSettings) {
-                    core.containers[this.settings.s].operator.showSettings();
+                if (polymorph_core.containers[this.settings.s].operator.showSettings) {
+                    polymorph_core.containers[this.settings.s].operator.showSettings();
                 }
             }
             //also render the datastreams if necessary.
@@ -455,6 +458,9 @@ core.rect = function (rectID) {
         if (this.children) {
             this.outerDiv.style.border = "";
             this.children.forEach((c) => c.refresh());
+        } else {
+            //show my container
+            this.switchOperator(this.settings.s);
         }
         //Operators may not exist on fromSaveData
         if (this.containers) this.containers.forEach((c) => { if (c && c.operator.refresh) c.operator.refresh() });
@@ -466,8 +472,8 @@ core.rect = function (rectID) {
     this.tieRect = (rectID) => {
         this.innerDivContainer.remove();
         this.tabbar.remove();
-        this.outerDiv.appendChild(core.rects[rectID].outerDiv);
-        core.rects[rectID].refresh();
+        this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+        polymorph_core.rects[rectID].refresh();
     }
 
 
@@ -511,17 +517,17 @@ core.rect = function (rectID) {
                 let _XorY = (this.split > 1) * 1;
                 let _firstOrSecond = this.split % 2;
                 let newRectIDs = [
-                    core.insertItem({ _rd: { p: rectID, x: _XorY, f: 0, ps: _firstOrSecond } }),
-                    core.insertItem({ _rd: { p: rectID, x: _XorY, f: 1, ps: _firstOrSecond } })
+                    polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 0, ps: _firstOrSecond } }),
+                    polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 1, ps: _firstOrSecond } })
                 ];
                 //instantiate the rects
                 newRectIDs.forEach((v) => {
-                    core.rects[v] = new core.rect(v);
+                    polymorph_core.rects[v] = new polymorph_core.rect(v);
                 })
                 //copy in operators
                 this.containers.forEach((v, i) => {
                     v.settings.p = newRectIDs[!_firstOrSecond * 1];
-                    core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
+                    polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
                 });
 
                 //force a refresh
@@ -589,7 +595,8 @@ core.rect = function (rectID) {
             this.children[1].mouseUpHandler(e);
         }
         if (rectChanged) {
-            core.fire("updateView", {
+            polymorph_core.fire("updateItem", {
+                id:rectID,
                 sender: this
             });
             rectChanged = false;
@@ -632,24 +639,24 @@ core.rect = function (rectID) {
     }
 
     //connect to my parent
-    if (this.settings.p && core.items[this.settings.p]) {
+    if (this.settings.p && polymorph_core.items[this.settings.p]) {
         //there is or will be a rect / subframe for it.
-        if (core.rects[this.settings.p]) {
-            core.rects[this.settings.p].tieRect(rectID);
+        if (polymorph_core.rects[this.settings.p]) {
+            polymorph_core.rects[this.settings.p].tieRect(rectID);
         } else {
-            if (!core.rectLoadCallbacks[this.settings.p]) core.rectLoadCallbacks[this.settings.p] = [];
-            core.rectLoadCallbacks[this.settings.p].push(rectID);
+            if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+            polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
     }
 
     //Signal all children waiting for this that they can connect to this now.
-    if (core.rectLoadCallbacks[rectID]) core.rectLoadCallbacks[rectID].forEach((v) => {
-        if (core.items[v]._od) {
+    if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
+        if (polymorph_core.items[v]._od) {
             //v is container
-            core.tieContainer(v);
+            polymorph_core.tieContainer(v);
         } else {
             //v is rect
-            core.tieRect(v);
+            polymorph_core.tieRect(v);
         }
     })
 
@@ -658,7 +665,8 @@ core.rect = function (rectID) {
         if (this.parent) this.parent._remove(this.settings.f, this);
     }
     this._remove = (_firstOrSecond) => {
-        core.fire("updateView", {
+        polymorph_core.fire("updateItem", {
+            id:rectID,
             sender: this
         });
         //if remaining innerDiv has an operator, adopt it
@@ -689,8 +697,8 @@ core.rect = function (rectID) {
 
 }
 
-Object.defineProperty(core, "baseRect", {
+Object.defineProperty(polymorph_core, "baseRect", {
     get: () => {
-        return core.rects[core.items._meta.currentView];
+        return polymorph_core.rects[polymorph_core.items._meta.currentView];
     }
 })

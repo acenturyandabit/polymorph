@@ -1,4 +1,4 @@
-core.registerOperator("calendar2", {
+polymorph_core.registerOperator("calendar2", {
         displayName: "Calendar v2",
         description: "A simple calendar, courtesy of fullcalendar.js."
     },
@@ -15,13 +15,13 @@ core.registerOperator("calendar2", {
         this.rootdiv = document.createElement("div");
         this.rootdiv.innerHTML = ``;
         this.rootdiv.style.cssText = 'height:100%; overflow-y: scroll';
-        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/core/main.css">`));
+        this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/polymorph_core/main.css">`));
         this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/daygrid/main.css">`));
         this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/timegrid/main.css">`));
         this.rootdiv.appendChild(htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar/list/main.css">`));
         //Add div HTML here
         scriptassert([
-            ['fcal_core', '3pt/fullcalendar/core/main.js'],
+            ['fcal_polymorph_core', '3pt/fullcalendar/polymorph_core/main.js'],
             ['fcal_daygrid', '3pt/fullcalendar/daygrid/main.js'],
             ['fcal_timegrid', '3pt/fullcalendar/timegrid/main.js'],
             ['fcal_list', '3pt/fullcalendar/list/main.js'],
@@ -37,11 +37,11 @@ core.registerOperator("calendar2", {
                         me.notifstack = [];
                     }
                     let tzd = new Date();
-                    for (let i in core.items) {
-                        if (core.items[i][me.settings.dateproperty] && core.items[i][me.settings.dateproperty].date) {
+                    for (let i in polymorph_core.items) {
+                        if (polymorph_core.items[i][me.settings.dateproperty] && polymorph_core.items[i][me.settings.dateproperty].date) {
                             let tzd = new Date();
                             if (me.settings.dateRetrieval == 'sDate') {
-                                let isostring = new Date(Number(core.items[i][me.settings.dateproperty].date) - tzd.getTimezoneOffset() * 60 * 1000);
+                                let isostring = new Date(Number(polymorph_core.items[i][me.settings.dateproperty].date) - tzd.getTimezoneOffset() * 60 * 1000);
                                 let eisostring;
                                 //if (me.items[i].dates[0].end) eisostring = new Date(Number(me.items[i].dates[0].end) - tzd.getTimezoneOffset() * 60 * 1000);
                                 eisostring = new Date(isostring.getTime() + 60 * 60 * 1000);
@@ -49,21 +49,21 @@ core.registerOperator("calendar2", {
                                 eisostring = eisostring.toISOString();
                                 allList.push({
                                     id: i,
-                                    title: core.items[i][me.settings.titleproperty],
+                                    title: polymorph_core.items[i][me.settings.titleproperty],
                                     start: isostring,
                                     end: eisostring
                                 });
                             } else if (me.settings.dateRetrieval == 'mDate') {
                                 try {
-                                    let isostring = new Date(Number(core.items[i][me.settings.dateproperty].date[0].date) - tzd.getTimezoneOffset() * 60 * 1000);
+                                    let isostring = new Date(Number(polymorph_core.items[i][me.settings.dateproperty].date[0].date) - tzd.getTimezoneOffset() * 60 * 1000);
                                     let eisostring;
-                                    if (core.items[i][me.settings.dateproperty].date[0].endDate) eisostring = new Date(Number(core.items[i][me.settings.dateproperty].date[0].endDate) - tzd.getTimezoneOffset() * 60 * 1000);
+                                    if (polymorph_core.items[i][me.settings.dateproperty].date[0].endDate) eisostring = new Date(Number(polymorph_core.items[i][me.settings.dateproperty].date[0].endDate) - tzd.getTimezoneOffset() * 60 * 1000);
                                     else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000);
                                     isostring = isostring.toISOString();
                                     eisostring = eisostring.toISOString();
                                     allList.push({
                                         id: i,
-                                        title: core.items[i][me.settings.titleproperty],
+                                        title: polymorph_core.items[i][me.settings.titleproperty],
                                         start: isostring,
                                         end: eisostring
                                     });
@@ -72,11 +72,11 @@ core.registerOperator("calendar2", {
                                 }
                             } else if (me.settings.dateRetrieval == 'rDate') {
                                 try {
-                                    let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, start, end);
+                                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][me.settings.dateproperty].date, start, end);
                                     for (let j = 0; j < result.length; j++) {
                                         if (me.settings.pushnotifs) {
                                             me.notifstack.push({
-                                                txt: core.items[i][me.settings.titleproperty],
+                                                txt: polymorph_core.items[i][me.settings.titleproperty],
                                                 time: result[j].date
                                             });
                                         }
@@ -89,13 +89,13 @@ core.registerOperator("calendar2", {
                                         eisostring = eisostring.toISOString();
                                         let col = "";
                                         let bak = "";
-                                        if (core.items[i].style) {
-                                            bak = core.items[i].style.background;
-                                            col = core.items[i].style.color;
+                                        if (polymorph_core.items[i].style) {
+                                            bak = polymorph_core.items[i].style.background;
+                                            col = polymorph_core.items[i].style.color;
                                         }
                                         allList.push({
                                             id: i,
-                                            title: core.items[i][me.settings.titleproperty],
+                                            title: polymorph_core.items[i][me.settings.titleproperty],
                                             backgroundColor: bak,
                                             textColor: col,
                                             start: isostring,
@@ -141,7 +141,7 @@ core.registerOperator("calendar2", {
         },true);
         this.updateItem = function (id, sender) {
             if (sender == this) return;
-            if (!core.items[id][me.settings.dateproperty]) return;
+            if (!polymorph_core.items[id][me.settings.dateproperty]) return;
             updateItemCapacitor.submit();
             //Check if item is shown
             //return true or false based on whether we can or cannot edit the item from this container

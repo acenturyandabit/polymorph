@@ -1,10 +1,11 @@
-core.registerSaveSource("gd", function () { // Google drive save source - based off firebase savesource
+polymorph_core.registerSaveSource("gd", function () { // Google drive save source - based off firebase savesource
   let me = this;
   this.prettyName = "Google drive integration";
   //firebase things
   me.unsub = {};
-  scriptassert([["firebase", "https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"], ["firestore", "https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"]], () => {  
-  try {
+  scriptassert([["firebase", "3pt/firebase-app.js"], ["firestore", "3pt/firebase-firestore.js"]], () => {
+    if (!polymorph_core.firebase) {
+      polymorph_core.firebase = {}
       firebase.initializeApp({
         apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
         authDomain: "backbits-567dd.firebaseapp.com",
@@ -12,14 +13,11 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
         projectId: "backbits-567dd",
         storageBucket: "backbits-567dd.appspot.com",
         messagingSenderId: "894862693076"
-      });
-      this.db = firebase.firestore();
-    } catch (e) {
-      //firebase is probably already loaded
-      console.log("Firebase error:");
-      console.log(e);
-      this.db = firebase.firestore();
+      })
+      polymorph_core.firebase.db = firebase.firestore();
+      console.log("i inited fb");
     }
+    this.db = polymorph_core.firebase.db;
 
 
     //google drive things
@@ -32,7 +30,7 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
 
 
     //prompt
-    core.on("UIstart", () => {
+    polymorph_core.on("UIstart", () => {
       try {
         document.querySelector(".gdrivePrompt").style.display = "block";
         document.querySelector(".gdrivePrompt").addEventListener("click", () => {
@@ -180,17 +178,17 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
           switch (change.type) {
             case "added":
             case "modified":
-              core.items[change.doc.id] = change.doc.data();
+              polymorph_core.items[change.doc.id] = change.doc.data();
               //dont double up local updates
               me.localChange = true;
-              core.fire("updateItem", {
+              polymorph_core.fire("updateItem", {
                 id: change.doc.id,
                 load: true
               });
               break;
             case "removed":
               localChange = true;
-              core.fire("deleteItem", {
+              polymorph_core.fire("deleteItem", {
                 id: change.doc.id,
                 load: true
               });
@@ -205,10 +203,10 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
           switch (change.type) {
             case "added":
             case "modified":
-              core.currentDoc.views[change.doc.id] = change.doc.data();
+              polymorph_core.currentDoc.views[change.doc.id] = change.doc.data();
               break;
             case "removed":
-              delete core.currentDoc.views[change.doc.id];
+              delete polymorph_core.currentDoc.views[change.doc.id];
               break;
           }
         })
@@ -218,9 +216,9 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
         //copy over the settings and apply them
         if (!shot.metadata.hasPendingWrites) {
           if (shot.data()) {
-            Object.assign(core.currentDoc, shot.data());
+            Object.assign(polymorph_core.currentDoc, shot.data());
             me.localChange = true;
-            core.updateSettings();
+            polymorph_core.updateSettings();
           }
         }
       });
@@ -228,9 +226,9 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       //local to remote
       //items
       me.itemcapacitor = new capacitor(500, 30, (id) => {
-        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(core.items[id])));
+        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
       })
-      core.on("updateItem", (d) => {
+      polymorph_core.on("updateItem", (d) => {
         if (me.localChange) me.localChange = false;
         else {
           me.itemcapacitor.submit(d.id);
@@ -238,10 +236,10 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
       });
       //views
       me.viewcapacitor = new capacitor(500, 30, () => {
-        root.collection('views').doc(core.userData.documents[core.currentDocID].currentView).set(JSON.parse(JSON.stringify(core.baseRect.toSaveData())));
+        root.collection('views').doc(polymorph_core.userData.documents[polymorph_core.currentDocID].currentView).set(JSON.parse(JSON.stringify(polymorph_core.baseRect.toSaveData())));
       })
-      core.on("updateView", (d) => {
-        me.viewcapacitor.submit(core.userData.documents[core.currentDocID].currentView);
+      polymorph_core.on("updateView", (d) => {
+        me.viewcapacitor.submit(polymorph_core.userData.documents[polymorph_core.currentDocID].currentView);
       });
       //meta
       scriptassert([
@@ -254,12 +252,12 @@ core.registerSaveSource("gd", function () { // Google drive save source - based 
             discoveryDocs: DISCOVERY_DOCS,
             scope: SCOPES
           }).then(function () {
-            let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: core.currentDocID, resource: { name: core.currentDoc.displayName } }).then((r) => { }) });
-            core.on("updateDoc", () => {
+            let gMetadataCapacitor = new capacitor(500, 30, () => { gapi.client.drive.files.update({ fileId: polymorph_core.currentDocID, resource: { name: polymorph_core.currentDoc.displayName } }).then((r) => { }) });
+            polymorph_core.on("updateDoc", () => {
               gMetadataCapacitor.submit();
               if (me.localChange) me.localChange = false;
               else {
-                let copyobj = Object.assign({}, core.currentDoc);
+                let copyobj = Object.assign({}, polymorph_core.currentDoc);
                 delete copyobj.items;
                 delete copyobj.views;
                 root.set(copyobj);

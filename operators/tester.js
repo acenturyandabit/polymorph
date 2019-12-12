@@ -1,4 +1,4 @@
-core.registerOperator("tester", {
+polymorph_core.registerOperator("tester", {
     displayName: "Testser",
     description: "Entry and examination for Polymorph's knowledge base use-case."
 }, function (container) {
@@ -76,7 +76,7 @@ core.registerOperator("tester", {
         if (this.settings.testing) {
             this.rootdiv.querySelector("h1").innerText = "Test mode";
             this.rootdiv.querySelector(".l2").innerText = "Currently testing topic:";
-            this.rootdiv.querySelector(".parentName").innerText = core.items[this.settings.testingParent].title;
+            this.rootdiv.querySelector(".parentName").innerText = polymorph_core.items[this.settings.testingParent].title;
             this.rootdiv.querySelector("textarea.above").disabled = true;
             switch (this.state) {
                 case "showingQuestion":
@@ -146,8 +146,8 @@ core.registerOperator("tester", {
                 let below = this.rootdiv.querySelector("div.below");
                 //record the bottom box answers
                 let trueAnswers;
-                if (core.items[this.currentTested][this.settings.cardBProp]) {
-                    trueAnswers = core.items[this.currentTested][this.settings.cardBProp].split(/\n/ig);
+                if (polymorph_core.items[this.currentTested][this.settings.cardBProp]) {
+                    trueAnswers = polymorph_core.items[this.currentTested][this.settings.cardBProp].split(/\n/ig);
                     removeIf(trueAnswers, (i) => i == "");
                     for (let i = 0; i < trueAnswers.length; i++) {
                         for (let j = 0; j < below.children.length; j++) {
@@ -170,7 +170,7 @@ core.registerOperator("tester", {
 
                     }
                 }
-                if (core.items[this.currentTested][this.settings.cardBProp]) {
+                if (polymorph_core.items[this.currentTested][this.settings.cardBProp]) {
                     //add the remaining
                     for (let i = 0; i < trueAnswers.length; i++) {
                         let existingBox = false;
@@ -244,21 +244,21 @@ core.registerOperator("tester", {
             let stack = [this.settings.testingParent];
             for (let i = 0; i < stack.length; i++) {
                 let ci = stack[i];
-                for (let it in core.items[ci].to) {
-                    if (!this.settings.leafNodesOnly || (!(core.items[it].to) || (Object.keys(core.items[it].to).length == 0))) this.activeList.push(it);
+                for (let it in polymorph_core.items[ci].to) {
+                    if (!this.settings.leafNodesOnly || (!(polymorph_core.items[it].to) || (Object.keys(polymorph_core.items[it].to).length == 0))) this.activeList.push(it);
                     if (!stack.includes(it)) stack.push(it);
                 }
             }
         } else {
-            for (let i in core.items) {
+            for (let i in polymorph_core.items) {
                 //();
-                if ((!this.filter) || core.items[i][this.settings.filter]) {
-                    if (!(core.items[i].to) || (Object.keys(core.items[i].to).length == 0)) this.activeList.push(i);
+                if ((!this.filter) || polymorph_core.items[i][this.settings.filter]) {
+                    if (!(polymorph_core.items[i].to) || (Object.keys(polymorph_core.items[i].to).length == 0)) this.activeList.push(i);
                 }
             }
         }
         this.activeList = this.activeList.map((i) => {
-            return { id: i, chance: 1 - (core.items[i].selfConfidence || 0), cv: core.items[i].selfConfidence };
+            return { id: i, chance: 1 - (polymorph_core.items[i].selfConfidence || 0), cv: polymorph_core.items[i].selfConfidence };
         })
         this.activeList = toProabilityArray(this.activeList, "chance");
 
@@ -272,7 +272,7 @@ core.registerOperator("tester", {
 
         } else {
             this.currentTested = toTest;
-            this.rootdiv.querySelector("textarea.above").value = core.items[toTest][this.settings.cardAProp];
+            this.rootdiv.querySelector("textarea.above").value = polymorph_core.items[toTest][this.settings.cardAProp];
             clearBottomBoxes();
         }
         container.fire("focus", { id: toTest, sender: this });
@@ -286,39 +286,39 @@ core.registerOperator("tester", {
             let calculateConfidence = (id) => {
                 if (!seenbunch.includes(id)) {
                     seenbunch.push(id);
-                    let totalScore = 0;
+                    let totalSpolymorph_core = 0;
                     let nItems;
-                    if (core.items[id].to) {
-                        nItems = Object.keys(core.items[id].to).length;
+                    if (polymorph_core.items[id].to) {
+                        nItems = Object.keys(polymorph_core.items[id].to).length;
                     } else {
                         nItems = 0;
                     }
                     if (nItems > 0) {
-                        let isTestable = (!me.settings.leafNodesOnly && core.items[id][me.settings.cardAProp].includes("?"));
+                        let isTestable = (!me.settings.leafNodesOnly && polymorph_core.items[id][me.settings.cardAProp].includes("?"));
                         if (isTestable) nItems++;
-                        for (let i in core.items[id].to) {
-                            totalScore += (core.items[i].confidence || 0) / nItems;
+                        for (let i in polymorph_core.items[id].to) {
+                            totalSpolymorph_core += (polymorph_core.items[i].confidence || 0) / nItems;
                         }
                         if (isTestable) {
-                            totalScore += (core.items[id].selfConfidence || 0) / nItems;
+                            totalSpolymorph_core += (polymorph_core.items[id].selfConfidence || 0) / nItems;
                         }
-                        core.items[id].confidence = totalScore;
+                        polymorph_core.items[id].confidence = totalSpolymorph_core;
                     } else {
-                        core.items[this.currentTested].confidence = core.items[this.currentTested].selfConfidence;
+                        polymorph_core.items[this.currentTested].confidence = polymorph_core.items[this.currentTested].selfConfidence;
                     }
                     container.fire("updateItem", { id: id });
-                    for (let i in core.items) {
-                        if (core.items[i].to && core.items[i].to[id]) {
+                    for (let i in polymorph_core.items) {
+                        if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                             calculateConfidence(i);
                         }
                     }
                 }
             }
-            if (!core.items[this.currentTested].selfConfidence) {
-                if (correct) core.items[this.currentTested].selfConfidence = 0.5;
-                else core.items[this.currentTested].selfConfidence = 0;
+            if (!polymorph_core.items[this.currentTested].selfConfidence) {
+                if (correct) polymorph_core.items[this.currentTested].selfConfidence = 0.5;
+                else polymorph_core.items[this.currentTested].selfConfidence = 0;
             } else {
-                core.items[this.currentTested].selfConfidence = (core.items[this.currentTested].selfConfidence) * 0.5 + (correct * 0.5);
+                polymorph_core.items[this.currentTested].selfConfidence = (polymorph_core.items[this.currentTested].selfConfidence) * 0.5 + (correct * 0.5);
             }
             calculateConfidence(this.currentTested);
             //do nothing for nowwww
@@ -335,8 +335,8 @@ core.registerOperator("tester", {
                     B: this.rootdiv.querySelector("textarea.below").value
                 };
                 itm[this.settings.filter] = true;
-                let id = core.insertItem(itm);
-                if (this.settings.inputParent) core.link(this.settings.inputParent, id);
+                let id = polymorph_core.insertItem(itm);
+                if (this.settings.inputParent) polymorph_core.link(this.settings.inputParent, id);
                 container.fire("updateItem", { id: id, sender: this });
                 //clear it all for the next insertion
                 this.rootdiv.querySelector("textarea.above").value = "";
@@ -349,22 +349,22 @@ core.registerOperator("tester", {
     })
 
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
         // Don't need to do anything... just return true for garbage collector if relevant to me
         let id = d.id;
         //do stuff with the item.
-        if (core.items[id][me.settings.filter]) {
+        if (polymorph_core.items[id][me.settings.filter]) {
             return true;
         }
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items _may_ be deleted by the core garbage collector :/
+        //otherwise your items _may_ be deleted by the polymorph_core garbage collector :/
         return false;
     });
 
-    //Core will call me when an object is focused on from somewhere
+    //polymorph_core will call me when an object is focused on from somewhere
     container.on("focus", (d) => {
         let id = d.id;
         if (d.sender == this) return;

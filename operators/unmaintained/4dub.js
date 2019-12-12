@@ -1,4 +1,4 @@
-core.registerOperator("4dub", {
+polymorph_core.registerOperator("4dub", {
     displayName: "4dub",
     description: "Make some music!"
 }, function (container) {
@@ -38,7 +38,7 @@ core.registerOperator("4dub", {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
@@ -46,7 +46,7 @@ core.registerOperator("4dub", {
         //do stuff with the item.
 
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items _may_ be deleted by the core garbage collector :/
+        //otherwise your items _may_ be deleted by the polymorph_core garbage collector :/
         return false;
     });
 

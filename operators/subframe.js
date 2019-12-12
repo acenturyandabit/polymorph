@@ -1,4 +1,4 @@
-core.registerOperator("subframe", {}, function (container) {
+polymorph_core.registerOperator("subframe", {}, function (container) {
     let me = this;
     me.container = container;
     this.settings = {};
@@ -9,25 +9,25 @@ core.registerOperator("subframe", {}, function (container) {
     this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
     container.div.appendChild(this.outerDiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     this.refresh = function () {
-        core.rects[this.rectID].refresh();
+        polymorph_core.rects[this.rectID].refresh();
     }
 
-    //////////////////Handling local changes to push to core//////////////////
+    //////////////////Handling local changes to push to polymorph_core//////////////////
 
     this.tieRect = function (rectID) {
         this.rectID=rectID;
-        this.outerDiv.appendChild(core.rects[rectID].outerDiv);
-        core.rects[rectID].refresh();
+        this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+        polymorph_core.rects[rectID].refresh();
     }
 
     //Check if i have any rects waiting for pickup
-    if (core.rectLoadCallbacks[container.id]) {
-        this.tieRect(core.rectLoadCallbacks[container.id][0]);
+    if (polymorph_core.rectLoadCallbacks[container.id]) {
+        this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
     } else {
-        let rectID = core.newRect(container.id);
+        let rectID = polymorph_core.newRect(container.id);
         this.tieRect(rectID);
     }
 

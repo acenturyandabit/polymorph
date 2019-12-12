@@ -1,11 +1,12 @@
-core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
   let me = this;
   this.prettyName = "Firebase (Real time collaboration)";
   this.createable = true;
   //initialise firebase
   me.unsub = {};
-  scriptassert([["firebase", "https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"], ["firestore", "https://www.gstatic.com/firebasejs/5.3.0/firebase-firestore.js"]], () => {
-    try {
+  scriptassert([["firebase", "3pt/firebase-app.js"], ["firestore", "3pt/firebase-firestore.js"]], () => {
+    if (!polymorph_core.firebase) {
+      polymorph_core.firebase = {}
       firebase.initializeApp({
         apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
         authDomain: "backbits-567dd.firebaseapp.com",
@@ -13,34 +14,37 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
         projectId: "backbits-567dd",
         storageBucket: "backbits-567dd.appspot.com",
         messagingSenderId: "894862693076"
-      });
-      this.db = firebase.firestore();
-    } catch (e) {
-      //Firebase is already loaded
-      console.log("Firebase error:")
-      console.log(e);
-      this.db = firebase.firestore();
+      })
+      polymorph_core.firebase.db = firebase.firestore();
+      console.log("i inited fb");
     }
+    this.db = polymorph_core.firebase.db;
 
-    this.pullAll = async function () {
+    this.pullAll = async function (res) {
       if (!this.db) return;
-      let root = this.db
+      let snapshot = await this.db
         .collection("polymorph")
-        .doc(core.currentDocID);
-      //Just send the thing (yay new save structure!)
-      snapshot = await root.get();
-      return snapshot;
+        .doc(polymorph_core.currentDocID).collection("items").get();
+      //compile all its items. We're not going to compress anything (yet).
+      let fulldoc = {}
+      snapshot.docs.forEach(doc => {
+        fulldoc[doc.id] = doc.data()
+      });
+      if (res) res(fulldoc);
+      else return fulldoc;
     }
 
-    this.hook = async function (id) {
-      //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
+    this.hook = async () => {
       let root = this.db
         .collection("polymorph")
-        .doc(core.currentDocID);
+        .doc(polymorph_core.currentDocID);
 
-      // just comment out if you can't subscribe to live updates.
-      //assumption: that all changes have already been pulled,
-      //If not, we'll deal with it. 
+
+      //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
+      //lmao help
+      for (let id in polymorph_core.items) {
+        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
+      }
 
       //remote
       //items
@@ -50,17 +54,17 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
           switch (change.type) {
             case "added":
             case "modified":
-              core.items[change.doc.id] = change.doc.data();
+              polymorph_core.items[change.doc.id] = change.doc.data();
               //dont double up local updates
               me.localChange = true;
-              core.fire("updateItem", {
+              polymorph_core.fire("updateItem", {
                 id: change.doc.id,
                 load: true
               });
               break;
             case "removed":
               localChange = true;
-              core.fire("deleteItem", {
+              polymorph_core.fire("deleteItem", {
                 id: change.doc.id,
                 load: true
               });
@@ -68,60 +72,18 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
           }
         })
       });
-      //views
-      me.unsub['views'] = root.collection("views").onSnapshot(shot => {
-        shot.docChanges().forEach(change => {
-          if (change.doc.metadata.hasPendingWrites) return;
-          switch (change.type) {
-            case "added":
-            case "modified":
-              core.currentDoc.views[change.doc.id] = change.doc.data();
-              break;
-            case "removed":
-              delete core.currentDoc.views[change.doc.id];
-              break;
-          }
-        })
-      });
-      //meta
-      me.unsub["settings"] = root.onSnapshot(shot => {
-        //copy over the settings and apply them
-        if (!shot.metadata.hasPendingWrites) {
-          if (shot.data()) {
-            Object.assign(core.currentDoc, shot.data());
-            me.localChange = true;
-            core.updateSettings();
-          }
-        }
-      });
+
 
       //local to remote
       //items
       me.itemcapacitor = new capacitor(500, 30, (id) => {
-        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(core.items[id])));
-        core.unsaved = false;
+        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
+        polymorph_core.unsaved = false;
       })
-      core.on("updateItem", (d) => {
+      polymorph_core.on("updateItem", (d) => {
         if (me.localChange) me.localChange = false;
         else {
           me.itemcapacitor.submit(d.id);
-        }
-      });
-      //views
-      me.viewcapacitor = new capacitor(500, 30, (i) => {
-        root.collection('views').doc(i).set(JSON.parse(JSON.stringify(core.baseRects[i].toSaveData())));
-      })
-      core.on("updateView", (d) => {
-        me.viewcapacitor.submit(core.userData.documents[core.currentDocID].currentView);
-      });
-      //meta
-      core.on("updateDoc", () => {
-        if (me.localChange) me.localChange = false;
-        else {
-          let copyobj = Object.assign({}, core.currentDoc);
-          delete copyobj.items;
-          delete copyobj.views;
-          root.set(copyobj);
         }
       });
     }
@@ -130,25 +92,51 @@ core.registerSaveSource("fb", function () { // a sample save source, implementin
         me.unsub[i]();
       }
     }
-
-    this.dialog = document.createElement("div");
-    let generatedURL = htmlwrap(`<input placeholder="URL for sharing"></input>`);
-    me.addrop = new _option({
-      div: this.dialog,
-      type: "text",
-      object: () => {
-        return core.userData.documents[core.currentDocID].saveSources
-      },
-      property: "fb",
-      label: "Document ID",
-      afterInput: (e) => {
-        generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
-      }
-    });
-    this.dialog.appendChild(generatedURL);
-    this.showDialog = function () {
-      me.addrop.load();
-      if (core.userData.documents[core.currentDocID].saveSources.fb) generatedURL.value = location.origin + location.pathname + `?doc=${core.userData.documents[core.currentDocID].saveSources.fb}&src=fb`;
-    }
   })
+  this.pullAll = (res) => {
+    if (res) {
+      setTimeout(() => {
+        this.pullAll(res)
+      }, 100);
+    } else {
+      return new Promise((res) => {
+        setTimeout(() => {
+          this.pullAll(res)
+        }, 100)
+      })
+    }
+  };
+
+  this.hook = (res) => {
+    if (res) {
+      setTimeout(() => {
+        this.hook(res)
+      }, 100);
+    } else {
+      return new Promise((res) => {
+        setTimeout(() => {
+          this.hook(res)
+        }, 100)
+      })
+    }
+  };
+  this.dialog = document.createElement("div");
+  let generatedURL = htmlwrap(`<input placeholder="URL for sharing"></input>`);
+  me.addrop = new _option({
+    div: this.dialog,
+    type: "text",
+    object: () => {
+      return polymorph_core.saveSourceData;
+    },
+    property: "fb",
+    label: "Document ID",
+    afterInput: (e) => {
+      generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
+    }
+  });
+  this.dialog.appendChild(generatedURL);
+  this.showDialog = function () {
+    me.addrop.load();
+    if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.fb) generatedURL.value = location.origin + location.pathname + `?doc=${polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.fb}&src=fb`;
+  }
 })

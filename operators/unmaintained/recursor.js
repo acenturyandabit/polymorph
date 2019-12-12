@@ -1,11 +1,11 @@
-core.registerOperator("template", {
+polymorph_core.registerOperator("template", {
     displayName: "Recursor",
     description: "Recursively store information, like how your brain does."
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {corel:guid(7)};
-    core.items[this.settings.corel]={};
+    this.settings = {polymorph_corel:guid(7)};
+    polymorph_core.items[this.settings.polymorph_corel]={};
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
@@ -19,7 +19,7 @@ core.registerOperator("template", {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {

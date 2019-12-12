@@ -35,7 +35,7 @@ else starscapeSettings = Object.assign(starscapeDefaultSettings, starscapeSettin
 
 starscape = [];
 
-///////Kaleiocore
+///////Kaleiopolymorph_core
 function startstarscape() {
     let things=document.getElementsByClassName("starscape");
      for (i=0;i<things.length;i++){

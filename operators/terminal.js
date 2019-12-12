@@ -1,4 +1,4 @@
-core.registerOperator("terminal", {
+polymorph_core.registerOperator("terminal", {
     displayName: "Terminal",
     description: "A command-line way of interacting with polymorph. Designed to facilitate integrations with other clients!"
 }, function (container) {
@@ -24,16 +24,16 @@ core.registerOperator("terminal", {
         let pathstr;
         if (cit) {
             pathstr = cit;
-            while (core.items[cit].links && core.items[cit].links.parent) {
-                cit = core.items[cit].links.parent
+            while (polymorph_core.items[cit].links && polymorph_core.items[cit].links.parent) {
+                cit = polymorph_core.items[cit].links.parent
                 pathstr = cit + ">" + pathstr;
             }
         } else pathstr = "";
         pathstr = pathstr + ">";
     }
     function getParentPath(id) {
-        if (core.items[id].links && core.items[id].links.parent) {
-            return getPath(core.items[id].links.parent);
+        if (polymorph_core.items[id].links && polymorph_core.items[id].links.parent) {
+            return getPath(polymorph_core.items[id].links.parent);
         }
         else return ">";
     }
@@ -71,7 +71,7 @@ core.registerOperator("terminal", {
             help: "This command can be thought of an equivalent to cd, for operators. Type co $1 to focus on an container, or simply co to output the current container.",
             operate: function (regres, state) {
                 if (regres[1]) {
-                    state.container = core.getOperator(regres[1]);
+                    state.container = polymorph_core.getOperator(regres[1]);
                 }
                 if (state.container.uuid) {
                     state.output(JSON.stringify(state.container.uuid));
@@ -85,14 +85,14 @@ core.registerOperator("terminal", {
             regex: /^lo$/ig,
             help: "This command can be thought of as an equivalent to ls, for operators. Type lo to list all available operators and their types.",
             operate: function (regres, state) {
-                state.output(JSON.stringify(core.listOperators()));
+                state.output(JSON.stringify(polymorph_core.listOperators()));
             }
         },
         lai: {
             regex: /^lai$/ig,
             help: "This command can be thought of as an equivalent to ls, for items. Type lo to list all available items, in full detail.",
             operate: function (regres, state) {
-                state.output(JSON.stringify(core.getItems()));
+                state.output(JSON.stringify(polymorph_core.getItems()));
             }
         },
         mki: {
@@ -104,7 +104,7 @@ core.registerOperator("terminal", {
                 if (state.state.path) it.links.parent = state.state.path;
                 it.title = regres[1];
                 let safetitle = it.title.replace(/ /ig, "_");
-                core.items[safetitle] = it;
+                polymorph_core.items[safetitle] = it;
                 state.output(safetitle + ":" + JSON.stringify(it));
             }
         },
@@ -113,13 +113,13 @@ core.registerOperator("terminal", {
             help: "This command can be thought of as an equivalent to ls, for items in the current path. Type lo to list all available items in the current path.",
             operate: function (regres, state) {
                 if (state.state.path) {
-                    for (let i in core.items) {
-                        if (core.items[i].links && core.items[i].links.parent == state.state.path) {
-                            state.output(core.items[i]);
+                    for (let i in polymorph_core.items) {
+                        if (polymorph_core.items[i].links && polymorph_core.items[i].links.parent == state.state.path) {
+                            state.output(polymorph_core.items[i]);
                         }
                     }
                 } else {
-                    state.output(JSON.stringify(core.getItems()));
+                    state.output(JSON.stringify(polymorph_core.getItems()));
                 }
             }
         },
@@ -128,7 +128,7 @@ core.registerOperator("terminal", {
             help: "This command can be thought of as an equivalent to cd, for the current path. Type ci by itself to list the current path; or type cd $1 to navigate to $1.",
             operate: function (regres, state) {
                 if (regres[1]) {
-                    if (core.items[regres[1]]) {
+                    if (polymorph_core.items[regres[1]]) {
                         state.state.path = regres[1];
                     }
                     state.output("Switched to " + regres[1]);
@@ -141,7 +141,7 @@ core.registerOperator("terminal", {
             regex: /^ni (.+?)(?: \"(.+?)\")?(?: \"(.+?)\")?$/ig,
             help: "This command can be thought of as an equivalent to nano, for items. Type ni $1 to display item i, or ni $1 \"$2\" to set the title of $1 to $2, and ni $1 \"$2\" \"$3\" to set property $2 on item $1 to $3.",
             operate: function (regres, state) {
-                let cit = core.items[regres[1]];
+                let cit = polymorph_core.items[regres[1]];
                 if (!cit) {
                     state.output("No such item " + regres[1] + " found. Use mki $1 to create an item.");
                     return;
@@ -162,7 +162,7 @@ core.registerOperator("terminal", {
             regex: /^no (.+?) \"(.+?)\"$/ig,
             help: "This command can be thought of as an equivalent to nano, for items. Type no $1 \"$2\" to set property $1 on the current container to $2.",
             operate: function (regres, state) {
-                let cit = core.items[regres[1]];
+                let cit = polymorph_core.items[regres[1]];
                 if (!cit) {
                     state.output("No such item " + regres[1] + " found. Use mki $1 to create an item.");
                     return;
@@ -220,7 +220,7 @@ core.registerOperator("terminal", {
                 } else {
                     Object.assign(itm, _itm);
                 }
-                id = core.insertItem(itm);
+                id = polymorph_core.insertItem(itm);
                 state.output("Item created with id " + id);
                 //query "https://www.ycombinator.com/companies/" "tr"
                 container.fire("updateItem", { id: id });
@@ -233,8 +233,8 @@ core.registerOperator("terminal", {
             operate: function (regres, state) {
                 let itm = {};
                 let _itm = JSON.parse(regres[2]);
-                if (!core.items[regres[1]]) core.items[regres[1]] = {};
-                Object.assign(core.items[regres[1]], _itm);
+                if (!polymorph_core.items[regres[1]]) polymorph_core.items[regres[1]] = {};
+                Object.assign(polymorph_core.items[regres[1]], _itm);
                 state.output("Item updated with id " + regres[1]);
                 //query "https://www.ycombinator.com/companies/" "tr"
                 container.fire("updateItem", { id: regres[1] });
@@ -405,7 +405,7 @@ core.registerOperator("terminal", {
 
         }
     })
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
     function evalSelf() {
         if (me.settings.scriptEnabled) {
             try {

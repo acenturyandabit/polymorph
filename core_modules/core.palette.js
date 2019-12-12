@@ -14,7 +14,7 @@ Palette looks like this:
 
 */
 
-core.rect.prototype.changePalette = function (palette) {
+polymorph_core.rect.prototype.changePalette = function (palette) {
     this.outerDiv.style.background = palette.rectOuterDivColour;
     this.innerDivs.forEach((v) => {
         v.style.background = palette.rectInnerDivColour || palette.rectOuterDivColour;
@@ -25,17 +25,17 @@ core.rect.prototype.changePalette = function (palette) {
     this.passthrough("changePalette",palette);
 }
 
-core.changePalette = function (palette) {
-    for (let i in core.baseRects) {
-        core.baseRects[i].changePalette(palette);
+polymorph_core.changePalette = function (palette) {
+    for (let i in polymorph_core.baseRects) {
+        polymorph_core.baseRects[i].changePalette(palette);
     }
 }
 
-core.container.prototype.changePalette = function (palette) {
+polymorph_core.container.prototype.changePalette = function (palette) {
     this.topdiv.style.background = palette.containerInnerColour;
 }
 
-core.on("UIstart", () => {
+polymorph_core.on("UIstart", () => {
     let paletteDialog = document.createElement('div');
     paletteDialog.classList.add("dialog");
     paletteDialog = dialogManager.checkDialogs(paletteDialog)[0];
@@ -57,7 +57,7 @@ core.on("UIstart", () => {
     <button>Change to blue palette<button>
     `;
     d.querySelector("button").addEventListener("click", () => {
-        core.changePalette({
+        polymorph_core.changePalette({
             rectOuterDivColour: "blue",
             rectInnerDivColour: "blue",
             rectTabColour: "blue",

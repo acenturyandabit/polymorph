@@ -7,8 +7,8 @@ Subframing refers to when an operator contains one or more rects. It can be used
 
 ## Requiremetns
 A subframing operator SHOULD (please):
-- Upon instantiating, check whether or not there are rects waiting for it in `core.operatorLoadCallbacks[container.id]`; and append them.
+- Upon instantiating, check whether or not there are rects waiting for it in `polymorph_core.operatorLoadCallbacks[container.id]`; and append them.
 - Otherwise, create its own rect on startup, and as necessary.
 - [STANDARD] Have a method `operator.tieRect(rectID)` to replace or append a given rect.
 
-To create rects, use `new core.rect()`. 
+To create rects, use `new polymorph_core.rect()`. 

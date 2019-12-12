@@ -1,11 +1,11 @@
-//// ISSUE: KEYWORD "core" IN TIMELINE.JS INTERFERES WITH CORE OPERATIONS.
+//// ISSUE: KEYWORD "polymorph_core" IN TIMELINE.JS INTERFERES WITH polymorph_core OPERATIONS.
 //// FIX: PUT timeline.js IN CLOSURE
 
 
 ///// BIGGER ISSUE: WHY IS TIMELINE.JS 38,000 lines of code?
 ///// FIX: Don't use timeline.js.
 
-core.registerOperator("timeline", {
+polymorph_core.registerOperator("timeline", {
         displayName: "Timeline",
         description: "A timeline based on vis.js. Pretty clean, for the most part."
     },
@@ -36,8 +36,8 @@ core.registerOperator("timeline", {
             //manually add the css
             me.dataset = new timeline.DataSet();
             me.updateItem = function (i) {
-                if (core.items[i][me.settings.dateproperty]) {
-                    let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperty].date, Date.now()-1000,Date.now()+1000);
+                if (polymorph_core.items[i][me.settings.dateproperty]) {
+                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][me.settings.dateproperty].date, Date.now()-1000,Date.now()+1000);
                     for (let j = 0; j < result.length; j++) {
                         let isostring = new Date(result[j].date + 1000);
                         let eisostring;
@@ -48,7 +48,7 @@ core.registerOperator("timeline", {
                         me.dataset.update({
                             id: i,
                             start: isostring,
-                            content: core.items[i][me.settings.titleproperty],
+                            content: polymorph_core.items[i][me.settings.titleproperty],
                             end: eisostring
                         });
                     }
@@ -58,7 +58,7 @@ core.registerOperator("timeline", {
                 me.updateItem(d.id);
             })
             let timeline = new timeline.Timeline(me.timediv, me.dataset,{});
-            for (let i in core.items) me.updateItem(i);
+            for (let i in polymorph_core.items) me.updateItem(i);
             
             timeline.on('select', (e) => {
                 //console.log(Object.keys[e.items]);

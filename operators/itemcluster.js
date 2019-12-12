@@ -1,4 +1,4 @@
-core.registerOperator("itemcluster2", {
+polymorph_core.registerOperator("itemcluster2", {
     displayName: "Itemcluster 2",
     description: "A brainstorming board. Add items, arrange them, and connect them with lines."
 }, function (container) {
@@ -110,7 +110,7 @@ core.registerOperator("itemcluster2", {
     })
 
     me.tray.addEventListener("input", (e) => {
-        core.items[e.target.parentElement.dataset.id].title = e.target.value;
+        polymorph_core.items[e.target.parentElement.dataset.id].title = e.target.value;
         container.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
     })
 
@@ -120,9 +120,9 @@ core.registerOperator("itemcluster2", {
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
         if (d.sender == me) return;
-        if (this.itemPointerCache[d.id] && core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
-            core.items[me.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
-            core.items[me.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
+        if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
+            polymorph_core.items[me.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
+            polymorph_core.items[me.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
             me.viewAdjust();
             if (me.preselected) {
                 me.preselected.classList.remove("selected");
@@ -134,23 +134,23 @@ core.registerOperator("itemcluster2", {
     })
 
 
-    ////////////////////////////////////////Handle core item updates//////////////////
+    ////////////////////////////////////////Handle polymorph_core item updates//////////////////
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
     let doubleUpdateCapacitor = new capacitor(200, 1000, () => {
-        for (let i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                 me.arrangeItem(i);
             }
         }
     })
     this.itemIsOurs = (id) => {
         // I will be shown at some point by this container
-        let isFiltered = (core.items[id][this.settings.filter] != undefined);
-        let hasView = core.items[id].itemcluster != undefined && core.items[id].itemcluster.viewName != undefined;
-        if (core.items[id].itemcluster && core.items[id].itemcluster.viewData) {
-            for (let i in core.items[id].itemcluster.viewData) {
-                if (core.items[i] && ((!this.settings.filter) || (core.items[i][this.settings.filter] != undefined))) {
+        let isFiltered = (polymorph_core.items[id][this.settings.filter] != undefined);
+        let hasView = polymorph_core.items[id].itemcluster != undefined && polymorph_core.items[id].itemcluster.viewName != undefined;
+        if (polymorph_core.items[id].itemcluster && polymorph_core.items[id].itemcluster.viewData) {
+            for (let i in polymorph_core.items[id].itemcluster.viewData) {
+                if (polymorph_core.items[i] && ((!this.settings.filter) || (polymorph_core.items[i][this.settings.filter] != undefined))) {
                     hasView = true;
                 }
             }
@@ -164,15 +164,15 @@ core.registerOperator("itemcluster2", {
         if (sender == me) return;
 
         if (me.container.visible()) {
-            if (core.items[id].itemcluster) {
-                if (core.items[id].itemcluster.viewData) {
-                    if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+            if (polymorph_core.items[id].itemcluster) {
+                if (polymorph_core.items[id].itemcluster.viewData) {
+                    if (polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
                         if (me.arrangeItem) {
                             me.arrangeItem(id);
                             doubleUpdateCapacitor.submit();//redraw lines
                         }
                     } else {
-                        if (!(me.settings.filter) || core.items[id][me.settings.filter]) me.addToTray(id);
+                        if (!(me.settings.filter) || polymorph_core.items[id][me.settings.filter]) me.addToTray(id);
                         else {
                             me.removeFromTray(id);
                         }
@@ -193,7 +193,7 @@ core.registerOperator("itemcluster2", {
 
     //Editing the name of a view
     this.viewName.addEventListener("keyup", function (e) {
-        core.items[me.settings.currentViewName].itemcluster.viewName =
+        polymorph_core.items[me.settings.currentViewName].itemcluster.viewName =
             e.currentTarget.innerText;
         container.fire("updateItem", {
             id: me.settings.currentViewName,
@@ -224,12 +224,12 @@ core.registerOperator("itemcluster2", {
 
     this.viewDropdownButton.addEventListener("click", function () {
         me.viewDropdown.innerHTML = "";
-        for (i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
-                if (me.settings.filter && !(core.items[i][me.settings.filter])) continue;//apply filter to views
+        for (i in polymorph_core.items) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
+                if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) continue;//apply filter to views
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
-                aa.innerHTML = core.items[i].itemcluster.viewName;
+                aa.innerHTML = polymorph_core.items[i].itemcluster.viewName;
                 me.viewDropdown.appendChild(aa);
             }
             //v = itemcluster.views[i].name;
@@ -254,9 +254,9 @@ core.registerOperator("itemcluster2", {
         if (!me.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
-            for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewName) {
-                    if (me.settings.filter && !(core.items[i][me.settings.filter])) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
+                    if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) {
                         continue;
                     }
                     this.switchView(i);
@@ -270,9 +270,9 @@ core.registerOperator("itemcluster2", {
             }
             //Show blank
         } else {
-            if (!core.items[me.settings.currentViewName] ||
-                !core.items[me.settings.currentViewName].itemcluster ||
-                !core.items[me.settings.currentViewName].itemcluster.viewName) {
+            if (!polymorph_core.items[me.settings.currentViewName] ||
+                !polymorph_core.items[me.settings.currentViewName].itemcluster ||
+                !polymorph_core.items[me.settings.currentViewName].itemcluster.viewName) {
                 if (assert) {
                     me.switchView(me.makeNewView(me.settings.currentViewName));
                 } else {
@@ -283,13 +283,13 @@ core.registerOperator("itemcluster2", {
             }
             //buttons
             this.viewName.innerText =
-                core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
+                polymorph_core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (previousView != id && previousView) {
                 if (subview) {
                     let b = document.createElement("button");
                     b.dataset.ref = previousView;
-                    b.innerText = core.items[previousView].itemcluster.viewName;
+                    b.innerText = polymorph_core.items[previousView].itemcluster.viewName;
                     b.addEventListener("click", () => {
                         me.switchView(b.dataset.ref, true, false);
                         while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
@@ -312,14 +312,14 @@ core.registerOperator("itemcluster2", {
                 }
             }
             //reposition all items, also updating viewbox
-            for (i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
+            for (i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //position the item appropriately.
                 }
             }
-            for (i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
+            for (i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
                     if (me.arrangeItem) me.arrangeItem(i);
                     //twice so that all lines show up. How efficient.
                 }
@@ -329,20 +329,20 @@ core.registerOperator("itemcluster2", {
     };
 
     this.makeNewView = function (id) {
-        //register it with the core
+        //register it with the polymorph_core
         let itm;
         if (!id) {
             itm = {};
-            id = core.insertItem(itm);
+            id = polymorph_core.insertItem(itm);
         } else {
-            itm = core.items[id] || {};
+            itm = polymorph_core.items[id] || {};
         }
         if (!itm.itemcluster) itm.itemcluster = {};
         itm.itemcluster.viewName = "New View"
         if (me.settings.filter) {
             if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
         }
-        core.items[id] = itm;//in case we are creating from scratch
+        polymorph_core.items[id] = itm;//in case we are creating from scratch
         //register a change
         container.fire("updateItem", {
             sender: this,
@@ -352,18 +352,18 @@ core.registerOperator("itemcluster2", {
     };
 
     this.cloneView = function () {
-        //register it with the core
-        let newName = "Copy of " + core.items[me.settings.currentViewName].itemcluster.viewName;
+        //register it with the polymorph_core
+        let newName = "Copy of " + polymorph_core.items[me.settings.currentViewName].itemcluster.viewName;
         let id = me.makeNewView();
-        core.items[id].itemcluster.viewName = newName;
+        polymorph_core.items[id].itemcluster.viewName = newName;
         container.fire("updateItem", {
             sender: this,
             id: id
         });
         //clone positions as well
-        for (let i in core.items) {
-            if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                core.items[i].itemcluster.viewData[id] = core.items[i].itemcluster.viewData[me.settings.currentViewName];
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                polymorph_core.items[i].itemcluster.viewData[id] = polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName];
             }
         }
         this.switchView(id);
@@ -371,9 +371,9 @@ core.registerOperator("itemcluster2", {
     this.destroyView = function (viewName, auto) {
         // Destroy the itemcluster property of the item but otherwise leave it alone
         if (me.settings.filter) {
-            delete core.items[viewName][me.settings.filter];
+            delete polymorph_core.items[viewName][me.settings.filter];
         } else {
-            delete core.items[viewName].itemcluster.viewName;
+            delete polymorph_core.items[viewName].itemcluster.viewName;
         }
         this.switchView();
     };
@@ -533,8 +533,8 @@ core.registerOperator("itemcluster2", {
             me.originalViewBox = me.svg.viewbox();
             me.dragDX = coords.x;
             me.dragDY = coords.y;
-            me.ocx = core.items[me.settings.currentViewName].itemcluster.cx || 0;
-            me.ocy = core.items[me.settings.currentViewName].itemcluster.cy || 0;
+            me.ocx = polymorph_core.items[me.settings.currentViewName].itemcluster.cx || 0;
+            me.ocy = polymorph_core.items[me.settings.currentViewName].itemcluster.cy || 0;
             //}
         }
     });
@@ -548,9 +548,9 @@ core.registerOperator("itemcluster2", {
             let cid = me.fromTray;
             //make us drag the item
             me.removeFromTray(cid);
-            if (!core.items[cid].itemcluster) core.items[cid].itemcluster = {};
-            if (!core.items[cid].itemcluster.viewData) core.items[cid].itemcluster.viewData = {};
-            core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
+            if (!polymorph_core.items[cid].itemcluster) polymorph_core.items[cid].itemcluster = {};
+            if (!polymorph_core.items[cid].itemcluster.viewData) polymorph_core.items[cid].itemcluster.viewData = {};
+            polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
             me.arrangeItem(cid);
             //this is probably broken now
             let divrep = {
@@ -627,8 +627,8 @@ core.registerOperator("itemcluster2", {
                     // delete the item from this view
                     me.movingDivs.forEach((v) => {
                         let cid = v.el.attr("data-id");
-                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
-                        delete core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
+                        delete polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                        delete polymorph_core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
                         me.arrangeItem(cid);
                         me.addToTray(cid);
                         container.fire("updateItem", { sender: me, id: cid });
@@ -668,9 +668,9 @@ core.registerOperator("itemcluster2", {
             // shift the view by delta
             let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
 
-            core.items[me.settings.currentViewName].itemcluster.cx =
+            polymorph_core.items[me.settings.currentViewName].itemcluster.cx =
                 me.ocx - (coords.x - me.dragDX);
-            core.items[me.settings.currentViewName].itemcluster.cy =
+            polymorph_core.items[me.settings.currentViewName].itemcluster.cy =
                 me.ocy - (coords.y - me.dragDY);
             //arrange all items
             me.viewAdjust();
@@ -678,7 +678,7 @@ core.registerOperator("itemcluster2", {
     });
 
     this.viewAdjust = function () {
-        let ic = core.items[me.settings.currentViewName].itemcluster;
+        let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
         let ww = me.itemSpace.clientWidth * (ic.scale || 1);
         let hh = me.itemSpace.clientHeight * (ic.scale || 1);
         if (me.svg) {
@@ -700,7 +700,7 @@ core.registerOperator("itemcluster2", {
             this.handleGridScroll(e);
         } else {
             //calculate old width constant
-            let ic = core.items[me.settings.currentViewName].itemcluster;
+            let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
             let br = me.itemSpace.getBoundingClientRect();
             ic.scale = ic.scale || 1;
             let vw = me.itemSpace.clientWidth * ic.scale;
@@ -771,13 +771,13 @@ core.registerOperator("itemcluster2", {
                     elements[i].matches(".floatingItem") &&
                     elements[i].dataset.id != cid && e.ctrlKey
                 ) {
-                    core.items[elements[i].dataset.id].itemcluster.viewName = core.items[elements[i].dataset.id].itemcluster.viewName || core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
-                    core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
+                    polymorph_core.items[elements[i].dataset.id].itemcluster.viewName = polymorph_core.items[elements[i].dataset.id].itemcluster.viewName || polymorph_core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
+                    polymorph_core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
                         x: 0,
                         y: 0
                     };
                     if (!e.altKey) {//push drag in.
-                        delete core.items[cid].itemcluster.viewData[me.settings.currentViewName];
+                        delete polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName];
                         me.arrangeItem(cid);
                         me.movingDivs = [];//clear movingdivs so it doesnt come back
                     }
@@ -823,8 +823,8 @@ core.registerOperator("itemcluster2", {
                 });
             }
         } else if (me.preselected) {
-            if (!core.items[me.preselected.dataset.id].boxsize) core.items[me.preselected.dataset.id].boxsize = {};
-            bs = core.items[me.preselected.dataset.id].boxsize;
+            if (!polymorph_core.items[me.preselected.dataset.id].boxsize) polymorph_core.items[me.preselected.dataset.id].boxsize = {};
+            bs = polymorph_core.items[me.preselected.dataset.id].boxsize;
             bs.w = me.preselected.children[0].style.width;
             bs.h = me.preselected.children[0].style.height;
             me.arrangeItem(me.preselected.dataset.id); // handle resizes
@@ -850,11 +850,11 @@ core.registerOperator("itemcluster2", {
     //----------item functions----------//
     this.updatePosition = (id) => {
         let it = this.itemPointerCache[id];
-        if (!core.items[id].itemcluster.viewData[this.settings.currentViewName]) core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
+        if (!polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName]) polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
         //if there is a grid, then deal with it
         this.alignGrid(it);
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
-        core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
+        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
+        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         container.fire("updateItem", {
             id: id
         });
@@ -863,8 +863,8 @@ core.registerOperator("itemcluster2", {
 
     this.createItem = function (x, y) {
         let itm = {};
-        //register it with the core
-        let id = core.insertItem(itm);
+        //register it with the polymorph_core
+        let id = polymorph_core.insertItem(itm);
         itm.title = "";
         itm.itemcluster = {
             viewData: {},
@@ -886,7 +886,7 @@ core.registerOperator("itemcluster2", {
     };
 
     this.removeItem = function (id) {
-        delete core.items[id].itemcluster.viewData[me.settings.currentViewName];
+        delete polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName];
         //hide all the lines
         for (let i in me.activeLines) {
             for (let j in me.activeLines[i]) {
@@ -917,7 +917,7 @@ core.registerOperator("itemcluster2", {
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            core.items[id].title = e.target.value;
+            polymorph_core.items[id].title = e.target.value;
             container.fire("updateItem", {
                 id: id,
                 sender: this
@@ -937,7 +937,7 @@ core.registerOperator("itemcluster2", {
             `);
             me.tray.appendChild(cti);
         }
-        cti.querySelector("textarea").value = core.items[id].title;
+        cti.querySelector("textarea").value = polymorph_core.items[id].title;
     }
 
     me.removeFromTray = function (id) {
@@ -951,21 +951,21 @@ core.registerOperator("itemcluster2", {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    //Core interactions
+    //polymorph_core interactions
 
     function updateSettings() {
         if (me.settings.tray) {
             //show the tray
             me.emptyTray();
             me.tray.style.display = "flex";
-            if (me.settings.filter && core.items[me.settings.currentViewName] && !core.items[me.settings.currentViewName][me.settings.filter]) {
-                core.items[me.settings.currentViewName][me.settings.filter] = true; // quick upgrade - to remove in future once things have settled
+            if (me.settings.filter && polymorph_core.items[me.settings.currentViewName] && !polymorph_core.items[me.settings.currentViewName][me.settings.filter]) {
+                polymorph_core.items[me.settings.currentViewName][me.settings.filter] = true; // quick upgrade - to remove in future once things have settled
             }
             //also populate the tray
-            for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData) {
-                    if (!core.items[i].itemcluster.viewData[me.settings.currentViewName]) {//not in this view
-                        if (!(me.settings.filter) || core.items[i][me.settings.filter]) {
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
+                    if (!polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {//not in this view
+                        if (!(me.settings.filter) || polymorph_core.items[i][me.settings.filter]) {
                             me.addToTray(i);
                         }
                     }
@@ -1038,7 +1038,7 @@ core.registerOperator("itemcluster2", {
     }
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
-        core.target().then((id) => {
+        polymorph_core.target().then((id) => {
             me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
             me.settings['focusOperatorID'] = id
             me.focusOperatorID = me.settings['focusOperatorID'];
@@ -1054,13 +1054,13 @@ core.registerOperator("itemcluster2", {
         }
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = ()=>{
         let its = me.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
             me.settings[its[i].dataset.role] = its[i].value;
         }
         updateSettings();
-        container.fire("updateView");
+        container.fire("updateItem", { id: this.container.id });
         // pull settings and update when your dialog is closed.
     }
     //extension API
@@ -1074,11 +1074,11 @@ core.registerOperator("itemcluster2", {
                 x = Math.random() * 1000;
                 y = Math.random() * 1000;
             }
-            let id = core.insertItem(item);
-            core.items[id].itemcluster = { viewData: {} };
-            core.items[id].itemcluster.viewData[me.settings.currentViewName] = {};
-            core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
-            core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
+            let id = polymorph_core.insertItem(item);
+            polymorph_core.items[id].itemcluster = { viewData: {} };
+            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName] = {};
+            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
+            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
             me.arrangeItem(id);
             container.fire("updateItem", { id: id, sender: me });
             return id;

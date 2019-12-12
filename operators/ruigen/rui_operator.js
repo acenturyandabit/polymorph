@@ -19,7 +19,7 @@ function randomRuiEl(element){
 }
 if (document.readyState != "loading") randomRuiEl(); else document.addEventListener("DOMContentLoaded", randomRuiEl);
 var rui_op={};
-core.registerOperator("ruigen", {
+polymorph_core.registerOperator("ruigen", {
     displayName: "Ruigen",
     description: "Random user interface thing. Fun to watch."
 }, function (container) {
@@ -42,7 +42,7 @@ core.registerOperator("ruigen", {
         })
     }
     
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
     this.refresh=function(){me.loadDisplay(me.settings.display)};
     //Saving and loading
     this.toSaveData = function () {

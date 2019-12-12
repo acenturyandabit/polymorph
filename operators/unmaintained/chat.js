@@ -1,4 +1,4 @@
-core.registerOperator("chat", {
+polymorph_core.registerOperator("chat", {
     displayName: "Chat",
     description: "A chat interface. Perfect for maintaining conversational style communications."
 }, function (container) {
@@ -39,12 +39,12 @@ core.registerOperator("chat", {
     `;
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     function update(id){
 //filter by property
         //then:
-        if (core.items[id].chat && core.items[id].chat.intime) {
+        if (polymorph_core.items[id].chat && polymorph_core.items[id].chat.intime) {
             let msg = me.rootdiv.querySelector(`[data-id='${id}']`);
             if (!msg) {
                 msg = document.createElement("p");
@@ -57,9 +57,9 @@ core.registerOperator("chat", {
                 msg.appendChild(rspn);
             }
             //load up the new item at the specified index.
-            msg.dataset.time = core.items[id].chat.intime;
+            msg.dataset.time = polymorph_core.items[id].chat.intime;
             msg.dataset.id = id;
-            msg.querySelector(".mspn").innerText = core.items[id].title;
+            msg.querySelector(".mspn").innerText = polymorph_core.items[id].title;
             //Place it in the appropriate place
             let premsgs = me.rootdiv.querySelectorAll(".conversation>p");
             if (!premsgs.length) {
@@ -87,11 +87,11 @@ core.registerOperator("chat", {
     container.on("updateItem", function (d) {
         let id = d.id;
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items _may_ be deleted by the core garbage collector :/
+        //otherwise your items _may_ be deleted by the polymorph_core garbage collector :/
         return update(id);
     });
 
-    for (let i in core.items){
+    for (let i in polymorph_core.items){
         update(i);    
     }
 
@@ -105,10 +105,10 @@ core.registerOperator("chat", {
             title: this.rootdiv.querySelector(".entry>input").value,
             chat: {
                 intime: Date.now(),
-                sender:core.userData.id
+                sender:polymorph_core.userData.id
             }
         }
-        let id = core.insertItem(itm);
+        let id = polymorph_core.insertItem(itm);
         this.rootdiv.querySelector(".entry>input").value = "";
         container.fire("updateItem", {
             sender: this,

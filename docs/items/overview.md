@@ -7,9 +7,9 @@ Items are generic data elements in Polymorph. Since this update, items include a
 ## Creating Elements
 Elements are native javascript objects. Please don't put functions in them - they should store data only.
 
-In order to retrieve a unique id for the object, use `newID=core.insertItem(newItem)`.
+In order to retrieve a unique id for the object, use `newID=polymorph_core.insertItem(newItem)`.
 
-Also, don't forget to fire `core.fire('updateItem',{id:newID})` once you've created the item, so that other operators are aware of it.
+Also, don't forget to fire `polymorph_core.fire('updateItem',{id:newID})` once you've created the item, so that other operators are aware of it.
 
 ## Deleting Elements
 
@@ -17,11 +17,11 @@ Also, don't forget to fire `core.fire('updateItem',{id:newID})` once you've crea
 
 
 ## Element properties
-You can use any element property you want, but you'll have to share with other operators, and the core. Properties reserved by the core include:
+You can use any element property you want, but you'll have to share with other operators, and the polymorph_core. Properties reserved by the polymorph_core include:
 - item._rd: Rect data. The precence of this property indicates that this item should be treated as a rect during load.
 - item._od: Operator data. The precence of this property indicates that this item should be treate as an operator during load. To read more about this, see `operators_general/common.md :  ## Storage considerations`.
 
 Some common properties include:
-- item.to: A map whose keys represent parent-to-child links from the current item to another item. The keys are strings which point to core.item[].
+- item.to: A map whose keys represent parent-to-child links from the current item to another item. The keys are strings which point to polymorph_core.item[].
 - item.title: The title of the element.
 - item.itemcluster: Used by itemcluster to do its thing. 

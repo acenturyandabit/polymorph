@@ -1,4 +1,4 @@
-function _itemcluster_extend_svg(me) { // very core functions! 
+function _itemcluster_extend_svg(me) { // very polymorph_core functions! 
     me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
     me.mapPageToSvgCoords = function (pageX, pageY, vb) {
         let rels = me.svg.node.getBoundingClientRect();
@@ -9,10 +9,10 @@ function _itemcluster_extend_svg(me) { // very core functions!
         return ret;
     }
     me.arrangeItem = function (id) {
-        if (!core.items[id].itemcluster || (!core.items[id].itemcluster.viewData && !core.items[id].itemcluster.viewName))
+        if (!polymorph_core.items[id].itemcluster || (!polymorph_core.items[id].itemcluster.viewData && !polymorph_core.items[id].itemcluster.viewName))
             return false;
-        if (!core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
-        if (!core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+        if (!polymorph_core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
+        if (!polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
             //if an item of it exists, hide the item
             let rect = me.itemPointerCache[id];
             if (rect) {
@@ -22,7 +22,7 @@ function _itemcluster_extend_svg(me) { // very core functions!
             return true;
         }
         //enforce a property on it with viewName.
-        if (!core.items[id][`__itemcluster_${me.settings.currentViewName}`]) core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
+        if (!polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`]) polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
         let rect = me.itemPointerCache[id];
         if (!rect) {
             //need to make a new rectangle
@@ -36,32 +36,32 @@ function _itemcluster_extend_svg(me) { // very core functions!
             me.itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
         }
         rect.show();
-        if (core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-            rect.move(core.items[id].itemcluster.viewData[me.settings.currentViewName].x, core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+        if (polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
+            rect.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
         }
         //fill in the textarea inside
         let tta = me.itemPointerCache[id].node.children[0].children[0];
-        tta.value = core.items[id].title || "";
-        if (core.items[id].style) { // dont update this if it hasn't changed.
-            if (JSON.stringify(core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
-                tta.style.background = core.items[id].style.background || "";
-                tta.style.color = core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
-                me.cachedStyle[id] = JSON.parse(JSON.stringify(core.items[id].style));
+        tta.value = polymorph_core.items[id].title || "";
+        if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
+            if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
+                tta.style.background = polymorph_core.items[id].style.background || "";
+                tta.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+                me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
             }
 
         }
-        if (!core.items[id].boxsize) {
-            core.items[id].boxsize = {
+        if (!polymorph_core.items[id].boxsize) {
+            polymorph_core.items[id].boxsize = {
                 w: "200px",
                 h: "100px"
             };
         }
-        me.itemPointerCache[id].node.children[0].style.width = core.items[id].boxsize.w || "";
-        me.itemPointerCache[id].node.children[0].style.height = core.items[id].boxsize.h || "";
-        rect.size(Number(/\d+/ig.exec(core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(core.items[id].boxsize.h)[0]));
+        me.itemPointerCache[id].node.children[0].style.width = polymorph_core.items[id].boxsize.w || "";
+        me.itemPointerCache[id].node.children[0].style.height = polymorph_core.items[id].boxsize.h || "";
+        rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
         //add icons if necessary
-        if (core.items[id].itemcluster.viewName) {
+        if (polymorph_core.items[id].itemcluster.viewName) {
             //this has a subview, make it known!.
             let subviewItemCount;
             if (rect.node.querySelector(".subviewItemCount")) {
@@ -82,8 +82,8 @@ function _itemcluster_extend_svg(me) { // very core functions!
                 //also count all the items in my subview and report.
             }
             let count = 0;
-            for (let i in core.items) {
-                if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData[id]) count++;
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[id]) count++;
             }
             subviewItemCount.innerText = count;
         } else {
@@ -92,9 +92,9 @@ function _itemcluster_extend_svg(me) { // very core functions!
             }
         }
         //draw its lines
-        if (core.items[id].to) {
-            for (let i in core.items[id].to) {
-                if (core.items[i] && core.items[i].itemcluster && core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+        if (polymorph_core.items[id].to) {
+            for (let i in polymorph_core.items[id].to) {
+                if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                     if (i == me.prevFocusID || id == me.prevFocusID) {
                         me.enforceLine(id, i, "red");
                     } else {
@@ -118,12 +118,12 @@ function _itemcluster_extend_svg(me) { // very core functions!
     me.toggleLine = function (start, end) {
         //start and end is now directional. 
         //check if linked; if linked, remove link
-        if (core.isLinked(start, end) % 2) {
-            core.unlink(start, end);
+        if (polymorph_core.isLinked(start, end) % 2) {
+            polymorph_core.unlink(start, end);
             if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
             delete me.activeLines[start][end];
         } else {
-            core.link(start, end);
+            polymorph_core.link(start, end);
             me.enforceLine(start, end);
         }
     };
@@ -173,11 +173,11 @@ function _itemcluster_extend_svg(me) { // very core functions!
 
 
     //arrange items 
-    for (let i in core.items) {
+    for (let i in polymorph_core.items) {
         me.arrangeItem(i);
     }
     //twice for lines, as some items may not have loaded yets
-    for (let i in core.items) {
+    for (let i in polymorph_core.items) {
         me.arrangeItem(i);
     }
     if (me.viewGrid) {

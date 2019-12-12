@@ -1,6 +1,6 @@
 (function () {
     let viewsets;
-    core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
+    polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
         let me = this;
         me.container = container;
         this.settings = {};
@@ -33,31 +33,32 @@
         this.descInnerDiv = this.rootdiv.querySelector("div.descriptions");
         this.viewInnerDiv = this.rootdiv.querySelector("div.views");
         this.reloadContents = function () {
-            for (let i in core.operators) {
-                if (core.operators[i].options.hidden) continue;
+            for (let i in polymorph_core.operators) {
+                if (polymorph_core.operators[i].options.hidden) continue;
                 if (me.buttondiv.querySelector(`[data-under-operator-name="${i}"]`)) return;
                 let b = document.createElement("button");
                 let displayText = i;
-                if (core.operators[i].options.displayName) displayText = core.operators[i].options.displayName;
+                if (polymorph_core.operators[i].options.displayName) displayText = polymorph_core.operators[i].options.displayName;
                 b.innerHTML = displayText;
                 b.dataset.underOperatorName = i;
                 b.addEventListener("click", () => {
                     //get out of the way
                     while (container.div.children.length) container.div.children[0].remove();
-                    container.settings.type = b.dataset.underOperatorName;
-                    container.operator = new core.operators[b.dataset.underOperatorName].constructor(container);
+                    container.settings.t = b.dataset.underOperatorName;
+                    container.operator = new polymorph_core.operators[b.dataset.underOperatorName].constructor(container);
                     //change the operator potato.
                     //change name if user has not already modified name
-                    if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = core.operators[b.dataset.underOperatorName].options.displayName || me.type;
-                    container.fire("updateView", {
+                    if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = polymorph_core.operators[b.dataset.underOperatorName].options.displayName || me.type;
+                    container.fire("updateItem", {
+                        id: this.container.id,
                         sender: this
                     });
                 })
                 me.buttondiv.appendChild(b);
                 //generate the description
                 let descDiv = document.createElement("div");
-                if (core.operators[i].options.description) {
-                    descDiv.innerHTML = `<p>` + core.operators[i].options.description + `</p>`;
+                if (polymorph_core.operators[i].options.description) {
+                    descDiv.innerHTML = `<p>` + polymorph_core.operators[i].options.description + `</p>`;
                 } else {
                     descDiv.innerHTML = `<p>No description provided :/</p>`;
                 }
@@ -78,7 +79,7 @@
         container.div.appendChild(this.rootdiv);
         container.on("operatorAdded", me.reloadContents);
         this.refresh = this.reloadContents;
-        //////////////////Handle core item updates//////////////////
+        //////////////////Handle polymorph_core item updates//////////////////
 
         //these are optional but can be used as a reference.
 
@@ -89,7 +90,7 @@
             // update your dialog elements with your settings
         }
 
-        //////////////////Handling local changes to push to core//////////////////
+        //////////////////Handling local changes to push to polymorph_core//////////////////
 
         //Saving and loading
         this.toSaveData = function () {

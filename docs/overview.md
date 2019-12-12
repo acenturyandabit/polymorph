@@ -6,18 +6,18 @@
 
 ## Software Architecture
 Polymorph is made up of a few main components:
-- Core: This represents a shared platform where everything interacts. It contains a main event interface.
+- polymorph_core: This represents a shared platform where everything interacts. It contains a main event interface.
 - Rects: This represents resizable rectangles that form the basis of Polymorph's UX.
 - Containers: Rects hold containers, which hold operators. Containers abstract away some common UX concerns from operators.
-- Core modules: These represent aspects of the core's operation.
+- polymorph_core modules: These represent aspects of the polymorph_core's operation.
 - Items: These are created by users through operators.
 - [MODDING FOCUS] Operators: These represent different ways of representing, interacting with and creating items.
 
 ## Data architecture
 The main data repositories of Polymorph include:
-- core.userData: Device (browser) scope. 
+- polymorph_core.userData: Device (browser) scope. 
 ```javascript
-core.userData={
+polymorph_core.userData={
     documents:{
         document_id:{
             saveSources:{
@@ -31,5 +31,5 @@ core.userData={
     }
 }
 ```
-- core.items: Instance scope.
+- polymorph_core.items: Instance scope.
 ## Living architecture

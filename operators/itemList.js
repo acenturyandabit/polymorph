@@ -1,4 +1,4 @@
-core.registerOperator("itemList", function (container) {
+polymorph_core.registerOperator("itemList", function (container) {
     let me = this;
     me.container = container;
     //Initialise with default settings
@@ -140,7 +140,7 @@ core.registerOperator("itemList", function (container) {
         it.itemList = true;
         //ensure the filter property exists
         if (me.settings.filterProp && !it[me.settings.filterProp]) it[me.settings.filterProp] = Date.now();
-        let id = core.insertItem(it);
+        let id = polymorph_core.insertItem(it);
         currentItemSpan.dataset.id = id;
         if (this.shiftDown) {
             let fi = me.taskList.querySelector(".ffocus");
@@ -148,7 +148,7 @@ core.registerOperator("itemList", function (container) {
                 fi.children[fi.children.length - 1].appendChild(currentItemSpan);
                 //we are creating a subitem
                 let fiid = fi.dataset.id;
-                fi = core.items[fiid];
+                fi = polymorph_core.items[fiid];
                 if (!fi.to) fi.to = {};
                 fi.to[id] = true;
                 container.fire("updateItem", {
@@ -209,7 +209,7 @@ core.registerOperator("itemList", function (container) {
         let items = getRenderedItems();
         let toShowItems = [];
         items.forEach((v) => {
-            let it = core.items[v];
+            let it = polymorph_core.items[v];
             let el = this.taskList.querySelector(`[data-id="${v}"]`);
             el.style.display = "none";
             for (let i = 0; i < searchboxes.length; i++) {
@@ -260,7 +260,7 @@ core.registerOperator("itemList", function (container) {
             for (let i = 0; i < itms.length; i++) {
                 cpp = {
                     id: itms[i].dataset.id,
-                    dt: core.items[itms[i].dataset.id][me.settings.sortby]
+                    dt: polymorph_core.items[itms[i].dataset.id][me.settings.sortby]
                 };
                 its.push(cpp);
             }
@@ -272,12 +272,12 @@ core.registerOperator("itemList", function (container) {
                         //we are going to upgrade all dates that don't match protocol)
                         if (its[i].dt && its[i].dt.date) {
                             if (typeof its[i].dt.date == "number") {
-                                core.items[its[i].id][dateprop].date = [{
-                                    date: core.items[its[i].id][dateprop].date
+                                polymorph_core.items[its[i].id][dateprop].date = [{
+                                    date: polymorph_core.items[its[i].id][dateprop].date
                                 }];
                             }
-                            if (core.items[its[i].id][dateprop].date[0]) {
-                                its[i].date = core.items[its[i].id][dateprop].date[0].date;
+                            if (polymorph_core.items[its[i].id][dateprop].date[0]) {
+                                its[i].date = polymorph_core.items[its[i].id][dateprop].date[0].date;
                                 //check for repetition structure
                                 if (its[i].dt.datestring.indexOf("(") != -1) {
                                     //evaluate the repetition
@@ -341,7 +341,7 @@ core.registerOperator("itemList", function (container) {
     });
 
     this.updateItem = (id, unbuf = false) => {//if unbuf then we dont want to fire getRenderedItems as it would force an update.
-        let it = core.items[id];
+        let it = polymorph_core.items[id];
         //First check if we should show the item
         if (!mf(me.settings.filterProp, it)) {
             //if existent, remove
@@ -407,7 +407,7 @@ core.registerOperator("itemList", function (container) {
             let ri = getRenderedItems();
             for (let _i = 0; _i < ri.length; _i++) {
                 let i = ri[_i];
-                if (core.items[i].to && core.items[i].to[id] && id != i) {
+                if (polymorph_core.items[i].to && polymorph_core.items[i].to[id] && id != i) {
                     if (uniqueParent == undefined) {
                         uniqueParent = i;
                     } else {
@@ -445,7 +445,7 @@ core.registerOperator("itemList", function (container) {
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
-            delete core.items[e.target.parentElement.dataset.id][me.settings.filterProp];
+            delete polymorph_core.items[e.target.parentElement.dataset.id][me.settings.filterProp];
             container.fire("updateItem", {
                 id: e.target.parentElement.dataset.id,
                 sender: this
@@ -467,11 +467,11 @@ core.registerOperator("itemList", function (container) {
     });*/
     this.reRenderEverything = () => {
         this.taskList.innerHTML = "";
-        for (let i in core.items) {
+        for (let i in polymorph_core.items) {
             this.updateItem(i, true);
         }
         //and again for links
-        for (let i in core.items) {
+        for (let i in polymorph_core.items) {
             this.updateItem(i);
         }
     }
@@ -520,6 +520,7 @@ core.registerOperator("itemList", function (container) {
         if (this.settings.enableEntry == false) {
             this.template.style.display = "none";
         }
+        this.container.fire("updateItem", { id: this.container.id })
     }
 
     //First time load
@@ -536,7 +537,7 @@ core.registerOperator("itemList", function (container) {
     }
 
     this.taskList.addEventListener("input", (e) => {
-        currentItem = core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+        currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
         switch (me.settings.properties[e.target.dataset.role]) {
             case "text":
             case "number":
@@ -611,9 +612,9 @@ core.registerOperator("itemList", function (container) {
                     dateprop = i;
                     //specifically reparse the date on it;
                     if (it) {
-                        if (core.items[it][dateprop]) {
-                            core.items[it][dateprop].date = dateParser.richExtractTime(core.items[it][dateprop].datestring);
-                            if (!core.items[it][dateprop].date.length) core.items[it][dateprop].date = undefined;
+                        if (polymorph_core.items[it][dateprop]) {
+                            polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
+                            if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
                             //ds=me.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
                         }
                     }
@@ -623,7 +624,7 @@ core.registerOperator("itemList", function (container) {
                         let itm = {
                             id: e.dataset.id
                         };
-                        if (!core.items[itm.id]) {
+                        if (!polymorph_core.items[itm.id]) {
                             //nerf the e that spawned me, then break
                             //idek how this happens :(
                             e.remove();
@@ -631,13 +632,13 @@ core.registerOperator("itemList", function (container) {
                             return;
                         }
                         //we are going to upgrade all dates that don't match protocol)
-                        if (core.items[itm.id][dateprop] && core.items[itm.id][dateprop].date) {
-                            if (typeof core.items[itm.id][dateprop].date == "number") {
-                                core.items[itm.id][dateprop].date = [{
-                                    date: core.items[itm.id][dateprop].date
+                        if (polymorph_core.items[itm.id][dateprop] && polymorph_core.items[itm.id][dateprop].date) {
+                            if (typeof polymorph_core.items[itm.id][dateprop].date == "number") {
+                                polymorph_core.items[itm.id][dateprop].date = [{
+                                    date: polymorph_core.items[itm.id][dateprop].date
                                 }];
                             }
-                            if (core.items[itm.id][dateprop].date[0]) itm.date = core.items[itm.id][dateprop].date[0].date;
+                            if (polymorph_core.items[itm.id][dateprop].date[0]) itm.date = polymorph_core.items[itm.id][dateprop].date[0].date;
                             else itm.date = Date.now() * 10000;
                         } else itm.date = Date.now() * 10000;
                         its.push(itm);
@@ -673,9 +674,9 @@ core.registerOperator("itemList", function (container) {
             } else {
                 menu.querySelector(".fixed").style.display = "none";
             }
-            if (core.items[contextedItem].style) {
-                menu.querySelector(".background").value = core.items[contextedItem].style.background || "";
-                menu.querySelector(".color").value = core.items[contextedItem].style.color || "";
+            if (polymorph_core.items[contextedItem].style) {
+                menu.querySelector(".background").value = polymorph_core.items[contextedItem].style.background || "";
+                menu.querySelector(".color").value = polymorph_core.items[contextedItem].style.color || "";
             } else {
                 menu.querySelector(".background").value = "";
                 menu.querySelector(".color").value = "";
@@ -688,8 +689,8 @@ core.registerOperator("itemList", function (container) {
         `, me.taskList, "input", filter)
         menu.querySelector(".fixed").addEventListener("click", function (e) {
             let id = contextedItem;
-            contextedInput.value = new Date(core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(core.items[id][contextedProp].date[0].endDate).toLocaleString();
-            core.items[id][contextedProp].datestring = contextedInput.value;
+            contextedInput.value = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
+            polymorph_core.items[id][contextedProp].datestring = contextedInput.value;
             me.datereparse(id);
             menu.style.display = "none";
         })
@@ -697,8 +698,8 @@ core.registerOperator("itemList", function (container) {
         function updateStyle(e) {
             let cid = contextedItem;
 
-            if (!core.items[cid].style) core.items[cid].style = {};
-            core.items[cid].style[e.target.className] = e.target.value;
+            if (!polymorph_core.items[cid].style) polymorph_core.items[cid].style = {};
+            polymorph_core.items[cid].style[e.target.className] = e.target.value;
             container.fire("updateItem", {
                 sender: this,
                 id: cid
@@ -765,9 +766,9 @@ core.registerOperator("itemList", function (container) {
         //Get all available properties, by looping through all elements (?)
         me.opList.innerHTML = "";
         let props = {};
-        for (let i in core.items) {
-            for (let j in core.items[i]) {
-                if (typeof core.items[i][j] != "function") props[j] = true;
+        for (let i in polymorph_core.items) {
+            for (let j in polymorph_core.items[i]) {
+                if (typeof polymorph_core.items[i][j] != "function") props[j] = true;
             }
         }
         for (let prop in props) {
@@ -803,16 +804,16 @@ core.registerOperator("itemList", function (container) {
     let targeter = this.dialogDiv.querySelector("button.targeter");
     targeter.addEventListener("click", function () {
         if (me.settings.operationMode == "iface") {
-            core.target("itemList").then((id) => {
+            polymorph_core.target("itemList").then((id) => {
                 me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
                 me.settings['focusOperatorID'] = id
                 me.focusOperatorID = me.settings['focusOperatorID'];
-                me.detach = core.queryOnIface(id, () => {
+                me.detach = polymorph_core.queryOnIface(id, () => {
                     // this will return a list of items
                 })
             })
         } else {
-            core.target().then((id) => {
+            polymorph_core.target().then((id) => {
                 me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
                 me.settings['focusOperatorID'] = id
                 me.focusOperatorID = me.settings['focusOperatorID'];
@@ -829,11 +830,11 @@ core.registerOperator("itemList", function (container) {
         }
     })
 
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = () => {
         // pull settings and update when your dialog is closed.
         me.updateSettings();
         me.sortItems();
-        container.fire("updateView");
+        container.fire("updateItem", { id: this.container.id });
     }
 
     //adding new buttons
@@ -900,7 +901,7 @@ core.registerOperator("itemList", function (container) {
                 } else {
                     obj = v;
                 }
-                let id = core.insertItem(obj);
+                let id = polymorph_core.insertItem(obj);
                 container.fire("updateItem", {
                     id: id
                 });
@@ -910,7 +911,7 @@ core.registerOperator("itemList", function (container) {
         },
         addObjects: function (a) {
             for (let i in a) {
-                core.items[i] = a[i];
+                polymorph_core.items[i] = a[i];
             }
         }
     };

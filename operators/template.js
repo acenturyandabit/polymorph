@@ -1,4 +1,4 @@
-core.registerOperator("template", {
+polymorph_core.registerOperator("template", {
     displayName: "Template",
     description: "A quickstart template. Very minimal."
 }, function (container) {
@@ -12,7 +12,7 @@ core.registerOperator("template", {
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", function (d) {
@@ -20,7 +20,7 @@ core.registerOperator("template", {
         //do stuff with the item.
 
         //return true or false based on whether we can or cannot edit the item from this container.
-        //otherwise your items will be deleted by the core garbage collector when the user saves.
+        //otherwise your items will be deleted by the polymorph_core garbage collector when the user saves.
         return false;
     });
 

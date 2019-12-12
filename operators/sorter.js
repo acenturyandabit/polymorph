@@ -1,4 +1,4 @@
-core.registerOperator("sorter", {
+polymorph_core.registerOperator("sorter", {
     displayName: "Sorter",
     description: "Sort and categorise items, and see statistics about them."
 }, function (container) {
@@ -57,13 +57,13 @@ core.registerOperator("sorter", {
         }
         let trucount=0;
         let total=0;
-        for (let i in core.items){
+        for (let i in polymorph_core.items){
             if (this.settings.showProp){
-                if (core.items[i][this.settings.showProp]==undefined){
+                if (polymorph_core.items[i][this.settings.showProp]==undefined){
                     continue;
                 }
             }
-            let propval=core.items[i][this.settings.filterProp]||"";
+            let propval=polymorph_core.items[i][this.settings.filterProp]||"";
             let obj=document.createElement("p");
             obj.innerHTML=propval;
             re.lastIndex=0;
@@ -78,7 +78,7 @@ core.registerOperator("sorter", {
         this.rootdiv.querySelector(".pct").innerHTML=trucount+"/"+total+":"+(trucount/total*100)+"%";
     });
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //Saving and loading
     this.toSaveData = function () {

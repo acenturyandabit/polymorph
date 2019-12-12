@@ -2,7 +2,7 @@
 
 
 
-core.registerOperator(
+polymorph_core.registerOperator(
   "httree", {
     outerScroll: true
   },
@@ -144,7 +144,7 @@ core.registerOperator(
         if (e.target.innerText == "+") {
           // if items hidden, just show and return
           if (e.target.style.border) {
-            core.items[e.target.parentElement.dataset.id].httree.collapsed = false;
+            polymorph_core.items[e.target.parentElement.dataset.id].httree.collapsed = false;
             hide(e.target.parentElement.dataset.id);
             container.fire("updateItem", {
               sender: me,
@@ -155,9 +155,9 @@ core.registerOperator(
           //Create a new item
           let it ={};
           it.to={};
-          //register it with the core
-          let id = core.insertItem(it);
-          core.items[e.target.parentElement.dataset.id].to[id]=true;
+          //register it with the polymorph_core
+          let id = polymorph_core.insertItem(it);
+          polymorph_core.items[e.target.parentElement.dataset.id].to[id]=true;
           if (me.settings.filter && !it[me.settings.filter]) {
             it[me.settings.filter] = true;
           }
@@ -168,8 +168,8 @@ core.registerOperator(
         } else if (e.target.innerText == "x") {
           //remove the current item
           let id=e.target.parentElement.parentElement.dataset.id;
-          if (me.settings.filter)delete core.items[id][me.settings.filter];
-          else delete core.items[id].links;
+          if (me.settings.filter)delete polymorph_core.items[id][me.settings.filter];
+          else delete polymorph_core.items[id].links;
           container.fire("deleteItem", {
             id: e.target.parentElement.parentElement.dataset.id,
             sender: me
@@ -192,19 +192,19 @@ core.registerOperator(
       }
       //check if item is shown
       if (
-        (core.items[id].links) &&
-        (!me.settings.filter || core.items[id][me.settings.filter])
+        (polymorph_core.items[id].links) &&
+        (!me.settings.filter || polymorph_core.items[id][me.settings.filter])
       ) {
         let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
         if (!cdiv) {
-          if (core.items[id].links.parent) {
+          if (polymorph_core.items[id].links.parent) {
             let pdiv = me.rootdiv.querySelector(
-              "[data-id='" + core.items[id].links.parent + "']"
+              "[data-id='" + polymorph_core.items[id].links.parent + "']"
             );
             if (!pdiv) {
-              if (!this.cachedUpdateRequests[core.items[id].links.parent])
-                this.cachedUpdateRequests[core.items[id].links.parent] = [];
-              this.cachedUpdateRequests[core.items[id].links.parent].push(id);
+              if (!this.cachedUpdateRequests[polymorph_core.items[id].links.parent])
+                this.cachedUpdateRequests[polymorph_core.items[id].links.parent] = [];
+              this.cachedUpdateRequests[polymorph_core.items[id].links.parent].push(id);
             } else {
               cdiv = mkdiv(id);
               pdiv.children[3].appendChild(cdiv);
@@ -221,14 +221,14 @@ core.registerOperator(
           }
         }
         if (cdiv) {
-          if (core.items[id].boxsize) {
-            cdiv.children[1].style.minWidth = core.items[id].boxsize.w;
-            cdiv.children[1].style.height = core.items[id].boxsize.h;
+          if (polymorph_core.items[id].boxsize) {
+            cdiv.children[1].style.minWidth = polymorph_core.items[id].boxsize.w;
+            cdiv.children[1].style.height = polymorph_core.items[id].boxsize.h;
           }
-          cdiv.children[1].value = core.items[id].title || "";
-          if (core.items[id].style) {
-            cdiv.children[1].style.background = core.items[id].style.background;
-            cdiv.children[1].style.color = core.items[id].style.color;
+          cdiv.children[1].value = polymorph_core.items[id].title || "";
+          if (polymorph_core.items[id].style) {
+            cdiv.children[1].style.background = polymorph_core.items[id].style.background;
+            cdiv.children[1].style.color = polymorph_core.items[id].style.color;
           }
           //also hide children if that applies
           hide(id);
@@ -298,7 +298,7 @@ core.registerOperator(
         e.preventDefault();
         let id = draggingNode.dataset.id;
         //change the httree.parent of the element
-        core.items[id].links.parent = core.items[dropLocation].links.parent;
+        polymorph_core.items[id].links.parent = polymorph_core.items[dropLocation].links.parent;
         //insert the div itself
         divtarget.parentNode.insertBefore(draggingNode, divtarget.nextSibling);
         container.fire("updateItem", {
@@ -308,19 +308,19 @@ core.registerOperator(
       }
     };
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
     //cache requests to items that haven't been updated yet.
     this.cachedUpdateRequests = {};
     //these are optional but can be used as a reference.
 
     function barfill(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
-      if (me.settings.attr && core.items[id][me.settings.attr]) cdiv.children[0].style.background = "linear-gradient(to right,red," + core.items[id][me.settings.attr] + "%,red," + core.items[id][me.settings.attr] + "%, white," + core.items[id][me.settings.attr] + "%,white)";
+      if (me.settings.attr && polymorph_core.items[id][me.settings.attr]) cdiv.children[0].style.background = "linear-gradient(to right,red," + polymorph_core.items[id][me.settings.attr] + "%,red," + polymorph_core.items[id][me.settings.attr] + "%, white," + polymorph_core.items[id][me.settings.attr] + "%,white)";
     }
 
     function hide(id) {
       let cdiv = me.rootdiv.querySelector("[data-id='" + id + "']");
-      if (core.items[id].httree && core.items[id].httree.collapsed) {
+      if (polymorph_core.items[id].httree && polymorph_core.items[id].httree.collapsed) {
         cdiv.children[3].classList.add("smoothHide"); //style.display = "none";
         cdiv.children[2].style.border = "3px dashed red";
       } else {
@@ -339,7 +339,7 @@ core.registerOperator(
       let s = d.sender;
       if (s == me) return;
       deselect();
-      if (core.items[id].links) {
+      if (polymorph_core.items[id].links) {
         select(id);
       }
       // An item was focused.
@@ -358,13 +358,13 @@ core.registerOperator(
     };
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
-    //////////////////Handling local changes to push to core//////////////////
+    //////////////////Handling local changes to push to polymorph_core//////////////////
 
-    //Register changes with core
+    //Register changes with polymorph_core
 
     this.rootdiv.addEventListener("input", e => {
       if (!e.target.parentElement.matches("[data-id]")) return;
-      core.items[e.target.parentElement.dataset.id].title = e.target.value;
+      polymorph_core.items[e.target.parentElement.dataset.id].title = e.target.value;
       let itemID = e.target.parentElement.dataset.id;
       container.fire("updateItem", {
         id: itemID,
@@ -375,14 +375,14 @@ core.registerOperator(
     this.rootdiv.addEventListener("mouseup", (e) => {
       if (e.target.tagName == "TEXTAREA") {
         let id = e.target.parentElement.dataset.id;
-        core.items[id].boxsize = {
+        polymorph_core.items[id].boxsize = {
           w: e.target.style.minWidth,
           h: e.target.style.height
         };
       }
     })
 
-    //Register focus with core
+    //Register focus with polymorph_core
     this.somethingwasfocused = function () {
       container.fire("focus", {
         id: itemID,
@@ -409,8 +409,8 @@ core.registerOperator(
       it.httree = {};
       it.httree.parent = me.settings.selected;
       it.title = data;
-      //register it with the core
-      let id = core.insertItem(it);
+      //register it with the polymorph_core
+      let id = polymorph_core.insertItem(it);
       if (me.settings.filter && !it[me.settings.filter]) {
         it[me.settings.filter] = true;
       }
@@ -441,7 +441,7 @@ core.registerOperator(
         contextedElement = tgt.dataset.id;
         if (me.settings.attr) {
           me.viewContextMenu.querySelector(".attribute").disabled = false;
-          me.viewContextMenu.querySelector(".attribute").value = core.items[contextedElement][me.settings.attr] || "";
+          me.viewContextMenu.querySelector(".attribute").value = polymorph_core.items[contextedElement][me.settings.attr] || "";
         } else me.viewContextMenu.querySelector(".attribute").disabled = true;
         return true;
       }
@@ -463,9 +463,9 @@ core.registerOperator(
       );
 
       function updateStyle(e) {
-        if (!core.items[contextedElement].style)
-          core.items[contextedElement].style = {};
-        core.items[contextedElement].style[e.target.className] = e.target.value;
+        if (!polymorph_core.items[contextedElement].style)
+          polymorph_core.items[contextedElement].style = {};
+        polymorph_core.items[contextedElement].style[e.target.className] = e.target.value;
         container.fire("updateItem", {
           sender: this,
           id: contextedElement
@@ -477,23 +477,23 @@ core.registerOperator(
         if (mediv.children[3].children.length) {
           let ta = 0;
           for (let i = 0; i < mediv.children[3].children.length; i++) {
-            if (core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
+            if (polymorph_core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
               ta += refreshAttribute(mediv.children[3].children[i].dataset.id);
             }
           }
           ta = ta / mediv.children[3].children.length;
-          core.items[id][me.settings.attr] = ta;
+          polymorph_core.items[id][me.settings.attr] = ta;
         }
         //update display
         barfill(id)
-        return core.items[id][me.settings.attr];
+        return polymorph_core.items[id][me.settings.attr];
       }
 
       function validateAttribute(id, state, val) {
         let mediv = me.rootdiv.querySelector("[data-id='" + id + "']");
         switch (state) {
           case 0: // initial set, propagate both ways
-            core.items[id][me.settings.attr] = val;
+            polymorph_core.items[id][me.settings.attr] = val;
             //validate attr of parent
             if (mediv.parentElement.parentElement.dataset.id) {
               validateAttribute(mediv.parentElement.parentElement.dataset.id, 1);
@@ -506,18 +506,18 @@ core.registerOperator(
           case 1: // calls to parents (aggregate)
             let ta = 0;
             for (let i = 0; i < mediv.children[3].children.length; i++) {
-              if (core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
-                ta += core.items[mediv.children[3].children[i].dataset.id][me.settings.attr];
+              if (polymorph_core.items[mediv.children[3].children[i].dataset.id][me.settings.attr]) {
+                ta += polymorph_core.items[mediv.children[3].children[i].dataset.id][me.settings.attr];
               }
             }
-            core.items[id][me.settings.attr] = ta / mediv.children[3].children.length;
+            polymorph_core.items[id][me.settings.attr] = ta / mediv.children[3].children.length;
             //validate attr of parent
             if (mediv.parentElement.parentElement.dataset.id) {
               validateAttribute(mediv.parentElement.parentElement.dataset.id, 1);
             }
             break;
           case 2: // calls to children (set)
-            core.items[id][me.settings.attr] = val;
+            polymorph_core.items[id][me.settings.attr] = val;
             //validate attr of children
             for (let i = 0; i < mediv.children[3].children.length; i++) {
               validateAttribute(mediv.children[3].children[i].dataset.id, 2, val);
@@ -536,8 +536,8 @@ core.registerOperator(
       me.viewContextMenu.querySelector('.attribute').addEventListener("input", (e) => validateAttribute(contextedElement, 0, Number(e.target.value)));
       me.viewContextMenu.querySelector('.reatt').addEventListener("click", (e) => me.viewContextMenu.querySelector(".attribute").value = refreshAttribute(contextedElement));
       me.viewContextMenu.querySelector('.collapsechildren').addEventListener("click", (e) => {
-        if (!core.items[contextedElement].httree) core.items[contextedElement].httree = {};
-        core.items[contextedElement].httree.collapsed = !core.items[contextedElement].httree.collapsed;
+        if (!polymorph_core.items[contextedElement].httree) polymorph_core.items[contextedElement].httree = {};
+        polymorph_core.items[contextedElement].httree.collapsed = !polymorph_core.items[contextedElement].httree.collapsed;
         hide(contextedElement);
       });
     });
@@ -566,11 +566,11 @@ core.registerOperator(
     this.dialogUpdateSettings = () => {
       this.settings.filter = this.dialogDiv.querySelector(".filterclass").value;
       // pull settings and update when your dialog is closed.
-      container.fire("updateView");
+      container.fire("updateItem", { id: this.container.id });
       for (let i = 0; i < this.secondaryDiv.children.length; i++) {
         this.secondaryDiv.children[i].remove();
       }
-      for (let i in core.items) {
+      for (let i in polymorph_core.items) {
         this.drawItem(i);
       }
     };

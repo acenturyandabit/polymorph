@@ -1,4 +1,4 @@
-core.registerOperator("miniBrowser", function (container) {
+polymorph_core.registerOperator("miniBrowser", function (container) {
     let me = this;
     me.container=container;
     this.settings = {};
@@ -18,7 +18,7 @@ core.registerOperator("miniBrowser", function (container) {
     //hide if the container is currently moving - just as a convenience measure?
 
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
 
@@ -35,7 +35,7 @@ core.registerOperator("miniBrowser", function (container) {
         me.fire("updateView");
     });
 
-    //////////////////Handling local changes to push to core//////////////////
+    //////////////////Handling local changes to push to polymorph_core//////////////////
 
     //Handle item creation, locally
 

@@ -269,7 +269,7 @@ function bit(maxR) {
   this.dr = Math.random() * maxR;
 }
 
-///////Kaleiocore
+///////Kaleiopolymorph_core
 function startOrbit3d() {
   let things = document.getElementsByClassName("orbit3d");
   for (i = 0; i < things.length; i++) {

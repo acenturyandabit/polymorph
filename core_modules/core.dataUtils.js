@@ -1,17 +1,17 @@
-core.datautils = {};
+polymorph_core.datautils = {};
 //detect and perform all decompression operations.
 //compressions should be an array of object with type = the type of compression used.
-core.datautils.decompress = function (data) {
+polymorph_core.datautils.decompress = function (data) {
     if (data.compressions) {
         for (let i = 0; i < data.compressions.length; i++) {
-            data = core.datautils[data.compressions[i].type].decompress(data, i);
+            data = polymorph_core.datautils[data.compressions[i].type].decompress(data, i);
         }
         return data.items;
     }
     else return data;
 }
 
-core.datautils.precompress = function (data, type) {
+polymorph_core.datautils.precompress = function (data, type) {
     //Deep copy it, just in case
     data = JSON.parse(JSON.stringify(data));
 
@@ -25,9 +25,9 @@ core.datautils.precompress = function (data, type) {
     return data;
 }
 
-core.datautils.IDCompress = {
+polymorph_core.datautils.IDCompress = {
     compress: function (data) {
-        data = core.datautils.precompress(data, "IDCompress");
+        data = polymorph_core.datautils.precompress(data, "IDCompress");
         let propDict = {};
         for (let i in data.items) {
             for (let j in data.items[i]) {
@@ -83,20 +83,20 @@ core.datautils.IDCompress = {
     }
 }
 
-core.datautils.linkSanitize = () => {
+polymorph_core.datautils.linkSanitize = () => {
     //clean out all links which point to invalid things.
-    for (let i in core.items) {
-        if (core.items[i].to) {
-            for (let j in core.items[i].to) {
-                if (!core.items[j]) {
-                    delete core.items[i].to[j];
+    for (let i in polymorph_core.items) {
+        if (polymorph_core.items[i].to) {
+            for (let j in polymorph_core.items[i].to) {
+                if (!polymorph_core.items[j]) {
+                    delete polymorph_core.items[i].to[j];
                 }
             }
         }
     }
 }
 
-core.datautils.viewToItems = (obj) => {
+polymorph_core.datautils.viewToItems = (obj) => {
     //_meta is special. Just a little safeguard so it doesnt get overwritten or anything.
     let newObj = {};
     for (let i in obj.items) {
@@ -127,6 +127,7 @@ core.datautils.viewToItems = (obj) => {
         if (obj._od.t == "subframe") {
             createObjectFromRect(obj._od.data.rectUnderData, newID);
         }
+        return newID;
     }
 
     function createObjectFromRect(r, parent, isView) {
@@ -145,9 +146,10 @@ core.datautils.viewToItems = (obj) => {
             createObjectFromRect(r.c[0], newID);
             createObjectFromRect(r.c[1], newID);
         } else if (r.o) {
-            r.o.forEach((o) => {
-                createObjectFromOperator(o, newID);
+            let oids=r.o.map((o) => {
+                return createObjectFromOperator(o, newID);
             })
+            obj._rd.s=oids[r.s];
         }
         delete obj._rd.c;
         delete obj._rd.o;
@@ -163,15 +165,15 @@ core.datautils.viewToItems = (obj) => {
 
 //called by docloading, and called when the preferences dialog is closed.
 
-core.datautils.upgradeSaveData = function (id, source) {
-    if (!core.userData.documents[id]) {
-        core.userData.documents[id] = { saveSources: {}, saveHooks: {} }
-    }
+polymorph_core.datautils.upgradeSaveData = function (id, source) {
+    let defaultDoc={ saveSources: {}, saveHooks: {} };
+    Object.assign(defaultDoc,polymorph_core.userData.documents[id]);
+    polymorph_core.userData.documents[id] = defaultDoc; 
     if (source) {
-        if (!core.userData.documents[id].saveSources[source]) {
+        if (!polymorph_core.userData.documents[id].saveSources[source]) {
             //if the source didnt exist, then we assume it didnt exist and we hook it, unless explicitly stated otherwise.
-            core.userData.documents[id].saveHooks[source] = true;
+            polymorph_core.userData.documents[id].saveHooks[source] = true;
         }
-        core.userData.documents[id].saveSources[source] = core.userData.documents[id].saveSources[source] || id;
+        polymorph_core.userData.documents[id].saveSources[source] = polymorph_core.userData.documents[id].saveSources[source] || id;
     }
 }

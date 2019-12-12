@@ -1,4 +1,4 @@
-core.registerOperator("scriptrunner", {
+polymorph_core.registerOperator("scriptrunner", {
     displayName: "Scriptrunner",
     description: "Runs scripts."
 }, function (container) {
@@ -23,13 +23,13 @@ core.registerOperator("scriptrunner", {
     /*Example script:*/
     /*
     instance.on("updateItem",(d)=>{
-        console.log(core.items[d.id]);
+        console.log(polymorph_core.items[d.id]);
     })
     */
 
     container.div.appendChild(this.rootdiv);
 
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", (d) => {

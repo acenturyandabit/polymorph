@@ -1,5 +1,5 @@
 (() => {
-    core.registerOperator("calendar", {
+    polymorph_core.registerOperator("calendar", {
         displayName: "Calendar",
         description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
     },
@@ -33,15 +33,15 @@
                             me.notifstack = [];
                         }
                         let tzd = new Date();
-                        for (let i in core.items) {
+                        for (let i in polymorph_core.items) {
                             let tzd = new Date();
                             try {
                                 for (let dp = 0; dp < me.settings.dateproperties.length; dp++) {
-                                    if (core.items[i][me.settings.dateproperties[dp]] && core.items[i][me.settings.dateproperties[dp]].date) {
-                                        let result = dateParser.getCalendarTimes(core.items[i][me.settings.dateproperties[dp]].date, start, end);
+                                    if (polymorph_core.items[i][me.settings.dateproperties[dp]] && polymorph_core.items[i][me.settings.dateproperties[dp]].date) {
+                                        let result = dateParser.getCalendarTimes(polymorph_core.items[i][me.settings.dateproperties[dp]].date, start, end);
                                         for (let j = 0; j < result.length; j++) {
                                             me.notifstack.push({
-                                                txt: core.items[i][me.settings.titleproperty],
+                                                txt: polymorph_core.items[i][me.settings.titleproperty],
                                                 time: result[j].date
                                             });
                                             let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
@@ -53,13 +53,13 @@
                                             eisostring = eisostring.toISOString();
                                             let col = "";
                                             let bak = "";
-                                            if (core.items[i].style) {
-                                                bak = core.items[i].style.background;
-                                                col = core.items[i].style.color || matchContrast(core.items[i].style.background);
+                                            if (polymorph_core.items[i].style) {
+                                                bak = polymorph_core.items[i].style.background;
+                                                col = polymorph_core.items[i].style.color || matchContrast(polymorph_core.items[i].style.background);
                                             }
                                             allList.push({
                                                 id: i,
-                                                title: core.items[i][me.settings.titleproperty],
+                                                title: polymorph_core.items[i][me.settings.titleproperty],
                                                 backgroundColor: bak,
                                                 textColor: col,
                                                 start: isostring,
@@ -100,7 +100,7 @@
             }, true);
             this.updateItem = function (id, sender) {
                 if (sender == this) return;
-                if (!core.items[id][me.settings.dateproperty]) return;
+                if (!polymorph_core.items[id][me.settings.dateproperty]) return;
                 updateItemCapacitor.submit();
                 //Check if item is shown
                 //return true or false based on whether we can or cannot edit the item from this container
@@ -118,10 +118,10 @@
                 this.updateItem(d.id, d.sender);
             });
             //Handle a change in settings (either from load or from the settings dialog or somewhere else)
-            this.processSettings = function () {
+            this.processSettings = () => {
                 try {
                     $(this.rootdiv).fullCalendar('refetchEvents');
-                    me.fire("updateView");
+                    container.fire("updateItem", { id: this.container.id });
                 } catch (e) {
                     console.log("JQUERY not ready yet :/");
                 }
@@ -220,10 +220,10 @@
 
             this.fromSaveData = function (d) {
                 Object.assign(this.settings, d);
-                if (this.settings.dateproperty){
+                if (this.settings.dateproperty) {
                     this.settings.dateproperties = [this.settings.dateproperty];
                     delete this.settings.dateproperty;
-                } 
+                }
                 this.processSettings();
             }
 

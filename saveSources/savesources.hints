@@ -1,6 +1,6 @@
-when the 'userSave' event is fired, all sources save based on the id stored in core.userData.documents[core.currentDocID].saveSources[saveSourceName].
+when the 'userSave' event is fired, all sources save based on the id stored in polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[saveSourceName].
 
-To check if a document exists, check whether core.userData.documents[core.currentDocID] has any data.
+To check if a document exists, check whether polymorph_core.userData.documents[polymorph_core.currentDocID] has any data.
 
-To initialise a save source, set core.userData.documents[core.currentDocID].saveSources[source] = core.currentDocID.
+To initialise a save source, set polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[source] = polymorph_core.currentDocID.
 The save source should then take on this and do something with it, e.g. hash it or otherwise.

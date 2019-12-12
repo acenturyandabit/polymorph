@@ -1,17 +1,17 @@
-function addCoreClipboard(core){
-    core.toClip=function(){
+function addpolymorph_coreClipboard(polymorph_core){
+    polymorph_core.toClip=function(){
 
     }
 }
 
 /*
 mouseleave
--> core.toclip (an id){
+-> polymorph_core.toclip (an id){
 
 }
 
 mouseenter:
-call before: -> core.fromclip(an id){
+call before: -> polymorph_core.fromclip(an id){
 
 }
 

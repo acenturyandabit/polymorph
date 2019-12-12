@@ -1,4 +1,4 @@
-core.registerOperator("stack", {
+polymorph_core.registerOperator("stack", {
     displayName: "Stack",
     description: "Stack operators and scroll through them like a browseable webpage.",
     targetForward:true
@@ -55,7 +55,7 @@ core.registerOperator("stack", {
         obj.outerDiv.style.boxSizing="border-box";
         obj.outerDiv.classList.add("stack_Container");
         me.rootdiv.insertBefore(obj.outerDiv,me.more);
-        obj.rect = new _rect(core, obj, RECT_ORIENTATION_X, 1, 0);
+        obj.rect = new _rect(polymorph_core, obj, RECT_ORIENTATION_X, 1, 0);
         if (r) obj.rect.fromSaveData(r.rect);
         me.rects.push(obj);
     }
@@ -103,7 +103,7 @@ core.registerOperator("stack", {
         container.fire("updateView",{sender:this});
     }
     this.more.addEventListener("click", this.addStack);
-    //////////////////Handle core item updates//////////////////
+    //////////////////Handle polymorph_core item updates//////////////////
     //Saving and loading
     this.toSaveData = function () {
         let obj = {};
