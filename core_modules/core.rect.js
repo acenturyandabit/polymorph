@@ -653,10 +653,10 @@ polymorph_core.rect = function (rectID) {
     if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
         if (polymorph_core.items[v]._od) {
             //v is container
-            polymorph_core.tieContainer(v);
+            this.tieContainer(v);
         } else {
             //v is rect
-            polymorph_core.tieRect(v);
+            this.tieRect(v);
         }
     })
 
