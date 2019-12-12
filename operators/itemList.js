@@ -446,7 +446,7 @@ core.registerOperator("itemList", function (container) {
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
             delete core.items[e.target.parentElement.dataset.id][me.settings.filterProp];
-            container.fire("deleteItem", {
+            container.fire("updateItem", {
                 id: e.target.parentElement.dataset.id,
                 sender: this
             });

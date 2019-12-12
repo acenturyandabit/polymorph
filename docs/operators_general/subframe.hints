@@ -1,8 +1,0 @@
-If the operator has a 'passthrough' function, then the container will assume that this function allows it to pass through calls to the underlying rect(s) for things like palette changes, force refreshes, dialogs and so on. 
-
-The syntax of the passthrough function shall be:
-
-operator.passthrough = function(fname, args){
-    return operator.rect[fname](args);
-    OR return [operator.rect[0][fname](args), operator.rect[1][fname](args)] etc.
-}

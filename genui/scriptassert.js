@@ -15,7 +15,7 @@ done: some function.
 For consistency, the module name should be in all lowercase and not include the extension name e.g. fullCalendar.js should be just fullcalendar.
 */
 window.addEventListener('error', function (e) {
-    if (e.target.tagName == "SCRIPT") e.target.onclick();//click the script element to push an event to it
+    if (e.target.tagName == "SCRIPT" && e.target.onclick) e.target.onclick();//click the script element to push an event to it
 }, true);
 
 var __assert_states = {};

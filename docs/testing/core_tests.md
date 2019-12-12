@@ -1,0 +1,5 @@
+- Test: Open a new window
+    - Expected result: rect, opselect opens up.
+- Test: Press save>open: 
+    - If a current existing document, then open in new window
+    - Otherwise, open in same window.

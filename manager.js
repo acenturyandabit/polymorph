@@ -4,12 +4,14 @@ var __manager_profiles = {
             ["filescreen", "genui/filescreen.js"],
             ["templates", "templates.js"],
             ["core", "core.js"],
+            ["core_dialog", "core_modules/core.dialog.js"],
             ["core_tutorial", "core_modules/core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
             ["core_docLoading", "core_modules/core.docLoading.js"],
             ["core_dataUtils", "core_modules/core.dataUtils.js"],
-            ["core_view", "core.view.js"],
-            ["container", "container.js"],
+            ["core_view", "core_modules/core.view.js"],
+            ["core_container", "core_modules/core.container.js"],
+            ["core_itemfx", "core_modules/core.itemfx.js"],
         ]
     },
     operators: {
@@ -26,8 +28,8 @@ var __manager_profiles = {
             //["chat", "operators/chat.js"],
             ["itemcluster", "operators/itemcluster.js"],
             //["turmach", "operators/turmach.js"],
-            ["roundshow", "operators/know/roundshow.js"],
-            ["tester", "operators/know/tester.js"],
+            ["roundshow", "operators/roundshow.js"],
+            ["tester", "operators/tester.js"],
             ["ruigen", "operators/ruigen/rui_operator.js"],
             //["calendar2", "operators/calendar.2.js"],
             ["scriptrunner", "operators/scriptrunner.js"]
@@ -57,9 +59,8 @@ var __manager_profiles = {
     },
     default: {
         files: [
-            ["core_dialog", "core_modules/core.dialog.js"],
             { r: "base" },
-            ["rect", "rect.js"],
+            ["core_rect", "core_modules/core.rect.js"],
             ["core_palette", "core_modules/core.palette.js"],
             ["coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },

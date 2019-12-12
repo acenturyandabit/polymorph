@@ -1,42 +1,11 @@
 (() => {
-    function upgradeSaveData(id, source) { // also handles creation of new savedatas. Just hand it an empty object or undefined .
-        if (core.userData.documents[id] == undefined || Object.keys(core.userData.documents[id]).length == 0) {
-            core.userData.documents[id] = {
-                saveSources: {}
-            };
-        }
-        if (!core.userData.documents[core.currentDocID].saveSources) {
-            core.userData.documents[core.currentDocID].saveSources = {};
-        }
-        if (core.userData.documents[core.currentDocID].saveSources.length) {//this is an array
-            let sses = {};
-            for (let i = 0; i < core.userData.documents[core.currentDocID].saveSources.length; i++) {
-                sses[core.userData.documents[core.currentDocID].saveSources] = core.currentDocID;
-            }
-            core.userData.documents[core.currentDocID].saveSources = sses;
-        }
-        if (core.userData.documents[id].saveHooks) {
-            Object.assign(core.userData.documents[id].saveSources, core.userData.documents[id].saveHooks);
-        }
-        if (source) {
-            if (!(core.userData.documents[id].saveSources[source])) {
-                //this is a new document.... do stuff
-                //Create a new profile for this save source and document
-                core.userData.documents[id].saveSources[source] = core.currentDocID;
-            }
-        }
-        if (!Object.keys(core.userData.documents[id].saveSources).length) {
-            core.userData.documents[id].saveSources["lf"] = core.currentDocID;//at least you got him, eh?
-            core.rehookAll(id);
-        }
-    }
 
     core.loadDocument = async function () {
         let params = new URLSearchParams(window.location.search);
         let handled = false;
         let source;
         if (params.has("doc")) {
-            //screw the id, we just gonna use core.userData straight up
+            //Load from core.userData
             source = params.get("src") || 'lf';
             core.currentDocID = params.get("doc");
             handled = true;
@@ -47,10 +16,11 @@
                 let loc = window.location.href
                 loc = loc.replace(/\?o/, "");
                 history.pushState({}, "", loc);
+
                 core.filescreen.showSplash();
                 return;
             }
-            //For non-polymorph links, like drive links
+            //For non-polymorph links (without doc), like drive links
             //try each save source to see if it can handle this kind of request
             for (let i in core.saveSources) {
                 if (core.saveSources[i].canHandle) {
@@ -63,66 +33,108 @@
                 }
             }
         }
-        if (handled) {
-            //if the current document doesnt exist, then create it.
-            upgradeSaveData(core.currentDocID, source);
-            //if there is a template, knock off the template from the url and remember it (discreetly)
-            let template;
-            if (params.has("tmp")) {
-                template = params.get("tmp");
-                let loc = window.location.href
-                loc = loc.replace(/&tmp=[^&]+/, "");
-                history.pushState({}, "", loc);
-            }
-            //Load it
-            if (!core.userLoad(source, core.currentDocID, { initial: true, template: template })) {
-                core.instantNewDoc();
-            };
-        } else {
-            core.instantNewDoc();
-        }
-    }
+        let d;
 
-    core.instantNewDoc = function () {
-        //don't reload the page, directly load a new document, so we can handle the case appropriately
-        //some parameters
-        let template = core.filescreen.baseDiv.querySelector(".tmplt").value;
-        let source = core.filescreen.baseDiv.querySelector(".source").value;
-        let nm = core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
-        let id = guid(5);
-        //generate the URL
-        window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${id}&src=${source}`);
-        let d = {
-            displayName: nm,
-            currentView: "default",
-            id: core.currentDocID,
-            views: {},
-            items: {}
-        }
-        d.id = core.currentDocID = id;
-        if (template != "none") {
-            Object.assign(d, polymorphTemplates[template]);
-        }
-        //generate the save instance
-        upgradeSaveData(core.currentDocID, source);
+        if (!handled) core.currentDocID = guid(6, core.userData.documents);
+
+
+
+
+
+        core.datautils.upgradeSaveData(core.currentDocID, source);
         core.rehookAll(core.currentDocID);
-        core.isNewDoc = true;
-        core.fire("documentCreated", id);
+
+        if (handled) {
+            //fetch it, if it exists
+            d = await core.fetchDoc(source, core.currentDocID);
+        } else {
+            source = "lf";
+        }
+
+        window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${core.currentDocID}&src=${source}`);
+
+        //if the current document userData doesnt exist, then create it.
+        // e.g. user starts, user presses new, we get redirected to ?doc=etc&src=lf, but there is no entry.
+
+        let template;
+        //if there is a template, knock off the template from the url and remember it (discreetly)
+        if (params.has("tmp")) {
+            template = params.get("tmp");
+            let loc = window.location.href
+            loc = loc.replace(/&tmp=[^&]+/, "");
+            history.pushState({}, "", loc);
+        }
+        //Create a doc if not created, also add at least one baserect.
+        //TODO: add document name to 2nd argument
+        d = core.sanityCheckDoc(d, { template: template });
+
         core.fromSaveData(d);
-        core.filescreen.baseDiv.style.display = "none";
-        document.querySelector(".wall").style.display = "none";
-        //dont care about the 
     }
 
-    core.on("updateItem,updateView", () => { core.isNewDoc = false });
+    //This is called by core.loadDocument and the filescreen.
+    core.sanityCheckDoc = function (data, settings) {
+        //if none then create new
+        if (!data) {
+            data = {
+                _meta: {
+                    displayName: settings.name || core.currentDocID,
+                    id: core.currentDocID
+                }
+            };
+            if (settings.template) {
+                Object.assign(data, polymorphTemplates[template]);
+            }
+            core.fire("documentCreated", { id: core.currentDocID, data: data });
+        }
+
+        //Decompress
+        data = core.datautils.decompress(data);
+
+        //Upgrade if necessary
+        if (!data._meta) {
+            data = core.datautils.viewToItems(data);
+        }
+
+        //Do some sanity checks 
+        if (!(data._meta.currentView && data[data._meta.currentView] && data[data._meta.currentView]._rd)) {
+            for (let i in data) {
+                //choose a view to assign as default
+                if (data[i]._rd && !(data[i]._rd.p)) {
+                    data._meta.currentView = i;
+                    break;
+                }
+            }
+            //if still not good, then add a new views
+            if (!(data._meta.currentView && data[data._meta.currentView]._rd)) {
+                //Add our first rect
+                let newRectID = guid(6, data);
+                data[newRectID] = { _rd: {} };
+                data._meta.currentView = newRectID;
+
+                //Also add an operator.
+                data[guid(6, data)] = {
+                    _od: { t: "opSelect", p: newRectID }
+                }
+            }
+        }
+        return data;
+    }
 
     core.rehookAll = function (id) { // TODO: redo this with promises to make it async compatible
-        for (let i in core.userData.documents[id].saveSources) {
+        for (let i in core.userData.documents[id].saveHooks) {
             if (core.saveSources[i].unhook) core.saveSources[i].unhook();
-            if (core.saveSources[i].hook) core.saveSources[i].hook(core.currentDocID, core.userData.documents[id].saveSources[i]);
+            if (core.saveSources[i].hook) core.saveSources[i].hook();
         }
     }
 
+    core.resetDocument = function () {
+        core.items = {};
+        core.containers = {};
+        for (let i in core.rects) {
+            core.rects[i].outerDiv.remove();
+            delete core.rects[i];
+        }
+    }
 
     core.saveSources = [];
 
@@ -132,7 +144,7 @@
         core.addToDialog(id);
     }
 
-    core.userLoad = async function (source, data, state) { // direct from URL
+    core.fetchDoc = async function (source, data, state) {
         if (!state) state = {};
         //do some checks before we do any lasting damage
         if (!core.saveSources[source]) {
@@ -149,38 +161,28 @@
             document.querySelector(".wall").style.display = "none";
             return;
         }
-
-        //Does data exist? If not, make a new document.
         if (!d) {
-            d = {
-                displayName: "New Workspace",
-                currentView: "default",
-                id: core.currentDocID,
-                views: {},
-                items: {}
-            }
-            core.fire("documentCreated", core.currentDocID);
-            if (state.template) {
-                Object.assign(d, polymorphTemplates[state.template]);
-            }
+            return;
         }
+        document.querySelector(".wall").style.display = "none";
+        return d;
+    }
+
+    core.fromSaveData = function (data) {
+
         //Does the current document match the current document? 
-        if (!d.id) {
-            //older version savedata, convert!
-            d.id = core.currentDocID;
-        }
-        if (d.id != core.currentDocID) {
+        if (data._meta.id != core.currentDocID) {
             //Alert the user
             if (!confirm("Hmm... this source seems to be storing a different document to the one you requested. Continue loading?")) {
                 document.querySelector(".wall").style.display = "none";
                 return false;
             } else {
                 if (confirm("Create a new document that matches this datasource? (OK), or change the loaded data to this document name (CANCEL)?")) {
-                    core.currentDocID = d.id;
-                    upgradeSaveData(d.id, "lf");
+                    core.currentDocID = data._meta.id;
+                    upgradeSaveData(data._meta.id, "lf");
                     //reload the page
                     core.rehookAll(core.currentDocID);
-                    core.fire("userSave", d);
+                    core.fire("userSave", data);
                     core.saveUserData();
                     function f() {
                         if (core.savedOK) {
@@ -191,68 +193,49 @@
                     }
                     setTimeout(f, 1);
                 } else {
-                    d.id = core.currentDocID;
+                    data._meta.id = core.currentDocID;
                 }
             }
         }
-        core.fromSaveData(d);
-        core.rehookAll(core.currentDocID);
-        document.querySelector(".wall").style.display = "none";
-        return true;
-    }
-
-    core.fromSaveData = function (data) {
-        //load metadata, including views
         core.resetDocument();
-        core.currentDoc = data;
-        core.items = data.items;
-        core.datautils.linkSanitize();
-        // create allll the views
-        delete core.baseRects;
-        core.baseRects = {};
-        for (let i in core.currentDoc.views) {
-            //load up said view
-            core.baseRects[i] = new _rect(core, undefined, core.currentDoc.views[i]);
-        }
-        // cry a little when they arent created
-        if (!core.userData.documents[core.currentDocID]) core.userData.documents[core.currentDocID] = {};
-        if (!core.userData.documents[core.currentDocID].currentView || !core.currentDoc.views[core.userData.documents[core.currentDocID].currentView]) core.userData.documents[core.currentDocID].currentView = Object.keys(core.currentDoc.views)[0];
-        core.isSaving = true; // set this so that autosave doesnt save for each item
-        core.presentView(core.userData.documents[core.currentDocID].currentView);
+
+        core.items = data;
+
+        //Create all the rects
+        core.rects = {};//live rects
         for (let i in core.items) {
-            core.standardiseItem(i);
+            if (core.items[i]._rd) {
+                core.rects[i] = new core.rect(i);
+            }
         }
+        //show the prevailing rect.
+        core.switchView(core.items._meta.currentView);
+
+
+
+        //Create all the operators, to go into the rects
+        core.containers = {};//live rects
         for (let i in core.items) {
-            core.fire("updateItem", {
-                id: i
-            });
+            if (core.items[i]._od) {
+                core.containers[i] = new core.container(i);
+            }
         }
-        core.isSaving = false;
-        core.updateSettings();
+
         core.unsaved = false;
+        core.datautils.linkSanitize();
+        core.updateSettings();
+        document.querySelector(".wall").style.display = "none";
     }
 
     core.toSaveData = function () {
-        //patch current doc
-        core.currentDoc.views[core.userData.documents[core.currentDocID].currentView] = core.baseRect.toSaveData();
-        //clean up
-        core.isSaving = true;
-        for (let i in core.items) {
-            core.itemShouldBeDeleted = true;
-            core.fire("updateItem", {
-                id: i,
-                sender: "GARBAGE_COLLECTOR"
-            });
-            if (core.itemShouldBeDeleted) {
-                delete core.items[i];
-            }
+        //politely ask the operators and rects to update their items
+        for (let i in core.rects) {
+            core.items[i]._rd = core.rects[i].toSaveData();
         }
-        core.isSaving = false;
-        //patch items
-        core.currentDoc.items = core.items;
-        //save to all sources
-        //upgrade older save systems
-        return core.currentDoc;
+        for (let i in core.containers) {
+            core.items[i]._od = core.containers[i].toSaveData();
+        }
+        return core.items;
     }
 
     core.cetch('userSave', (data, state) => {
@@ -268,8 +251,8 @@
         //save to all sources
         //upgrade older save systems
         let d = core.toSaveData();
-        upgradeSaveData(core.currentDocID);
-        core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.currentDoc.displayName);
+        core.datautils.upgradeSaveData(core.currentDocID);
+        core.filescreen.saveRecentDocument(core.currentDocID, undefined, core.items._meta.displayName);
         //trigger saving on all save sources
         core.fire("userSave", d);
     };
@@ -340,7 +323,7 @@
             document.querySelector(".saveSources").addEventListener("click", () => {
                 for (let i in core.saveSources)
                     if (core.saveSources[i].showDialog) core.saveSources[i].showDialog();
-                for (let i in core.userData.documents[core.currentDocID].saveSources) {
+                for (let i in core.userData.documents[core.currentDocID].saveHooks) {
                     try {
                         core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
                     }
@@ -354,23 +337,24 @@
         });
         loadDialog.querySelector(".cb").addEventListener("click", core.saveUserData);
     })();
+
     core.loadInnerDialog.addEventListener("input", (e) => {
         //save to this source checkbox checked
         if (e.target.matches("[data-role='tsync']")) {
             let csource = e.target.parentElement.parentElement.parentElement.dataset.saveref;
             if (e.target.checked) {
                 if (!core.userData.documents[core.currentDocID].saveSources[csource]) core.userData.documents[core.currentDocID].saveSources[csource] = core.currentDocID;
-                if (core.saveSources[csource].hook) core.saveSources[csource].hook(core.userData.documents[core.currentDocID].saveSources[csource]);
+                if (core.saveSources[csource].hook) core.saveSources[csource].hook();
                 core.userData.documents[core.currentDocID].saveHooks[csource] = true;
             } else {
-                if (core.saveSources[csource].unhook) core.saveSources[csource].unhook(core.userData.documents[core.currentDocID].saveSources[csource]);
+                if (core.saveSources[csource].unhook) core.saveSources[csource].unhook();
                 delete core.userData.documents[core.currentDocID].saveHooks[csource];
             }
             core.saveUserData();
         }
     })
 
-    core.loadInnerDialog.addEventListener("click", (e) => {
+    core.loadInnerDialog.addEventListener("click", async (e) => {
         if (e.target.matches("[data-role='dlg_save']")) {
             //Get the save source to save now
             let src = e.target.parentElement.parentElement.dataset.saveref;
@@ -378,7 +362,33 @@
         } else if (e.target.matches("[data-role='dlg_load']")) {
             //Load from the save source
             let source = e.target.parentElement.parentElement.dataset.saveref;
-            core.userLoad(source, core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID)
+            let d = await core.fetchDoc(source, core.currentDocID, core.userData.documents[core.currentDocID].saveSources[source] || core.currentDocID);
+            d = core.sanityCheckDoc(d, core.currentDocID);
+            core.fromSaveData(d);
         }
     })
+
+    //a little nicety to warn user of unsaved items.
+    //#region
+    core.unsaved = false;
+    core.on("updateView,updateItem", (e) => {
+        if (!e || !e.load) {//if event was not triggered by a loading action
+            core.unsaved = true;
+        }
+    })
+    window.addEventListener("beforeunload", (e) => {
+        if (core.unsaved) {
+            e.preventDefault();
+            e.returnValue = "Hold up, you seem to have some unsaved changes. Are you sure you want to close this window?";
+        }
+    })
+    //#endregion
+
+    Object.defineProperty(core, "saveSourceData", {
+        get: () => {
+            return core.userData.documents[core.currentDocID];
+        }
+    })
+
+
 })();

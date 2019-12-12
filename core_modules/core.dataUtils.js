@@ -6,17 +6,20 @@ core.datautils.decompress = function (data) {
         for (let i = 0; i < data.compressions.length; i++) {
             data = core.datautils[data.compressions[i].type].decompress(data, i);
         }
+        return data.items;
     }
-    delete data.compressions;
-    return data;
+    else return data;
 }
 
 core.datautils.precompress = function (data, type) {
     //Deep copy it, just in case
     data = JSON.parse(JSON.stringify(data));
-    //set up the compression structure so we dont have to do it manually
+
     if (!data.compressions) {
-        data.compressions = [];
+        data={
+            compressions:[],
+            items:data
+        }
     }
     data.compressions.push({ type: type });
     return data;
@@ -90,5 +93,85 @@ core.datautils.linkSanitize = () => {
                 }
             }
         }
+    }
+}
+
+core.datautils.viewToItems = (obj) => {
+    //_meta is special. Just a little safeguard so it doesnt get overwritten or anything.
+    let newObj = {};
+    for (let i in obj.items) {
+        newObj[i] = obj.items[i];
+    }
+    //metadata
+    let meta = {};
+    for (let m in obj) {
+        if (m != "items" && m != "views") {
+            meta[m] = obj[m];
+            meta[m].lastChanged = Date.now();
+        }
+    }
+    newObj._meta = meta;
+    //views
+    function createObjectFromOperator(o, parent) {
+        let obj = { _od: {} };
+        Object.assign(obj._od, o.opdata);
+        obj._od.t = obj._od.type;
+        delete obj._od.type;
+        if (parent) {
+            obj._od.p = parent;
+        }
+        //ID is needed before subframe processing
+        let newID = guid(6, newObj);
+        newObj[newID] = obj;
+        //you need to deal with subrects here as well ://)
+        if (obj._od.t == "subframe") {
+            createObjectFromRect(obj._od.data.rectUnderData, newID);
+        }
+    }
+
+    function createObjectFromRect(r, parent, isView) {
+        let obj = { _rd: {} };
+        Object.assign(obj._rd, r);
+        obj._rd.ps = obj._rd.p;
+        delete obj._rd.p;
+        if (isView) {
+            obj._rd.vn = parent;
+        } else if (parent) {
+            obj._rd.p = parent;
+        }
+        let newID = guid(6, newObj);
+        newObj[newID] = {};//stake claim to the newID
+        if (r.c) {
+            createObjectFromRect(r.c[0], newID);
+            createObjectFromRect(r.c[1], newID);
+        } else if (r.o) {
+            r.o.forEach((o) => {
+                createObjectFromOperator(o, newID);
+            })
+        }
+        delete obj._rd.c;
+        delete obj._rd.o;
+        newObj[newID] = obj;
+        return newID;
+    }
+    for (let i in obj.views) {
+        let newRectID = createObjectFromRect(obj.views[i], i, true);
+        if (i == newObj._meta.currentView) newObj._meta.currentView = newRectID;
+    }
+    return newObj;
+}
+
+//called by docloading, and called when the preferences dialog is closed.
+
+core.datautils.upgradeSaveData = function (id, source) {
+    if (!core.userData.documents[id]) {
+        core.userData.documents[id] = { saveSources: {}, saveHooks: {} }
+    }
+    if (source) {
+        if (!core.userData.documents[id].saveSources[source]) {
+            //if the source didnt exist, then we assume it didnt exist and we hook it, unless explicitly stated otherwise.
+            core.userData.documents[id].saveHooks[source] = true;
+        }
+        core.userData.documents[id].saveSources[source] = core.userData.documents[id].saveSources[source] || id;
     }
 }

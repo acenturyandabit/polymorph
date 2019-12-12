@@ -86,15 +86,6 @@ core.registerOperator(
         ["OK!"]
       ]
     });
-    this.startTutorial = function () {
-      tu.start("hello").end(() => {
-        core.userData.introductions.httree = true;
-        core.saveUserData();
-      });
-    }
-    if (!core.userData.introductions.httree) {
-      this.startTutorial();
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Selecting and deselecting.

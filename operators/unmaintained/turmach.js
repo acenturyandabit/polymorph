@@ -165,25 +165,6 @@ core.registerOperator("turmach", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Tutorial
 
-    if (!core.userData.introductions[me.propertyName]) {
-        /*let tu = new _tutorial({
-            root: me.rootdiv
-        });
-        tu.addStep({
-            id: "hello",
-            target: me.rootdiv,
-            type: "shader",
-            contents: `<p>Double click to add a new box.</p>
-      <p>Click and drag to add new boxes!</p>`,
-            to: [
-                ["OK!"]
-            ]
-        });
-        tu.start("hello").end(() => {
-            core.userData.introductions[me.propertyName] = true;
-            core.saveUserData();
-        });*/
-    }
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
         if (d.sender == me) return;

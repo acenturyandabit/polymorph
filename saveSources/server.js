@@ -49,7 +49,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
         xmlhttp.send();
         return p;
     }
-    this.hook = async function (id) { 
+    this.hook = async function () { 
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use core.on("updateItem",handler) to listen to item updates and core.on("updateView",handler) as well.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -66,7 +66,7 @@ core.registerSaveSource("srv", function (core) { // a sample save source, implem
     })
 
     // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async function (id) {
+    this.unhook = async function () {
         //unhook previous hooks.
         this.toSave=false;
     }
