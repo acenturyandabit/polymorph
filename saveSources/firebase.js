@@ -21,10 +21,11 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     this.db = polymorph_core.firebase.db;
 
     this.pullAll = async function (res) {
+      if (!polymorph_core.saveSourceData["fb"]) polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
       if (!this.db) return;
       let snapshot = await this.db
         .collection("polymorph")
-        .doc(polymorph_core.currentDocID).collection("items").get();
+        .doc(polymorph_core.saveSourceData["fb"].docName).collection("items").get();
       //compile all its items. We're not going to compress anything (yet).
       let fulldoc = {}
       snapshot.docs.forEach(doc => {
@@ -35,9 +36,12 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     }
 
     this.hook = async () => {
+      if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
+        polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
+      }
       let root = this.db
         .collection("polymorph")
-        .doc(polymorph_core.currentDocID);
+        .doc(polymorph_core.saveSourceData["fb"].docName);
 
 
       //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
@@ -126,9 +130,9 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     div: this.dialog,
     type: "text",
     object: () => {
-      return polymorph_core.saveSourceData;
+      return polymorph_core.saveSourceData["fb"];
     },
-    property: "fb",
+    property: "docName",
     label: "Document ID",
     afterInput: (e) => {
       generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
@@ -136,7 +140,8 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
   });
   this.dialog.appendChild(generatedURL);
   this.showDialog = function () {
+    polymorph_core.saveSourceData["fb"] = {};
     me.addrop.load();
-    if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.fb) generatedURL.value = location.origin + location.pathname + `?doc=${polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.fb}&src=fb`;
+    if (polymorph_core.saveSourceData["fb"]) generatedURL.value = location.origin + location.pathname + `?doc=${polymorph_core.currentDocID}&src=fb`;
   }
 })
