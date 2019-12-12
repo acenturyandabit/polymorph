@@ -21,7 +21,9 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     this.db = polymorph_core.firebase.db;
 
     this.pullAll = async function (res) {
-      if (!polymorph_core.saveSourceData["fb"]) polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
+      if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
+        polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
+      }
       if (!this.db) return;
       let snapshot = await this.db
         .collection("polymorph")
