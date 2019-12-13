@@ -37,12 +37,8 @@
 
         if (!handled) polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
 
-
-
-
-
+        // update savedata because fetchdoc depends on it.
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, source);
-        polymorph_core.rehookAll(polymorph_core.currentDocID);
 
         if (handled) {
             //fetch it, if it exists
@@ -50,6 +46,9 @@
         } else {
             source = "lf";
         }
+
+        // rehook after fetchdoc because firebase depends on it.
+        polymorph_core.rehookAll(polymorph_core.currentDocID);
 
         window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}&src=${source}`);
 

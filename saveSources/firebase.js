@@ -19,7 +19,8 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       console.log("i inited fb");
     }
     this.db = polymorph_core.firebase.db;
-
+    //lastPulledFBID is necessary because on load, we can't directly access items._meta.
+    let lastPulledFBID;
     this.pullAll = async function (res) {
       if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
         polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
@@ -33,6 +34,7 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       snapshot.docs.forEach(doc => {
         fulldoc[doc.id] = doc.data()
       });
+      lastPulledFBID = fulldoc._meta.fbID || undefined;
       if (res) res(fulldoc);
       else return fulldoc;
     }
@@ -40,6 +42,21 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     this.hook = async () => {
       if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
         polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
+      }
+      //add FBID to meta, so we can check if docs are different
+      let ourfbID;
+      if (polymorph_core.items._meta) {
+        if (!polymorph_core.items._meta.fbID) {
+          polymorph_core.items._meta.fbID = Date.now() + "_" + guid(10); // hopefully unique...
+        }
+        ourfbID=polymorph_core.items._meta.fbID;
+      }else{
+        ourfbID=lastPulledFBID
+      }
+      let _meta = (await this.db.collection("polymorph").doc(polymorph_core.saveSourceData["fb"].docName).collection("items").doc("meta").get()).data();
+      if (_meta && _meta.fbID != ourfbID) {
+        alert("Error: FB ID Mismatch - the remote document you are merging with your current document is not the same. PM is preventing this operation to prevent data loss.");
+        return;
       }
       let root = this.db
         .collection("polymorph")
@@ -142,7 +159,7 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
   });
   this.dialog.appendChild(generatedURL);
   this.showDialog = function () {
-    polymorph_core.saveSourceData["fb"] = {};
+    if (!polymorph_core.saveSourceData["fb"]) polymorph_core.saveSourceData["fb"] = {};
     me.addrop.load();
     if (polymorph_core.saveSourceData["fb"]) generatedURL.value = location.origin + location.pathname + `?doc=${polymorph_core.currentDocID}&src=fb`;
   }
