@@ -514,7 +514,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
         } else if (e.target.matches(".tray textarea") && e.buttons % 2) {
             this.fromTray = e.target.parentElement.dataset.id;
-        } else if (e.getModifierState("Control")) {
+        } else if (e.getModifierState("Control") || e.getModifierState("Meta")) {
             //start a rectangleDrag!
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
             this.rectangleDragging = {
@@ -524,7 +524,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
         } else {
             //deselect
-            if (this.movingDivs.length && !e.getModifierState("Control")) {
+            if (this.movingDivs.length && !(e.getModifierState("Control") || e.getModifierState("Meta"))) {
                 //also reset the borders
                 this.clearOutMovingDivs();
             }
