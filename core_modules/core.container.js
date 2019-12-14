@@ -102,12 +102,6 @@ polymorph_core.container = function container(containerID) {
         }
 
         e.forEach((v) => {
-            if (v=="updateItem" && args.id==this.id){
-                //occasionally this is called during load, in which case this.operator is still undefined
-                if (this.operator){
-                    polymorph_core.items[this.id]._od.data=this.operator.toSaveData();
-                }
-            }
             polymorph_core.fire(v, args);
         })
 
@@ -232,9 +226,8 @@ polymorph_core.container = function container(containerID) {
             this.outerDiv.style.overflowY = "hidden";
         }
         try {
-            this.operator = new polymorph_core.operators[this.settings.t].constructor(this);
-            if (this.settings.data) this.operator.fromSaveData(this.settings.data); // though we might as well do this in instantiation
-            if (!this.operator.container) this.operator.container = this;
+            this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
+            this.operator.container = this;
         } catch (e) {
             console.log(e);
         }

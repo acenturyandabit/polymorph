@@ -2,8 +2,7 @@
 
 ## It's like...
 - ROS [https://www.ros.org/], but for user interfaces
-- Outlook, but less integrated and more flexible
-
+- Outlook, but less integrated (sad) and more flexible (yay)
 ## Software Architecture
 Polymorph is made up of a few main components:
 - polymorph_core: This represents a shared platform where everything interacts. It contains a main event interface.

@@ -24,3 +24,14 @@ polymorph_core.unlink = function (A, B, undirected = false) {
         polymorph_core.unlink(B, A);
     }
 }
+
+polymorph_core.itemRelevant=function (operator, id){
+    if (!operator.settings.filter){
+        return true;
+    }
+    if (polymorph_core.items[id][operator.settings.filter]){
+        return true;
+    }else{
+        return false;
+    }
+}
