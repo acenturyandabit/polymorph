@@ -4,23 +4,21 @@
         description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
     },
         function (container) {
-            let me = this;
-            me.container = container;
-            this.settings = {
+            let defaultSettings = {
                 dateproperties: ["datestring"],
                 titleproperty: 'title',
-                defaultView: "agendaWeek",
-            }; // Use my date retrieval format. (others not implented yet lm.ao)
+                defaultView: "agendaWeek"
+            };
+            polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
-            this.rootdiv = document.createElement("div");
-            this.rootdiv.innerHTML = ``;
             this.rootdiv.style.cssText = 'height:100%; overflow-y: scroll';
-            this.cstyle = document.createElement("link");
-            this.cstyle.rel = "stylesheet";
-            this.cstyle.type = "text/css";
-            this.cstyle.href = "3pt/fullcalendar.min.css";
+            this.cstyle = htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar.min.css"></link>`)
+            // this.cstyle = document.createElement("link");
+            // this.cstyle.rel = "stylesheet";
+            // this.cstyle.type = "text/css";
+            // this.cstyle.href = "3pt/fullcalendar.min.css";
             this.rootdiv.appendChild(this.cstyle);
-            //Add div HTML here
+
             scriptassert([
                 ['jquery', '3pt/jquery.min.js'],
                 ['moment', '3pt/moment.min.js'],
@@ -29,21 +27,24 @@
                 $(this.rootdiv).fullCalendar({
                     events: (start, end, timezone, callback) => {
                         let allList = [];
-                        if (me.settings.pushnotifs) {
-                            me.notifstack = [];
+                        if (this.settings.pushnotifs) {
+                            this.notifstack = [];
                         }
                         let tzd = new Date();
                         for (let i in polymorph_core.items) {
                             let tzd = new Date();
                             try {
-                                for (let dp = 0; dp < me.settings.dateproperties.length; dp++) {
-                                    if (polymorph_core.items[i][me.settings.dateproperties[dp]] && polymorph_core.items[i][me.settings.dateproperties[dp]].date) {
-                                        let result = dateParser.getCalendarTimes(polymorph_core.items[i][me.settings.dateproperties[dp]].date, start, end);
+                                for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
+                                    if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
+                                        let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
                                         for (let j = 0; j < result.length; j++) {
-                                            me.notifstack.push({
-                                                txt: polymorph_core.items[i][me.settings.titleproperty],
-                                                time: result[j].date
-                                            });
+                                            if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
+                                                //prevent auto now spam
+                                                this.notifstack.push({
+                                                    txt: polymorph_core.items[i][this.settings.titleproperty],
+                                                    time: result[j].date
+                                                });
+                                            }
                                             let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
                                             let eisostring;
                                             if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
@@ -59,7 +60,7 @@
                                             }
                                             allList.push({
                                                 id: i,
-                                                title: polymorph_core.items[i][me.settings.titleproperty],
+                                                title: polymorph_core.items[i][this.settings.titleproperty],
                                                 backgroundColor: bak,
                                                 textColor: col,
                                                 start: isostring,
@@ -74,10 +75,10 @@
                         }
                         callback(allList);
                     },
-                    eventClick: function (calEvent, jsEvent, view) {
+                    eventClick: (calEvent, jsEvent, view) => {
                         container.fire("focus", {
                             id: calEvent.id,
-                            sender: me
+                            sender: this
                         })
                     },
                     header: {
@@ -85,38 +86,34 @@
                         center: '',
                         right: 'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
                     },
-                    defaultView: me.settings.defaultView,
+                    defaultView: this.settings.defaultView,
                     height: "parent"
                 });
             });
-            container.div.appendChild(this.rootdiv);
+
             //Handle item updates
             let updateItemCapacitor = new capacitor(1000, 1000, () => {
                 try {
-                    if (me.container.visible()) $(me.rootdiv).fullCalendar('refetchEvents');
+                    if (this.container.visible()) $(this.rootdiv).fullCalendar('refetchEvents');
                 } catch (e) {
                     console.log("JQUERY not ready yet :/");
                 }
             }, true);
-            this.updateItem = function (id, sender) {
-                if (sender == this) return;
-                if (!polymorph_core.items[id][me.settings.dateproperty]) return;
-                updateItemCapacitor.submit();
-                //Check if item is shown
-                //return true or false based on whether we can or cannot edit the item from this container
-                return false;
-            }
+
             container.on("dateUpdate", () => {
                 try {
-                    if (me.container.visible()) $(me.rootdiv).fullCalendar('refetchEvents');
+                    if (this.container.visible()) $(this.rootdiv).fullCalendar('refetchEvents');
                 } catch (e) {
                     console.log("JQUERY not ready yet :/");
                 }
             });
 
             container.on("updateItem", (d) => {
-                this.updateItem(d.id, d.sender);
+                if (d.sender == this) return;
+                if (!polymorph_core.items[d.id][this.settings.dateproperty]) return;
+                updateItemCapacitor.submit();
             });
+
             //Handle a change in settings (either from load or from the settings dialog or somewhere else)
             this.processSettings = () => {
                 try {
@@ -144,7 +141,7 @@
             }
             //every 10 s, check for new notifs!
             this.notifstack = [];
-            /*setInterval(() => {
+            setInterval(() => {
                 let ihtml = "";
                 for (let i = 0; i < this.notifstack.length; i++) {
                     if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000 && !this.notifstack[i].notified) {
@@ -161,18 +158,18 @@
                 if (this.notifWindow) {
                     this.notifWindow.document.body.innerHTML = ihtml;
                 }
-            }, 10000);*/
+            }, 10000);
 
 
-            this.tryEstablishWS = function () {
+            this.tryEstablishWS = () => {
                 //close previous ws if open
                 if (this.ws) this.ws.close();
                 if (this.settings.wsurl) {
                     try {
                         this.ws = new WebSocket(this.settings.wsurl);
                         this.ws.onmessage = function (e) {
-                            if (me.settings.echoOn) {
-                                me.state.output(e.data);
+                            if (this.settings.echoOn) {
+                                this.state.output(e.data);
                             }
                             processQuery(e.data);
                         }
@@ -186,7 +183,7 @@
                 if (this.ws) this.ws.send(data);
             }
 
-            this.notify = function (txt, ask) {
+            this.notify = (txt, ask) => {
                 try {
                     // Let's check whether notification permissions have already been granted
                     if (Notification.permission === "granted") {
@@ -202,7 +199,7 @@
                                 var notification = new Notification(txt);
                             } else {
                                 console.log("The browser does not support notifications, or notifications were denied. Notifications disabled!");
-                                me.settings.pushnotifs = false;
+                                this.settings.pushnotifs = false;
                             }
                         });
                     }
@@ -215,16 +212,6 @@
             //Saving and loading
             this.toSaveData = function () {
                 this.settings.defaultView = $(this.rootdiv).fullCalendar('getView').name;
-                return this.settings;
-            }
-
-            this.fromSaveData = function (d) {
-                Object.assign(this.settings, d);
-                if (this.settings.dateproperty) {
-                    this.settings.dateproperties = [this.settings.dateproperty];
-                    delete this.settings.dateproperty;
-                }
-                this.processSettings();
             }
 
 
@@ -284,24 +271,18 @@
                 this.processSettings();
             }
 
-            container.on("deleteItem", (d) => {
-                try {
-                    $(me.rootdiv).fullCalendar('refetchEvents');
-                } catch (e) {
-                    console.log("JQUERY not ready yet :/");
-                }
-            })
-
-            this.refresh = function () {
+            this.refresh = () => {
                 setTimeout(() => {
                     try {
-                        $(me.rootdiv).fullCalendar('render');
-                        $(me.rootdiv).fullCalendar('refetchEvents');
+                        $(this.rootdiv).fullCalendar('render');
+                        $(this.rootdiv).fullCalendar('refetchEvents');
                     } catch (err) {
                         console.log("jquery not ready yet :/");
                     }
                 }, 1000);
             }
+
+            this.processSettings();
 
         });
 })();

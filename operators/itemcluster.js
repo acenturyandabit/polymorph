@@ -2,10 +2,9 @@ polymorph_core.registerOperator("itemcluster2", {
     displayName: "Itemcluster 2",
     description: "A brainstorming board. Add items, arrange them, and connect them with lines."
 }, function (container) {
-    let me = this;
     addEventAPI(this);
-    me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {
+
+    let defaultSettings = {
         itemcluster: {
             cx: 0,
             cy: 0,
@@ -14,6 +13,10 @@ polymorph_core.registerOperator("itemcluster2", {
         filter: guid(6),
         tray: true
     };
+
+
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
@@ -106,12 +109,12 @@ polymorph_core.registerOperator("itemcluster2", {
     this.tray = this.rootdiv.querySelector(".tray");
 
     this.tray.addEventListener("wheel", (e) => {
-        me.tray.scrollLeft += e.deltaY;
+        this.tray.scrollLeft += e.deltaY;
     })
 
-    me.tray.addEventListener("input", (e) => {
+    this.tray.addEventListener("input", (e) => {
         polymorph_core.items[e.target.parentElement.dataset.id].title = e.target.value;
-        container.fire('updateItem', { sender: me, id: e.target.parentElement.dataset.id });
+        container.fire('updateItem', { sender: this, id: e.target.parentElement.dataset.id });
     })
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -119,17 +122,17 @@ polymorph_core.registerOperator("itemcluster2", {
 
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
-        if (d.sender == me) return;
-        if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[me.settings.currentViewName]) {
-            polymorph_core.items[me.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
-            polymorph_core.items[me.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
-            me.viewAdjust();
-            if (me.preselected) {
-                me.preselected.classList.remove("selected");
-                me.preselected.classList.remove("anchored");
+        if (d.sender == this) return;
+        if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[this.settings.currentViewName]) {
+            polymorph_core.items[this.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
+            polymorph_core.items[this.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
+            this.viewAdjust();
+            if (this.preselected) {
+                this.preselected.classList.remove("selected");
+                this.preselected.classList.remove("anchored");
             }
-            me.preselected = this.itemPointerCache[d.id].node;
-            me.preselected.classList.add("anchored");
+            this.preselected = this.itemPointerCache[d.id].node;
+            this.preselected.classList.add("anchored");
         }
     })
 
@@ -139,12 +142,12 @@ polymorph_core.registerOperator("itemcluster2", {
     // but only update items that are visible; and only update if we are visible
     let doubleUpdateCapacitor = new capacitor(200, 1000, () => {
         for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                me.arrangeItem(i);
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                this.arrangeItem(i);
             }
         }
     })
-    this.itemIsOurs = (id) => {
+    this.itemRelevant = (id) => {
         // I will be shown at some point by this container
         let isFiltered = (polymorph_core.items[id][this.settings.filter] != undefined);
         let hasView = polymorph_core.items[id].itemcluster != undefined && polymorph_core.items[id].itemcluster.viewName != undefined;
@@ -161,26 +164,25 @@ polymorph_core.registerOperator("itemcluster2", {
     container.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;
-        if (sender == me) return;
+        if (sender == this) return;
 
-        if (me.container.visible()) {
+        if (this.container.visible()) {
             if (polymorph_core.items[id].itemcluster) {
                 if (polymorph_core.items[id].itemcluster.viewData) {
-                    if (polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-                        if (me.arrangeItem) {
-                            me.arrangeItem(id);
+                    if (polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName]) {
+                        if (this.arrangeItem) {
+                            this.arrangeItem(id);
                             doubleUpdateCapacitor.submit();//redraw lines
                         }
                     } else {
-                        if (!(me.settings.filter) || polymorph_core.items[id][me.settings.filter]) me.addToTray(id);
+                        if (!(this.settings.filter) || polymorph_core.items[id][this.settings.filter]) this.addToTray(id);
                         else {
-                            me.removeFromTray(id);
+                            this.removeFromTray(id);
                         }
                     }
                 }
             }
         }
-        return this.itemIsOurs(id); // fix this soon pls
         //Check if item is shown
         //Update item if relevant
         //This will be called for all items when the items are loaded.
@@ -192,71 +194,71 @@ polymorph_core.registerOperator("itemcluster2", {
     //Views
 
     //Editing the name of a view
-    this.viewName.addEventListener("keyup", function (e) {
-        polymorph_core.items[me.settings.currentViewName].itemcluster.viewName =
+    this.viewName.addEventListener("keyup", (e) => {
+        polymorph_core.items[this.settings.currentViewName].itemcluster.viewName =
             e.currentTarget.innerText;
         container.fire("updateItem", {
-            id: me.settings.currentViewName,
-            sender: me
+            id: this.settings.currentViewName,
+            sender: this
         });
     });
 
-    this.viewDropdown.addEventListener("click", function (e) {
+    this.viewDropdown.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "a") {
             if (e.target.dataset.isnew) {
                 //make a new view
-                let nv = me.makeNewView();
-                me.switchView(nv);
+                let nv = this.makeNewView();
+                this.switchView(nv);
             } else {
                 let id = e.target.dataset.listname;
-                me.switchView(id);
+                this.switchView(id);
             }
         } else {
             if (e.target.tagName.toLowerCase() == "em") {
                 nv = Date.now().toString();
-                nv = me.makeNewView();
-                me.switchView(nv);
+                nv = this.makeNewView();
+                this.switchView(nv);
             }
         }
-        me.viewDropdown.style.display = "none";
+        this.viewDropdown.style.display = "none";
         e.stopPropagation();
     });
 
-    this.viewDropdownButton.addEventListener("click", function () {
-        me.viewDropdown.innerHTML = "";
+    this.viewDropdownButton.addEventListener("click", () => {
+        this.viewDropdown.innerHTML = "";
         for (i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
-                if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) continue;//apply filter to views
+                if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
                 let aa = document.createElement("a");
                 aa.dataset.listname = i;
                 aa.innerHTML = polymorph_core.items[i].itemcluster.viewName;
-                me.viewDropdown.appendChild(aa);
+                this.viewDropdown.appendChild(aa);
             }
             //v = itemcluster.views[i].name;
         }
-        me.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Add another view</em></a>`));
-        me.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Create view from filter</em></a>`));
-        me.viewDropdown.style.display = "block";
+        this.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Add another view</em></a>`));
+        this.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Create view from filter</em></a>`));
+        this.viewDropdown.style.display = "block";
     });
 
     //hide the view dropdown button, if necessary.
-    this.rootdiv.addEventListener("mousedown", function (e) {
+    this.rootdiv.addEventListener("mousedown", (e) => {
         let p = e.target;
-        while (p != me.rootdiv && p) {
-            if (p == me.viewDropdown) return;
+        while (p != this.rootdiv && p) {
+            if (p == this.viewDropdown) return;
             p = p.parentElement;
         }
-        me.viewDropdown.style.display = "none";
+        this.viewDropdown.style.display = "none";
     });
     this.switchView = (id, assert, subview) => {
-        let previousView = me.settings.currentViewName;
-        me.settings.currentViewName = id;
-        if (!me.settings.currentViewName) {
+        let previousView = this.settings.currentViewName;
+        this.settings.currentViewName = id;
+        if (!this.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
             let switched = false;
             for (let i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
-                    if (me.settings.filter && !(polymorph_core.items[i][me.settings.filter])) {
+                    if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) {
                         continue;
                     }
                     this.switchView(i);
@@ -270,20 +272,20 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             //Show blank
         } else {
-            if (!polymorph_core.items[me.settings.currentViewName] ||
-                !polymorph_core.items[me.settings.currentViewName].itemcluster ||
-                !polymorph_core.items[me.settings.currentViewName].itemcluster.viewName) {
+            if (!polymorph_core.items[this.settings.currentViewName] ||
+                !polymorph_core.items[this.settings.currentViewName].itemcluster ||
+                !polymorph_core.items[this.settings.currentViewName].itemcluster.viewName) {
                 if (assert) {
-                    me.switchView(me.makeNewView(me.settings.currentViewName));
+                    this.switchView(this.makeNewView(this.settings.currentViewName));
                 } else {
                     //view doesnt exist, switch to any view
-                    me.switchView();
+                    this.switchView();
                     return;
                 }
             }
             //buttons
             this.viewName.innerText =
-                polymorph_core.items[me.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
+                polymorph_core.items[this.settings.currentViewName].itemcluster.viewName.replace(/\n/ig, "");
             //if this is a subview, add a button on the back; otherwise remove all buttons
             if (previousView != id && previousView) {
                 if (subview) {
@@ -291,7 +293,7 @@ polymorph_core.registerOperator("itemcluster2", {
                     b.dataset.ref = previousView;
                     b.innerText = polymorph_core.items[previousView].itemcluster.viewName;
                     b.addEventListener("click", () => {
-                        me.switchView(b.dataset.ref, true, false);
+                        this.switchView(b.dataset.ref, true, false);
                         while (b.nextElementSibling.tagName == "BUTTON") b.nextElementSibling.remove();
                         b.remove();
                     })
@@ -305,30 +307,30 @@ polymorph_core.registerOperator("itemcluster2", {
                 }
             }
             //kill all lines
-            for (let i in me.activeLines) {
-                for (let j in me.activeLines[i]) {
-                    me.activeLines[i][j].remove();
-                    delete me.activeLines[i][j];
+            for (let i in this.activeLines) {
+                for (let j in this.activeLines[i]) {
+                    this.activeLines[i][j].remove();
+                    delete this.activeLines[i][j];
                 }
             }
             //reposition all items, also updating viewbox
             for (i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    if (me.arrangeItem) me.arrangeItem(i);
+                    if (this.arrangeItem) this.arrangeItem(i);
                     //position the item appropriately.
                 }
             }
             for (i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    if (me.arrangeItem) me.arrangeItem(i);
+                    if (this.arrangeItem) this.arrangeItem(i);
                     //twice so that all lines show up. How efficient.
                 }
             }
-            me.viewAdjust();
+            this.viewAdjust();
         }
     };
 
-    this.makeNewView = function (id) {
+    this.makeNewView = (id) => {
         //register it with the polymorph_core
         let itm;
         if (!id) {
@@ -339,8 +341,8 @@ polymorph_core.registerOperator("itemcluster2", {
         }
         if (!itm.itemcluster) itm.itemcluster = {};
         itm.itemcluster.viewName = "New View"
-        if (me.settings.filter) {
-            if (!itm[me.settings.filter]) itm[me.settings.filter] = true;
+        if (this.settings.filter) {
+            if (!itm[this.settings.filter]) itm[this.settings.filter] = true;
         }
         polymorph_core.items[id] = itm;//in case we are creating from scratch
         //register a change
@@ -351,10 +353,10 @@ polymorph_core.registerOperator("itemcluster2", {
         return id;
     };
 
-    this.cloneView = function () {
+    this.cloneView = () => {
         //register it with the polymorph_core
-        let newName = "Copy of " + polymorph_core.items[me.settings.currentViewName].itemcluster.viewName;
-        let id = me.makeNewView();
+        let newName = "Copy of " + polymorph_core.items[this.settings.currentViewName].itemcluster.viewName;
+        let id = this.makeNewView();
         polymorph_core.items[id].itemcluster.viewName = newName;
         container.fire("updateItem", {
             sender: this,
@@ -362,16 +364,16 @@ polymorph_core.registerOperator("itemcluster2", {
         });
         //clone positions as well
         for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                polymorph_core.items[i].itemcluster.viewData[id] = polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName];
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                polymorph_core.items[i].itemcluster.viewData[id] = polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName];
             }
         }
         this.switchView(id);
     };
-    this.destroyView = function (viewName, auto) {
+    this.destroyView = (viewName, auto) => {
         // Destroy the itemcluster property of the item but otherwise leave it alone
-        if (me.settings.filter) {
-            delete polymorph_core.items[viewName][me.settings.filter];
+        if (this.settings.filter) {
+            delete polymorph_core.items[viewName][this.settings.filter];
         } else {
             delete polymorph_core.items[viewName].itemcluster.viewName;
         }
@@ -379,10 +381,10 @@ polymorph_core.registerOperator("itemcluster2", {
     };
 
     container.on("focus", (e) => {
-        if (e.sender == me) return;
-        if (me.settings.operationMode == "focus") {
-            if (e.sender.container.uuid == me.settings.focusOperatorID) {
-                me.switchView(e.id, true);
+        if (e.sender == this) return;
+        if (this.settings.operationMode == "focus") {
+            if (e.sender.container.uuid == this.settings.focusOperatorID) {
+                this.switchView(e.id, true);
             }
         }
     })
@@ -402,11 +404,11 @@ polymorph_core.registerOperator("itemcluster2", {
 
     //More items shenanigans
 
-    this.itemSpace.addEventListener("click", function (e) {
+    this.itemSpace.addEventListener("click", (e) => {
         //click: anchor and deanchor.
-        if (me.preselected) {
-            me.preselected.classList.remove("selected");
-            me.preselected.classList.remove("anchored");
+        if (this.preselected) {
+            this.preselected.classList.remove("selected");
+            this.preselected.classList.remove("anchored");
         }
         if (
             e.target.matches(".floatingItem") ||
@@ -414,22 +416,22 @@ polymorph_core.registerOperator("itemcluster2", {
         ) {
             let it = e.target;
             while (!it.matches(".floatingItem")) it = it.parentElement;
-            if (me.preselected == it) {
+            if (this.preselected == it) {
                 //keep it anchored
                 it.classList.add("anchored");
             } else {
-                me.preselected = it;
+                this.preselected = it;
                 it.classList.add("selected");
             }
         } else {
-            me.preselected = undefined;
+            this.preselected = undefined;
         }
     });
 
     this.itemSpace.addEventListener("dblclick", (e) => {
-        if (me.preselected) {
-            me.preselected.classList.remove("selected");
-            me.preselected.classList.remove("anchored");
+        if (this.preselected) {
+            this.preselected.classList.remove("selected");
+            this.preselected.classList.remove("anchored");
         }
         if (
             e.target.matches(".floatingItem") ||
@@ -438,19 +440,19 @@ polymorph_core.registerOperator("itemcluster2", {
             let it = e.target;
             while (!it.matches(".floatingItem")) it = it.parentElement;
 
-            me.preselected = it;
+            this.preselected = it;
             it.classList.add("anchored");
         } else {
-            me.preselected = undefined;
+            this.preselected = undefined;
         }
     });
 
     this.dragging = false;
     this.movingDivs = [];
     this.alreadyMoving = -1;//for deselecting nodes
-    this.clearOutMovingDivs = function () {
-        me.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
-        me.movingDivs = [];//empty them
+    this.clearOutMovingDivs = () => {
+        this.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
+        this.movingDivs = [];//empty them
     }
     this.itemSpace.addEventListener("mousedown", (e) => {
         if (e.target.matches(".floatingItem") || e.target.matches(".floatingItem *")) {
@@ -459,140 +461,140 @@ polymorph_core.registerOperator("itemcluster2", {
             if (e.getModifierState("Shift")) {
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
-                me.linkingDiv = it;
-                me.linking = true;
+                this.linkingDiv = it;
+                this.linking = true;
             } else {
                 //if not lineing
                 //clear the movingDivs if they need to be cleared
-                me.shouldHighlightMovingDivs++;
-                if (me.movingDivs.length && !e.getModifierState("Control")) {
+                this.shouldHighlightMovingDivs++;
+                if (this.movingDivs.length && !e.getModifierState("Control")) {
                     //also reset the borders
-                    me.clearOutMovingDivs();
+                    this.clearOutMovingDivs();
                 }
                 let it = e.target;
                 while (!it.matches(".floatingItem")) it = it.parentElement;
                 if (it.classList.contains("anchored")) return;
-                if (me.dragging) return;
+                if (this.dragging) return;
                 //check to see if we are already in movingDivs...
-                me.alreadyMoving = -1;
-                me.movingDivs.forEach((v, i) => {
+                this.alreadyMoving = -1;
+                this.movingDivs.forEach((v, i) => {
                     if (v.el == this.itemPointerCache[it.dataset.id]) {
                         //remove the red border
                         v.el.node.children[0].style.border = "1px solid black"
-                        me.alreadyMoving = i;
+                        this.alreadyMoving = i;
                     }
                 })
-                if (me.alreadyMoving == -1) {
-                    me.movingDivs.push({
+                if (this.alreadyMoving == -1) {
+                    this.movingDivs.push({
                         el: this.itemPointerCache[it.dataset.id]
                     });
                 }
-                me.lastMovingDiv = this.itemPointerCache[it.dataset.id];
+                this.lastMovingDiv = this.itemPointerCache[it.dataset.id];
                 //style it so we can see it
                 this.itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
                 //adjust x indexes
                 this.itemPointerCache[it.dataset.id].front();
                 container.fire("focus", {
                     id: it.dataset.id,
-                    sender: me
+                    sender: this
                 });
                 //it.style.border = "3px solid #ffa2fc";
-                me.dragging = true;
+                this.dragging = true;
                 //set relative drag coordinates
-                let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-                for (let i = 0; i < me.movingDivs.length; i++) {
-                    me.movingDivs[i].dx = coords.x - me.movingDivs[i].el.x();
-                    me.movingDivs[i].dy = coords.y - me.movingDivs[i].el.y();
+                let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+                for (let i = 0; i < this.movingDivs.length; i++) {
+                    this.movingDivs[i].dx = coords.x - this.movingDivs[i].el.x();
+                    this.movingDivs[i].dy = coords.y - this.movingDivs[i].el.y();
                 }
                 //Enforce its lines in blue.
-                if (me.prevFocusID) me.redrawLines(me.prevFocusID);
-                me.redrawLines(it.dataset.id, "red");
-                me.prevFocusID = it.dataset.id;
+                if (this.prevFocusID) this.redrawLines(this.prevFocusID);
+                this.redrawLines(it.dataset.id, "red");
+                this.prevFocusID = it.dataset.id;
                 //return false;
             }
         } else if (e.target.matches(".tray textarea") && e.buttons % 2) {
-            me.fromTray = e.target.parentElement.dataset.id;
+            this.fromTray = e.target.parentElement.dataset.id;
         } else if (e.getModifierState("Control")) {
             //start a rectangleDrag!
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.rectangleDragging = {
-                rect: me.svg.rect(0, 0).stroke({ width: 1, color: "red" }).fill({ opacity: 0 }),
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            this.rectangleDragging = {
+                rect: this.svg.rect(0, 0).stroke({ width: 1, color: "red" }).fill({ opacity: 0 }),
                 sx: coords.x,
                 sy: coords.y
             }
         } else {
             //deselect
-            if (me.movingDivs.length && !e.getModifierState("Control")) {
+            if (this.movingDivs.length && !e.getModifierState("Control")) {
                 //also reset the borders
-                me.clearOutMovingDivs();
+                this.clearOutMovingDivs();
             }
             //Pan
             //if (e.getModifierState("Shift") || e.which == 2) {
-            me.globalDrag = true;
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.originalViewBox = me.svg.viewbox();
-            me.dragDX = coords.x;
-            me.dragDY = coords.y;
-            me.ocx = polymorph_core.items[me.settings.currentViewName].itemcluster.cx || 0;
-            me.ocy = polymorph_core.items[me.settings.currentViewName].itemcluster.cy || 0;
+            this.globalDrag = true;
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            this.originalViewBox = this.svg.viewbox();
+            this.dragDX = coords.x;
+            this.dragDY = coords.y;
+            this.ocx = polymorph_core.items[this.settings.currentViewName].itemcluster.cx || 0;
+            this.ocy = polymorph_core.items[this.settings.currentViewName].itemcluster.cy || 0;
             //}
         }
     });
 
     this.itemSpace.addEventListener("mousemove", (e) => {
         //stop from creating an item if we are resizing another item
-        if (Math.abs(e.offsetX - me.mouseStoredX) > 5 || Math.abs(e.offsetY - me.mouseStoredY) > 5) {
-            me.possibleResize = true;
+        if (Math.abs(e.offsetX - this.mouseStoredX) > 5 || Math.abs(e.offsetY - this.mouseStoredY) > 5) {
+            this.possibleResize = true;
         }
-        if (me.fromTray) {
-            let cid = me.fromTray;
+        if (this.fromTray) {
+            let cid = this.fromTray;
             //make us drag the item
-            me.removeFromTray(cid);
+            this.removeFromTray(cid);
             if (!polymorph_core.items[cid].itemcluster) polymorph_core.items[cid].itemcluster = {};
             if (!polymorph_core.items[cid].itemcluster.viewData) polymorph_core.items[cid].itemcluster.viewData = {};
-            polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName] = { x: 0, y: 0 };
-            me.arrangeItem(cid);
+            polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName] = { x: 0, y: 0 };
+            this.arrangeItem(cid);
             //this is probably broken now
             let divrep = {
                 el: this.itemPointerCache[cid],
                 dx: 30,
                 dy: 30
             };
-            me.clearOutMovingDivs();
-            me.movingDivs = [divrep];//overwrite the thing in the array
-            me.lastMovingDiv = this.itemPointerCache[cid];
+            this.clearOutMovingDivs();
+            this.movingDivs = [divrep];//overwrite the thing in the array
+            this.lastMovingDiv = this.itemPointerCache[cid];
             // force a mousemove
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.lastMovingDiv.x(coords.x - divrep.dx);
-            me.lastMovingDiv.y(coords.y - divrep.dy);
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            this.lastMovingDiv.x(coords.x - divrep.dx);
+            this.lastMovingDiv.y(coords.y - divrep.dy);
 
-            me.updatePosition(cid);
-            me.dragging = true;
+            this.updatePosition(cid);
+            this.dragging = true;
             //set a flag so we dont instantly return it to the tray
-            me.stillInTray = true;
-            me.fromTray = false;
+            this.stillInTray = true;
+            this.fromTray = false;
         }
-        if (me.rectangleDragging) {
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            let dx = coords.x - me.rectangleDragging.sx;
+        if (this.rectangleDragging) {
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            let dx = coords.x - this.rectangleDragging.sx;
             if (dx > 0) {
-                me.rectangleDragging.rect.x(me.rectangleDragging.sx).width(dx);
+                this.rectangleDragging.rect.x(this.rectangleDragging.sx).width(dx);
             } else {
-                me.rectangleDragging.rect.x(coords.x).width(-dx);
+                this.rectangleDragging.rect.x(coords.x).width(-dx);
             }
-            let dy = coords.y - me.rectangleDragging.sy;
+            let dy = coords.y - this.rectangleDragging.sy;
             if (dy > 0) {
-                me.rectangleDragging.rect.y(me.rectangleDragging.sy).height(dy);
+                this.rectangleDragging.rect.y(this.rectangleDragging.sy).height(dy);
             } else {
-                me.rectangleDragging.rect.y(coords.y).height(-dy);
+                this.rectangleDragging.rect.y(coords.y).height(-dy);
             }
-            me.clearOutMovingDivs();
+            this.clearOutMovingDivs();
             for (let i in this.itemPointerCache) {
-                if (((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < me.rectangleDragging.sx) ||
-                    (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > me.rectangleDragging.sx)) &&
-                    ((this.itemPointerCache[i].cy() > coords.y && this.itemPointerCache[i].cy() < me.rectangleDragging.sy) ||
-                        (this.itemPointerCache[i].cy() < coords.y && this.itemPointerCache[i].cy() > me.rectangleDragging.sy))) {
-                    me.movingDivs.push({
+                if (((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < this.rectangleDragging.sx) ||
+                    (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > this.rectangleDragging.sx)) &&
+                    ((this.itemPointerCache[i].cy() > coords.y && this.itemPointerCache[i].cy() < this.rectangleDragging.sy) ||
+                        (this.itemPointerCache[i].cy() < coords.y && this.itemPointerCache[i].cy() > this.rectangleDragging.sy))) {
+                    this.movingDivs.push({
                         el: this.itemPointerCache[i]
                     });
                     this.itemPointerCache[i].node.children[0].style.border = "1px solid red";
@@ -600,92 +602,92 @@ polymorph_core.registerOperator("itemcluster2", {
                 }
             }
         }
-        if (me.dragging) {
-            me.dragged = true;
+        if (this.dragging) {
+            this.dragged = true;
             //dragging an item
             //translate position of mouse to position of rectangle
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            for (let i = 0; i < me.movingDivs.length; i++) {
-                me.movingDivs[i].el.x(coords.x - me.movingDivs[i].dx);
-                me.movingDivs[i].el.y(coords.y - me.movingDivs[i].dy);
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            for (let i = 0; i < this.movingDivs.length; i++) {
+                this.movingDivs[i].el.x(coords.x - this.movingDivs[i].dx);
+                this.movingDivs[i].el.y(coords.y - this.movingDivs[i].dy);
             }
-            let elements = me.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
+            let elements = this.rootdiv.getRootNode().elementsFromPoint(e.clientX, e.clientY);
             //borders for the drag item in item
-            if (me.hoverOver) {
-                me.hoverOver.style.border = "";
+            if (this.hoverOver) {
+                this.hoverOver.style.border = "";
             }
             let stillInTray = false;
 
             //if we send the items to tray
             for (let i = 0; i < elements.length; i++) {
                 if (elements[i].matches(".tray")) {
-                    if (me.stillInTray) {
+                    if (this.stillInTray) {
                         stillInTray = true;
                         break;
                     }
                     //send to tray, and end interaction
                     // delete the item from this view
-                    me.movingDivs.forEach((v) => {
+                    this.movingDivs.forEach((v) => {
                         let cid = v.el.attr("data-id");
-                        delete polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName];
-                        delete polymorph_core.items[cid][`__itemcluster_${me.settings.currentViewName}`];
-                        me.arrangeItem(cid);
-                        me.addToTray(cid);
-                        container.fire("updateItem", { sender: me, id: cid });
+                        delete polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName];
+                        delete polymorph_core.items[cid][`__itemcluster_${this.settings.currentViewName}`];
+                        this.arrangeItem(cid);
+                        this.addToTray(cid);
+                        container.fire("updateItem", { sender: this, id: cid });
                     });
-                    me.clearOutMovingDivs();
-                    me.dragging = false;
+                    this.clearOutMovingDivs();
+                    this.dragging = false;
                 }
-                if (elements[i].matches(".floatingItem") && elements[i].dataset.id != me.lastMovingDiv.attr("data-id")) {
-                    me.hoverOver = elements[i];
+                if (elements[i].matches(".floatingItem") && elements[i].dataset.id != this.lastMovingDiv.attr("data-id")) {
+                    this.hoverOver = elements[i];
                     elements[i].style.border = "3px dotted red";
                     break;
                 }
             }
-            if (!stillInTray) me.stillInTray = false;
+            if (!stillInTray) this.stillInTray = false;
             //if we are moving something ensure it wont be twice-click selected.
-            me.preselected = undefined;
+            this.preselected = undefined;
             //redraw all ITS lines
-            for (let i = 0; i < me.movingDivs.length; i++) {
-                me.redrawLines(me.movingDivs[i].el.node.dataset.id, "red");
+            for (let i = 0; i < this.movingDivs.length; i++) {
+                this.redrawLines(this.movingDivs[i].el.node.dataset.id, "red");
             }
-        } else if (me.linking) {
+        } else if (this.linking) {
             // draw a line from the object to the mouse cursor
-            let rect = this.itemPointerCache[me.linkingDiv.dataset.id];
-            let p = me.mapPageToSvgCoords(e.pageX, e.pageY)
-            me.linkingLine.plot(
+            let rect = this.itemPointerCache[this.linkingDiv.dataset.id];
+            let p = this.mapPageToSvgCoords(e.pageX, e.pageY)
+            this.linkingLine.plot(
                 rect.x() + rect.width() / 2,
                 rect.y() + rect.height() / 2,
                 p.x,
                 p.y
             ).stroke({
                 width: 3
-            }).marker('end', 9, 6, function (add) {
+            }).marker('end', 9, 6, (add) => {
                 add.path("M0,0 L0,6 L9,3 z").fill("#000");
             });
-        } else if (me.globalDrag) {
+        } else if (this.globalDrag) {
             this.actualMotion = true;
             // shift the view by delta
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY, me.originalViewBox);
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY, this.originalViewBox);
 
-            polymorph_core.items[me.settings.currentViewName].itemcluster.cx =
-                me.ocx - (coords.x - me.dragDX);
-            polymorph_core.items[me.settings.currentViewName].itemcluster.cy =
-                me.ocy - (coords.y - me.dragDY);
+            polymorph_core.items[this.settings.currentViewName].itemcluster.cx =
+                this.ocx - (coords.x - this.dragDX);
+            polymorph_core.items[this.settings.currentViewName].itemcluster.cy =
+                this.ocy - (coords.y - this.dragDY);
             //arrange all items
-            me.viewAdjust();
+            this.viewAdjust();
         }
     });
 
-    this.viewAdjust = function () {
-        let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
-        let ww = me.itemSpace.clientWidth * (ic.scale || 1);
-        let hh = me.itemSpace.clientHeight * (ic.scale || 1);
-        if (me.svg) {
-            me.svg.viewbox((ic.cx || 0) - ww / 2, (ic.cy || 0) - hh / 2, ww, hh);
-            me.viewGrid();
+    this.viewAdjust = () => {
+        let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
+        let ww = this.itemSpace.clientWidth * (ic.scale || 1);
+        let hh = this.itemSpace.clientHeight * (ic.scale || 1);
+        if (this.svg) {
+            this.svg.viewbox((ic.cx || 0) - ww / 2, (ic.cy || 0) - hh / 2, ww, hh);
+            this.viewGrid();
         } else {
-            setTimeout(me.viewAdjust, 200);
+            setTimeout(this.viewAdjust, 200);
         }
     }
 
@@ -693,18 +695,18 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.itemSpace.addEventListener("wheel", (e) => {
         if (e.target.matches(".floatingItem") ||
-            e.target.matches(".floatingItem *") || me.tray.contains(e.target)) {
+            e.target.matches(".floatingItem *") || this.tray.contains(e.target)) {
             return;
         }
         if (this.gridScroll) {
             this.handleGridScroll(e);
         } else {
             //calculate old width constant
-            let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
-            let br = me.itemSpace.getBoundingClientRect();
+            let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
+            let br = this.itemSpace.getBoundingClientRect();
             ic.scale = ic.scale || 1;
-            let vw = me.itemSpace.clientWidth * ic.scale;
-            let vh = me.itemSpace.clientHeight * ic.scale;
+            let vw = this.itemSpace.clientWidth * ic.scale;
+            let vh = this.itemSpace.clientHeight * ic.scale;
             let wc = ic.cx - vw / 2 + (e.clientX - br.x) / br.width * vw;
             let hc = ic.cy - vh / 2 + (e.clientY - br.y) / br.height * vh;
             if (e.deltaY > 0) {
@@ -713,51 +715,51 @@ polymorph_core.registerOperator("itemcluster2", {
                 ic.scale *= 0.9;
             }
             //correct the new view centre
-            vw = me.itemSpace.clientWidth * ic.scale;
-            vh = me.itemSpace.clientHeight * ic.scale;
+            vw = this.itemSpace.clientWidth * ic.scale;
+            vh = this.itemSpace.clientHeight * ic.scale;
             ic.cx = wc - (e.clientX - br.x) / br.width * vw + vw / 2;
             ic.cy = hc - (e.clientY - br.y) / br.height * vh + vh / 2;
-            me.viewAdjust();
-            me.viewGrid();
+            this.viewAdjust();
+            this.viewGrid();
         }
     })
 
     this.itemSpace.addEventListener("mouseup", e => {
-        me.handleMoveEnd(e);
+        this.handleMoveEnd(e);
     });
     this.itemSpace.addEventListener("mouseleave", e => {
-        me.handleMoveEnd(e);
+        this.handleMoveEnd(e);
     });
 
-    me.handleMoveEnd = function (e, touch) {
-        me.fromTray = false;
-        if (me.globalDrag) {
-            //setTimeout(me.viewAdjust, 500);
-            me.globalDrag = false;
-            if (me.viewGrid && me.actualMotion) me.viewGrid();
-            me.actualMotion = false;
+    this.handleMoveEnd = (e, touch) => {
+        this.fromTray = false;
+        if (this.globalDrag) {
+            //setTimeout(this.viewAdjust, 500);
+            this.globalDrag = false;
+            if (this.viewGrid && this.actualMotion) this.viewGrid();
+            this.actualMotion = false;
         }
-        if (me.rectangleDragging) {
-            me.rectangleDragging.rect.remove();
-            me.rectangleDragging = undefined;
+        if (this.rectangleDragging) {
+            this.rectangleDragging.rect.remove();
+            this.rectangleDragging = undefined;
         }
-        if (me.dragging) {
+        if (this.dragging) {
             //disengage drag
-            me.dragging = false;
-            if (!me.dragged) {
-                if (me.alreadyMoving != -1) {
-                    me.movingDivs[me.alreadyMoving].el.node.children[0].style.border = "1px solid black";
-                    me.movingDivs.splice(me.alreadyMoving, 1);
+            this.dragging = false;
+            if (!this.dragged) {
+                if (this.alreadyMoving != -1) {
+                    this.movingDivs[this.alreadyMoving].el.node.children[0].style.border = "1px solid black";
+                    this.movingDivs.splice(this.alreadyMoving, 1);
                 }
             }
-            me.dragged = false;
-            //me.movingDiv.classList.remove("moving");
-            if (me.hoverOver) me.hoverOver.style.border = "";
+            this.dragged = false;
+            //this.movingDiv.classList.remove("moving");
+            if (this.hoverOver) this.hoverOver.style.border = "";
 
             //define some stuff
-            let cid = me.lastMovingDiv.attr("data-id");
+            let cid = this.lastMovingDiv.attr("data-id");
 
-            let elements = me.rootdiv
+            let elements = this.rootdiv
                 .getRootNode()
                 .elementsFromPoint(e.clientX, e.clientY);
             /*
@@ -777,33 +779,33 @@ polymorph_core.registerOperator("itemcluster2", {
                         y: 0
                     };
                     if (!e.altKey) {//push drag in.
-                        delete polymorph_core.items[cid].itemcluster.viewData[me.settings.currentViewName];
-                        me.arrangeItem(cid);
-                        me.movingDivs = [];//clear movingdivs so it doesnt come back
+                        delete polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName];
+                        this.arrangeItem(cid);
+                        this.movingDivs = [];//clear movingdivs so it doesnt come back
                     }
-                    me.arrangeItem(elements[i].dataset.id);
-                    //me.switchView(elements[i].dataset.id, true, true);
+                    this.arrangeItem(elements[i].dataset.id);
+                    //this.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
             }
-            me.movingDivs.forEach((v) => {
-                me.updatePosition(v.el.node.dataset.id);
+            this.movingDivs.forEach((v) => {
+                this.updatePosition(v.el.node.dataset.id);
             })
             container.fire("updateItem", {
-                sender: me,
+                sender: this,
                 id: cid
             });
-        } else if (me.linking) {
+        } else if (this.linking) {
             //reset linking line
-            me.linkingLine.plot(0, 0, 0, 0).stroke({ width: 0 });
-            me.linking = false;
+            this.linkingLine.plot(0, 0, 0, 0).stroke({ width: 0 });
+            this.linking = false;
             //change the data
             let linkedTo;
             let elements = container.div.elementsFromPoint(e.clientX, e.clientY);
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches("textarea") &&
-                    elements[i].parentElement.parentElement.dataset.id != me.linkingDiv.dataset.id
+                    elements[i].parentElement.parentElement.dataset.id != this.linkingDiv.dataset.id
                 ) {
                     linkedTo = elements[i].parentElement.parentElement;
                     break;
@@ -811,35 +813,35 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             if (linkedTo) {
                 //add a new line connecting the items
-                me.toggleLine(me.linkingDiv.dataset.id, linkedTo.dataset.id);
+                this.toggleLine(this.linkingDiv.dataset.id, linkedTo.dataset.id);
                 //push the change
                 container.fire("updateItem", {
-                    sender: me,
-                    id: me.linkingDiv.dataset.id
+                    sender: this,
+                    id: this.linkingDiv.dataset.id
                 });
                 container.fire("updateItem", {
-                    sender: me,
+                    sender: this,
                     id: linkedTo.dataset.id
                 });
             }
-        } else if (me.preselected) {
-            if (!polymorph_core.items[me.preselected.dataset.id].boxsize) polymorph_core.items[me.preselected.dataset.id].boxsize = {};
-            bs = polymorph_core.items[me.preselected.dataset.id].boxsize;
-            bs.w = me.preselected.children[0].style.width;
-            bs.h = me.preselected.children[0].style.height;
-            me.arrangeItem(me.preselected.dataset.id); // handle resizes
+        } else if (this.preselected) {
+            if (!polymorph_core.items[this.preselected.dataset.id].boxsize) polymorph_core.items[this.preselected.dataset.id].boxsize = {};
+            bs = polymorph_core.items[this.preselected.dataset.id].boxsize;
+            bs.w = this.preselected.children[0].style.width;
+            bs.h = this.preselected.children[0].style.height;
+            this.arrangeItem(this.preselected.dataset.id); // handle resizes
         }
     };
-    this.itemSpace.addEventListener("mousedown", function (e) {
-        me.possibleResize = false;
-        me.mouseStoredX = e.offsetX;
-        me.mouseStoredY = e.offsetY;
+    this.itemSpace.addEventListener("mousedown", (e) => {
+        this.possibleResize = false;
+        this.mouseStoredX = e.offsetX;
+        this.mouseStoredY = e.offsetY;
     });
 
     this.itemSpace.addEventListener("dblclick", (e) => {
-        if (e.target == me.itemSpace || e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) {
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            me.createItem(
+        if (e.target == this.itemSpace || e.target.tagName.toLowerCase() == "svg" || e.target == this.tempTR.node) {
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            this.createItem(
                 coords.x,
                 coords.y
             );
@@ -858,10 +860,10 @@ polymorph_core.registerOperator("itemcluster2", {
         container.fire("updateItem", {
             id: id
         });
-        me.arrangeItem(id);
+        this.arrangeItem(id);
     };
 
-    this.createItem = function (x, y) {
+    this.createItem = (x, y) => {
         let itm = {};
         //register it with the polymorph_core
         let id = polymorph_core.insertItem(itm);
@@ -870,12 +872,12 @@ polymorph_core.registerOperator("itemcluster2", {
             viewData: {},
             description: ""
         };
-        itm.itemcluster.viewData[me.settings.currentViewName] = {
+        itm.itemcluster.viewData[this.settings.currentViewName] = {
             x: x,
             y: y
         };
-        if (me.settings.filter) {
-            itm[me.settings.filter] = true;
+        if (this.settings.filter) {
+            itm[this.settings.filter] = true;
         }
         //register a change
         container.fire("updateItem", {
@@ -885,17 +887,17 @@ polymorph_core.registerOperator("itemcluster2", {
         this.arrangeItem(id);
     };
 
-    this.removeItem = function (id) {
-        delete polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName];
+    this.removeItem = (id) => {
+        delete polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName];
         //hide all the lines
-        for (let i in me.activeLines) {
-            for (let j in me.activeLines[i]) {
+        for (let i in this.activeLines) {
+            for (let j in this.activeLines[i]) {
                 if (i == id || j == id) {// this could STILL be done better
-                    me.toggleLine(i, j);
+                    this.toggleLine(i, j);
                 }
             }
         }
-        me.arrangeItem(id);
+        this.arrangeItem(id);
         container.fire("deleteItem", {
             id: id
         });
@@ -906,11 +908,11 @@ polymorph_core.registerOperator("itemcluster2", {
             let id = e.target.parentElement.parentElement.dataset.id;
             container.fire("focus", {
                 id: id,
-                sender: me
+                sender: this
             });
-            if (me.prevFocusID) me.redrawLines(me.prevFocusID);
-            me.redrawLines(id, "red");
-            me.prevFocusID = id;
+            if (this.prevFocusID) this.redrawLines(this.prevFocusID);
+            this.redrawLines(id, "red");
+            this.prevFocusID = id;
         }
     })
 
@@ -927,64 +929,64 @@ polymorph_core.registerOperator("itemcluster2", {
 
     ////////////////////////////////////////////////////////////
     //The tray
-    me.addToTray = function (id) {
-        let cti = me.tray.querySelector(`div[data-id='${id}']`);
+    this.addToTray = (id) => {
+        let cti = this.tray.querySelector(`div[data-id='${id}']`);
         if (!cti) {
             cti = htmlwrap(`
                 <div data-id=${id}>
                 <textarea></textarea>
                 </div>
             `);
-            me.tray.appendChild(cti);
+            this.tray.appendChild(cti);
         }
         cti.querySelector("textarea").value = polymorph_core.items[id].title;
     }
 
-    me.removeFromTray = function (id) {
-        let cti = me.tray.querySelector(`div[data-id='${id}']`);
+    this.removeFromTray = (id) => {
+        let cti = this.tray.querySelector(`div[data-id='${id}']`);
         if (cti) cti.remove();
     }
-    me.emptyTray = function () {
-        while (me.tray.children.length) {
-            me.tray.children[0].remove();
+    this.emptyTray = () => {
+        while (this.tray.children.length) {
+            this.tray.children[0].remove();
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //polymorph_core interactions
 
-    function updateSettings() {
-        if (me.settings.tray) {
+    this.updateSettings = () => {
+        if (this.settings.tray) {
             //show the tray
-            me.emptyTray();
-            me.tray.style.display = "flex";
-            if (me.settings.filter && polymorph_core.items[me.settings.currentViewName] && !polymorph_core.items[me.settings.currentViewName][me.settings.filter]) {
-                polymorph_core.items[me.settings.currentViewName][me.settings.filter] = true; // quick upgrade - to remove in future once things have settled
+            this.emptyTray();
+            this.tray.style.display = "flex";
+            if (this.settings.filter && polymorph_core.items[this.settings.currentViewName] && !polymorph_core.items[this.settings.currentViewName][this.settings.filter]) {
+                polymorph_core.items[this.settings.currentViewName][this.settings.filter] = true; // quick upgrade - to remove in future once things have settled
             }
             //also populate the tray
             for (let i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    if (!polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {//not in this view
-                        if (!(me.settings.filter) || polymorph_core.items[i][me.settings.filter]) {
-                            me.addToTray(i);
+                    if (!polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {//not in this view
+                        if (!(this.settings.filter) || polymorph_core.items[i][this.settings.filter]) {
+                            this.addToTray(i);
                         }
                     }
                 }
             }
         } else {
-            me.emptyTray();
-            me.tray.style.display = "none";
+            this.emptyTray();
+            this.tray.style.display = "none";
         }
-        if (me.svg && me.viewGrid) {
-            me.viewGrid();
+        if (this.svg && this.viewGrid) {
+            this.viewGrid();
         }
     }
-    this.refresh = function () {
-        if (me.svg) me.svg.size(me.rootdiv.clientWidth, me.rootdiv.clientHeight);
-        me.switchView(me.settings.currentViewName, true);
+    this.refresh = () => {
+        if (this.svg) this.svg.size(this.rootdiv.clientWidth, this.rootdiv.clientHeight);
+        this.switchView(this.settings.currentViewName, true);
     };
     //Saving and loading
-    this.toSaveData = function () {
+    this.toSaveData = () => {
         //compile the current view path
         this.settings.viewpath = [];
         let bs = this.viewName.parentElement.querySelectorAll("button");
@@ -995,19 +997,16 @@ polymorph_core.registerOperator("itemcluster2", {
         return this.settings;
     }
 
-    this.fromSaveData = function (d) {
-        //this is called when your container is started OR your container loads for the first time
-        Object.assign(this.settings, d);
-        if (this.settings.viewpath) {
-            this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
-            for (let i = 0; i < this.settings.viewpath.length; i++) {
-                me.switchView(this.settings.viewpath[i], true, true);
-            }
-        } else {//for older versions
-            me.switchView(me.settings.currentViewName, true, true);
+    if (this.settings.viewpath) {
+        this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
+        for (let i = 0; i < this.settings.viewpath.length; i++) {
+            this.switchView(this.settings.viewpath[i], true, true);
         }
-        updateSettings();
+    } else {//for older versions
+        this.switchView(this.settings.currentViewName, true, true);
     }
+    this.updateSettings();
+
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
@@ -1037,35 +1036,35 @@ polymorph_core.registerOperator("itemcluster2", {
         })
     }
     let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", function () {
+    targeter.addEventListener("click", () => {
         polymorph_core.target().then((id) => {
-            me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            me.settings['focusOperatorID'] = id
-            me.focusOperatorID = me.settings['focusOperatorID'];
+            this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+            this.settings['focusOperatorID'] = id
+            this.focusOperatorID = this.settings['focusOperatorID'];
         })
     });
-    this.showDialog = function () {
-        for (i in me.settings) {
-            let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
-            if (it) it.value = me.settings[i];
+    this.showDialog = () => {
+        for (i in this.settings) {
+            let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
+            if (it) it.value = this.settings[i];
         }
         for (i in options) {
             options[i].load();
         }
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = ()=>{
-        let its = me.dialogDiv.querySelectorAll("[data-role]");
+    this.dialogUpdateSettings = () => {
+        let its = this.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
-            me.settings[its[i].dataset.role] = its[i].value;
+            this.settings[its[i].dataset.role] = its[i].value;
         }
-        updateSettings();
+        this.updateSettings();
         container.fire("updateItem", { id: this.container.id });
         // pull settings and update when your dialog is closed.
     }
     //extension API
     this.callables = {
-        placeItem: function (data) {
+        placeItem: (data) => {
             let item = data.item;
             let x = data.x;
             let y = data.y;
@@ -1076,11 +1075,11 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             let id = polymorph_core.insertItem(item);
             polymorph_core.items[id].itemcluster = { viewData: {} };
-            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName] = {};
-            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x = x;
-            polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y = y;
-            me.arrangeItem(id);
-            container.fire("updateItem", { id: id, sender: me });
+            polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
+            polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = x;
+            polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].y = y;
+            this.arrangeItem(id);
+            container.fire("updateItem", { id: id, sender: this });
             return id;
         }
     }

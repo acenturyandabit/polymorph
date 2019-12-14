@@ -136,7 +136,7 @@ polymorph_core.rect = function (rectID) {
 
         tabSpan.style.cssText = `
         border: 1px solid black;
-        background: rgb(128, 147, 255);
+        background: #C074E8;
         color: white;
         align-items: center;
         display: inline-flex;
@@ -204,7 +204,11 @@ polymorph_core.rect = function (rectID) {
         this.innerDivContainer.insertBefore(currentInnerDiv, this.innerDivContainer.children[index]);
 
         if (container.operator && container.operator.refresh) container.operator.refresh();
-        if (containerID == this.settings.s) this.switchOperator(this.settings.s); // because during initial load, this needs to be called to actually show anything.
+        // because during initial load, this needs to be called to actually show anything.
+        if (containerID == this.settings.s) this.switchOperator(this.settings.s);
+        else{
+            //set the colour to a nope
+        }
     }
 
     //Callback for tab clicks to switch between operators.
@@ -226,7 +230,7 @@ polymorph_core.rect = function (rectID) {
         currentTab.children[1].style.display = "inline";
         currentTab.children[2].style.display = "inline";
         currentTab.style.background = "#8093FF";
-        if (polymorph_core.containers[containerID].operator.refresh) polymorph_core.containers[containerID].operator.refresh();
+        polymorph_core.containers[containerID].refresh();
         //Overall refresh because borders are dodgy
         polymorph_core.containers[this.settings.s].refresh();
         return true;
@@ -365,7 +369,7 @@ polymorph_core.rect = function (rectID) {
         // at the tab, create a new subframe operator
         this.containers[contextedOperatorIndex].fromSaveData(polymorph_core.copiedFrameData);
         this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-        polymorph_core.fire("updateItem", {id:rectID, sender: this });
+        polymorph_core.fire("updateItem", { id: rectID, sender: this });
         tabmenu.style.display = "none";
     })
 
@@ -384,7 +388,7 @@ polymorph_core.rect = function (rectID) {
                 let importObject = JSON.parse(tta.querySelector("textarea").value);
                 this.containers[contextedOperatorIndex].fromSaveData(importObject);
                 this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                polymorph_core.fire("updateItem", {id:rectID, sender: this });
+                polymorph_core.fire("updateItem", { id: rectID, sender: this });
                 //force update all items to reload the view
                 for (let i in polymorph_core.items) {
                     polymorph_core.fire('updateItem', { id: i });
@@ -418,7 +422,7 @@ polymorph_core.rect = function (rectID) {
                     this.tabbar.querySelector(`[data-containerid="${this.settings.s}"]`).children[0].innerText = polymorph_core.containers[this.settings.s].settings.tabbarName;
                     if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                     polymorph_core.containers[this.settings.s].processRemappingDiv();
-                    polymorph_core.fire("updateItem",{id:rectID});
+                    polymorph_core.fire("updateItem", { id: rectID });
                 })
             } else {
                 //old version
@@ -462,8 +466,10 @@ polymorph_core.rect = function (rectID) {
             //show my container
             this.switchOperator(this.settings.s);
         }
-        //Operators may not exist on fromSaveData
-        if (this.containers) this.containers.forEach((c) => { if (c && c.operator.refresh) c.operator.refresh() });
+        if (this.containers) this.containers.forEach((c) => {
+            //containers may not exist on fromSaveData
+            if (c) c.refresh()
+        });
     }
     let rectChanged = false;
     //Make draggable borders.
@@ -596,7 +602,7 @@ polymorph_core.rect = function (rectID) {
         }
         if (rectChanged) {
             polymorph_core.fire("updateItem", {
-                id:rectID,
+                id: rectID,
                 sender: this
             });
             rectChanged = false;
@@ -666,7 +672,7 @@ polymorph_core.rect = function (rectID) {
     }
     this._remove = (_firstOrSecond) => {
         polymorph_core.fire("updateItem", {
-            id:rectID,
+            id: rectID,
             sender: this
         });
         //if remaining innerDiv has an operator, adopt it

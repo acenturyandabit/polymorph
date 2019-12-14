@@ -2,14 +2,12 @@ polymorph_core.registerOperator("scriptrunner", {
     displayName: "Scriptrunner",
     description: "Runs scripts."
 }, function (container) {
-    let me = this;
-    me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {
+    let defaultSettings = {
         autorun: false,
         reallyAutorun: false
     };
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
-    this.rootdiv = document.createElement("div");
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
         <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>

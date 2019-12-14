@@ -12,6 +12,7 @@ var __manager_profiles = {
             ["polymorph_core_view", "core_modules/core.view.js"],
             ["polymorph_core_container", "core_modules/core.container.js"],
             ["polymorph_core_itemfx", "core_modules/core.itemfx.js"],
+            ["polymorph_core_operator", "core_modules/core.operator.js"],
         ]
     },
     operators: {

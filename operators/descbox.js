@@ -1,113 +1,102 @@
-polymorph_core.registerOperator("descbox", function (container) {
-    let me = this;
-    me.container = container;
-    me.settings = {
+polymorph_core.registerOperator("descbox", { description: "A simple text entry field." }, function (container) {
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
         property: "description",
         operationMode: "focus",
         staticItem: ""
     };
 
-    me.rootdiv = document.createElement("div");
-    //Add div HTML here
-    me.rootdiv.innerHTML = `<p></p><textarea></textarea>`;
-    me.rootdiv.style.cssText = "height:100%; display:flex; flex-direction: column;"
-    me.textarea = me.rootdiv.querySelector("textarea");
-    me.textarea.style.width = "100%";
-    me.textarea.style.flex = "1 0 auto";
-    me.textarea.style.resize = "none";
-    me.currentIDNode = me.rootdiv.querySelector("p");
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
-    container.div.appendChild(me.rootdiv);
+    //Add div HTML here
+    this.rootdiv.innerHTML = `<p style="margin: 1px;"></p><textarea style="width:100%; flex: 1 0 auto; resize:none;"></textarea>`;
+    this.rootdiv.style.cssText = "height:100%; display:flex; flex-direction: column;"
+    this.textarea = this.rootdiv.querySelector("textarea");
+    this.currentIDNode = this.rootdiv.querySelector("p");
+
+    container.div.appendChild(this.rootdiv);
 
     //Handle item updates
-    me.updateItem = (id) => {
-        me.currentIDNode.innerText = id;
+    this.updateItem = (id) => {
+        this.currentIDNode.innerText = id;
         //if focused, ignore
-        if (me.settings.operationMode != "putter") {
-            if (id == me.settings.currentID && id && polymorph_core.items[id]) {
-                if (me.textarea.matches(":focus")) {
-                    setTimeout(() => me.updateItem(id), 500);
+        if (this.settings.operationMode != "putter") {
+            if (id == this.settings.currentID && id && polymorph_core.items[id]) {
+                if (this.textarea.matches(":focus")) {
+                    setTimeout(() => this.updateItem(id), 500);
                 } else {
                     if (this.changed) {
                         //someone else just called this so i'll have to save my modifications discreetly.
-                        polymorph_core.items[id][me.settings.property] = me.textarea.value;
+                        polymorph_core.items[id][this.settings.property] = this.textarea.value;
                     } else {
-                        if (polymorph_core.items[id] && polymorph_core.items[id][me.settings.property]) me.textarea.value = polymorph_core.items[id][me.settings.property];
-                        else me.textarea.value = "";
+                        if (polymorph_core.items[id] && polymorph_core.items[id][this.settings.property]) this.textarea.value = polymorph_core.items[id][this.settings.property];
+                        else this.textarea.value = "";
                     }
-                    me.textarea.disabled = false;
+                    this.textarea.disabled = false;
                     if (polymorph_core.items[id].style) {
-                        me.textarea.style.background = polymorph_core.items[id].style.background;
-                        me.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(me.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
+                        this.textarea.style.background = polymorph_core.items[id].style.background;
+                        this.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(this.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
                     } else {
-                        me.textarea.style.background = "";
-                        me.textarea.style.color = "";
+                        this.textarea.style.background = "";
+                        this.textarea.style.color = "";
                     }
                 }
             } else {
-                if (!me.settings.currentID) {
-                    me.textarea.disabled = true;
-                    me.textarea.value = "Select an item to view its description.";
+                if (!this.settings.currentID) {
+                    this.textarea.disabled = true;
+                    this.textarea.value = "Select an item to view its description.";
                 }
             }
         } else {
-            me.textarea.disabled = false;
+            this.textarea.disabled = false;
         }
     }
 
-    container.on("updateItem", function (d) {
+    container.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;
-        if (sender == me) return;
-        if (id == me.settings.currentID) {
-            me.updateItem(id);
+        if (sender == this) return;
+        if (id == this.settings.currentID) {
+            this.updateItem(id);
             return true;
         }
     });
 
     //First time load
 
-    me.updateItem(me.settings.currentID);
+    this.updateItem(this.settings.currentID);
 
-    me.updateSettings = function () {
-        if (me.settings.operationMode == 'static') {
-            let staticItem = me.settings.staticItem;
-            me.settings.currentID = me.settings.staticItem;
+    this.updateSettings = () => {
+        if (this.settings.operationMode == 'static') {
+            let staticItem = this.settings.staticItem;
+            this.settings.currentID = this.settings.staticItem;
             if (!polymorph_core.items[staticItem]) {
                 let it = {};
-                it[me.settings.property] = "";
+                it[this.settings.property] = "";
                 polymorph_core.items[staticItem] = it;
                 container.fire("updateItem", {
                     sender: this,
                     id: staticItem
                 });
             }
-        } else if (me.settings.operationMode == 'putter') {
-            if (me.settings.focusOperatorID) me.focusOperatorID = me.settings.focusOperatorID;
-            me.textarea.value = "";
-            me.textarea.disabled = false;
+        } else if (this.settings.operationMode == 'putter') {
+            if (this.settings.focusOperatorID) this.focusOperatorID = this.settings.focusOperatorID;
+            this.textarea.value = "";
+            this.textarea.disabled = false;
         }
-        me.updateItem(me.settings.currentID);
+        this.updateItem(this.settings.currentID);
     }
 
-    //Saving and loading
-    me.toSaveData = function () {
-        return me.settings;
-    }
-
-    me.fromSaveData = function (d) {
-        Object.assign(me.settings, d);
-        me.updateSettings();
-        //then rehash the display or sth
-        me.updateItem(me.settings.currentID);
-    }
+    this.updateSettings();
+    this.updateItem(this.settings.currentID);
 
     let upc = new capacitor(100, 40, (id, data) => {
         if (id && polymorph_core.items[id] && this.changed) {
-            polymorph_core.items[id][me.settings.property] = data;
+            polymorph_core.items[id][this.settings.property] = data;
             container.fire("updateItem", {
                 id: id,
-                sender: me
+                sender: this
             });
             this.changed = false;
         }
@@ -117,25 +106,27 @@ polymorph_core.registerOperator("descbox", function (container) {
         }
     })
     //Register changes with polymorph_core
-    me.somethingwaschanged = function () {
-        if (me.settings.operationMode != "putter") {
-            upc.submit(me.settings.currentID, me.textarea.value);
+    this.somethingwaschanged = () => {
+        if (this.settings.operationMode != "putter") {
+            upc.submit(this.settings.currentID, this.textarea.value);
         }
     }
 
-    me.textarea.addEventListener("blur", () => { upc.forceSend() });
+    this.textarea.addEventListener("blur", () => { upc.forceSend() });
 
-    me.textarea.addEventListener("input", me.somethingwaschanged);
-    me.textarea.addEventListener("keyup", me.somethingwaschanged);
+    this.textarea.addEventListener("input", this.somethingwaschanged);
+    this.textarea.addEventListener("keyup", this.somethingwaschanged);
 
-    me.textarea.addEventListener("keydown", (e) => {
+    this.createItem = (id, data) => {
+        id = this._createItem();
+        polymorph_core.items[id][this.settings.property] = data;
+    }
+
+    this.textarea.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            let container = polymorph_core.getOperator(me.focusOperatorID);
-            if (container && container.container.quickAdd) {
-                container.container.quickAdd(me.textarea.value);
-                me.textarea.value = "";
-                e.preventDefault();
-            }
+            this.createItem(undefined, this.textarea.value);
+            this.textarea.value = "";
+            e.preventDefault();
         }
     });
 
@@ -164,59 +155,58 @@ polymorph_core.registerOperator("descbox", function (container) {
         showWordCount: new _option({
             div: this.dialogDiv,
             type: "bool",
-            object: me.settings,
+            object: this.settings,
             property: "showWordCount",
             label: "Show wordcount?"
         })
     };
     let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", function () {
+    targeter.addEventListener("click", () => {
         polymorph_core.target().then((id) => {
-            me.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            me.settings['focusOperatorID'] = id
-            me.focusOperatorID = me.settings['focusOperatorID'];
+            this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
+            this.settings['focusOperatorID'] = id
         })
     })
-    this.showDialog = function () {
+    this.showDialog = () => {
         // update your dialog elements with your settings
         //fill out some details
         for (i in options) {
             options[i].load();
         }
-        for (i in me.settings) {
-            let it = me.dialogDiv.querySelector("[data-role='" + i + "']");
-            if (it) it.value = me.settings[i];
+        for (i in this.settings) {
+            let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
+            if (it) it.value = this.settings[i];
         }
     }
     this.dialogUpdateSettings = () => {
         // pull settings and update when your dialog is closed.
-        let its = me.dialogDiv.querySelectorAll("[data-role]");
+        let its = this.dialogDiv.querySelectorAll("[data-role]");
         for (let i = 0; i < its.length; i++) {
-            me.settings[its[i].dataset.role] = its[i].value;
+            this.settings[its[i].dataset.role] = its[i].value;
         }
-        me.textarea.placeholder = me.settings.placeholder || "";
-        me.updateSettings();
+        this.textarea.placeholder = this.settings.placeholder || "";
+        this.updateSettings();
         container.fire("updateItem", { id: this.container.id });
     }
-    me.dialogDiv.addEventListener("input", function (e) {
+    this.dialogDiv.addEventListener("input", (e) => {
         if (e.target.dataset.role) {
-            me.settings[e.target.dataset.role] = e.target.value;
+            this.settings[e.target.dataset.role] = e.target.value;
         }
     })
 
-    //polymorph_core will call me when an object is focused on from somewhere
+    //polymorph_core will call this when an object is focused on from somewhere
     container.on("focus", (d) => {
         let id = d.id;
         let sender = d.sender;
-        function switchTo(id) {
+        let switchTo = (id) => {
             upc.forceSend();
-            me.settings.currentID = id;
-            me.updateItem(id);
+            this.settings.currentID = id;
+            this.updateItem(id);
             container.fire("updateItem", { id: this.container.id });
         }
-        if (me.settings.operationMode == "focus") {
-            if (me.settings['focusOperatorID']) {
-                if (me.settings['focusOperatorID'] == sender.container.uuid) {
+        if (this.settings.operationMode == "focus") {
+            if (this.settings['focusOperatorID']) {
+                if (this.settings['focusOperatorID'] == sender.container.uuid) {
                     switchTo(id);
                 }
             } else {
@@ -225,7 +215,7 @@ polymorph_core.registerOperator("descbox", function (container) {
                     let baserectSender = sender.container.rect;
                     while (baserectSender.parent) baserectSender = baserectSender.parent;
                     //calculate my base rect
-                    let myBaseRect = me.container.rect;
+                    let myBaseRect = this.container.rect;
                     while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
                     //if they're the same, then update.
                     if (myBaseRect == baserectSender) {
@@ -233,18 +223,7 @@ polymorph_core.registerOperator("descbox", function (container) {
                     }
                 }
             }
-        } else if (me.settings.operationMode == "putter") {
-            if (!me.settings.focusOperatorID) {
-                me.focusOperatorID = d.sender.container.uuid;
-            }
+        } else if (this.settings.operationMode == "putter") {
         }
-    });
-    container.on("deleteItem", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        if (me.settings.currentID == id) {
-            me.settings.currentID = undefined;
-            me.updateItem(undefined);
-        };
     });
 });

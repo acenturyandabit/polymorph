@@ -78,7 +78,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     this.refresh = function () {
-        if (this.operator.refresh) this.operator.refresh();
+        if (this.operator && this.operator.refresh) this.operator.refresh();
     }
 
     //event remapping
@@ -207,8 +207,9 @@ polymorph_core.container = function container(containerID) {
     //saving and loading
     //#region
     this.toSaveData = () => {
-        this.settings.data = this.operator.toSaveData();
-        return this.settings;
+        //sometimes the operator breaks -- we dont want to disrupt the entire save process.
+        if (this.operator && this.operator.toSaveData) this.operator.toSaveData();
+        return this.settings;// doesn't hurt, helps with subframing too
     };
 
     //parse options and decide what to do re: a div

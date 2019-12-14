@@ -1,8 +1,5 @@
 polymorph_core.registerOperator("subframe", {}, function (container) {
-    let me = this;
-    me.container = container;
-    this.settings = {};
-
+    polymorph_core.operatorTemplate.call(this, container, {});
     this.outerDiv = document.createElement("div");
     //Add div HTML here
     this.outerDiv.innerHTML = ``;
@@ -18,7 +15,7 @@ polymorph_core.registerOperator("subframe", {}, function (container) {
     //////////////////Handling local changes to push to polymorph_core//////////////////
 
     this.tieRect = function (rectID) {
-        this.rectID=rectID;
+        this.rectID = rectID;
         this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
         polymorph_core.rects[rectID].refresh();
     }
@@ -31,16 +28,6 @@ polymorph_core.registerOperator("subframe", {}, function (container) {
         this.tieRect(rectID);
     }
 
-
-
-    //Saving and loading
-    this.toSaveData = function () {
-        return this.settings;
-    }
-
-    this.fromSaveData = function (d) {
-        //do nothing
-    }
 
 
     //Handle the settings dialog click!

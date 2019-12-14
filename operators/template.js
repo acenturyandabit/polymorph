@@ -7,23 +7,36 @@ polymorph_core.registerOperator("template", {
         somesetting: "somevalue"
     };
 
+    //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
-
-    this.rootdiv = document.createElement("div");
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = ``;
-    container.div.appendChild(this.rootdiv);
 
     //return true if we care about an item and dont want it garbage-cleaned :(
     this.itemRelevant = (id) => { return polymorph_core.itemRelevant(this, id); }
 
-    //////////////////Handle polymorph_core item updates//////////////////
+    this.createItem = (id) => {
+        //Use the inherited _createItem function to sort out instantiation and
+        //coordination between operators.
+        id=this._createItem(id);
+        itm=polymorph_core.items[id];
+
+        //add any data you need
+        itm.a=b;
+    }
+
+    this.deleteItem = (id) => {
+        //Use the inherited _createItem function to sort out instantiation and
+        //coordination between operators.
+        this._deleteItem(id);
+        container.fire("updateItem",{id:id});
+    }
 
     //this is called when an item is updated (e.g. by another container)
-    container.on("updateItem", function (d) {
+    container.on("updateItem", (d) => {
         let id = d.id;
-        if (this.itemRelevant(id)){
+        if (this.itemRelevant(id)) {
             //render the item, if we care about it.
         }
         //do stuff with the item.

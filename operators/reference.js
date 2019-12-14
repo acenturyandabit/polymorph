@@ -1,165 +1,65 @@
-polymorph_core.registerOperator("reference", {
-    displayName: "Reference",
-    description: "Here we list all the different features that Polymorph supports for you. If you're looking to get started quick, check out template.js instead!"
+polymorph_core.registerOperator("template", {
+    displayName: "Template",
+    description: "A quickstart template. Very minimal."
 }, function (container) {
-    let me = this;
-    me.container = container;
-    this.settings = {};
-    //Add styling info here. Don't worry, it won't affect anything outside your component. (Shadow DOM yay!!!!1)
-    this.style = document.createElement("style");
-    this.style.innerHTML = `
-        button{
-            width: 5em;
-            display:block;
-        }
-    `
-    container.div.appendChild(this.style);
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
+        somesetting: "somevalue"
+    };
 
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
-    this.rootdiv = document.createElement("div");
-    //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
+    //Add content-independent HTML here.
     this.rootdiv.innerHTML = ``;
 
-    container.div.appendChild(this.rootdiv);
+    //return true if we care about an item and dont want it garbage-cleaned :(
+    this.itemRelevant = (id) => { return polymorph_core.itemRelevant(this, id); }
 
-    //////////////////Handle polymorph_core item updates//////////////////
+    this.createItem = (id) => {
+        //Use the inherited _createItem function to sort out instantiation and
+        //coordination between operators.
+        id=this._createItem(id);
+        itm=polymorph_core.items[id];
 
-    //these are optional but can be used as a reference.
-    container.on("updateItem", function (d) {
+        //add any data you need
+        itm.a=b;
+    }
+
+    this.deleteItem = (id) => {
+        //Use the inherited _createItem function to sort out instantiation and
+        //coordination between operators.
+        //If you're simply removing the filter property, then deleteItem will 
+        //be sufficient.
+        this._deleteItem(id);
+        itm=polymorph_core.items[id];
+
+        //remove just enough data so that you no longer care about the operator
+        //garbage cleaner will do the rest
+        delete itm.a;
+    }
+
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", (d) => {
         let id = d.id;
-        let sender = d.sender;
-        if (sender == me) return;
-        //Check if item is shown
-        //Update item if relevant
-        //This will be called for all items when the items are loaded.
-        //This is also called when items are created.
-    });
-
-    container.on("focus", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        // An item was focused.
-    });
-
-    container.on("deleteItem", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        if (sender == me) return;
-        // An item was deleted.
-    });
-
-    container.on("dateUpdate", function (d) {
-        let id = d.id;
-        let s = d.sender;
-        if (sender == me) return;
-        // The date of an item was updated.
+        if (this.itemRelevant(id)) {
+            //render the item, if we care about it.
+        }
+        //do stuff with the item.
     });
 
     this.refresh = function () {
-        // This is called when my parent rect is resized.
-    }
-
-    //For interoperability between views you may fire() and on() your own events. You may only pass one object to the fire() function; use the properties of that object for additional detail.
-
-
-    //////////////////Handling local changes to push to polymorph_core//////////////////
-
-    //Handle item creation, locally
-    this.createItem = function () {
-        //Create a new item
-        let it = {};
-
-        //register it with the polymorph_core
-        let id = polymorph_core.insertItem(it);
-
-        //register a change
-        container.fire("updateItem", {
-            sender: this,
-            id: id
-        });
-    }
-
-    //Register changes with polymorph_core
-    this.somethingwaschanged = function () {
-        container.fire("updateItem", {
-            id: itemID,
-            sender: this
-        });
-    }
-
-    //Register focus with polymorph_core
-    this.somethingwasfocused = function () {
-        container.fire("focus", {
-            id: itemID,
-            sender: this
-        });
-    }
-
-    this.somethingwasdeleted = function () {
-        container.fire("deleteItem", {
-            id: itemID,
-            sender: this
-        });
-        //Don't actually delete() the item! polymorph_core will manage that.
-    }
-
-    //Saving and loading
-    this.toSaveData = function () {
-        return this.settings;
-    }
-
-    this.fromSaveData = function (d) {
-        Object.assign(this.settings, d);
-        this.processSettings();
-    }
-
-
-
-    //Handle a change in settings (either from load or from the settings dialog or somewhere else)
-    this.processSettings = function () {
-
+        // This is called when the parent container is resized.
     }
 
     //Handle the settings dialog click!
-    this.dialogDiv=document.createElement("div");
-    this.dialogDiv.innerHTML=`Some html`;
-    //Sample options using our _options in house options settings
-    let ops = [
-        new _option({
-            div: this.dialogDiv,
-            type: "bool",
-            object: this.settings,
-            property: "echoOn",
-            label: "Echo commands"
-        }), new _option({
-            div: this.dialogDiv,
-            type: "bool",
-            object: this.settings,
-            property: "wsautocon",
-            label: "Autoconnect websocket on disconnect"
-        }), new _option({
-            div: this.dialogDiv,
-            type: "bool",
-            object: this.settings,
-            property: "wsthru",
-            label: "Use as dedicated websocket interface"
-        })
-    ];
-
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
     this.showDialog = function () {
-        ops.forEach((op) => { op.load(); });
+        // update your dialog elements with your settings
     }
-
-    this.dialogUpdateSettings=function(){
-        // pull settings and update when your dialog is closed.
+    this.dialogUpdateSettings = function () {
+        // This is called when your dialog is closed. Use it to update your container!
     }
-
-    this.quickAdd=function(data){
-        // An operation that is called to quickly add an item. may be called by other operators sometimes. data will always be plaintext. do what you will with it.
-    }
-
-    //Terminal protocol: If you want to add terminal-callable functions, put them under this.callables
-    this.callables={}
-    this.callables.fn=this.fn; //etc
 
 });
