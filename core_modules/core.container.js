@@ -86,20 +86,27 @@ polymorph_core.container = function container(containerID) {
     this._on = this.on;
     this._fire = this.fire;
     //we need the garbagecollector to work still
+    this.selfFiredEvents = [];
+
     this.fire = (e, f) => {
-        if (e.includes("createItem") || e.includes("deleteItem")) e += "updateItem";
         this._fire(e, f);
+        if (e.includes("createItem") || e.includes("deleteItem")) {
+            this.selfFiredEvents.push({ e: "updateItem", args: f });
+            this._fire("updateItem", f);
+            this.selfFiredEvents.pop();
+        }
     }
 
     this.on = (e, f) => {
         if (e == "updateItem") polymorph_core.on("updateItem", f);
         else (this._on(e, f));
     }
-    this.incomingEvents = [];
     this.on("*", (args, e) => {
 
-        for (let i = 0; i < this.incomingEvents.length; i++) {
-            if (this.incomingEvents[i].e == e && this.incomingEvents[i].args == args) return;
+        //takes in events from outside and from self
+        //we want to filter out the self ones.
+        for (let i = 0; i < this.selfFiredEvents.length; i++) {
+            if (this.selfFiredEvents[i].e == e && this.selfFiredEvents[i].args == args) return;
         }
 
         if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
@@ -116,10 +123,10 @@ polymorph_core.container = function container(containerID) {
     polymorph_core.on("*", (args, e) => {
         //with this setup, updateItem will be called twice - so dont handle updateItem
         if (e == "updateItem") return;
-        this.incomingEvents.push({ e: e, args: args });
+        this.selfFiredEvents.push({ e: e, args: args });
         if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
         this.fire(e, args);
-        this.incomingEvents.pop();
+        this.selfFiredEvents.pop();
     })
 
     //Input event remapping
