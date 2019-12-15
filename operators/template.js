@@ -27,8 +27,7 @@ polymorph_core.registerOperator("template", {
     }
 
     this.deleteItem = (id) => {
-        //Use the inherited _createItem function to sort out instantiation and
-        //coordination between operators.
+        //The inherited _deleteItem is pretty standard and may be enough.
         this._deleteItem(id);
         container.fire("updateItem",{id:id});
     }

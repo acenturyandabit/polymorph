@@ -30,4 +30,16 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
         //container.fire("updateItem", { id: id });
         //container.fire("focusItem", { id: undefined });
     }
+
+    this._itemRelevant=(id)=>{
+        if (!this.settings.filter){
+            return true;
+        }else{
+            if (polymorph_core.items[id][this.settings.filter]){
+                return true;
+            }else{
+                return false;
+            }
+        }
+    }
 }

@@ -10,28 +10,21 @@ polymorph_core.isLinked = function (A, B) {
     return ret;
 }
 
-polymorph_core.link = function (A, B, undirected = false) {
-    polymorph_core.items[A].to = polymorph_core.items[A].to || {};
-    polymorph_core.items[A].to[B] = polymorph_core.items[A].to[B] || true;
+polymorph_core.link = function (A, B, toProp, fromProp, undirected = false) {
+    polymorph_core.items[A][toProp] = polymorph_core.items[A][toProp] || {};
+    polymorph_core.items[A][toProp][B] = polymorph_core.items[A][toProp][B] || true;
+    polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
+    polymorph_core.items[B][fromProp][A] = polymorph_core.items[B][fromProp][A] || true;
     if (undirected) {
         polymorph_core.link(B, A);
     }
 }
-polymorph_core.unlink = function (A, B, undirected = false) {
-    polymorph_core.items[A].to = polymorph_core.items[A].to || {};
-    delete polymorph_core.items[A].to[B];
+polymorph_core.unlink = function (A, B, toProp, fromProp, undirected = false) {
+    polymorph_core.items[A][toProp] = polymorph_core.items[A][toProp] || {};
+    delete polymorph_core.items[A][toProp][B];
+    polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
+    delete polymorph_core.items[B][fromProp][A];
     if (undirected) {
         polymorph_core.unlink(B, A);
-    }
-}
-
-polymorph_core.itemRelevant=function (operator, id){
-    if (!operator.settings.filter){
-        return true;
-    }
-    if (polymorph_core.items[id][operator.settings.filter]){
-        return true;
-    }else{
-        return false;
     }
 }

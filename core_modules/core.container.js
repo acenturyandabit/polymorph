@@ -84,7 +84,13 @@ polymorph_core.container = function container(containerID) {
     //event remapping
     addEventAPI(this);
     this._on = this.on;
+    this._fire = this.fire;
     //we need the garbagecollector to work still
+    this.fire = (e, f) => {
+        if (e.includes("createItem") || e.includes("deleteItem")) e += "updateItem";
+        this._fire(e, f);
+    }
+
     this.on = (e, f) => {
         if (e == "updateItem") polymorph_core.on("updateItem", f);
         else (this._on(e, f));

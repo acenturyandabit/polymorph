@@ -21,19 +21,20 @@ var __manager_profiles = {
             ["itemList", "operators/itemList.js"],
             ["descbox", "operators/descbox.js"],
             ["calendar", "operators/calendar.js"],
-            ["stack", "operators/stack.js"],
+            //["stack", "operators/stack.js"],
             ["terminal", "operators/terminal.js"],
             ["inspector", "operators/inspector.js"],
-            ["sorter", "operators/sorter.js"],
-            ["httree", "operators/httree.js"],
+            //["sorter", "operators/sorter.js"],
+            //["httree", "operators/httree.js"],
             //["chat", "operators/chat.js"],
             ["itemcluster", "operators/itemcluster.js"],
             //["turmach", "operators/turmach.js"],
-            ["roundshow", "operators/roundshow.js"],
-            ["tester", "operators/tester.js"],
-            ["ruigen", "operators/ruigen/rui_operator.js"],
+            //["roundshow", "operators/roundshow.js"],
+            //["tester", "operators/tester.js"],
+            //["ruigen", "operators/ruigen/rui_operator.js"],
             //["calendar2", "operators/calendar.2.js"],
-            ["scriptrunner", "operators/scriptrunner.js"]
+            ["scriptrunner", "operators/scriptrunner.js"],
+            ["workflow", "operators/workflow.js"]
         ]
     },
     saveSources: {

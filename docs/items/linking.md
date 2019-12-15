@@ -1,6 +1,10 @@
 # Linking
 
-In polymorph, I store links as parent->child relations only. The decision is largely arbitrary, but enforcing both parent and child links is a bad idea (see below). 
+To enforce links in polymorph, you may use the provided `polymorph_core.link(A,B,linkProp)` and corresponding `unlink` function.
+
+These automatically enforce both parent and child relations on objects, when given the link property.
+
+A utility 
 
 ## How it currently works
 ```javascript
@@ -12,15 +16,21 @@ polymorph_core.items[id].to={
 An undirected link is indicated by a->b and b->a both being enforced.
 
 ## How it could work
-### Parent only
-Instead of to, I could have polymorph_core.from. 
-- Advantage: tree children add themselves
-- Disadvantage: need to keep a cache of parents 
+### Children only, object
+- Quickly store data
+- Easily store metadata in links
+- Disadvantage: No ordered links.
 
-### Children only
-- Advantage: Easily find children of trees.
-- Disadvantage: Harder to find parents of stray items
+### Parents and children, object
+- Easily find children and parents.
+- Disadvantage: Storage is doubled up
 
-### Parents and children
-- Advantage: Easily find children and parents.
-- Disadvantages: Storage is doubled up, removing links are harder, implementation is more fiddly, Need to make undirected links a separate thing.
+### Array of objects as children
+- Ordered children
+- Disadvantage: Searching for children is a lot slower.
+
+
+### Linking TODO
+- Ordered children (because e.g. workflowy and you can always go back to unordered)
+- Enforce from-to pairs? 
+- Get core in on the gig (anything that looks like a from-to pair will automatically be treated as a link list)

@@ -83,7 +83,7 @@ polymorph_core.on("UIstart", () => {
         polymorph_core.baseRect.refresh();
     })
     document.body.addEventListener("keydown", e => {
-        if (e.ctrlKey && e.key == "s") {
+        if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
             polymorph_core.unsaved = false;
