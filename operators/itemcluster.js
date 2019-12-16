@@ -365,7 +365,7 @@ polymorph_core.registerOperator("itemcluster2", {
         //clone positions as well
         for (let i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                polymorph_core.items[i].itemcluster.viewData[id] = polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName];
+                polymorph_core.items[i].itemcluster.viewData[id] = JSON.parse(JSON.stringify(polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]));
             }
         }
         this.switchView(id);
@@ -771,7 +771,7 @@ polymorph_core.registerOperator("itemcluster2", {
             for (let i = 0; i < elements.length; i++) {
                 if (
                     elements[i].matches(".floatingItem") &&
-                    elements[i].dataset.id != cid && e.ctrlKey
+                    elements[i].dataset.id != cid && (e.ctrlKey || e.metaKey)
                 ) {
                     polymorph_core.items[elements[i].dataset.id].itemcluster.viewName = polymorph_core.items[elements[i].dataset.id].itemcluster.viewName || polymorph_core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
                     polymorph_core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {

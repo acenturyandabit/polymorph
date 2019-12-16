@@ -1,10 +1,8 @@
 # Linking
 
-To enforce links in polymorph, you may use the provided `polymorph_core.link(A,B,linkProp)` and corresponding `unlink` function.
+To enforce links in polymorph, you may use the provided `polymorph_core.link(A,B,settings)` and corresponding `unlink` function.
 
 These automatically enforce both parent and child relations on objects, when given the link property.
-
-A utility 
 
 ## How it currently works
 ```javascript

@@ -10,20 +10,36 @@ polymorph_core.isLinked = function (A, B) {
     return ret;
 }
 
-polymorph_core.link = function (A, B, toProp, fromProp, undirected = false) {
+polymorph_core.link = function (A, B, settings = {}) {
+    if (settings == true) {
+        settings = { undirected: true };
+    }
+    let toProp = settings.toProp || "to";
+    let fromProp = settings.fromProp;
+    let undirected = settings.undirected;
     polymorph_core.items[A][toProp] = polymorph_core.items[A][toProp] || {};
     polymorph_core.items[A][toProp][B] = polymorph_core.items[A][toProp][B] || true;
-    polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
-    polymorph_core.items[B][fromProp][A] = polymorph_core.items[B][fromProp][A] || true;
+    if (fromProp) {
+        polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
+        polymorph_core.items[B][fromProp][A] = polymorph_core.items[B][fromProp][A] || true;
+    }
     if (undirected) {
-        polymorph_core.link(B, A);
+        polymorph_core.link(B, A, settings);
     }
 }
-polymorph_core.unlink = function (A, B, toProp, fromProp, undirected = false) {
+polymorph_core.unlink = function (A, B, settings = {}) {
+    if (settings == true) {
+        settings = { undirected: true };
+    }
+    let toProp = settings.toProp || "to";
+    let fromProp = settings.fromProp;
+    let undirected = settings.undirected;
     polymorph_core.items[A][toProp] = polymorph_core.items[A][toProp] || {};
     delete polymorph_core.items[A][toProp][B];
-    polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
-    delete polymorph_core.items[B][fromProp][A];
+    if (fromProp) {
+        polymorph_core.items[B][fromProp] = polymorph_core.items[B][fromProp] || {};
+        delete polymorph_core.items[B][fromProp][A];
+    }
     if (undirected) {
         polymorph_core.unlink(B, A);
     }

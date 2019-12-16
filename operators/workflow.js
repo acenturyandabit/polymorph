@@ -42,6 +42,7 @@ polymorph_core.registerOperator("workflow", {
 
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = ``;
+    this.rootdiv.style.color = "white";
 
     //return true if we care about an item and dont want it garbage-cleaned :(
     this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
@@ -72,7 +73,7 @@ polymorph_core.registerOperator("workflow", {
                 let newItem = {};
                 newItem[this.settings.titleProperty] = "";
                 let newID = polymorph_core.insertItem(newItem);
-                polymorph_core.items[e.target.parentElement.dataset.id].to[newID] = true;
+                polymorph_core.link(e.target.parentElement.dataset.id, newID);
                 container.fire("createItem", { id: id, sender: this });
             }
         }
@@ -93,7 +94,7 @@ polymorph_core.registerOperator("workflow", {
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", (d) => {
-        if (d.sender==this)return;// Dont handle our own updates so that the user does not lose focus.
+        if (d.sender == this) return;// Dont handle our own updates so that the user does not lose focus.
         let id = d.id;
         if (this.itemRelevant(id)) {
             //render the item, if we care about it.
