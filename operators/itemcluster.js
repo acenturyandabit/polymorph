@@ -81,13 +81,13 @@ polymorph_core.registerOperator("itemcluster2", {
 <div>
     <div class="itemcluster-container">
         <div class="itemcluster-banner">
-            <span class="topbar">
+            <span class="topbar" style="user-select: none; color:white; background:rgb(113, 28, 156);">
                 <a>View:</a>
                 <span>
-                    <a class="viewNameContainer" style="background:rgb(132, 185, 218);"><span><span contenteditable class="viewName" data-listname='main' style="cursor:text"></span><span
+                    <a class="viewNameContainer" style="user-select:text"><span><span contenteditable class="viewName" data-listname='main' style="cursor:text"></span><span
                                 class="listDrop">&#x25BC</span>
                         </span><!--<img class="gears" src="assets/gear.png" style="height:1em">--></a>
-                    <div class="viewNameDrop" style="display:none">
+                    <div class="viewNameDrop" style="display:none; color: black">
                     </div>
                 </span>
             </span>
@@ -117,8 +117,12 @@ polymorph_core.registerOperator("itemcluster2", {
         container.fire('updateItem', { sender: this, id: e.target.parentElement.dataset.id });
     })
 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Tutorial
+    this.viewDropdownContainer.addEventListener("keydown", (e) => {
+        if (e.key == "Enter") {
+            e.preventDefault();
+            e.target.blur();
+        }
+    })
 
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
@@ -316,6 +320,8 @@ polymorph_core.registerOperator("itemcluster2", {
             //reposition all items, also updating viewbox
             for (i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
+                    //invalidate cached style so it recolours them.
+                    this.cachedStyle[i] = undefined;
                     if (this.arrangeItem) this.arrangeItem(i);
                     //position the item appropriately.
                 }
@@ -550,6 +556,7 @@ polymorph_core.registerOperator("itemcluster2", {
             let cid = this.fromTray;
             //make us drag the item
             this.removeFromTray(cid);
+            this.cachedStyle[cid] = undefined;
             if (!polymorph_core.items[cid].itemcluster) polymorph_core.items[cid].itemcluster = {};
             if (!polymorph_core.items[cid].itemcluster.viewData) polymorph_core.items[cid].itemcluster.viewData = {};
             polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName] = { x: 0, y: 0 };

@@ -2,7 +2,6 @@ var __manager_profiles = {
     base: {
         files: [
             ["filescreen", "genui/filescreen.js"],
-            ["templates", "templates.js"],
             ["polymorph_core", "core.js"],
             ["polymorph_core_dialog", "core_modules/core.dialog.js"],
             ["polymorph_core_tutorial", "core_modules/core.tutorial.js"],
@@ -13,6 +12,8 @@ var __manager_profiles = {
             ["polymorph_core_container", "core_modules/core.container.js"],
             ["polymorph_core_itemfx", "core_modules/core.itemfx.js"],
             ["polymorph_core_operator", "core_modules/core.operator.js"],
+            ["templates", "core_modules/core.templates.js"],
+
         ]
     },
     operators: {

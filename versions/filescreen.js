@@ -18,7 +18,7 @@ polymorph_core.filescreen = new _filescreen({
 
 polymorph_core.on("UIstart", () => {
     polymorph_core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="none">None</option>`));
-    for (let i in polymorphTemplates) {
+    for (let i in polymorph_core.templates) {
         polymorph_core.filescreen.baseDiv.querySelector(".tmplt").appendChild(htmlwrap(`<option value="${i}">${i}</option>`));
     }
     for (let i in polymorph_core.saveSources) {

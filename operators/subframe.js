@@ -13,6 +13,11 @@ polymorph_core.registerOperator("subframe", {}, function (container) {
     }
 
     //////////////////Handling local changes to push to polymorph_core//////////////////
+    Object.defineProperty(this, "rect", {
+        get: () => {
+            return polymorph_core.rects[this.rectID];
+        }
+    })
 
     this.tieRect = function (rectID) {
         this.rectID = rectID;

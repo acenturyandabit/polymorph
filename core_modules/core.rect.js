@@ -19,10 +19,12 @@ const RECT_BORDER_COLOR = "transparent";
 
 polymorph_core.newRect = function (parent) {
     let ID = polymorph_core.insertItem({
-        p: parent,
-        f: RECT_FIRST_SIBLING,
-        x: RECT_ORIENTATION_X,
-        ps: 1
+        _rd: {
+            p: parent,
+            f: RECT_FIRST_SIBLING,
+            x: RECT_ORIENTATION_X,
+            ps: 1
+        }
     });
     polymorph_core.rects[ID] = new polymorph_core.rect(ID);
     return ID;
@@ -71,22 +73,22 @@ polymorph_core.rect = function (rectID) {
         }
     })
 
-    Object.defineProperty(this, "containerIDs", {
+    Object.defineProperty(this, "containerids", {
         get: () => {
-            this._containerIDs = [];
+            this._containerids = [];
             for (let i in polymorph_core.items) {
                 if (polymorph_core.items[i]._od && polymorph_core.items[i]._od.p == rectID) {
-                    this._containerIDs.push(i);
+                    this._containerids.push(i);
                 }
             }
-            return this._containerIDs;
+            return this._containerids;
         }
     })
 
     Object.defineProperty(this, "containers", {
         get: () => {
-            if (this.containerIDs) {
-                return this.containerIDs.map((v) => polymorph_core.containers[v]);
+            if (this.containerids) {
+                return this.containerids.map((v) => polymorph_core.containers[v]);
             }
             return undefined;
         }
@@ -115,7 +117,7 @@ polymorph_core.rect = function (rectID) {
         background: ${RECT_OUTER_DIV_COLOR}
     `;
 
-    this.createTabSpan = (containerID) => {
+    this.createTabSpan = (containerid) => {
         let tabSpan = document.createElement("span");
         let tabName = document.createElement("button");
         let tabDelete = document.createElement("button");
@@ -146,7 +148,7 @@ polymorph_core.rect = function (rectID) {
         tabSpan.appendChild(tabName);
         tabSpan.appendChild(tabDelete);
         tabSpan.appendChild(tabGear);
-        tabSpan.dataset.containerid = containerID;
+        tabSpan.dataset.containerid = containerid;
 
         return tabSpan;
     }
@@ -162,7 +164,7 @@ polymorph_core.rect = function (rectID) {
 
     // For handling operators. Each operator has its own innerDiv, and a tabSpan (with the name, and a cross) in the tabspan bar.
     // Create the innerDivs and generator for innerDivs..
-    this.createInnerDiv = (containerID) => {
+    this.createInnerDiv = (containerid) => {
         let indiv = document.createElement("div");
         indiv.style.cursor = "default";
         indiv.style.height = "100%";
@@ -170,7 +172,7 @@ polymorph_core.rect = function (rectID) {
         indiv.style.overflow = "hidden";
         indiv.style.background = RECT_OUTER_DIV_COLOR;
         indiv.style.display = "none";
-        indiv.dataset.containerid = containerID;
+        indiv.dataset.containerid = containerid;
         return indiv;
     }
 
@@ -180,8 +182,8 @@ polymorph_core.rect = function (rectID) {
 
     //Function for adding an operator to this rect. Operator must already exist.
     //This function is called: on operator create by operator; OR inernally by rearranging tabspans (later).
-    this.tieContainer = (containerID, index) => {
-        let container = polymorph_core.containers[containerID];
+    this.tieContainer = (containerid, index) => {
+        let container = polymorph_core.containers[containerid];
         if (!container) {
             console.log("Ack!");
             return;
@@ -193,32 +195,32 @@ polymorph_core.rect = function (rectID) {
 
         // Just move the tabbar around, and attach some information to the tabbar so 
         // we know what to do when a button is clicked.
-        let currentTabSpan = this.tabbar.querySelector(`span[data-containerID="${containerID}"]`);
-        if (!currentTabSpan) currentTabSpan = this.createTabSpan(containerID);
+        let currentTabSpan = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
+        if (!currentTabSpan) currentTabSpan = this.createTabSpan(containerid);
         currentTabSpan.children[0].innerText = container.settings.tabbarName;
         this.tabbar.insertBefore(currentTabSpan, this.tabbar.children[index]);
 
-        let currentInnerDiv = this.innerDivContainer.querySelector(`div[data-containerID="${containerID}"]`);
-        if (!currentInnerDiv) currentInnerDiv = this.createInnerDiv(containerID);
+        let currentInnerDiv = this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`);
+        if (!currentInnerDiv) currentInnerDiv = this.createInnerDiv(containerid);
         currentInnerDiv.appendChild(container.outerDiv);
         this.innerDivContainer.insertBefore(currentInnerDiv, this.innerDivContainer.children[index]);
 
         if (container.operator && container.operator.refresh) container.operator.refresh();
         // because during initial load, this needs to be called to actually show anything.
-        if (containerID == this.settings.s) this.switchOperator(this.settings.s);
-        else{
+        if (containerid == this.settings.s) this.switchOperator(this.settings.s);
+        else {
             //set the colour to a nope
         }
     }
 
     //Callback for tab clicks to switch between operators.
-    this.switchOperator = (containerID) => {
-        if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerID}"]`)) return false;//we cant do that
-        this.settings.s = containerID;
+    this.switchOperator = (containerid) => {
+        if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`)) return false;//we cant do that
+        this.settings.s = containerid;
         for (let i = 0; i < this.innerDivContainer.children.length; i++) {
             this.innerDivContainer.children[i].style.display = "none";
         }
-        this.innerDivContainer.querySelector(`div[data-containerid="${containerID}"]`).style.display = "block";
+        this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`).style.display = "block";
         // hide buttons on previous operator
         for (let i = 0; i < this.tabbar.children.length - 1; i++) {
             this.tabbar.children[i].children[1].style.display = "none";
@@ -226,11 +228,11 @@ polymorph_core.rect = function (rectID) {
             this.tabbar.children[i].style.background = "#C074E8";
         }
         //show buttons on this operator
-        let currentTab = this.tabbar.querySelector(`span[data-containerid="${containerID}"]`);
+        let currentTab = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
         currentTab.children[1].style.display = "inline";
         currentTab.children[2].style.display = "inline";
         currentTab.style.background = "#8093FF";
-        polymorph_core.containers[containerID].refresh();
+        polymorph_core.containers[containerid].refresh();
         //Overall refresh because borders are dodgy
         polymorph_core.containers[this.settings.s].refresh();
         return true;
@@ -260,24 +262,25 @@ polymorph_core.rect = function (rectID) {
     //Delegated cross button handler
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x" && confirm("Warning: closing operators is irreversible and may lead to data loss. Continue?")) {
-            let containerID = e.target.parentElement.dataset.containerid;
+            let containerid = e.target.parentElement.dataset.containerid;
             e.target.parentElement.remove();
-            let currentInnerDiv = this.innerDivContainer.querySelector(`[data-containerID="${containerID}"]`);
+            let currentInnerDiv = this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`);
             let switchToID;
-            if (currentInnerDiv.previousElement) switchToID = currentInnerDiv.previousElement.dataset.containerid;
-            else if (currentInnerDiv.nextElement) switchToID = currentInnerDiv.nextElement.dataset.containerid;
+            if (currentInnerDiv.previousElementSibling) switchToID = currentInnerDiv.previousElementSibling.dataset.containerid;
+            else if (currentInnerDiv.nextElementSibling) switchToID = currentInnerDiv.nextElementSibling.dataset.containerid;
             currentInnerDiv.remove();
 
             this.switchOperator(switchToID);
             //nerf the item
-            polymorph_core.destroyItem(conatinerID);
+            delete polymorph_core.items[containerid]._od;
+            //polymorph_core.destroyItem(containerid);
         }
     })
 
     let tabmenu;
     //Delegated context menu click on tabs
     let c = new _contextMenuManager(this.outerDiv);
-    let contextedOperatorIndex = 0;
+    let contextedOperatorIndex = undefined;
     let tabfilter = (e) => {
         let t = e.target;
         while (t != this.tabbar) {
@@ -289,7 +292,7 @@ polymorph_core.rect = function (rectID) {
         }
         contextedOperatorIndex = t.dataset.containerid;
         let tp = t.parentElement;
-        if (this.parent && this.parent.constructor.name == "polymorph_core.rect") {
+        if (this.parent && (this.parent instanceof polymorph_core.rect)) {
             //i have a prent, show subframe parent button
             tabmenu.querySelector(".subframePR").style.display = "block";
         } else {
@@ -301,59 +304,86 @@ polymorph_core.rect = function (rectID) {
     <li>Subframing
         <ul class="submenu">
             <li class="subframe">Subframe Contents</li>
-            <li class="subframePR">Subframe this</li>
+            <li class="subframePR">Subframe Parent Rect</li>
         </ul>
     </li>
     <li>Export/Import
     <ul class="submenu">
         <li class="cpfr">Copy frame settings</li>
         <li class="psfr">Paste frame settings</li>
+        <!--
         <li class="xpfr">Export frame to text...</li>
         <li class="mpfr">Import frame from text...</li>
         <li class="xdoc">Export frame as document...</li>
+        -->
     </ul>
     </li>
     `, this.tabbar, undefined, tabfilter);
     tabmenu.querySelector(".subframePR").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new polymorph_core.container("subframe", this.parent));
-        let pcp = new polymorph_core.rect(polymorph_core, sf.operator.rootdiv, RECT_ORIENTATION_X, 1, 0);
-        sf.operator.rect = pcp;
-        let oldParent = this.parent;
-        pcp.children = this.parent.children;
-        pcp.outerDiv.children[pcp.outerDiv.children.length - 1].remove();//remove rect, just to clean up
-        pcp.outerDiv.appendChild(pcp.children[0].outerDiv);
-        pcp.outerDiv.appendChild(pcp.children[1].outerDiv);
-        pcp.children[0].parent = pcp;
-        pcp.children[1].parent = pcp;
-        oldParent.children = [];
-        oldParent.innerDivs = [];
-        oldParent.tabspans = [];
-        oldParent.tieContainer(sf);
-        oldParent.innerDivs[0].style.display = "block";
-        oldParent.refresh();
-        oldParent.refresh();// could probably be more efficient than calling resize twice...
+        let newContainerID = polymorph_core.insertItem({
+            _od: {
+                t: "subframe",
+                p: rectID,
+                data: {},
+                outputRemaps: {},
+                inputRemaps: {},
+                tabbarName: polymorph_core.containers[contextedOperatorIndex].settings.tabbarName
+            }
+        });
+        let sf = (new polymorph_core.container(newContainerID));
+        let seenNewContainer = false;
+        while (this.innerDivContainer.children.length > 1) {
+            //the container ties itself, so we need to make sure it does not eat itself
+            let containerid = this.innerDivContainer.children[0].dataset.containerid;
+            if (containerid == newContainerID) {
+                seenNewContainer = true;
+            }
+            if (seenNewContainer) {
+                containerid = this.innerDivContainer.children[1].dataset.containerid;
+            }
+            this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
+            this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+            sf.operator.rect.tieContainer(containerid);
+            polymorph_core.containers[containerid].settings.p = sf.operator.rect.id;
+        }
+        this.tieContainer(sf, contextedOperatorIndex);
+        this.switchOperator(newContainerID);
+        sf.operator.rect.switchOperator(contextedOperatorIndex);
         polymorph_core.fire("updateItem", { id: rectID, sender: this });
         tabmenu.style.display = "none";
     })
     tabmenu.querySelector(".subframe").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        let sf = (new polymorph_core.container("subframe", this));
-        let oop = this.containers[contextedOperatorIndex];
-        sf.settings.tabbarName = oop.settings.tabbarName;
+        let newContainerID = polymorph_core.insertItem({
+            _od: {
+                t: "subframe",
+                p: rectID,
+                data: {},
+                outputRemaps: {},
+                inputRemaps: {},
+                tabbarName: polymorph_core.containers[contextedOperatorIndex].settings.tabbarName
+            }
+        });
+        let sf = (new polymorph_core.container(newContainerID));
+        this.tabbar.querySelector(`[data-containerid="${contextedOperatorIndex}"]`).remove();
+        this.innerDivContainer.querySelector(`[data-containerid="${contextedOperatorIndex}"]`).remove();
         this.tieContainer(sf, contextedOperatorIndex);
-        sf.operator.rect.tieContainer(oop, 0);
+        let oop = polymorph_core.containers[contextedOperatorIndex];
+        sf.operator.rect.tieContainer(contextedOperatorIndex, 0);
+        oop.settings.p = sf.operator.rect.id;
         polymorph_core.fire("updateItem", { id: rectID, sender: this });
+        this.switchOperator(newContainerID);
+        sf.operator.rect.switchOperator(contextedOperatorIndex);
         tabmenu.style.display = "none";
     })
 
     tabmenu.querySelector(".cpfr").addEventListener("click", () => {
         // at the tab, create a new subframe operator
-        polymorph_core.copiedFrameData = this.containers[contextedOperatorIndex].toSaveData();
-        polymorph_core.fire("updateItem", { id: rectID, sender: this });
+        polymorph_core.copiedFrameID = contextedOperatorIndex;
         tabmenu.style.display = "none";
     })
-    tabmenu.querySelector(".xdoc").addEventListener("click", () => {
+    /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
         //export as a whole doc! how generous
         let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
         tabmenu.style.display = "none";
@@ -363,41 +393,46 @@ polymorph_core.rect = function (rectID) {
         let collatedItems = polymorph_core.items;
         tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${guid(5)}","views":{"default":{
         "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
-    })
+    })*/
 
     tabmenu.querySelector(".psfr").addEventListener("click", () => {
-        // at the tab, create a new subframe operator
-        this.containers[contextedOperatorIndex].fromSaveData(polymorph_core.copiedFrameData);
-        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+        // Ditch the old container
+        let containerid = contextedOperatorIndex;
+        this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
+        this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+        let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
+        polymorph_core.items[newID]._od.p = rectID;
+        polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
         polymorph_core.fire("updateItem", { id: rectID, sender: this });
+        this.switchOperator(newID);
         tabmenu.style.display = "none";
     })
-
-    tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-        let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-        tabmenu.style.display = "none";
-        polymorph_core.dialog.prompt(tta);
-        tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-    })
-
-    tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-        let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-        polymorph_core.dialog.prompt(tta);
-        tta.querySelector("button").addEventListener("click", () => {
-            if (tta.querySelector("textarea").value) {
-                let importObject = JSON.parse(tta.querySelector("textarea").value);
-                this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                //force update all items to reload the view
-                for (let i in polymorph_core.items) {
-                    polymorph_core.fire('updateItem', { id: i });
-                }
-            }
+    /*
+        tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+            tabmenu.style.display = "none";
+            polymorph_core.dialog.prompt(tta);
+            tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
         })
-        tabmenu.style.display = "none";
-    })
-
+    
+        tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+            let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+            polymorph_core.dialog.prompt(tta);
+            tta.querySelector("button").addEventListener("click", () => {
+                if (tta.querySelector("textarea").value) {
+                    let importObject = JSON.parse(tta.querySelector("textarea").value);
+                    this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                    this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                    polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                    //force update all items to reload the view
+                    for (let i in polymorph_core.items) {
+                        polymorph_core.fire('updateItem', { id: i });
+                    }
+                }
+            })
+            tabmenu.style.display = "none";
+        })
+    */
     //And a delegated settings button handler
     this.tabbar.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "img") {
@@ -534,6 +569,7 @@ polymorph_core.rect = function (rectID) {
                 this.containers.forEach((v, i) => {
                     v.settings.p = newRectIDs[!_firstOrSecond * 1];
                     polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
+                    polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].settings.s = v.id;
                 });
 
                 //force a refresh

@@ -81,7 +81,7 @@
                 }
             };
             if (settings.template) {
-                Object.assign(data, polymorphTemplates[template]);
+                Object.assign(data, polymorph_core.templates[template]);
             }
             polymorph_core.fire("documentCreated", { id: polymorph_core.currentDocID, data: data });
         }
@@ -111,11 +111,11 @@
                 data._meta.currentView = newRectID;
 
                 //Also add an operator
-                let newOperatorID=guid(6, data);
+                let newOperatorID = guid(6, data);
                 data[newOperatorID] = {
                     _od: { t: "opSelect", p: newRectID }
                 }
-                data[newRectID]._rd.s=newOperatorID;
+                data[newRectID]._rd.s = newOperatorID;
             }
         }
         return data;
@@ -233,7 +233,7 @@
             polymorph_core.rects[i].toSaveData();
         }
         for (let i in polymorph_core.containers) {
-             polymorph_core.containers[i].toSaveData();
+            polymorph_core.containers[i].toSaveData();
         }
         return polymorph_core.items;
     }
