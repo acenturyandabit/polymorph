@@ -674,7 +674,6 @@ polymorph_core.rect = function (rectID) {
 
     })
     ///Saving
-    let toSaveProperties = ['XorY', 'firstOrSecond', 'pos'];
     this.toSaveData = () => {
         //just ensure your item data is accurate.
         return this.settings;

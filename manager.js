@@ -51,7 +51,7 @@ var __manager_profiles = {
     phone: {
         condition: () => { return isPhone() },
         files: [
-            ["polymorph_core_dialog", "versions/phone/core.dialog.js"],
+            //["polymorph_core_dialog", "versions/phone/core.dialog.js"],
             { r: "base" },
             ["polymorph_coreUI", "versions/phone/coreUI.js"],
             ["rect", "versions/phone/rect.js"],

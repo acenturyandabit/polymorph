@@ -1,5 +1,4 @@
 (() => {
-
     polymorph_core.loadDocument = async function () {
         let params = new URLSearchParams(window.location.search);
         let handled = false;
@@ -72,7 +71,7 @@
         }
         //Create a doc if not created, also add at least one baserect.
         //TODO: add document name to 2nd argument
-        d = polymorph_core.sanityCheckDoc(d, { template: template,name:name });
+        d = polymorph_core.sanityCheckDoc(d, { template: template, name: name });
 
         polymorph_core.fromSaveData(d);
     }
@@ -127,9 +126,9 @@
         }
 
         //make sure all items have an lm property.
-        for (let i in data){
-            if (!data[i]._lm_){
-                data[i]._lm_=Date.now();
+        for (let i in data) {
+            if (!data[i]._lm_) {
+                data[i]._lm_ = Date.now();
             }
         }
 
@@ -224,10 +223,6 @@
                 polymorph_core.rects[i] = new polymorph_core.rect(i);
             }
         }
-        //show the prevailing rect.
-        polymorph_core.switchView(polymorph_core.items._meta.currentView);
-
-
 
         //Create all the operators, to go into the rects
         polymorph_core.containers = {};//live rects
@@ -237,9 +232,12 @@
             }
         }
 
+        //show the prevailing rect. do this after containers exist so that refresh actually means something for phone.
+        polymorph_core.switchView(polymorph_core.items._meta.currentView);
+
         // Say hello for everything
         for (let i in polymorph_core.items) {
-            polymorph_core.fire("updateItem", { id: i ,loadProcess:true});
+            polymorph_core.fire("updateItem", { id: i, loadProcess: true });
         }
         polymorph_core.unsaved = false;
         polymorph_core.datautils.linkSanitize();

@@ -39,8 +39,33 @@ polymorph_core.on("UIstart", () => {
         window.open(window.location.pathname);
     })
     document.querySelector("#opop").addEventListener("click", () => {
-        polymorph_core.dialog.register(polymorph_core.currentOperator);
+        //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
+        if (polymorph_core.containers[polymorph_core.currentOperator].operator.dialogDiv) {
+            this.settingsOperator = polymorph_core.containers[polymorph_core.currentOperator].operator;
+            this.settingsOperator.showDialog();
+            this.settingsDiv = document.createElement("div");
+            this.settingsDiv.innerHTML = `<h1>Settings</h1>
+            <h3> General settings </h3>
+            <input class="tabDisplayName" placeholder="Tab display name:"/>
+            <h3>Operator settings</h3>`;
+            this.settingsOperator.dialogDiv.style.maxWidth = "50vw";
+            this.settingsDiv.appendChild(this.settingsOperator.dialogDiv);
+            this.settingsDiv.querySelector(".tabDisplayName").value = this.tabbar.querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).children[0].innerText;
+            //add remapping by the operator
+            polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
+            this.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
+
+            polymorph_core.dialog.prompt(this.settingsDiv, (d) => {
+                polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
+                this.tabbar.querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).children[0].innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
+                if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
+                polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
+                polymorph_core.fire("updateItem", { id: rectID });
+            })
+            polymorph_core.dialog.register(polymorph_core.currentOperator);
+        }
     })
+
 });
 documentReady(() => {
     document.body.appendChild(htmlwrap(`
@@ -54,9 +79,9 @@ documentReady(() => {
             }
         </style>`));
     document.body.appendChild(htmlwrap(`<div id="topbar" style="flex: 0 0 2em">
-            <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
+            <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
             <span class="docName" contentEditable>Polymorph</span>
-            <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
+            <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
         </div>`));
     document.body.appendChild(htmlwrap(`<div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
             <div style="position: absolute;top:0;bottom:0; left:-100%; background:rgba(0,0,0,0.5); width:100%; z-index:100;">
@@ -74,7 +99,7 @@ documentReady(() => {
                     </div>
                 </div>
             </div>
-            <div id="body" style="position: absolute;top:0;bottom:0; width: 100%">
+            <div id="body" style="position: absolute;top:0;bottom:0; width: 100%; background: url('assets/nightsky.jpg'); background-size: cover; background-position: center center;">
             </div>
         </div>`));
     document.body.appendChild(htmlwrap(`<div class="wall"
@@ -93,7 +118,7 @@ polymorph_core.on("documentCreated", (id) => {
 //Add showOperator
 
 polymorph_core.showOperator = function (op) {
-    if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
+    if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
     document.body.querySelector("#body").appendChild(op.topdiv);
     if (op.operator && op.operator.refresh) op.operator.refresh();
     polymorph_core.currentOperator = op;
@@ -111,7 +136,7 @@ polymorph_core.showOperator = function (op) {
 
 
 polymorph_core.resetView = function () {
-    if (document.body.querySelector("#body").children.length)document.body.querySelector("#body").children[0].remove();
+    if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
     polymorph_core.baseRect = new _rect(polymorph_core,
         undefined, {});
     polymorph_core.baseRect.refresh();
