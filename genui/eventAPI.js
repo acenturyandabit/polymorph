@@ -30,6 +30,7 @@ function addEventAPI(itm, errf = console.error) {
     itm.events = {};
     itm.fire = function (e, args) {
         let _e = e.split(",");
+        let _oe = e.split(",");//original elevents
         _e.push("*"); // a wildcard event listener
         _e.forEach((i) => {
             if (!itm.events[i]) return;
@@ -43,9 +44,9 @@ function addEventAPI(itm, errf = console.error) {
                 itm.events[i].events.forEach((f) => {
                     if (cnt == false) return;
                     try {
-                        result = f(args, e);
+                        result = f(args, _oe);
                         if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => {
-                            if (cnt != false) cnt = f(result, undefined, e)
+                            if (cnt != false) cnt = f(result, undefined, i)
                         });
                     } catch (er) {
                         errf(er);

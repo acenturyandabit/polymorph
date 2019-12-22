@@ -10,7 +10,7 @@
             polymorph_core.currentDocID = params.get("doc");
             handled = true;
         } else if (window.location.search) {
-            //check open flag
+            //check open flag, for file>open
             if (params.has("o")) {
                 //trim the open flag
                 let loc = window.location.href
@@ -63,9 +63,16 @@
             loc = loc.replace(/&tmp=[^&]+/, "");
             history.pushState({}, "", loc);
         }
+        let name;
+        if (params.has("nm")) {
+            name = params.get("nm");
+            let loc = window.location.href
+            loc = loc.replace(/&nm=[^&]+/, "");
+            history.pushState({}, "", loc);
+        }
         //Create a doc if not created, also add at least one baserect.
         //TODO: add document name to 2nd argument
-        d = polymorph_core.sanityCheckDoc(d, { template: template });
+        d = polymorph_core.sanityCheckDoc(d, { template: template,name:name });
 
         polymorph_core.fromSaveData(d);
     }
@@ -118,6 +125,14 @@
                 data[newRectID]._rd.s = newOperatorID;
             }
         }
+
+        //make sure all items have an lm property.
+        for (let i in data){
+            if (!data[i]._lm_){
+                data[i]._lm_=Date.now();
+            }
+        }
+
         return data;
     }
 
@@ -174,7 +189,7 @@
         //Does the current document match the current document? 
         if (data._meta.id != polymorph_core.currentDocID) {
             //Alert the user
-            if (!confirm("Hmm... this source seems to be storing a different document to the one you requested. Continue loading?")) {
+            if (!confirm(`Hmm... this source seems to be storing a different document (${data._meta.id}) to the one you requested (${polymorph_core.currentDocID}). Continue loading?`)) {
                 document.querySelector(".wall").style.display = "none";
                 return false;
             } else {
@@ -220,6 +235,11 @@
             if (polymorph_core.items[i]._od) {
                 polymorph_core.containers[i] = new polymorph_core.container(i);
             }
+        }
+
+        // Say hello for everything
+        for (let i in polymorph_core.items) {
+            polymorph_core.fire("updateItem", { id: i ,loadProcess:true});
         }
         polymorph_core.unsaved = false;
         polymorph_core.datautils.linkSanitize();

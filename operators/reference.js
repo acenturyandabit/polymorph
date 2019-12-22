@@ -14,29 +14,11 @@ polymorph_core.registerOperator("template", {
     this.rootdiv.innerHTML = ``;
 
     //return true if we care about an item and dont want it garbage-cleaned :(
-    this.itemRelevant = (id) => { return polymorph_core.itemRelevant(this, id); }
 
     this.createItem = (id) => {
-        //Use the inherited _createItem function to sort out instantiation and
-        //coordination between operators.
-        id=this._createItem(id);
-        itm=polymorph_core.items[id];
-
-        //add any data you need
-        itm.a=b;
     }
 
     this.deleteItem = (id) => {
-        //Use the inherited _createItem function to sort out instantiation and
-        //coordination between operators.
-        //If you're simply removing the filter property, then deleteItem will 
-        //be sufficient.
-        this._deleteItem(id);
-        itm=polymorph_core.items[id];
-
-        //remove just enough data so that you no longer care about the operator
-        //garbage cleaner will do the rest
-        delete itm.a;
     }
 
     //this is called when an item is updated (e.g. by another container)

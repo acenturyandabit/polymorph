@@ -4,12 +4,16 @@ polymorph_core.registerOperator("itemList", function (container) {
             title: "text"
         },
         propertyWidths: {},
-        filterProp: guid(),
+        filter: guid(),
         enableEntry: true,
         implicitOrder: true
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-
+    //upgrade older ones
+    if (this.settings.filterProp){
+        this.settings.filter=this.settings.filterProp;
+        delete this.settings.filterProp;
+    }
     this.settingsBar = document.createElement('div');
     this.settingsBar.innerHTML = `<div></div>`
     this.taskListBar = document.createElement("div");
@@ -23,13 +27,7 @@ polymorph_core.registerOperator("itemList", function (container) {
     this._template = this.template.querySelector("span");
     this.taskListBar.appendChild(this.template);
 
-    //search
-    this.searchtemplate = htmlwrap(`<span style="display:block; width:100%;">
-    <span></span>
-    <button disabled>&#128269;</button>
-    </span>`);
-    this._searchtemplate = this.searchtemplate.querySelector("span");
-    this.taskListBar.appendChild(this.searchtemplate);
+
 
     this.taskListBar.appendChild(document.createElement("hr"));
     this.taskListBar.style.whiteSpace = "nowrap";
@@ -135,9 +133,8 @@ polymorph_core.registerOperator("itemList", function (container) {
             this.template.querySelector("[data-role='" + i + "']").value = "";
         }
         currentItemSpan.children[1].innerHTML = "X";
-        it.itemList = true;
         //ensure the filter property exists
-        if (this.settings.filterProp && !it[this.settings.filterProp]) it[this.settings.filterProp] = Date.now();
+        if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
         let id = polymorph_core.insertItem(it);
         currentItemSpan.dataset.id = id;
         if (this.shiftDown) {
@@ -159,7 +156,7 @@ polymorph_core.registerOperator("itemList", function (container) {
             this.taskList.appendChild(currentItemSpan);
         }
         this.renderedItemsCache = undefined;
-        container.fire("updateItem", {
+        container.fire("createItem", {
             id: id,
             sender: this
         });
@@ -184,164 +181,19 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     });
 
-
-    //Managing the search
-    let searchCapacitor = new capacitor(1000, 300, () => {
-        //filter the items
-        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        let amSearching = false;
-        for (let i = 0; i < searchboxes.length; i++) {
-            if (searchboxes[i].value != "") {
-                amSearching = true;
-            }
-        }
-        if (amSearching) {
-            this.searchtemplate.querySelector("button").innerHTML = "&#9003;";
-            this.searchtemplate.querySelector("button").disabled = false;
-        } else {
-            this.searchtemplate.querySelector("button").innerHTML = "&#128269;";
-            this.searchtemplate.querySelector("button").disabled = true;
-            //dont return yet, we have to reset everything
-        }
-
-        let items = getRenderedItems();
-        let toShowItems = [];
-        items.forEach((v) => {
-            let it = polymorph_core.items[v];
-            let el = this.taskList.querySelector(`[data-id="${v}"]`);
-            el.style.display = "none";
-            for (let i = 0; i < searchboxes.length; i++) {
-                //only search by text for now
-                if (searchboxes[i].value) {
-                    switch (this.settings.properties[searchboxes[i].dataset.role]) {
-                        case "text":
-                            if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
-                                toShowItems.push(el);
-                            }
-                            break;
-                    }
-                }
-            }
-        });
-        toShowItems.forEach((v) => {
-            let e = v;
-            while (e != this.taskList) {
-                e.style.display = "block";
-                e = e.parentElement;
-            }
-        });
-    });
-    this.searchtemplate.addEventListener("keyup", searchCapacitor.submit);
-    this.searchtemplate.querySelector("button").addEventListener("click", () => {
-        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        searchboxes.forEach(v => { v.value = ""; });
-        searchCapacitor.submit();
-    })
-
-    this.indexOf = (id) => {
-        let childs = this.taskList.children;
-        for (let i = 0; i < childs.length; i++) {
-            if (childs[i].dataset.id == id) return i;
-        }
-        return -1;
-    }
-
-    this._sortItems = () => {
-        if (!this.container.visible()) return;
-        if (this.settings.implicitOrder) {
-            this.settings.sortby = this.settings.filterProp;
-        }
-        if (this.settings.sortby) {
-            //collect all items
-            let itms = this.taskList.querySelectorAll(`[data-id]`);
-            let its = [];
-            for (let i = 0; i < itms.length; i++) {
-                cpp = {
-                    id: itms[i].dataset.id,
-                    dt: polymorph_core.items[itms[i].dataset.id][this.settings.sortby]
-                };
-                its.push(cpp);
-            }
-            //sort everything based on the filtered property.
-            switch (this.settings.properties[this.settings.sortby]) {
-                case "date":
-                    let dateprop = this.settings.sortby;
-                    for (let i = 0; i < its.length; i++) {
-                        //we are going to upgrade all dates that don't match protocol)
-                        if (its[i].dt && its[i].dt.date) {
-                            if (typeof its[i].dt.date == "number") {
-                                polymorph_core.items[its[i].id][dateprop].date = [{
-                                    date: polymorph_core.items[its[i].id][dateprop].date
-                                }];
-                            }
-                            if (polymorph_core.items[its[i].id][dateprop].date[0]) {
-                                its[i].date = polymorph_core.items[its[i].id][dateprop].date[0].date;
-                                //check for repetition structure
-                                if (its[i].dt.datestring.indexOf("(") != -1) {
-                                    //evaluate the repetition
-                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date())[0].date;
-                                }
-                            }
-                            else its[i].date = Date.now() * 10000;
-                        } else its[i].date = Date.now() * 10000;
-                    }
-                    its.sort((a, b) => {
-                        return a.date - b.date;
-                    });
-                    break;
-                case "text":
-                    for (let i = 0; i < its.length; i++) {
-                        if (!its[i].dt) its[i].dt = "";
-                    }
-                    its.sort((a, b) => {
-                        return a.dt.toString().localeCompare(b.dt.toString());
-                    });
-                    break;
-                default: // probably implicit ordering
-                    its.sort((a, b) => {
-                        return a.dt - b.dt;
-                    });
-            }
-            //remember focused item
-            let fi = this.taskList.querySelector(":focus");
-            //also remember cursor position
-            let cp;
-            if (fi) cp = fi.selectionStart || 0;
-            //rearrange items
-            //dont do this if subitem
-            for (let i = 0; i < its.length; i++) {
-                let span = this.taskList.querySelector("[data-id='" + its[i].id + "']")
-                if (span.parentElement == this.taskList) this.taskList.appendChild(span);
-            }
-            //return focused item
-            if (fi) {
-                fi.focus();
-                try {
-                    fi.selectionStart = cp;
-                } catch (e) {
-                }
-            }
-        }
-    }
-
-    let sortcap = new capacitor(500 + isPhone() * 1000, 1000, this._sortItems);
-
-    this.sortItems = () => {
-        sortcap.submit();
-    }
-
     container.on("updateItem", (d) => {
         let id = d.id;
         let s = d.sender;
         this.settings.currentID = id;
-        if (s != "GARBAGE_COLLECTOR") sortcap.submit();
+        //sortcap may not have been declared yet
+        if (s != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
         return this.updateItem(id);
     });
 
     this.updateItem = (id, unbuf = false) => {//if unbuf then we dont want to fire getRenderedItems as it would force an update.
         let it = polymorph_core.items[id];
         //First check if we should show the item
-        if (!mf(this.settings.filterProp, it)) {
+        if (!mf(this.settings.filter, it)) {
             //if existent, remove
             let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
             if (currentItemSpan) currentItemSpan.remove();
@@ -443,8 +295,12 @@ polymorph_core.registerOperator("itemList", function (container) {
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
-            delete polymorph_core.items[e.target.parentElement.dataset.id][this.settings.filterProp];
-            container.fire("updateItem", {
+            container.fire("deleteItem", {
+                id: e.target.parentElement.dataset.id,
+                sender: this
+            });
+            delete polymorph_core.items[e.target.parentElement.dataset.id][this.settings.filter];
+            container.fire("deleteItem", {
                 id: e.target.parentElement.dataset.id,
                 sender: this
             });
@@ -490,6 +346,9 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     })
 
+    waitForFn.apply(this, ["setSearchTemplate"]);
+    waitForFn.apply(this, ["sortItems"]);
+
     this.updateSettings = () => {
         //Look at the settings and apply any relevant changes
         let htmlstring = ``
@@ -506,11 +365,10 @@ polymorph_core.registerOperator("itemList", function (container) {
             }
         }
         this._template.innerHTML = htmlstring;
-        this._searchtemplate.innerHTML = htmlstring;
+        this.setSearchTemplate(htmlstring);
         //resize stuff
         for (let i in this.settings.propertyWidths) {
             this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
-            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
         }
         //Recreate everything
         this.reRenderEverything();
@@ -524,8 +382,6 @@ polymorph_core.registerOperator("itemList", function (container) {
     //First time load
     this.updateSettings();
     //Saving and loading
-
-    this.updateSettings();
 
     this.taskList.addEventListener("input", (e) => {
         currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
@@ -652,7 +508,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         let contextedProp;
         let menu;
 
-        function filter(e) {
+        let filter = (e) => {
             contextedInput = e.target;
             contextedProp = contextedInput.dataset.role;
             let id = contextedInput;
@@ -724,7 +580,7 @@ polymorph_core.registerOperator("itemList", function (container) {
     <option value="iface">Link to another container...</option>
     </select>
     <p>View items with the following property:</p> 
-    <input data-role='filterProp' placeholder = 'Property name'></input>
+    <input data-role='filter' placeholder = 'Property name'></input>
     <p>container to focus on:</p> 
     <input data-role="focusOperatorID" placeholder="container UID (use the button)">
     <button class="targeter">Select container</button>
@@ -842,15 +698,8 @@ polymorph_core.registerOperator("itemList", function (container) {
     )
 
     //the filter property.
-    d.querySelector("input[data-role='filterProp']").addEventListener("input", (e) => {
-        this.settings.filterProp = e.target.value;
-        try {
-            this.filter = eval(this.settings.filterProp);
-        } catch (e) {
-            this.filter = (itm) => {
-                return itm[this.settings.filterProp]
-            };
-        }
+    d.querySelector("input[data-role='filter']").addEventListener("input", (e) => {
+        this.settings.filter = e.target.value;
     })
 
     //Handle select's in proplist
@@ -877,7 +726,7 @@ polymorph_core.registerOperator("itemList", function (container) {
     container.on("focus", (data) => {
         if (this.settings.operationMode == "focus") {
             if (data.sender.container.container.uuid == this.settings.focusOperatorID) {
-                this.settings.filterProp = data.id;
+                this.settings.filter = data.id;
             }
         }
         this.focusItem(data.id);
@@ -906,4 +755,7 @@ polymorph_core.registerOperator("itemList", function (container) {
             }
         }
     };
+    scriptassert([["itemlist searchsort", "operators/itemList.searchsort.js"]], () => {
+        __itemlist_searchsort.apply(this);
+    })
 });

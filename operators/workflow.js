@@ -16,7 +16,7 @@ polymorph_core.registerOperator("workflow", {
             else {
                 this._existingItemsCache = Array.from(this.settings.rootItems);
                 for (let i = 0; i < this._existingItemsCache.length; i++) {
-                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.concat(Object.keys(polymorph_core.items[this._existingItemsCache[i]].to));
+                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache = this._existingItemsCache.concat(Object.keys(polymorph_core.items[this._existingItemsCache[i]].to));
                 }
                 return this._existingItemsCache;
             }
@@ -41,16 +41,29 @@ polymorph_core.registerOperator("workflow", {
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
     //Add content-independent HTML here.
-    this.rootdiv.innerHTML = ``;
+    this.rootdiv.innerHTML = `
+    <style>
+    span[data-id]{
+        display:block;
+        width:100%;
+    }
+    
+    span[contenteditable]{
+        display: inline-block;
+        width: calc(100% - 10px);
+        float: right; 
+    }
+    span[data-id]>div{
+        padding-left: 10px;
+    }
+    </style>
+    `;
     this.rootdiv.style.color = "white";
 
     //return true if we care about an item and dont want it garbage-cleaned :(
     this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
 
     this.createItem = (id, data) => {
-        //Use the inherited _createItem function to sort out instantiation and
-        //coordination between operators.
-        id = this._createItem(id);
         itm = polymorph_core.items[id];
 
         //add any data you need
@@ -73,11 +86,35 @@ polymorph_core.registerOperator("workflow", {
                 let newItem = {};
                 newItem[this.settings.titleProperty] = "";
                 let newID = polymorph_core.insertItem(newItem);
-                polymorph_core.link(e.target.parentElement.dataset.id, newID);
-                container.fire("createItem", { id: id, sender: this });
+                if (e.shiftKey) {
+                    polymorph_core.link(e.target.parentElement.dataset.id, newID);
+                } else {
+                    //     span     span          div        span or root
+                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN") {
+                        polymorph_core.link(e.target.parentElement.parentElement.parentElement.dataset.id, newID);
+                    } else {
+                        this.settings.rootItems.push(newID);
+                    }
+
+                }
+                this._existingItemsCache.push(newID);
+                container.fire("createItem", { id: newID, sender: this });
+                e.preventDefault();
+
+                this.renderItem(newID);
+
+                let range = document.createRange();
+                let newP = this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1];
+                range.setStart(newP.childNodes[0], 0);
+                range.collapse(true);
+                let sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                newP.focus();
             }
         }
     })
+
 
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
@@ -93,9 +130,7 @@ polymorph_core.registerOperator("workflow", {
     }
 
     //this is called when an item is updated (e.g. by another container)
-    container.on("updateItem", (d) => {
-        if (d.sender == this) return;// Dont handle our own updates so that the user does not lose focus.
-        let id = d.id;
+    this.renderItem = (id) => {
         if (this.itemRelevant(id)) {
             //render the item, if we care about it.
             let span = this.rootdiv.querySelector(`span[data-id='${id}']`);
@@ -104,13 +139,18 @@ polymorph_core.registerOperator("workflow", {
             <span data-id="${id}">
                 <span>*</span>
                 <span contenteditable></span>
-                <div style="padding-right: 10px"></div>
+                <div></div>
             </span>`);
             }
-            span.children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || "new item";
+            span.children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
             if (this.parentOf(id)) this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[2].appendChild(span);
             else { this.rootdiv.appendChild(span); }
         }
+    }
+    container.on("updateItem", (d) => {
+        if (d.sender == this) return;// Dont handle our own updates so that the user does not lose focus.
+        let id = d.id;
+        this.renderItem(id);
         //do stuff with the item.
     });
 

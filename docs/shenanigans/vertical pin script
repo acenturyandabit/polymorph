@@ -1,0 +1,34 @@
+core.on("updateItem",(d)=>{
+	let i=d.id;
+	if (core.items[i].tracked && (
+		!(core.items[i].acton && core.items[i].acton.date && core.items[i].acton.date[0] && core.items[i].acton.date[0].date) ||
+		!(core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData.df90b5)
+		)){
+		return;
+	}
+	if (core.items[i].acton && core.items[i].acton.date && core.items[i].acton.date[0] && core.items[i].acton.date[0].date){
+		core.items[i].itemcluster = core.items[i].itemcluster || {};
+		core.items[i].itemcluster.viewData = core.items[i].itemcluster.viewData || {};
+		core.items[i].itemcluster.viewData.df90b5 =core.items[i].itemcluster.viewData.df90b5|| {};
+		let relTime=(core.items[i].acton.date[0].date-Date.now())/3600000;
+		if (relTime>2){
+			relTime = Math.log(relTime);
+		}else if (relTime>0){
+			relTime = Math.sqrt(relTime)/2;
+		}else if (relTime>-2){
+			relTime = -Math.sqrt(-relTime)/2;
+		}else{
+			relTime = -Math.log(-relTime);
+		}
+		relTime*=200;
+		core.items[i].itemcluster.viewData.df90b5.x=relTime;
+		core.items[i].tracked=true;
+		instance.log(`tracked new item ${i} with title ${core.items[i].title} from list to itemCluster`);
+	}
+	if (core.items[i].itemcluster && core.items[i].itemcluster.viewData && core.items[i].itemcluster.viewData.df90b5){
+		if (!core.items[i].acton)core.items[i].acton={datestring:{}};
+		core.items[i].tracked=true;
+		instance.log(`tracked new item ${i} with title ${core.items[i].title} from itemcluster to list.`);
+	}
+});
+

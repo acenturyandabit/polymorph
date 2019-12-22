@@ -26,10 +26,13 @@ function _polymorph_core() {
         this.loadDocument();
     }
 
-    this.currentDoc = 0; // a getter fn that points to polymorph_core.items._meta.
+    Object.defineProperty(this, "currentDoc", {
+        get: () => {
+            return this.items._meta;
+        }
+    })
 
     //Document level functions
-    //#region
     this.updateSettings = () => {
         document.body.querySelector(
             ".docName"
@@ -52,7 +55,6 @@ function _polymorph_core() {
                 this.items._meta.displayName + " - Polymorph";
         });
     })
-    //#endregion
 
     //Operator registration
     //#region
@@ -83,12 +85,37 @@ function _polymorph_core() {
     //Item management
     //#region
     this.items = {};
+    //TODO: regenerate garbaged IDs on fromSaveData
+    this.garbagedIDs = [];
 
-    //Garbage collection: TODO
+    //garbage collection
+    this.tryGarbageCollect = (id) => {
+        let toDelete = true;
+        for (let i in this.containers) {
+            if (this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+                toDelete = false;
+            }
+        }
+        if (toDelete) {
+            //flag it for future reuse.
+            this.garbagedIDs.push(id);
+        }
+    }
+
+    this.on("__polymorph_core_deleteItem", (d) => {
+        this.tryGarbageCollect(d.id);
+    })
+
+    this.on("updateItem",(d)=>{
+        if (!d.loadProcess)this.items[d.id]._lu_=Date.now();
+    })
 
     //insert an item.
     this.insertItem = (itm) => {
         let nuid = guid(6, this.items);
+        if (this.garbagedIDs.length) {
+            nuid = this.garbagedIDs.pop();
+        }
         this.items[nuid] = itm;
         return nuid;
     }

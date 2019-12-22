@@ -171,16 +171,6 @@ function mf(obj, args) {
     }
 }
 
-function delta(O1, O2) {
-    //added + changed
-    //removed
-    //output
-}
-
-function applyDelta(O1, d, undo) {
-
-}
-
 function autoReturn(inputTag, submitTag) {
     document.addEventListener("DOMContentLoaded", (e) => {
         if (e.target.classList.contains(inputTag)) {
@@ -227,3 +217,10 @@ function hslToRgb(h, s, l) {
 
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
+
+function waitForFn(property){
+    if (!this[property])this[property]=(args)=>{
+        setTimeout(()=>this[property](args),1000);
+    }
+}
+//waitForFn.apply(obj,["run"]);

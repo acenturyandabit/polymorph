@@ -35,16 +35,35 @@ container.on("createItem",(data)=>{
     polymorph_core.items[data.id].someproperty=somevalue;
 })
 ```
+When you create items locally, please fire this function at the END of your create function. 
 
-A default has been provided with polymorph.
+A standard createItem has been provided with polymorph_core.
+
 Data should be used sparingly. It is not designed to be standard across different operators. Any information about new items should be written to `polymorph_core.items[id]` as soon as possible.
+
+DO NOT fire `container.fire("createItem")` inside your hook. This may result in an infinite loop; we have a few protections but they're not foolproof.
+### deleteItem
+See createItem - same thing. However, some caveats:
+
+For deleteItem, remove your data after firing. This allows you to build data transformers without any side effects.
+
+Fire deleteItem a second time once you remove your data. (I'd like it if someone could suggest a more friendly way of doing this.) The second fire allows the garbage collector to collect your item if your item is no longer needed.
+
 ### Garbage cleaning
 ```javascript
 this.itemRelevant=(item_id){
     //return true if the item is relevant, false otherwise
 }
 ```
-- A standard itemRelevant is provided as `this._itemRelevant(operator, id)` and should be called by passing `this` as `operator`. It considers `this.settings.filter` as either a string (specifying the property that the item must have), or a function in string form that should return true if the item is relevant (UNSAFE EVAL SPECIFIABLE BY THE USER).
+- A standard itemRelevant is provided as `this.itemRelevant(id)`, so you _can_ leave it out of your code. It considers `this.settings.filter` as either a string (specifying the property that the item must have), or a function in string form that should return true if the item is relevant (UNSAFE EVAL SPECIFIABLE BY THE USER).
+- If you would like to use the provided `itemRelevant` function as part of your overloaded itemRelevant function, you can do something like this:
+```javascript
+this._itemRelevant=this.itemRelevant;
+this.itemRelevant=(id)=>{
+    let relevant1=this._itemRelevant(id);
+    //other stuff;
+}
+```
 - If your operator exists solely to display information, it may not need an itemRelevant.
 ### toSaveData
 The `polymorph_core.operatorTemplate` parent takes care of savedata for the most part, but if you have any data that might need to be saved that can't be updated to `operator.settings` on an event-driven basis, then you can do it via toSaveData.
@@ -54,6 +73,6 @@ this.toSaveData=()=>{
 }
 ```
 ## Firables
-- updateItem
+- updateItem - Fire whenever you edit an item. Hook this to recieve live updates about items. Please use the capacitor as you see fit.
 - createItem - automatically fires updateItem (enforced by container)
 - deleteItem - automatically fires updateItem (enforced by container)

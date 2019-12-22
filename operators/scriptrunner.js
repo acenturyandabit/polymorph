@@ -18,10 +18,23 @@ polymorph_core.registerOperator("scriptrunner", {
         <div id="output" style="overflow-y: auto; height: 30%;"></div>
     `;
 
+    //Allow tab to work
+    let textarea = this.rootdiv.querySelector('textarea');
+    textarea.addEventListener("keydown", (e) => {
+        textarea.style.background = "lightgreen";
+        if (e.keyCode == 9 || e.which == 9) {
+            e.preventDefault();
+            var s = e.target.selectionStart;
+            e.target.value = e.target.value.substring(0, e.target.selectionStart) + "\t" + e.target.value.substring(e.target.selectionEnd);
+            e.target.selectionEnd = s + 1;
+        }
+    });
+
+
     /*Example script:*/
     /*
     instance.on("updateItem",(d)=>{
-        console.log(polymorph_core.items[d.id]);
+        instance.log(polymorph_core.items[d.id]);
     })
     */
 
@@ -30,17 +43,16 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
-    container.on("updateItem", (d) => {
+    container.on("updateItem,deleteItem,createItem", (d, e) => {
         if (d.sender != "GARBAGE_COLLECTOR") {
-            if (this.currentInstance) this.currentInstance.fire("updateItem", d);
+            e.forEach(e => {
+                if (this.currentInstance) this.currentInstance.fire(e, d);
+            })
         }
         return false;
     });
-    //Saving and loading
-    this.toSaveData = function () {
-        return this.settings;
-    }
 
+    let me=this;
     function instance() {
         this.log = function (data) {
             let p = document.createElement("p");
@@ -58,21 +70,23 @@ polymorph_core.registerOperator("scriptrunner", {
         let wrapped = `(function factory(instance){
             ${this.settings.script}
         })`;
-        eval(wrapped)(this.currentInstance);
-    }
-
-    this.fromSaveData = (d) => {
-        //this is called when your container is started OR your container loads for the first time
-        Object.assign(this.settings, d);
-        this.rootdiv.querySelector("textarea").value = this.settings.script || "";
-        if (this.settings.autorun && this.settings.reallyAutorun) {
-            this.execute();
-        } else {
-            //don't execute, just flag this as needing attention
-            textarea.style.background = "green";
+        try{
+            eval(wrapped)(this.currentInstance);
+        }catch (e){
+            this.currentInstance.log(e.toString());
         }
-
+        
     }
+
+    //this is called when your container is started OR your container loads for the first time
+    this.rootdiv.querySelector("textarea").value = this.settings.script || "";
+    if (this.settings.autorun && this.settings.reallyAutorun) {
+        this.execute();
+    } else {
+        //don't execute, just flag this as needing attention
+        textarea.style.background = "green";
+    }
+
     this.rootdiv.querySelector("button").addEventListener("click", () => {
         textarea.style.background = "white";
         this.settings.script = this.rootdiv.querySelector("textarea").value;
@@ -105,17 +119,5 @@ polymorph_core.registerOperator("scriptrunner", {
     this.dialogUpdateSettings = function () {
         // pull settings and update when your dialog is closed.
     }
-
-    //Allow tab to work
-    let textarea = this.rootdiv.querySelector('textarea');
-    textarea.addEventListener("keydown", (e) => {
-        textarea.style.background = "lightgreen";
-        if (e.keyCode == 9 || e.which == 9) {
-            e.preventDefault();
-            var s = e.target.selectionStart;
-            e.target.value = e.target.value.substring(0, e.target.selectionStart) + "\t" + e.target.value.substring(e.target.selectionEnd);
-            e.target.selectionEnd = s + 1;
-        }
-    });
 
 });

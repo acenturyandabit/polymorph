@@ -33,10 +33,10 @@ polymorph_core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click
     let source = polymorph_core.filescreen.baseDiv.querySelector(".source").value;
     let nm = polymorph_core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
     let id = guid(5);
-    polymorph_core.currentDocID = id;
-    polymorph_core.datautils.upgradeSaveData(id, source);
-    polymorph_core.rehookAll(id);
-    let doc = polymorph_core.sanityCheckDoc({}, { template: template, name: nm });
-    polymorph_core.fromSaveData(doc);
-    polymorph_core.filescreen.baseDiv.style.display = "none";
+    //redirect to a creation URL, thats all
+    let newURL=window.location.href.split("?")[0];
+    newURL+=`?doc=${id}&src=${source}`;
+    if (nm)newURL+=`&nm=${nm}`
+    if (template!="none")newURL+=`&tmp=${template}`;
+    window.location.href=newURL;
 })

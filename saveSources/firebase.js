@@ -49,9 +49,9 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
         if (!polymorph_core.items._meta.fbID) {
           polymorph_core.items._meta.fbID = Date.now() + "_" + guid(10); // hopefully unique...
         }
-        ourfbID=polymorph_core.items._meta.fbID;
-      }else{
-        ourfbID=lastPulledFBID
+        ourfbID = polymorph_core.items._meta.fbID;
+      } else {
+        ourfbID = lastPulledFBID
       }
       let _meta = (await this.db.collection("polymorph").doc(polymorph_core.saveSourceData["fb"].docName).collection("items").doc("meta").get()).data();
       if (_meta && _meta.fbID != ourfbID) {
@@ -62,12 +62,27 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
         .collection("polymorph")
         .doc(polymorph_core.saveSourceData["fb"].docName);
 
+      //Fetch all items and merge; use some time-pagination (ooh!)
+      let toPostUpdate = [];
 
+      await inductor({
+        fn: async (id) => {
+          let itemData = (await root.collection('items').doc(id).get().then()).data();
+          if (!itemData) itemData = { _lm_: 0 };
+          if (!polymorph_core.items[id]) polymorph_core.items[id] = { _lm_: 0 };
+          if (itemData._lm_ > polymorph_core.items[id]._lm_) {
+            //pull, it's newer
+            polymorph_core.items[id] = itemData;
+            toPostUpdate.push(id);
+          } else if (itemData._lm_ < polymorph_core.items[id]._lm_) {
+            //push, its older
+            root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
+          }
+        },
+        data: Object.keys(polymorph_core.items),
+        numPerRound: 100
+      });
       //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
-      //lmao help
-      for (let id in polymorph_core.items) {
-        root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
-      }
 
       //remote
       //items

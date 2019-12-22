@@ -80,7 +80,6 @@ function _dialogManager(userSettings) {
             {
                 className: "midmid",
                 styling: `
-                display: table;
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -91,8 +90,8 @@ function _dialogManager(userSettings) {
             {
                 className: "mid",
                 styling: `
-                display: table-cell;
-                vertical-align: middle;
+                height:90%;
+                margin-top:5%;
             `
             },
             {
@@ -108,7 +107,7 @@ function _dialogManager(userSettings) {
                 overflow-y: auto;
                 max-width: 80%;
                 background-color: white;
-                border-radius: 30px;
+                border-radius: 5px;
                 padding: 30px;
             `
             }

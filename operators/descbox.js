@@ -118,7 +118,6 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
     this.textarea.addEventListener("keyup", this.somethingwaschanged);
 
     this.createItem = (id, data) => {
-        id = this._createItem();
         polymorph_core.items[id][this.settings.property] = data;
     }
 

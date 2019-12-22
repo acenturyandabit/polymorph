@@ -17,8 +17,12 @@ polymorph_core.container = function container(containerID) {
     let defaultSettings = {
         t: "opSelect",
         data: {},
-        inputRemaps: {},
-        outputRemaps: {},
+        inputRemaps: {
+        },
+        outputRemaps: {
+            createItem: ["createItem_" + containerID],
+            deleteItem: ["deleteItem_" + containerID]
+        },
         tabbarName: "New Operator"
     };
     Object.assign(defaultSettings, this.settings);
@@ -83,50 +87,33 @@ polymorph_core.container = function container(containerID) {
 
     //event remapping
     addEventAPI(this);
-    this._on = this.on;
     this._fire = this.fire;
-    //we need the garbagecollector to work still
-    this.selfFiredEvents = [];
 
-    this.fire = (e, f) => {
-        this._fire(e, f);
+    this.fire = (e, args) => {
+        e = e.split(",");
         if (e.includes("createItem") || e.includes("deleteItem")) {
-            this.selfFiredEvents.push({ e: "updateItem", args: f });
-            this._fire("updateItem", f);
-            this.selfFiredEvents.pop();
+            e.push("updateItem");
         }
-    }
-
-    this.on = (e, f) => {
-        if (e == "updateItem") polymorph_core.on("updateItem", f);
-        else (this._on(e, f));
-    }
-    this.on("*", (args, e) => {
-
-        //takes in events from outside and from self
-        //we want to filter out the self ones.
-        for (let i = 0; i < this.selfFiredEvents.length; i++) {
-            if (this.selfFiredEvents[i].e == e && this.selfFiredEvents[i].args == args) return;
+        if (e.includes("deleteItem")) {
+            e.push("__polymorph_core_deleteItem");
         }
-
-        if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
-        else {
-            e = [e, e + "_" + containerID];
-        }
-
-        e.forEach((v) => {
-            polymorph_core.fire(v, args);
+        //deal with remappings
+        e.forEach((e) => {
+            if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
+            else {
+                e = [e, e + "_" + containerID];
+            }
+            e.forEach((v) => {
+                polymorph_core.fire(v, args);
+            })
         })
-
-    })
+    }
 
     polymorph_core.on("*", (args, e) => {
-        //with this setup, updateItem will be called twice - so dont handle updateItem
-        if (e == "updateItem") return;
-        this.selfFiredEvents.push({ e: e, args: args });
-        if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
-        this.fire(e, args);
-        this.selfFiredEvents.pop();
+        e.forEach(e=>{
+            if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
+            this._fire(e, args);
+        })
     })
 
     //Input event remapping

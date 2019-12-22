@@ -18,8 +18,9 @@ Also, don't forget to fire `polymorph_core.fire('updateItem',{id:newID})` once y
 
 ## Element properties
 You can use any element property you want, but you'll have to share with other operators, and the polymorph_core. Properties reserved by the polymorph_core include:
-- item._rd: Rect data. The precence of this property indicates that this item should be treated as a rect during load.
-- item._od: Operator data. The precence of this property indicates that this item should be treate as an operator during load. To read more about this, see `operators_general/common.md :  ## Storage considerations`.
+- `item._rd`: Rect data. The precence of this property indicates that this item should be treated as a rect during load.
+- `item._od`: Operator data. The precence of this property indicates that this item should be treated as an operator during load. To read more about this, see `operators_general/common.md :  ## Storage considerations`.
+- `item._lu_`: Last update timestamp. This is a useful thing for realtime save sources to manage versions.
 
 Some common properties include:
 - item.to: A map whose keys represent parent-to-child links from the current item to another item. The keys are strings which point to polymorph_core.item[].
