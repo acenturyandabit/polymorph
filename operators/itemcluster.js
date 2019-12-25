@@ -137,6 +137,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             this.preselected = this.itemPointerCache[d.id].node;
             this.preselected.classList.add("anchored");
+            this.tryFocus(d.id, true);
         }
     })
 
@@ -254,6 +255,7 @@ polymorph_core.registerOperator("itemcluster2", {
         }
         this.viewDropdown.style.display = "none";
     });
+    waitForFn.apply(this, ["viewGrid"]);
     this.switchView = (id, assert, subview) => {
         let previousView = this.settings.currentViewName;
         this.settings.currentViewName = id;
@@ -498,12 +500,9 @@ polymorph_core.registerOperator("itemcluster2", {
                 this.lastMovingDiv = this.itemPointerCache[it.dataset.id];
                 //style it so we can see it
                 this.itemPointerCache[it.dataset.id].node.children[0].style.border = "1px solid red";
-                //adjust x indexes
-                this.itemPointerCache[it.dataset.id].front();
-                container.fire("focus", {
-                    id: it.dataset.id,
-                    sender: this
-                });
+                //adjust x indexes, if not focused
+                if (this.prevFocusID != it.dataset.id) this.itemPointerCache[it.dataset.id].front();
+                this.tryFocus(it.dataset.id);
                 //it.style.border = "3px solid #ffa2fc";
                 this.dragging = true;
                 //set relative drag coordinates
@@ -512,10 +511,6 @@ polymorph_core.registerOperator("itemcluster2", {
                     this.movingDivs[i].dx = coords.x - this.movingDivs[i].el.x();
                     this.movingDivs[i].dy = coords.y - this.movingDivs[i].el.y();
                 }
-                //Enforce its lines in blue.
-                if (this.prevFocusID) this.redrawLines(this.prevFocusID);
-                this.redrawLines(it.dataset.id, "red");
-                this.prevFocusID = it.dataset.id;
                 //return false;
             }
         } else if (e.target.matches(".tray textarea") && e.buttons % 2) {
@@ -910,16 +905,23 @@ polymorph_core.registerOperator("itemcluster2", {
         });
     };
 
-    this.rootdiv.addEventListener("focus", (e) => {
-        if (e.target.parentElement.parentElement.matches("[data-id]")) {
-            let id = e.target.parentElement.parentElement.dataset.id;
-            container.fire("focus", {
+    this.tryFocus = function (id, fromContainer) {
+        if (this.prevFocusID != id) {
+            this.redrawLines(id, "red");
+            if (!fromContainer) container.fire("focus", {
                 id: id,
                 sender: this
             });
-            if (this.prevFocusID) this.redrawLines(this.prevFocusID);
-            this.redrawLines(id, "red");
+            this.redrawLines(this.prevFocusID); //clear old lines to black
             this.prevFocusID = id;
+        }
+    }
+
+
+    this.rootdiv.addEventListener("focus", (e) => {
+        if (e.target.parentElement.parentElement.matches("[data-id]")) {
+            let id = e.target.parentElement.parentElement.dataset.id;
+            this.tryFocus(id);
         }
     })
 

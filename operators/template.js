@@ -15,11 +15,13 @@ polymorph_core.registerOperator("template", {
 
     //return true if we care about an item and dont want it garbage-cleaned :(
     
-    this.createItem = (id) => {
-    }
+    container.on("createItem", (id) => {
+        
+    })
 
-    this.deleteItem = (id) => {
-    }
+    container.on("deleteItem", (id) => {
+        
+    })
 
     //this is called when an item is updated (e.g. by another container)
     container.on("updateItem", (d) => {

@@ -35,6 +35,7 @@ var __manager_profiles = {
             //["ruigen", "operators/ruigen/rui_operator.js"],
             //["calendar2", "operators/calendar.2.js"],
             ["scriptrunner", "operators/scriptrunner.js"],
+            ["timerOperator", "operators/timer.js"],
             ["workflow", "operators/workflow.js"]
         ]
     },

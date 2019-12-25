@@ -92,7 +92,7 @@ function _contextMenuManager(root) {
             }
         }
 
-        document.addEventListener("click", hidemenu);
+        document.addEventListener("mousedown", hidemenu);
 
         //add styling along with element for safety 
         let s = document.createElement("style");

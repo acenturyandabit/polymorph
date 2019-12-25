@@ -79,6 +79,17 @@ polymorph_core.registerOperator("workflow", {
         this._existingItemsCache.push(id);
     }
 
+    let focusOnElement = function (el, index) {
+        let range = document.createRange();
+        let newP = el;
+        range.setStart(newP.childNodes[0], index);
+        range.collapse(true);
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        newP.focus();
+    }
+
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.dataset.id;
@@ -89,28 +100,26 @@ polymorph_core.registerOperator("workflow", {
                 if (e.shiftKey) {
                     polymorph_core.link(e.target.parentElement.dataset.id, newID);
                 } else {
-                    //     span     span          div        span or root
-                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN") {
+                    //     span     span          div        span or null
+                    if (e.target.parentElement.parentElement.parentElement) {
                         polymorph_core.link(e.target.parentElement.parentElement.parentElement.dataset.id, newID);
                     } else {
                         this.settings.rootItems.push(newID);
                     }
-
                 }
                 this._existingItemsCache.push(newID);
                 container.fire("createItem", { id: newID, sender: this });
                 e.preventDefault();
 
                 this.renderItem(newID);
+                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1]);
 
-                let range = document.createRange();
-                let newP = this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1];
-                range.setStart(newP.childNodes[0], 0);
-                range.collapse(true);
-                let sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-                newP.focus();
+            } else if (e.key == "ArrowUp") {
+                let toFocusOnSpan = e.target.parentElement.previousElementSibling;
+                if (!toFocusOnSpan) {
+                    toFocusOnSpan = e.target.parentElement.parentElement.parentElement;
+                }
+                focusOnElement(toFocusOnSpan.children[1]);
             }
         }
     })
@@ -163,6 +172,29 @@ polymorph_core.registerOperator("workflow", {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = ``;
+    let options = {
+        oneTimeImport: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "oneTimeImport",
+            label: "Filter for one time import"
+        }),
+        implicitOrder: new _option({
+            div: this.dialogDiv,
+            type: "button",
+            fn: () => {
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i][this.settings.oneTimeImport]) {
+                        //check if they are children of any of the existing items occurs on render.
+                        this.settings.rootItems.push(i);
+                        this.renderItem(i);
+                    }
+                }
+            },
+            label: "Import now"
+        })
+    }
     this.showDialog = function () {
         // update your dialog elements with your settings
     }

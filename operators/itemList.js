@@ -6,12 +6,13 @@ polymorph_core.registerOperator("itemList", function (container) {
         propertyWidths: {},
         filter: guid(),
         enableEntry: true,
-        implicitOrder: true
+        implicitOrder: true,
+        linkProperty:"to"
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //upgrade older ones
-    if (this.settings.filterProp){
-        this.settings.filter=this.settings.filterProp;
+    if (this.settings.filterProp) {
+        this.settings.filter = this.settings.filterProp;
         delete this.settings.filterProp;
     }
     this.settingsBar = document.createElement('div');
@@ -94,7 +95,7 @@ polymorph_core.registerOperator("itemList", function (container) {
 
     container.div.appendChild(this.taskListBar);
 
-    let getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
+    this.getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
         if (!this.renderedItemsCache) {
             let items = Array.from(this.taskList.querySelectorAll("span[data-id]"));
             this.renderedItemsCache = items.map((i) => i.dataset.id);
@@ -137,15 +138,15 @@ polymorph_core.registerOperator("itemList", function (container) {
         if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
         let id = polymorph_core.insertItem(it);
         currentItemSpan.dataset.id = id;
-        if (this.shiftDown) {
+        if (this.shiftDown && this.settings.linkProperty) {
             let fi = this.taskList.querySelector(".ffocus");
             if (fi) {
                 fi.children[fi.children.length - 1].appendChild(currentItemSpan);
                 //we are creating a subitem
                 let fiid = fi.dataset.id;
                 fi = polymorph_core.items[fiid];
-                if (!fi.to) fi.to = {};
-                fi.to[id] = true;
+                if (!fi[this.settings.linkProperty]) fi[this.settings.linkProperty] = {};
+                fi[this.settings.linkProperty][id] = true;
                 container.fire("updateItem", {
                     id: fiid,
                     sender: this
@@ -161,13 +162,22 @@ polymorph_core.registerOperator("itemList", function (container) {
             sender: this
         });
         this.datereparse(id);
+        return id;
     }
     document.body.addEventListener("keydown", (e) => {
+        //this is a global listener across operators, but will abstract away target; so don't use it for normal stuff.
         if (e.getModifierState("Shift")) {
             this.shiftDown = true;
             this.template.children[1].innerHTML = "&#x21a9;";
         }
     });
+    container.div.addEventListener("keydown", (e) => {
+        if (e.key == "Enter" && (e.getModifierState("Control") || e.getModifierState("Meta")) && e.target.dataset.role) {
+            let id=this.createItem();
+            container.div.querySelector(`[data-id='${id}'] [data-role='${e.target.dataset.role}']`).focus();
+        }
+    })
+
     document.body.addEventListener("keyup", (e) => {
         if (!e.getModifierState("Shift")) {
             this.shiftDown = false;
@@ -253,11 +263,11 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
         //then check if i have a direct and unique parent that is in the current set.
         let uniqueParent = undefined;
-        if (!unbuf) {
-            let ri = getRenderedItems();
+        if (!unbuf && this.settings.linkProperty) {
+            let ri = this.getRenderedItems();
             for (let _i = 0; _i < ri.length; _i++) {
                 let i = ri[_i];
-                if (polymorph_core.items[i].to && polymorph_core.items[i].to[id] && id != i) {
+                if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
                     if (uniqueParent == undefined) {
                         uniqueParent = i;
                     } else {
@@ -268,28 +278,33 @@ polymorph_core.registerOperator("itemList", function (container) {
             }
         }
         if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
+            try{
             this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
+            }catch (error){
+                if (error instanceof DOMException){
+                    //just an infinite loop, all chill
+                }else{
+                    throw error;
+                }
+            }
         }
         return true;
     }
 
     //auto
     setInterval(() => {
-        let worried = false;
+        if (!this.container.visible()) return; //if not shown then dont worryy
         for (let i in this.settings.properties) {
             if (this.settings.properties[i] == 'date') {
-                worried = i;
-            }
-        }
-        if (!this.container.visible()) return; //if not shown then dont worryy
-        if (worried) {
-            let listofitems = this.taskList.querySelectorAll("[data-role='" + worried + "']");
-            for (let i = 0; i < listofitems.length; i++) {
-                if (listofitems[i].value.indexOf("auto") != -1) {
-                    if (this.datereparse) this.datereparse(listofitems[i].parentElement.parentElement.parentElement.dataset.id);
+                let listofitems = this.taskList.querySelectorAll("[data-role='" + i + "']");
+                for (let i = 0; i < listofitems.length; i++) {
+                    if (listofitems[i].value.indexOf("auto") != -1) {
+                        if (this.datereparse) this.datereparse(listofitems[i].parentElement.parentElement.parentElement.dataset.id);
+                    }
                 }
             }
         }
+        this.sortItems();
     }, 10000);
 
     //Handle item deletion
@@ -599,6 +614,13 @@ polymorph_core.registerOperator("itemList", function (container) {
             object: this.settings,
             property: "implicitOrder",
             label: "Implicit ordering"
+        }),
+        linkProperty: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "linkProperty",
+            label: "Property for links (leave blank to ignore links)"
         })
     }
     let d = this.dialogDiv;

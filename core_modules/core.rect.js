@@ -239,11 +239,30 @@ polymorph_core.rect = function (rectID) {
     }
 
     //operator creation
-    this.plus.addEventListener("click", () => {
-        let newContainer = { _od: { t: "opSelect", p: rectID } };
-        let newContainerID = polymorph_core.insertItem(newContainer);
-        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
-        this.switchOperator(newContainerID);
+    this.plus.addEventListener("click", (e) => {
+        if (e.getModifierState("Shift") && this.parent instanceof polymorph_core.rect) {
+            if (confirm("WARNING: You are about to delete this rect and all its containers. THIS CAN HAVE SERIOUS CONSEQUENCES. Are you sure you want to do this?")) {
+                let myIndex = this.parent.children.indexOf(this);
+                let mySibling = this.parent.children[!myIndex + 0];
+                this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
+                Object.assign(mySibling.settings, this.parent.settings);
+                this.parent.outerDiv.remove();
+                mySibling.refresh();
+                let pid = this.parent.id;//deleting things messes with the parent getter
+                delete polymorph_core.rects[pid];
+                delete polymorph_core.items[pid]._rd;
+                delete polymorph_core.rects[rectID];
+                delete polymorph_core.items[rectID]._rd;
+                //delete this rect
+                //delete this rect's parent
+            }
+        } else {
+            let newContainer = { _od: { t: "opSelect", p: rectID } };
+            let newContainerID = polymorph_core.insertItem(newContainer);
+            polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+            this.switchOperator(newContainerID);
+        }
+
     })
 
     //Delegated operator switching
@@ -261,7 +280,7 @@ polymorph_core.rect = function (rectID) {
 
     //Delegated cross button handler
     this.tabbar.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x" && confirm("Warning: closing operators is irreversible and may lead to data loss. Continue?")) {
+        if (e.target.tagName.toLowerCase() == 'button' && e.target.innerText == "x" && e.target.parentElement.tagName == "SPAN" && confirm("Warning: closing operators is irreversible and may lead to data loss. Continue?")) {
             let containerid = e.target.parentElement.dataset.containerid;
             e.target.parentElement.remove();
             let currentInnerDiv = this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`);
@@ -269,11 +288,66 @@ polymorph_core.rect = function (rectID) {
             if (currentInnerDiv.previousElementSibling) switchToID = currentInnerDiv.previousElementSibling.dataset.containerid;
             else if (currentInnerDiv.nextElementSibling) switchToID = currentInnerDiv.nextElementSibling.dataset.containerid;
             currentInnerDiv.remove();
-
             this.switchOperator(switchToID);
             //nerf the item
-            delete polymorph_core.items[containerid]._od;
-            //polymorph_core.destroyItem(containerid);
+            delete polymorph_core.containers[containerid];
+            polymorph_core.tryGarbageCollect(containerid);
+        }
+    })
+
+    // Click and drag tabs to rearrange
+    this.tabbar.addEventListener("mousedown", (e) => {
+        //pass direct clicks so we don't switch to blank operators
+        let el = e.target;
+        while (el != this.tabbar) {
+            if (el.dataset.containerid) {
+                this.pulledDiv = el;
+                break;
+            }
+            el = el.parentElement;
+        }
+    })
+    document.addEventListener("mousemove", (e) => {
+        if (this.pulledDiv) {
+            //lift the item, by setting its display to position absolute
+            this.pulledDiv.style.position = "absolute";
+            this.pulledDiv.style.display = "flex";//instead of inline flex
+            let rect = this.tabbar.getBoundingClientRect();
+            this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
+            this.pulledDiv.style.top = 0;
+        }
+    })
+    document.addEventListener("mouseup", (e) => {
+        if (this.pulledDiv) {
+            let rect = this.tabbar.getBoundingClientRect();
+            let elementsAtPoint = this.tabbar.getRootNode().elementsFromPoint(e.clientX, rect.top);
+            this.pulledDiv.style.display = "inline-flex";
+            this.pulledDiv.style.position = "static";
+            if (elementsAtPoint[1].tagName == "SPAN") {
+                let childs = Array.from(this.tabbar.children)
+                let pulledIndex = childs.indexOf(this.pulledDiv);
+                let otherIndex = childs.indexOf(elementsAtPoint[1])
+                if (otherIndex < pulledIndex) {
+                    this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1]);
+                } else {
+                    this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
+                }
+            }
+            this.pulledDiv = undefined;
+        }
+    })
+
+    document.addEventListener("keydown", (e) => {
+        if (e.getModifierState("Shift")) {
+            this.plus.innerText = "x";
+            this.plus.style.color = "red";
+        }
+    })
+
+    document.addEventListener("keyup", (e) => {
+        if (!e.getModifierState("Shift")) {
+            this.plus.innerText = "+";
+            this.plus.style.color = "blue";
         }
     })
 

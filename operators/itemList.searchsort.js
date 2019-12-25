@@ -26,7 +26,7 @@ function __itemlist_searchsort() {
             //dont return yet, we have to reset everything
         }
 
-        let items = getRenderedItems();
+        let items = this.getRenderedItems();
         let toShowItems = [];
         items.forEach((v) => {
             let it = polymorph_core.items[v];
@@ -103,7 +103,7 @@ function __itemlist_searchsort() {
                                 //check for repetition structure
                                 if (its[i].dt.datestring.indexOf("(") != -1) {
                                     //evaluate the repetition
-                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring, new Date())[0].date;
+                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring)[0].date;
                                 }
                             }
                             else its[i].date = Date.now() * 10000;

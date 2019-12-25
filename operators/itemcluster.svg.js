@@ -150,9 +150,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp = me.activeLines[start][end];
         } else {
             if (!me.activeLines[start]) me.activeLines[start] = {};
-            cp = me.svg.path().stroke({ width: 2, color: style });;
+            cp = me.svg.path().stroke({ width: 2, color: style });
             cp.marker('mid', 9, 6, function (add) {
-                add.path("M0,0 L0,6 L9,3 z").fill(style);
+                add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
         }
@@ -167,6 +167,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             x[1] = (x[0] + x[2]) / 2;
             y[1] = (y[0] + y[2]) / 2;
             cp.plot(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`);
+            cp.stroke({ width: 2, color: style });
             cp.back();
         }
     };

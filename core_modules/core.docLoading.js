@@ -113,7 +113,11 @@
             if (!(data._meta.currentView && data[data._meta.currentView]._rd)) {
                 //Add our first rect
                 let newRectID = guid(6, data);
-                data[newRectID] = { _rd: {} };
+                data[newRectID] = { _rd: { //we need some initial data otherwise rect deletion gets weird
+                    x:0,
+                    f:0,
+                    ps:1
+                } };
                 data._meta.currentView = newRectID;
 
                 //Also add an operator

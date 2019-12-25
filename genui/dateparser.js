@@ -91,6 +91,18 @@ function _dateParser() {
         }
     },
     {
+        name: "weekday",
+        regex: /weekday/ig,
+        operate: function (regres, d, data, refdate) {
+            data.nextDay = 0;
+            let tomorrow = d.getDay();
+            if (refdate.getTime() - d.getTime() <= 0) tomorrow++;//respect past pure days.
+            if (!(tomorrow > 0 && tomorrow < 5)) {
+                d.setDate(d.getDate() + (8 - d.getDay()) % 7);
+            }
+        }
+    },
+    {
         name: "auto",
         regex: /auto/ig,
         operate: function (regres, d, data) {
@@ -197,18 +209,19 @@ function _dateParser() {
         part: substring that resulted in this date
         endDate: end date (integer)}
         */
-        let orefdate = refdate;
+        let orefdate = refdate;// Honour orefdate first - this is passed externally
+        //otherwise honour the first part of the repetition.
         let dvchain = str.split("&");
         let result = []; //see below.
         for (let k = 0; k < dvchain.length; k++) {
             //Check for repetition structure.
             let rsplit = /\((?:([^\)\|]+)\|\|)?([^\)\|]+)(?:\|([^\)\|]+))?\)/ig.exec(dvchain[k]);
             let toParse;
-            let reps = 1;
+            let reps = undefined;
             let part = dvchain[k];
             refdate = undefined;
             if (rsplit) {
-                if (rsplit[1]) {
+                if (rsplit[1] && !orefdate) {
                     refdate = this.extractTime(rsplit[1]);
                 } else refdate = orefdate || new Date();
                 toParse = rsplit[2];
@@ -220,7 +233,6 @@ function _dateParser() {
             } else {
                 toParse = dvchain[k]; //the whole thing
             }
-
             if (!orefdate && !refdate) refdate = new Date();
             else if (orefdate && !refdate) refdate = orefdate;
             let db = toParse.split(">");
@@ -269,7 +281,11 @@ function _dateParser() {
         for (let i = 0; i < dateArray.length; i++) {
             let refstart = new Date(dateArray[i].refdate);
             let recurCount = dateArray[i].reps;
-            if (recurCount<0 || recurCount>100)recurCount=100;
+            if (!isNaN(recurCount)){
+                if (recurCount < 0 || recurCount > 100) recurCount = 100;
+            }else{
+                recurCount=1;
+            }
             do {
                 output = this.richExtractTime(dateArray[i].part, refstart)[0];
                 if (!output) break;

@@ -91,7 +91,7 @@ var _option = (function () {
                 break;
             case "select":
                 appendedElement = document.createElement("select");
-                appendedElement.addEventListener("changed", (e) => {
+                appendedElement.addEventListener("click", (e) => {//apparently click is better than change or select
                     let actualObject = iff(settings.object);
                     if (typeof actualObject != "object") actualObject = {};
                     if (settings.beforeInput) settings.beforeInput(e);
@@ -101,8 +101,8 @@ var _option = (function () {
                 break;
             case "array":
                 appendedElement = document.createElement("div");
-                appendedElement.style.display="flex";
-                appendedElement.style.flexDirection="column";
+                appendedElement.style.display = "flex";
+                appendedElement.style.flexDirection = "column";
                 appendedElement.addEventListener("input", (e) => {
                     let actualObject = iff(settings.object);
                     if (!actualObject[settings["property"]]) actualObject[settings["property"]] = [];
@@ -122,7 +122,7 @@ var _option = (function () {
                         let s = document.createElement("span");
                         s.innerHTML = `<input><button>x</button>`;
                         s.style.width = "100%";
-                        appendedElement.insertBefore(s,appendedElement.children[appendedElement.children.length-1]);
+                        appendedElement.insertBefore(s, appendedElement.children[appendedElement.children.length - 1]);
                         actualObject[settings['property']].push("");
                     } else {
                         let index = 0;
@@ -135,9 +135,17 @@ var _option = (function () {
                         e.target.parentElement.remove();
                     }
                 });
+                break;
+            case 'button':
+                appendedElement = document.createElement("button");
+                appendedElement.innerText = settings.label;
+                appendedElement.addEventListener("click", (e) => {
+                    settings.fn();
+                })
+                break;
         }
         if (!isPhone()) appendedElement.style.float = "right";
-        if (settings.label) {
+        if (settings.label && settings.type != "button") {
             let lb = document.createElement("label");
             lb.innerHTML = settings.label;
             lb.appendChild(appendedElement);
@@ -169,6 +177,12 @@ var _option = (function () {
                         //if source is an array
                         if (_source.length) {
                             //differentiate between array of objects and array of string
+                            _source.forEach(i => {
+                                let op = document.createElement("option");
+                                op.innerText = i;
+                                op.value = i;
+                                appendedElement.appendChild(op);
+                            })
                         } else
                             for (let i in _source) {
                                 let op = document.createElement("option");
