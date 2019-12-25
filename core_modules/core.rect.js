@@ -291,6 +291,7 @@ polymorph_core.rect = function (rectID) {
             this.switchOperator(switchToID);
             //nerf the item
             delete polymorph_core.containers[containerid];
+            delete polymorph_core.items[containerid]._od;
             polymorph_core.tryGarbageCollect(containerid);
         }
     })

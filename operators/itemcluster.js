@@ -126,7 +126,8 @@ polymorph_core.registerOperator("itemcluster2", {
 
     //////////////////////////// Focusing an item////////////////////
     container.on("focus", (d) => {
-        if (d.sender == this) return;
+        if (d.sender instanceof polymorph_core.operators["itemcluster2"].constructor) return;
+        //^ prevent focus teleport when multiple itemclusters with the same view are in play.
         if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[this.settings.currentViewName]) {
             polymorph_core.items[this.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
             polymorph_core.items[this.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
@@ -389,7 +390,7 @@ polymorph_core.registerOperator("itemcluster2", {
     };
 
     container.on("focus", (e) => {
-        if (e.sender == this) return;
+        if (e.sender) return;
         if (this.settings.operationMode == "focus") {
             if (e.sender.container.uuid == this.settings.focusOperatorID) {
                 this.switchView(e.id, true);
