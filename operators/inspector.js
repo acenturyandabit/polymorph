@@ -3,6 +3,78 @@ polymorph_core.registerOperator("inspector", {
     displayName: "Inspector",
     description: "Inspect all properties of a given element."
 }, function (container) {
+
+    let upc = new capacitor(300, 40, (id) => {
+        container.fire("updateItem", {
+            id: id,
+            sender: this
+        });
+    })
+
+
+    let datatypes = {
+        'Text': {
+            onInput: (e, it, i) => {
+                it[i] = e.target.value;
+                upc.submit(this.settings.currentItem);
+            },
+            generate: (id) => {
+                return `<input>`;
+            },
+            updateValue: (obj, div) => {
+                div.querySelector("input").value = obj || "";
+            }
+        },
+        'Large Text': {
+            onInput: (e, it, i) => {
+                it[i] = e.target.value;
+                upc.submit(this.settings.currentItem);
+            },
+            generate: (id) => {
+                return `<textarea style="width:100%"></textarea>`;
+            },
+            updateValue: (obj, div) => {
+                div.querySelector("textarea").value = obj || "";
+            }
+        },
+        'Date': {
+            onInput: (e, it, i) => {
+                if (!it[i]) it[i] = {};
+                if (typeof it[i] == "string") it[i] = {
+                    datestring: it[i]
+                };
+                it[i].datestring = e.target.value;
+                if (this.datereparse) this.datereparse(it, i);
+            },
+            generate: (id) => {
+                return `<input>`;
+            },
+            updateValue: (obj, div) => {
+                div.querySelector("input").value = obj.datestring || "";
+            }
+        },
+        'Auto': {
+            onInput: (e, it, i) => {
+                it[i] = e.target.value;
+                upc.submit(this.settings.currentItem);
+            },
+            updateValue: (obj, div, i) => {
+                if (typeof (obj) == "object") {
+                    recursiveRender(obj, div);
+                } else {
+                    div.innerHTML = `<p>${i}:</p><input>`;
+                    //fall through
+                }
+            }
+        }
+    };
+
+
+
+
+
+
+
     let defaultSettings = {
         operationMode: "focus",
         currentItem: "",
@@ -15,9 +87,15 @@ polymorph_core.registerOperator("inspector", {
     color: white;
     `
     let ttypes = `<select data-role="nttype">
-    <option>Auto</option>
-    <option>Text</option>
-    <option>Date</option>
+    ${
+        (() => {
+            let output = "";
+            for (i in datatypes) {
+                output += "<option value='" + i + "'>";
+            }
+            return output;
+        })()
+        }
     </select>`;
     this.rootdiv.appendChild(htmlwrap(`
     <h3>Item: <span class="itemID"></span></h3>
@@ -110,12 +188,6 @@ polymorph_core.registerOperator("inspector", {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Actual editing the item
-    let upc = new capacitor(300, 40, (id) => {
-        container.fire("updateItem", {
-            id: id,
-            sender: this
-        });
-    })
 
     this.internal.addEventListener("input", (e) => {
         //change this to invalidate instead of directly edit?
@@ -124,23 +196,8 @@ polymorph_core.registerOperator("inspector", {
         } else if (this.settings.currentItem) {
             let it = polymorph_core.items[this.settings.currentItem];
             let i = e.target.parentElement.dataset.role;
-            switch (e.target.parentElement.dataset.type) {
-                case 'Text':
-                    it[i] = e.target.value;
-                    upc.submit(this.settings.currentItem);
-                    break;
-                case 'Date':
-                    if (!it[i]) it[i] = {};
-                    if (typeof it[i] == "string") it[i] = {
-                        datestring: it[i]
-                    };
-                    it[i].datestring = e.target.value;
-                    if (this.datereparse) this.datereparse(it, i);
-                    break;
-                case 'Auto':
-                    it[i] = e.target.value;
-                    upc.submit(this.settings.currentItem);
-                    break;
+            if (datatypes[e.target.parentElement.dataset.type]) {
+                datatypes[e.target.parentElement.dataset.type].onInput(e, it, i);
             }
         }
     })
@@ -239,31 +296,16 @@ polymorph_core.registerOperator("inspector", {
                     pdiv.dataset.role = i;
                     pdiv.dataset.type = this.settings.propsOn[i];
                     let ihtml = `<h4>` + i + `</h4>`;
-                    switch (this.settings.propsOn[i]) {
-                        case 'Text':
-                        case 'Date':
-                            ihtml += `<p>${i}:</p><input>`;
+                    if (datatypes[this.settings.propsOn[i]].generate) {
+                        ihtml += datatypes[this.settings.propsOn[i]].generate(i);
                     }
                     pdiv.innerHTML = ihtml;
                     this.internal.appendChild(pdiv);
                 }
                 pdiv.dataset.invalid = 0;
                 //display value
-                switch (this.settings.propsOn[i]) {
-                    case 'Auto':
-                        if (typeof (clean_obj[i]) == "object") {
-                            recursiveRender(clean_obj[i], pdiv);
-                            break;
-                        } else {
-                            pdiv.innerHTML = `<p>${i}:</p><input>`;
-                            //fall through
-                        }
-                    case 'Text':
-                        pdiv.querySelector("input").value = clean_obj[i] || "";
-                        break;
-                    case 'Date':
-                        pdiv.querySelector("input").value = clean_obj[i].datestring || "";
-                        break;
+                if (datatypes[this.settings.propsOn[i]].updateValue) {
+                    datatypes[this.settings.propsOn[i]].updateValue(clean_obj[i], pdiv, i);
                 }
             }
         }

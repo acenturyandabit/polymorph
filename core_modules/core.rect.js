@@ -208,9 +208,6 @@ polymorph_core.rect = function (rectID) {
         if (container.operator && container.operator.refresh) container.operator.refresh();
         // because during initial load, this needs to be called to actually show anything.
         if (containerid == this.settings.s) this.switchOperator(this.settings.s);
-        else {
-            //set the colour to a nope
-        }
     }
 
     //Callback for tab clicks to switch between operators.
@@ -334,6 +331,9 @@ polymorph_core.rect = function (rectID) {
                     this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
                 }
             }
+            //save the order of my containers in settings
+            this.settings.containerOrder = Array.from(this.tabbar.children).map(i => i.dataset.containerid);
+            this.settings.containerOrder.pop();//remove button with undefined id
             this.pulledDiv = undefined;
         }
     })
@@ -475,6 +475,9 @@ polymorph_core.rect = function (rectID) {
         let containerid = contextedOperatorIndex;
         this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
         this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+        delete polymorph_core.containers[containerid];
+        delete polymorph_core.items[containerid]._od;
+        polymorph_core.tryGarbageCollect(containerid);
         let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
         polymorph_core.items[newID]._od.p = rectID;
         polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
@@ -575,6 +578,17 @@ polymorph_core.rect = function (rectID) {
         } else {
             //show my container
             this.switchOperator(this.settings.s);
+            //order the tabbars
+            if (this.settings.containerOrder) {
+                this.settings.containerOrder.forEach(i => {
+                    let currentTab = this.tabbar.querySelector(`[data-containerid='${i}']`);
+                    if (currentTab) this.tabbar.appendChild(currentTab);
+                })
+                this.tabbar.appendChild(this.plus);
+            }
+            for (let i in this.tabbar.length) {
+
+            }
         }
         if (this.containers) this.containers.forEach((c) => {
             //containers may not exist on fromSaveData
@@ -815,6 +829,10 @@ polymorph_core.rect = function (rectID) {
 
 Object.defineProperty(polymorph_core, "baseRect", {
     get: () => {
-        return polymorph_core.rects[polymorph_core.items._meta.currentView];
+        try {
+            return polymorph_core.rects[polymorph_core.items._meta.currentView];
+        } catch (e) {
+            return undefined;
+        }
     }
 })

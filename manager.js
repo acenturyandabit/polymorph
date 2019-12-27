@@ -69,6 +69,7 @@ var __manager_profiles = {
             ["polymorph_coreUI", "versions/desktop/coreUI.js"],
             { r: "operators" },
             ["subframe", "operators/subframe.js"],
+            ["influence_background", "core_modules/addons/influence_background.js"],
             { r: "saveSources" },
         ]
     }

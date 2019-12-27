@@ -69,6 +69,7 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
 
     this.updateSettings = () => {
         if (this.settings.operationMode == 'static') {
+            if (!this.settings.staticItem) this.settings.staticItem = polymorph_core.insertItem({});
             let staticItem = this.settings.staticItem;
             this.settings.currentID = this.settings.staticItem;
             if (!polymorph_core.items[staticItem]) {
@@ -85,6 +86,7 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
             this.textarea.value = "";
             this.textarea.disabled = false;
         }
+        this.textarea.placeholder = this.settings.placeholder || "";
         this.updateItem(this.settings.currentID);
     }
 
@@ -132,25 +134,40 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = `
-    <p>Role</p>
-    <select data-role="operationMode">
-    <option value="static">Display static item</option>
-    <option value="focus">Display focused item</option>
-    <option value="putter">Use as data entry</option>
-    </select>
-    <br/>
-    <input data-role="staticItem" placeholder="Static item to display...">
-    <br>
-    <p> Or, click to target 'focus' events from an container...
-    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
-    <button class="targeter">Select container</button>
-    </br>
-    <input data-role="property" placeholder="Enter the property to display...">
-    <input data-role="placeholder" placeholder="Enter a placeholder...">
-    `;
-
     let options = {
+        operationMode: new _option({
+            div: this.dialogDiv,
+            type: "select",
+            object: this.settings,
+            property: "operationMode",
+            source: {
+                static: "Display static item",
+                focus: "Display focused item",
+                putter: "Use as data entry"
+            },
+            label: "Select operation mode:"
+        }),
+        staticItem: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "staticItem",
+            label: "Static item to display:"
+        }),
+        property: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "property",
+            label: "Property of item to display:"
+        }),
+        placeholder: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "property",
+            label: "Property of item to display:"
+        }),
         showWordCount: new _option({
             div: this.dialogDiv,
             type: "bool",
@@ -159,34 +176,14 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
             label: "Show wordcount?"
         })
     };
-    let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", () => {
-        polymorph_core.target().then((id) => {
-            this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            this.settings['focusOperatorID'] = id
-        })
-    })
     this.showDialog = () => {
         // update your dialog elements with your settings
         //fill out some details
         for (i in options) {
             options[i].load();
         }
-        for (i in this.settings) {
-            let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
-            if (it) it.value = this.settings[i];
-        }
     }
-    this.dialogUpdateSettings = () => {
-        // pull settings and update when your dialog is closed.
-        let its = this.dialogDiv.querySelectorAll("[data-role]");
-        for (let i = 0; i < its.length; i++) {
-            this.settings[its[i].dataset.role] = its[i].value;
-        }
-        this.textarea.placeholder = this.settings.placeholder || "";
-        this.updateSettings();
-        container.fire("updateItem", { id: this.container.id });
-    }
+    this.dialogUpdateSettings = this.updateSettings;
     this.dialogDiv.addEventListener("input", (e) => {
         if (e.target.dataset.role) {
             this.settings[e.target.dataset.role] = e.target.value;

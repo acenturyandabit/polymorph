@@ -7,7 +7,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         filter: guid(),
         enableEntry: true,
         implicitOrder: true,
-        linkProperty:"to"
+        linkProperty: "to"
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //upgrade older ones
@@ -173,7 +173,7 @@ polymorph_core.registerOperator("itemList", function (container) {
     });
     container.div.addEventListener("keydown", (e) => {
         if (e.key == "Enter" && (e.getModifierState("Control") || e.getModifierState("Meta")) && e.target.dataset.role) {
-            let id=this.createItem();
+            let id = this.createItem();
             container.div.querySelector(`[data-id='${id}'] [data-role='${e.target.dataset.role}']`).focus();
         }
     })
@@ -278,12 +278,12 @@ polymorph_core.registerOperator("itemList", function (container) {
             }
         }
         if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
-            try{
-            this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
-            }catch (error){
-                if (error instanceof DOMException){
+            try {
+                this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
+            } catch (error) {
+                if (error instanceof DOMException) {
                     //just an infinite loop, all chill
-                }else{
+                } else {
                     throw error;
                 }
             }
@@ -383,7 +383,8 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.setSearchTemplate(htmlstring);
         //resize stuff
         for (let i in this.settings.propertyWidths) {
-            this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            else delete this.settings.propertyWidths[i];
         }
         //Recreate everything
         this.reRenderEverything();

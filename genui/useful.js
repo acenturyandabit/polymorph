@@ -218,9 +218,10 @@ function hslToRgb(h, s, l) {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
-function waitForFn(property){
-    if (!this[property])this[property]=(args)=>{
-        setTimeout(()=>this[property](args),1000);
+function waitForFn(property) {
+    let me = this;
+    if (!this[property]) this[property] = function (args) {
+        setTimeout(() => me[property].apply(me, arguments), 1000);
     }
 }
 //waitForFn.apply(obj,["run"]);

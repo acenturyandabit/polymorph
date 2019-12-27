@@ -55,6 +55,7 @@ polymorph_core.on("UIsetup", () => {
                 </ul>
             </li>
             <li class="palettedialog">🎨</li>
+            <li class="showInfluence">🕸</li>
         </ul>
     </div>`));
     document.body.appendChild(htmlwrap(`
