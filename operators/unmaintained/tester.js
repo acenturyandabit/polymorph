@@ -275,7 +275,7 @@ polymorph_core.registerOperator("tester", {
             this.rootdiv.querySelector("textarea.above").value = polymorph_core.items[toTest][this.settings.cardAProp];
             clearBottomBoxes();
         }
-        container.fire("focus", { id: toTest, sender: this });
+        container.fire("focusItem", { id: toTest, sender: this });
     }
 
     //////////////////////////////

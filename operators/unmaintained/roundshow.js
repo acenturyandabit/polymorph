@@ -252,7 +252,7 @@ polymorph_core.registerOperator("roundshow", {
                 //set the centre item so we can go back up the tree
                 me.centreItem.data('return', me.settings.currentRoot);
                 //focus it
-                container.fire("focus", { id: currentItem });
+                container.fire("focusItem", { id: currentItem });
             }
         })
 
@@ -265,7 +265,7 @@ polymorph_core.registerOperator("roundshow", {
             let itm = me.rootdiv.querySelector(".svg [data-role='return']").dataset.return;
             let tree = createTree(itm);
             me.renderTree(tree);
-            container.fire("focus", { sender: this, id: itm });
+            container.fire("focusItem", { sender: this, id: itm });
             if (itm) me.polymorph_coreText.text(polymorph_core.items[itm][this.settings.nameProp] || "Root").cx(200).cy(200);
             else me.polymorph_coreText.text("Root").cx(200).cy(200);
         })

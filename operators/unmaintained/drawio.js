@@ -83,7 +83,7 @@ polymorph_core.registerOperator("drawio", function (container) {
 
     //Register focus with polymorph_core
     this.somethingwasfocused = function () {
-        container.fire("focus", {
+        container.fire("focusItem", {
             id: itemID,
             sender: this
         });

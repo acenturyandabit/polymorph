@@ -36,7 +36,7 @@ var __manager_profiles = {
             //["calendar2", "operators/calendar.2.js"],
             ["scriptrunner", "operators/scriptrunner.js"],
             ["timerOperator", "operators/timer.js"],
-            ["workflow", "operators/workflow.js"]
+            ["textflow", "operators/textflow.js"]
         ]
     },
     saveSources: {

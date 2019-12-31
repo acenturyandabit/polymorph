@@ -62,7 +62,7 @@ polymorph_core.registerOperator("timeline", {
             
             timeline.on('select', (e) => {
                 //console.log(Object.keys[e.items]);
-                container.fire("focus", {
+                container.fire("focusItem", {
                     id: e.items[0],
                     sender: me
                 });

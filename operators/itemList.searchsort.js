@@ -24,25 +24,31 @@ function __itemlist_searchsort() {
             this.searchtemplate.querySelector("button").innerHTML = "&#128269;";
             this.searchtemplate.querySelector("button").disabled = true;
             //dont return yet, we have to reset everything
+
         }
 
         let items = this.getRenderedItems();
         let toShowItems = [];
         items.forEach((v) => {
             let it = polymorph_core.items[v];
-            let el = this.taskList.querySelector(`[data-id="${v}"]`);
-            el.style.display = "none";
-            for (let i = 0; i < searchboxes.length; i++) {
-                //only search by text for now
-                if (searchboxes[i].value) {
-                    switch (this.settings.properties[searchboxes[i].dataset.role]) {
-                        case "text":
-                            if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
-                                toShowItems.push(el);
-                            }
-                            break;
+            if (amSearching) {
+                let el = this.taskList.querySelector(`[data-id="${v}"]`);
+                el.style.display = "none";
+                for (let i = 0; i < searchboxes.length; i++) {
+                    //only search by text for now
+                    if (searchboxes[i].value) {
+                        switch (this.settings.properties[searchboxes[i].dataset.role]) {
+                            case "text":
+                                if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
+                                    toShowItems.push(el);
+                                }
+                                break;
+                        }
                     }
                 }
+            } else {
+                let el = this.taskList.querySelector(`[data-id="${v}"]`);
+                toShowItems.push(el);
             }
         });
         toShowItems.forEach((v) => {

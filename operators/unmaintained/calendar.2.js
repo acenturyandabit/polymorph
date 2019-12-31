@@ -111,7 +111,7 @@ polymorph_core.registerOperator("calendar2", {
                     callback(allList);
                 },
                 eventClick: function (calEvent, jsEvent, view) {
-                    container.fire("focus", {
+                    container.fire("focusItem", {
                         id: calEvent.id,
                         sender: me
                     })

@@ -115,7 +115,7 @@ polymorph_core.registerOperator(
           t = t.parentElement;
         }
         select(t.dataset.id);
-        container.fire("focus", {
+        container.fire("focusItem", {
           sender: me,
           id: t.dataset.id
         });
@@ -384,7 +384,7 @@ polymorph_core.registerOperator(
 
     //Register focus with polymorph_core
     this.somethingwasfocused = function () {
-      container.fire("focus", {
+      container.fire("focusItem", {
         id: itemID,
         sender: this
       });

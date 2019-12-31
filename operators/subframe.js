@@ -28,12 +28,37 @@ polymorph_core.registerOperator("subframe", {}, function (container) {
     //Check if i have any rects waiting for pickup
     if (polymorph_core.rectLoadCallbacks[container.id]) {
         this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
-    } else {
+        delete polymorph_core.rectLoadCallbacks[container.id];
+    } else if (!this.settings.operatorClonedFrom) {
         let rectID = polymorph_core.newRect(container.id);
         this.tieRect(rectID);
     }
 
-
+    if (this.settings.operatorClonedFrom) {
+        for (let ri in polymorph_core.rects) {
+            if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
+                //make a clone of it
+                let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[ri]));
+                copyRect._rd.p = container.id;
+                let newRectID = polymorph_core.insertItem(copyRect);
+                polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
+                this.tieRect(newRectID);
+                //also make a clone of all its operators
+                for (let i in polymorph_core.containers) {
+                    if (polymorph_core.containers[i].settings.p == ri) {
+                        //clone it
+                        let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                        copyOp._od.p = newRectID;
+                        copyOp._od.data.operatorClonedFrom = i;
+                        let newContainerID = polymorph_core.insertItem(copyOp);
+                        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+                    }
+                }
+            }
+        }
+        polymorph_core.items[this.settings.operatorClonedFrom]
+        delete this.settings.operatorClonedFrom;
+    }
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");

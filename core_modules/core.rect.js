@@ -480,6 +480,7 @@ polymorph_core.rect = function (rectID) {
         polymorph_core.tryGarbageCollect(containerid);
         let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
         polymorph_core.items[newID]._od.p = rectID;
+        polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID;//facilitate subframe deep copy
         polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
         polymorph_core.fire("updateItem", { id: rectID, sender: this });
         this.switchOperator(newID);

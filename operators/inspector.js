@@ -63,6 +63,7 @@ polymorph_core.registerOperator("inspector", {
                     recursiveRender(obj, div);
                 } else {
                     div.innerHTML = `<p>${i}:</p><input>`;
+                    div.querySelector("input").value = obj || "";
                     //fall through
                 }
             }

@@ -909,7 +909,7 @@ polymorph_core.registerOperator("itemcluster2", {
     this.tryFocus = function (id, fromContainer) {
         if (this.prevFocusID != id) {
             this.redrawLines(id, "red");
-            if (!fromContainer) container.fire("focus", {
+            if (!fromContainer) container.fire("focusItem", {
                 id: id,
                 sender: this
             });

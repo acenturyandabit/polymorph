@@ -1,4 +1,6 @@
 polymorph_core.registerOperator("itemList", function (container) {
+    //initialisation
+    //#region
     let defaultSettings = {
         properties: {
             title: "text"
@@ -103,7 +105,10 @@ polymorph_core.registerOperator("itemList", function (container) {
         return this.renderedItemsCache;
     }
 
-    //Handle item creation
+    //#endregion
+
+    //Item creation
+    //#region
     this.createItem = () => {
         let it = {};
         //clone the template and append it
@@ -191,6 +196,10 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     });
 
+    //#endregion
+
+    //Item updating
+    //#region
     container.on("updateItem", (d) => {
         let id = d.id;
         let s = d.sender;
@@ -290,6 +299,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
         return true;
     }
+    //#endregion
 
     //auto
     setInterval(() => {
@@ -307,6 +317,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.sortItems();
     }, 10000);
 
+    //Item deletion
     //Handle item deletion
     this.taskList.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "button") {
@@ -321,19 +332,7 @@ polymorph_core.registerOperator("itemList", function (container) {
             });
         }
     })
-    /*
-    //probably wont need this anymore as updateItem handles deletion
-    this.deleteItem = (id)=>{
-        try {
-            this.taskList.querySelector("span[data-id='" + id + "']").remove();
-        } catch (e) {
-            return;
-        }
-    }
 
-    container.on("deletedItem", (d) => {
-        this.deleteItem(d.id);
-    });*/
     this.reRenderEverything = () => {
         this.taskList.innerHTML = "";
         for (let i in polymorph_core.items) {
@@ -363,6 +362,9 @@ polymorph_core.registerOperator("itemList", function (container) {
 
     waitForFn.apply(this, ["setSearchTemplate"]);
     waitForFn.apply(this, ["sortItems"]);
+    scriptassert([["itemlist searchsort", "operators/itemList.searchsort.js"]], () => {
+        __itemlist_searchsort.apply(this);
+    })
 
     this.updateSettings = () => {
         //Look at the settings and apply any relevant changes
@@ -458,13 +460,23 @@ polymorph_core.registerOperator("itemList", function (container) {
 
     this.taskList.addEventListener("focusin", (e) => {
         if (e.target.matches("input")) {
-            container.fire("focus", {
+            container.fire("focusItem", {
                 id: e.target.parentElement.parentElement.parentElement.dataset.id,
                 sender: this
             });
             this.focusItem(e.target.parentElement.parentElement.parentElement.dataset.id);
         }
     })
+    container.on("focusItem", (data) => {
+        if (this.settings.operationMode == "focus") {
+            if (data.sender.container.container.uuid == this.settings.focusOperatorID) {
+                this.settings.filter = data.id;
+            }
+        }
+        this.focusItem(data.id);
+    });
+
+
     scriptassert([
         ['dateparser', 'genui/dateparser.js']
     ], () => {
@@ -576,6 +588,8 @@ polymorph_core.registerOperator("itemList", function (container) {
             .addEventListener("input", updateStyle);
     })
 
+    //settings dialog
+    //#region
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `
@@ -669,28 +683,6 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     }
 
-
-
-    let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", () => {
-        if (this.settings.operationMode == "iface") {
-            polymorph_core.target("itemList").then((id) => {
-                this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-                this.settings['focusOperatorID'] = id
-                this.focusOperatorID = this.settings['focusOperatorID'];
-                this.detach = polymorph_core.queryOnIface(id, () => {
-                    // this will return a list of items
-                })
-            })
-        } else {
-            polymorph_core.target().then((id) => {
-                this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-                this.settings['focusOperatorID'] = id
-                this.focusOperatorID = this.settings['focusOperatorID'];
-            })
-        }
-    })
-
     //when clicking a sort radio button, turn off implict ordering
     this.proplist = this.dialogDiv.querySelector(".proplist");
     this.proplist.addEventListener("input", (e) => {
@@ -745,40 +737,8 @@ polymorph_core.registerOperator("itemList", function (container) {
     //retrieve stuff
     //sort by date checkbox
     //Style tags button
+    //#endregion
 
-    container.on("focus", (data) => {
-        if (this.settings.operationMode == "focus") {
-            if (data.sender.container.container.uuid == this.settings.focusOperatorID) {
-                this.settings.filter = data.id;
-            }
-        }
-        this.focusItem(data.id);
-    });
-    this.callables = {
-        addArray: (a) => {
-            let createdIDs = [];
-            a.forEach((v) => {
-                let obj = {};
-                if (typeof v == "string") {
-                    obj.title = v;
-                } else {
-                    obj = v;
-                }
-                let id = polymorph_core.insertItem(obj);
-                container.fire("updateItem", {
-                    id: id
-                });
-                createdIDs.push(id);
-            });
-            return createdIDs;
-        },
-        addObjects: (a) => {
-            for (let i in a) {
-                polymorph_core.items[i] = a[i];
-            }
-        }
-    };
-    scriptassert([["itemlist searchsort", "operators/itemList.searchsort.js"]], () => {
-        __itemlist_searchsort.apply(this);
-    })
+
+
 });

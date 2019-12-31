@@ -76,7 +76,7 @@
                         callback(allList);
                     },
                     eventClick: (calEvent, jsEvent, view) => {
-                        container.fire("focus", {
+                        container.fire("focusItem", {
                             id: calEvent.id,
                             sender: this
                         })

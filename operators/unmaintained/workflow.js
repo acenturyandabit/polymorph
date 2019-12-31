@@ -1,6 +1,6 @@
 polymorph_core.registerOperator("workflow", {
     displayName: "Workflowish",
-    description: "Recursive item listing."
+    description: "Workflowy emulation."
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {

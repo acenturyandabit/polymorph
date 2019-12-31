@@ -1,8 +1,8 @@
 (() => {
     let started = false;
-    let svg, _game;
+    let svg, _game, hud;
     let neutralColor = "grey";
-    let playerColors = ["red", "blue", "green", "yellow"];
+    let playerColors = ["red", "blue", "green", "yellow", "purple", "pink", "orange"];
     let blobTime = 10;
     let sendFreq = 50;
     function dist(x1, y1, x2, y2) {
@@ -37,9 +37,8 @@
         }
         return false;
     }
-    let strategies = ["first", "closestNode"];
-    function player() {
-        this.strategy = strategies[Math.floor(Math.random() * strategies.length)];
+    let strategies = ["first", "closestNode", "jasons", "enoughbot", "noresting", "fork", "balance"];
+    function player(index) {
         Object.defineProperty(this, "index", {
             get: () => {
                 for (let i = 0; i < _game.players.length; i++) {
@@ -49,6 +48,10 @@
                 }
             }
         })
+        this.strategy = strategies[Math.floor(Math.random() * strategies.length)];
+        if (this.strategy == "noresting") this.sendFreqs = {};
+        if (this.strategy == "fork") this.nodeBlobCount = {};
+        //this.strategy = strategies[index];
         Object.defineProperty(this, "color", {
             get: () => {
                 return playerColors[this.index];
@@ -63,6 +66,7 @@
                 return nodes;
             }
         })
+
         this.update = () => {
             //create packets, or upgrade nodes
             let currentNodes = this.nodes;
@@ -95,7 +99,9 @@
                         }
                     });
                     break;
+                case "enoughbot":
                 case "closestNode":
+                case "noresting":
                     //each node finds their closest neighbour
                     nextNodes = nextNodes.map(i => i.index);
                     currentNodes.forEach((i) => {
@@ -109,10 +115,111 @@
                             }
                         })
                         i.sendFreq++;
+                        if (this.strategy == "noresting" && this.sendFreqs[i.index] != undefined) this.sendFreqs[i.index]++;
+                        if (i.blobs > 5 && shortestPathNext != undefined) {
+                            if (this.strategy == "enoughbot" && _game.nodes[shortestPathNext].owner != this) {
+                                let antagBlobs = _game.nodes[shortestPathNext].blobs * 2;
+                                if (antagBlobs > (i.npacketsToSend || 0)) i.npacketsToSend = antagBlobs;
+                            } else {
+                                i.npacketsToSend = i.blobs - 1;
+                            }
+                            if (this.strategy == "noresting") {
+                                if (!this.sendFreqs[i.index]) this.sendFreqs[i.index] = sendFreq;
+                                if (this.sendFreqs[i.index] > sendFreq) {
+                                    _game.sendPacket(this, i.index, shortestPathNext, i.npacketsToSend);
+                                    this.sendFreqs[i.index] = 0;
+                                    i.npacketsToSend = 0;
+                                }
+                            } else {
+                                if (i.sendFreq > sendFreq) {
+                                    _game.sendPacket(this, i.index, shortestPathNext, i.npacketsToSend);
+                                    i.sendFreq = 0;
+                                    i.npacketsToSend = 0;
+                                }
+                            }
+                        }
+                    });
+                    break;
+                case "fork":
+                    //each node finds their closest neighbour
+                    nextNodes = nextNodes.map(i => i.index);
+                    currentNodes.forEach((i) => {
+                        let paths = nextNodes.map(n => pathFrom(i.index, n));
+                        let shortestPath = 1000;
+                        let shortestPathNext = -1;
+                        paths.forEach(i => {
+                            if (i.length < shortestPath) {
+                                shortestPath = i.length;
+                                shortestPathNext = i[1];
+                            }
+                        })
+                        i.sendFreq++;
+                        var sent = false;
+                        i.connections.forEach(ci => {
+                            if (_game.nodes[ci].owner == this) return;
+                            this.nodeBlobCount[ci] = this.nodeBlobCount[ci] || 0;
+                            let antagBlobs = _game.nodes[ci].blobs * 2;
+                            if (antagBlobs > this.nodeBlobCount[ci]) this.nodeBlobCount[ci] = antagBlobs;
+                        })
+                        if (i.sendFreq > sendFreq) {
+                            i.connections.forEach(ci => {
+                                if (_game.nodes[ci].owner == this) return;
+                                if (i.blobs > this.nodeBlobCount[ci]) {
+                                    _game.sendPacket(this, i.index, ci, this.nodeBlobCount[ci]);
+                                    sent = true;
+                                    i.sendFreq = 0;
+                                }
+                            })
+                            if (!sent && i.blobs > 5 && _game.nodes[shortestPathNext] && _game.nodes[shortestPathNext].owner == this) {
+                                _game.sendPacket(this, i.index, shortestPathNext, i.blobs - 1);
+                                i.sendFreq = 0;
+                            }
+                        }
+                    });
+                    break;
+                case "balance":
+                    //each node finds their closest neighbour
+                    nextNodes = nextNodes.map(i => i.index);
+                    currentNodes.forEach((i) => {
+                        let paths = nextNodes.map(n => pathFrom(i.index, n));
                         if (i.blobs > 5 && i.sendFreq > sendFreq) {
-                            _game.sendPacket(this, i.index, shortestPathNext, i.blobs - 1);
+                            i.totalBlobs = i.blobs;
+                            let toSend = {};
+                            paths.forEach(p => {
+                                toSend[p[1]] = toSend[p[1]] || 0;
+                                toSend[p[1]]++;
+                            })
+                            for (let oi in toSend) {
+                                _game.sendPacket(this, i.index, Number(oi), Math.floor(i.totalBlobs * toSend[oi] / paths.length));
+                            }
                             i.sendFreq = 0;
                         }
+                        i.sendFreq++;
+                    });
+                    break;
+                case "jasons":
+                    //each node finds their closest neighbour
+                    currentNodes.forEach((i) => {
+                        let smallestNode = -1;
+                        let smallestNodeCount = 10000;
+                        for (let c = 0; c < i.connections.length; c++) {
+                            if (_game.nodes[i.connections[c]].owner != i.owner) {
+                                smallestNode = i.connections[c];
+                                break;
+                            } else {
+                                if (_game.nodes[i.connections[c]].blobs < smallestNodeCount) {
+                                    smallestNodeCount = _game.nodes[i.connections[c]].blobs;
+                                    smallestNode = i.connections[c];
+                                }
+                            }
+                        }
+                        if (smallestNode != -1) {
+                            if (i.blobs > 5 && i.sendFreq > sendFreq) {
+                                _game.sendPacket(this, i.index, smallestNode, Math.floor(i.blobs * 0.75 - 1));
+                                i.sendFreq = 0;
+                            }
+                        }
+                        i.sendFreq++;
                     });
                     break;
             }
@@ -229,15 +336,19 @@
         //get some players; give them starting this.nodes
 
         this.players = [];
-        for (let i = 0; i < 4; i++) {
-            this.players.push(new player());
+        for (let i = 0; i < 7; i++) {
+            this.players.push(new player(i));
             let randomNode;
             do {
                 randomNode = Math.floor(Math.random() * this.nodes.length);
             } while (this.nodes[randomNode].owner != null);
             this.nodes[randomNode].owner = this.players[this.players.length - 1];
         }
-
+        let htmlstr = "";
+        this.players.forEach((v, i) => {
+            htmlstr += `<p>${playerColors[i]}:${v.strategy}</p>`
+        })
+        hud.innerHTML = htmlstr;
         this.hasFinished = () => {
             let remainingPlayers = this.nodes.reduce((p, i) => {
                 if (p.indexOf(i.owner) == -1) p.push(i.owner);
@@ -287,7 +398,7 @@
                     i.blobTimer++;
                     if (i.blobTimer == blobTime) {
                         i.blobTimer = 0;
-                        i.blobs++;
+                        i.blobs += (1 + Math.floor(Math.log((i.blobs + 1) / Math.log(2))));
                     }
                 }
             })
@@ -387,20 +498,27 @@
                 let d = htmlwrap(`
                     <div style="position:absolute; z-index:-10;width:100vw; height:100vh; top:0px;left:0px;"></div>
                 `)
+                d.style.top = document.querySelector(".banner").clientHeight;
+                d.style.height = `calc(100vh - ${document.querySelector(".banner").clientHeight}px)`;
                 d.style.background = document.querySelector(".rectspace").style.background;
                 document.querySelector(".rectspace").style.background = "transparent";
                 document.body.appendChild(d);
                 scriptassert([["svg", "3pt/svg.min.js"]], () => {
                     svg = SVG(d);
+                    hud = htmlwrap(`<div style = "position:absolute; top:0px;left:0px;color:white"></div> `);
+                    hud.style.opacity = 0.1;
+                    d.appendChild(hud)//HUD
                     d.children[0].style.opacity = 0.2;
                 });
                 document.querySelector("li.showInfluence").addEventListener("mousedown", () => {
                     d.children[0].style.opacity = 1;
+                    hud.style.opacity = 0.5;
                     moveTimer = 50;
                     document.querySelector(".rectspace").style.opacity = 0.1;
                 });
                 function exitMouse() {
                     d.children[0].style.opacity = 0.2;
+                    hud.style.opacity = 0.1;
                     moveTimer = 400;
                     document.querySelector(".rectspace").style.opacity = 1;
                 }

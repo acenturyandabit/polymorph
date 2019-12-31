@@ -1092,7 +1092,7 @@ polymorph_core.registerOperator("turmach", {
                     let contest = Number(relements[i].style["z-index"]);
                     if (minzind > contest) minzind = contest;
                 }
-                container.fire("focus", {
+                container.fire("focusItem", {
                     id: it.dataset.id,
                     sender: me
                 });
@@ -1498,7 +1498,7 @@ polymorph_core.registerOperator("turmach", {
     this.rootdiv.addEventListener("focus", (e) => {
         if (e.target.parentElement.parentElement.matches("[data-id]")) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            container.fire("focus", {
+            container.fire("focusItem", {
                 id: id,
                 sender: me
             });
