@@ -365,7 +365,7 @@ polymorph_core.registerOperator("tester", {
     });
 
     //polymorph_core will call me when an object is focused on from somewhere
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         let id = d.id;
         if (d.sender == this) return;
         if (this.settings.testing) {

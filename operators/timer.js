@@ -16,26 +16,30 @@ polymorph_core.registerOperator("timer", {
 
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
-        <h1><input></h1>
+        <p><input></p>
+        <p id="remaining_time">00:00</p>
         <button>Start</button>
     `;
-    this.rootdiv.children[1].addEventListener("click", () => {
+    this.rootdiv.children[2].addEventListener("click", () => {
         this.settings.started = !this.settings.started;
-        if (this.settings.started) this.rootdiv.children[1].innerHTML = "Stop";
-        else this.rootdiv.children[1].innerHTML = "Start";
+        if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+        else this.rootdiv.children[2].innerHTML = "Start";
+        let timeString = this.rootdiv.querySelector("input").value;
+        this.startTimer(timeString);
     })
 
     scriptassert([["intervalParser", "genui/intervalParser.js"]], () => {
-        container.on("focus,updateItem", (d) => {
+        container.on("focusItem,updateItem", (d) => {
             if (this.settings.mode == "focus" && !(this.settings.startLock && this.settings.started)) {
                 this.settings.focusedItem = d.id;
                 let timeString = polymorph_core.items[this.settings.focusedItem][this.settings.timerTotalProp];
-                let ctimeLeft = intervalParser.extractTime(timeString);
-                if (ctimeLeft) this.settings.remainingTime = ctimeLeft.t;
-                else this.settings.remainingTime = "INVALID";
-                this.settings.started = false;
+                this.rootdiv.querySelector("input").value = timeString;
             }
         })
+        this.startTimer = (timeString) => {
+            let ctimeLeft = intervalParser.extractTime(timeString);
+            if (ctimeLeft) this.settings.remainingTime = ctimeLeft.t;
+        }
     })
 
     waitForFn.apply(this, ["notify"]);
@@ -47,7 +51,7 @@ polymorph_core.registerOperator("timer", {
         }
     })
 
-    setInterval(() => {
+    let doTimer = () => {
         if (this.settings.started) {
             if (this.settings.remainingTime > 100) {
                 this.settings.remainingTime -= 100;
@@ -61,8 +65,10 @@ polymorph_core.registerOperator("timer", {
             }
         }
         let remainingTimeDate = new Date(Number(this.settings.remainingTime) + (new Date(Number(this.settings.remainingTime))).getTimezoneOffset() * 60 * 1000);
-        this.rootdiv.children[0].children[0].value = remainingTimeDate.toTimeString().split(" ")[0];
-    }, 100);
+        this.rootdiv.children[1].innerText = remainingTimeDate.toTimeString().split(" ")[0];
+        setTimeout(doTimer,100);//this rather than setInterval because then it'll nerf itself if you delete the operator
+    }
+    doTimer();
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
@@ -108,8 +114,8 @@ polymorph_core.registerOperator("timer", {
         if (this.settings.pushnotifs) {
             this.notify("Notifications enabled!", true);
         }
-        if (this.settings.started) this.rootdiv.children[1].innerHTML = "Stop";
-        else this.rootdiv.children[1].innerHTML = "Start";
+        if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+        else this.rootdiv.children[2].innerHTML = "Start";
     }
     this.dialogUpdateSettings();
 

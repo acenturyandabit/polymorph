@@ -97,32 +97,111 @@ polymorph_core.registerOperator("itemList", function (container) {
 
     container.div.appendChild(this.taskListBar);
 
-    this.getRenderedItems = () => {//TODO: add caching to this in case it becomes a burden on processing
-        if (!this.renderedItemsCache) {
+    Object.defineProperty(this, "renderedItems", {
+        get: () => {
             let items = Array.from(this.taskList.querySelectorAll("span[data-id]"));
-            this.renderedItemsCache = items.map((i) => i.dataset.id);
+            return items.map((i) => i.dataset.id);
         }
-        return this.renderedItemsCache;
-    }
+    })
 
     //#endregion
+
+    this.renderItem = (id) => {
+        let it = polymorph_core.items[id];
+        let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
+        //First check if we should show the item
+        if (!mf(this.settings.filter, it)) {
+            //if existent, remove
+            if (currentItemSpan) currentItemSpan.remove();
+            return false;
+        }
+        //Then check if the item already exists; if so then update it
+        if (!currentItemSpan) {
+            currentItemSpan = this.template.cloneNode(true);
+            currentItemSpan.style.display = "block";
+            currentItemSpan.dataset.id = id;
+            currentItemSpan.children[1].innerText = "X";
+            this.taskList.appendChild(currentItemSpan);
+        }
+        for (i in this.settings.properties) {
+            switch (this.settings.properties[i]) {
+                case "text":
+                case "number":
+                    currentItemSpan.querySelector("[data-role='" + i + "']").value = (it[i] != undefined) ? it[i] : "";
+                    break;
+                case "object":
+                    currentItemSpan.querySelector("[data-role='" + i + "']").value = (it[i] != undefined) ? JSON.stringify(it[i]) : "";
+                    break;
+                case "date":
+                    if (it[i] && it[i].datestring) {
+                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
+                    } else {
+                        if (it[i] && typeof it[i] == "string") {
+                            it[i] = {
+                                datestring: it[i]
+                            };
+                            currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
+                            // May want to reparse the date aswell.
+                            if (this.datereparse) this.datereparse(id);
+                        }
+                    }
+                    break;
+            }
+        }
+        if (it.style) {
+            currentItemSpan.style.background = it.style.background;
+            currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
+        } else {
+            //enforce white, in case its parent is not white
+            currentItemSpan.style.background = "white";
+            currentItemSpan.style.color = "black";
+        }
+        //then check if i have a direct and unique parent that is in the current set.
+        let uniqueParent = undefined;
+        if (this.settings.linkProperty) {
+            let ri = this.renderedItems;
+            for (let _i = 0; _i < ri.length; _i++) {
+                let i = ri[_i];
+                if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
+                    if (uniqueParent == undefined) {
+                        uniqueParent = i;
+                    } else {
+                        uniqueParent = undefined;
+                        break;
+                    }
+                }
+            }
+        }
+        if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
+            try {
+                this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
+            } catch (error) {
+                if (error instanceof DOMException) {
+                    //just an infinite loop, all chill
+                } else {
+                    throw error;
+                }
+            }
+        }
+    }
+
+
 
     //Item creation
     //#region
     this.createItem = () => {
         let it = {};
-        //clone the template and append it
-        let currentItemSpan = this.template.cloneNode(true);
+        //clone the template and parse it
         //get data and register item
         for (i in this.settings.properties) {
             switch (this.settings.properties[i]) {
                 case "text":
                 case "number":
-                    it[i] = currentItemSpan.querySelector("[data-role='" + i + "']").value;
+                    it[i] = this.template.querySelector("[data-role='" + i + "']").value;
                     break;
                 case "object":
                     try {
-                        it[i] = JSON.parse(currentItemSpan.querySelector("[data-role='" + i + "']").value);
+                        it[i] = JSON.parse(this.template.querySelector("[data-role='" + i + "']").value);
                     } catch (e) {
 
                     }
@@ -132,21 +211,19 @@ polymorph_core.registerOperator("itemList", function (container) {
                     if (typeof it[i] == "string") it[i] = {
                         datestring: it[i]
                     };
-                    it[i].datestring = currentItemSpan.querySelector("[data-role='" + i + "']").value;
+                    it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
                     break;
             }
             //clear the template
             this.template.querySelector("[data-role='" + i + "']").value = "";
         }
-        currentItemSpan.children[1].innerHTML = "X";
         //ensure the filter property exists
         if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
         let id = polymorph_core.insertItem(it);
-        currentItemSpan.dataset.id = id;
+
         if (this.shiftDown && this.settings.linkProperty) {
             let fi = this.taskList.querySelector(".ffocus");
             if (fi) {
-                fi.children[fi.children.length - 1].appendChild(currentItemSpan);
                 //we are creating a subitem
                 let fiid = fi.dataset.id;
                 fi = polymorph_core.items[fiid];
@@ -158,17 +235,21 @@ polymorph_core.registerOperator("itemList", function (container) {
                 });
             }
         }
-        if (!currentItemSpan.parentElement) {
-            this.taskList.appendChild(currentItemSpan);
-        }
-        this.renderedItemsCache = undefined;
         container.fire("createItem", {
             id: id,
             sender: this
         });
+        this.renderItem(id);
         this.datereparse(id);
         return id;
     }
+
+    container.on("createItem", (d) => {
+        let it = polymorph_core.items[d.id];
+        if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
+        this.renderItem(d.id);
+    })
+
     document.body.addEventListener("keydown", (e) => {
         //this is a global listener across operators, but will abstract away target; so don't use it for normal stuff.
         if (e.getModifierState("Shift")) {
@@ -206,99 +287,9 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.settings.currentID = id;
         //sortcap may not have been declared yet
         if (s != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
-        return this.updateItem(id);
+        return this.renderItem(id);
     });
 
-    this.updateItem = (id, unbuf = false) => {//if unbuf then we dont want to fire getRenderedItems as it would force an update.
-        let it = polymorph_core.items[id];
-        //First check if we should show the item
-        if (!mf(this.settings.filter, it)) {
-            //if existent, remove
-            let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
-            if (currentItemSpan) currentItemSpan.remove();
-            this.renderedItemsCache = undefined;//ask to repopulate next time
-            return false;
-        }
-        //Then check if the item already exists; if so then update it
-        let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
-        if (!currentItemSpan) {
-            currentItemSpan = this.template.cloneNode(true);
-            currentItemSpan.style.display = "block";
-            currentItemSpan.dataset.id = id;
-            currentItemSpan.children[1].innerText = "X";
-            this.taskList.appendChild(currentItemSpan);
-            this.renderedItemsCache = undefined;//this can be even further optimised by only adding / removing stuff.
-        }
-        for (i in this.settings.properties) {
-            switch (this.settings.properties[i]) {
-                case "text":
-                case "number":
-                    if (it[i] != undefined) {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i];
-                    } else {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = "";
-                    }
-                    break;
-                case "object":
-                    if (it[i]) {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = JSON.stringify(it[i]);
-                    } else {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = "";
-                    }
-                    break;
-                case "date":
-                    if (it[i] && it[i].datestring) {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
-                    } else {
-                        if (it[i] && typeof it[i] == "string") {
-                            it[i] = {
-                                datestring: it[i]
-                            };
-                            currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
-                            // May want to reparse the date aswell.
-                            if (this.datereparse) this.datereparse(id);
-                        }
-                    }
-                    break;
-            }
-        }
-        if (it.style) {
-            currentItemSpan.style.background = it.style.background;
-            currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
-        } else {
-            //enforce white, in case its parent is not white
-            currentItemSpan.style.background = "white";
-            currentItemSpan.style.color = "black"; //stuff error handling
-        }
-        //then check if i have a direct and unique parent that is in the current set.
-        let uniqueParent = undefined;
-        if (!unbuf && this.settings.linkProperty) {
-            let ri = this.getRenderedItems();
-            for (let _i = 0; _i < ri.length; _i++) {
-                let i = ri[_i];
-                if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
-                    if (uniqueParent == undefined) {
-                        uniqueParent = i;
-                    } else {
-                        uniqueParent = undefined;
-                        break;
-                    }
-                }
-            }
-        }
-        if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
-            try {
-                this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
-            } catch (error) {
-                if (error instanceof DOMException) {
-                    //just an infinite loop, all chill
-                } else {
-                    throw error;
-                }
-            }
-        }
-        return true;
-    }
     //#endregion
 
     //auto
@@ -336,11 +327,11 @@ polymorph_core.registerOperator("itemList", function (container) {
     this.reRenderEverything = () => {
         this.taskList.innerHTML = "";
         for (let i in polymorph_core.items) {
-            this.updateItem(i, true);
+            this.renderItem(i, true);
         }
         //and again for links
         for (let i in polymorph_core.items) {
-            this.updateItem(i);
+            this.renderItem(i);
         }
     }
 
@@ -421,10 +412,11 @@ polymorph_core.registerOperator("itemList", function (container) {
                 break;
             case "date":
                 if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
-                if (typeof currentItem[e.target.dataset.role] == "string") currentItem[e.target.dataset.role] = {
-                    "datestring": currentItem[e.target.dataset.role]
+                if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
+                    "datestring": ""
                 };
                 currentItem[e.target.dataset.role].datestring = e.target.value;
+                currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
                 break;
         }
 
@@ -503,7 +495,6 @@ polymorph_core.registerOperator("itemList", function (container) {
                             //nerf the e that spawned this, then break
                             //idek how this happens :(
                             e.remove();
-                            this.renderedItemsCache = undefined;
                             return;
                         }
                         //we are going to upgrade all dates that don't match protocol)

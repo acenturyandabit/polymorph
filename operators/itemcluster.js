@@ -11,7 +11,9 @@ polymorph_core.registerOperator("itemcluster2", {
             scale: 1
         },
         filter: guid(6),
-        tray: true
+        tray: true,
+        createAcrossViews: true,
+        showNewViewButton: false
     };
 
 
@@ -125,7 +127,7 @@ polymorph_core.registerOperator("itemcluster2", {
     })
 
     //////////////////////////// Focusing an item////////////////////
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         if (d.sender instanceof polymorph_core.operators["itemcluster2"].constructor) return;
         //^ prevent focus teleport when multiple itemclusters with the same view are in play.
         if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[this.settings.currentViewName]) {
@@ -199,6 +201,20 @@ polymorph_core.registerOperator("itemcluster2", {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Views
 
+    Object.defineProperty(this, "views", {
+        get: () => {
+            let results = [];
+            for (i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
+                    if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
+                    results.push(i);
+                }
+                //v = itemcluster.views[i].name;
+            }
+            return results;
+        }
+    })
+
     //Editing the name of a view
     this.viewName.addEventListener("keyup", (e) => {
         polymorph_core.items[this.settings.currentViewName].itemcluster.viewName =
@@ -232,18 +248,13 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.viewDropdownButton.addEventListener("click", () => {
         this.viewDropdown.innerHTML = "";
-        for (i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
-                if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
-                let aa = document.createElement("a");
-                aa.dataset.listname = i;
-                aa.innerHTML = polymorph_core.items[i].itemcluster.viewName;
-                this.viewDropdown.appendChild(aa);
-            }
-            //v = itemcluster.views[i].name;
-        }
-        this.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Add another view</em></a>`));
-        this.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Create view from filter</em></a>`));
+        this.views.forEach(i => {
+            let aa = document.createElement("a");
+            aa.dataset.listname = i;
+            aa.innerHTML = polymorph_core.items[i].itemcluster.viewName;
+            this.viewDropdown.appendChild(aa);
+        })
+        if (this.settings.showNewViewButton) this.viewDropdown.appendChild(htmlwrap(`<a data-isnew="yes"><em>Add another view</em></a>`));
         this.viewDropdown.style.display = "block";
     });
 
@@ -389,7 +400,7 @@ polymorph_core.registerOperator("itemcluster2", {
         this.switchView();
     };
 
-    container.on("focus", (e) => {
+    container.on("focusItem", (e) => {
         if (e.sender) return;
         if (this.settings.operationMode == "focus") {
             if (e.sender.container.uuid == this.settings.focusOperatorID) {
@@ -873,8 +884,15 @@ polymorph_core.registerOperator("itemcluster2", {
         itm.title = "";
         itm.itemcluster = {
             viewData: {},
-            description: ""
         };
+        if (this.settings.createAcrossViews) {
+            this.views.forEach(i => {
+                itm.itemcluster.viewData[i] = {
+                    x: 0,
+                    y: 0
+                };
+            });
+        }
         itm.itemcluster.viewData[this.settings.currentViewName] = {
             x: x,
             y: y
@@ -883,12 +901,31 @@ polymorph_core.registerOperator("itemcluster2", {
             itm[this.settings.filter] = true;
         }
         //register a change
-        container.fire("updateItem", {
+        container.fire("createItem", {
             sender: this,
             id: id
         });
         this.arrangeItem(id);
     };
+
+    container.on("createItem", (d) => {
+        if (d.sender == this) return;
+        let it = polymorph_core.items[d.id];
+        //create the item for every view I care about?
+        if (!it.itemcluster) it.itemcluster = {};
+        if (!it.itemcluster.viewData) it.itemcluster.viewData = {};
+        for (i in polymorph_core.items) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
+                if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
+                it.itemcluster.viewData[i] = { x: 0, y: 0 };
+                if (this.settings.filter) {
+                    it[this.settings.filter] = true;
+                }
+            }
+            //v = itemcluster.views[i].name;
+        }
+
+    })
 
     this.removeItem = (id) => {
         delete polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName];
@@ -1043,6 +1080,20 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "filter",
             label: "Filter items by string:"
+        }),
+        createAcrossViews: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "createAcrossViews",
+            label: "Create items across all views, always"
+        }),
+        showNewViewButton: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "showNewViewButton",
+            label: "Show the 'Add new view button'."
         })
     }
     let targeter = this.dialogDiv.querySelector("button.targeter");

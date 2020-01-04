@@ -25,7 +25,7 @@ polymorph_core.registerOperator("treant", function (container) {
         //This will be called for all items when the items are loaded.
     });
 
-    container.on("focus", function (d) {
+    container.on("focusItem", function (d) {
         let id = d.id;
         let s = d.sender;
         // An item was focused.

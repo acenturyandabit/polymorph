@@ -84,7 +84,7 @@ polymorph_core.registerOperator("inspector", {
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     this.rootdiv.style.cssText = `
     overflow:auto;
-    height: 100%;
+    height: 100%;polymorph_core.items[it][dateprop]
     color: white;
     `
     let ttypes = `<select data-role="nttype">
@@ -92,7 +92,7 @@ polymorph_core.registerOperator("inspector", {
         (() => {
             let output = "";
             for (i in datatypes) {
-                output += "<option value='" + i + "'>";
+                output += `<option value='${i}'>${i}</option>`;
             }
             return output;
         })()
@@ -514,7 +514,7 @@ polymorph_core.registerOperator("inspector", {
     })
 
     //polymorph_core will call this when an object is focused on from somewhere
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         let id = d.id;
         let sender = d.sender;
         if (this.settings.operationMode == "focus") {

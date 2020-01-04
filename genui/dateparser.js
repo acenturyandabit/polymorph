@@ -16,7 +16,7 @@ function _dateParser() {
     this.dateParserRegexes = [{
         name: "repetition",
         regex: /\((\d+)*\)/ig,
-        operate: function (regres, d, data) {
+        operate: function (regres, data) {
             if (regres[1]) {
                 data.repetition = Number(regres[1]);
             } else data.repetition = -1;
@@ -25,50 +25,50 @@ function _dateParser() {
     {
         name: "pmtime",
         regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
-        operate: function (regres, d, data) {
-            d.setMinutes(0);
-            d.setSeconds(0);
-            d.setHours(Number(regres[1]));
-            if (regres[2] == 'pm') d.setHours(Number(regres[1]) + 12);
+        operate: function (regres, data) {
+            data.d.setMinutes(0);
+            data.d.setSeconds(0);
+            data.d.setHours(Number(regres[1]));
+            if (regres[2] == 'pm') data.d.setHours(Number(regres[1]) + 12);
         }
     },
     {
         name: "time",
         regex: /(?:(?:(\d+)\/(\d+)(?:\/(\d+))?)|(?:(\d+):(\d+)(?::(\d+))?))/g,
-        operate: function (regres, d, data) {
-            d.setMinutes(0);
-            d.setSeconds(0);
+        operate: function (regres, data) {
+            data.d.setMinutes(0);
+            data.d.setSeconds(0);
             //data.noDateSpecific = true;
             if (regres[1]) {
-                d.setDate(Number(regres[1]))
+                data.d.setDate(Number(regres[1]))
                 data.noDateSpecific = false;
             }
-            if (regres[2]) d.setMonth(Number(regres[2]) - 1)
+            if (regres[2]) data.d.setMonth(Number(regres[2]) - 1)
             if (regres[3]) {
                 data.yr = Number(regres[3]);
                 if (data.yr < 100) data.yr += 2000;
-                d.setFullYear(data.yr)
+                data.d.setFullYear(data.yr)
             }
             if (regres[4]) {
                 data.hr = Number(regres[4]);
                 if (data.hr < 6) data.hr += 12;
             }
-            d.setHours(data.hr);
-            if (regres[5]) d.setMinutes(Number(regres[5]))
-            if (regres[6]) d.setSeconds(Number(regres[6]))
+            data.d.setHours(data.hr);
+            if (regres[5]) data.d.setMinutes(Number(regres[5]))
+            if (regres[6]) data.d.setSeconds(Number(regres[6]))
         }
     },
     {
         name: "ampm",
         regex: /(am|pm)/gi,
-        operate: function (regres, d, data) {
+        operate: function (regres, data) {
             if (regres[1] == "am") {
-                if (d.getHours() > 12) {
-                    d.setHours(d.getHours() - 12);
+                if (data.d.getHours() > 12) {
+                    data.d.setHours(data.d.getHours() - 12);
                 }
             } else {
-                if (d.getHours() < 12) {
-                    d.setHours(d.getHours() + 12);
+                if (data.d.getHours() < 12) {
+                    data.d.setHours(data.d.getHours() + 12);
                 }
             }
         }
@@ -76,36 +76,36 @@ function _dateParser() {
     {
         name: "dayofweek",
         regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
-        operate: function (regres, d, data, refdate) {
+        operate: function (regres, data, refdate) {
             data.nextDay = 0;
             for (i = 0; i < regres.length; i++) {
                 if (regres[i] != undefined) {
                     data.nextDay = i;
                 }
             }
-            if (d.getDay() == data.nextDay % 7 && refdate.getTime() - d.getTime() > 0) {
-                d.setDate(d.getDate() + 7);
+            if (data.d.getDay() == data.nextDay % 7 && refdate.getTime() - data.d.getTime() > 0) {
+                data.d.setDate(data.d.getDate() + 7);
             } else {
-                d.setDate(d.getDate() + (data.nextDay + 7 - d.getDay()) % 7);
+                data.d.setDate(data.d.getDate() + (data.nextDay + 7 - data.d.getDay()) % 7);
             }
         }
     },
     {
         name: "weekday",
         regex: /weekday/ig,
-        operate: function (regres, d, data, refdate) {
+        operate: function (regres, data, refdate) {
             data.nextDay = 0;
-            let tomorrow = d.getDay();
-            if (refdate.getTime() - d.getTime() <= 0) tomorrow++;//respect past pure days.
+            let tomorrow = data.d.getDay();
+            if (refdate.getTime() - data.d.getTime() <= 0) tomorrow++;//respect past pure days.
             if (!(tomorrow > 0 && tomorrow < 5)) {
-                d.setDate(d.getDate() + (8 - d.getDay()) % 7);
+                data.d.setDate(data.d.getDate() + (8 - data.d.getDay()) % 7);
             }
         }
     },
     {
         name: "auto",
         regex: /auto/ig,
-        operate: function (regres, d, data) {
+        operate: function (regres, data) {
             data.auto = true;
         }
     },
@@ -113,33 +113,25 @@ function _dateParser() {
     {
         name: "today",
         regex: /today/g,
-        operate: function (regres, d, data) {
+        operate: function (regres, data) {
             today = new Date();
-            d.setDate(today.getDate());
-            d.setMonth(today.getMonth());
+            data.d.setDate(today.getDate());
+            data.d.setMonth(today.getMonth());
             data.noDateSpecific = false;
         }
     },
     {
         name: "now",
         regex: /now/g,
-        operate: function (regres, d, data) {
-            d = new Date();
+        operate: function (regres, data) {
+            data.d = new Date();
             data.noDateSpecific = false;
         }
     },
-    /*{
-        name: "atid",//BROKEN
-        regex: /@(\w+)/g,
-        operate: function(regres,d,data){
-            if (!recursive) d = new Date(Number(extractDate(lookupId(regres[1]), true)));
-            else d = new Date();
-        }
-    },*/
     {
         name: "delTime",
         regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
-        operate: function (regres, d, data) {
+        operate: function (regres, data) {
             data.freeamt = 1;
             for (i = 3; i < regres.length; i++) {
                 if (regres[i] != undefined) {
@@ -168,7 +160,7 @@ function _dateParser() {
             }
             data.freeamt *= Number(regres[2]);
             if (regres[1] == "-") data.freeamt *= -1;
-            d.setTime(d.getTime() + data.freeamt);
+            data.d.setTime(data.d.getTime() + data.freeamt);
         }
     }
     ];
@@ -183,19 +175,20 @@ function _dateParser() {
         }
         me.tempdata = {
             hr: 9,
-            noDateSpecific: true
+            noDateSpecific: true,
+            d: d
         };
         let seen = false;
         let regres;
         for (let z = 0; z < this.dateParserRegexes.length; z++) {
             this.dateParserRegexes[z].regex.lastIndex = 0; //force reset regexes
             while ((regres = this.dateParserRegexes[z].regex.exec(str)) != null) {
-                this.dateParserRegexes[z].operate(regres, d, me.tempdata, refdate);
+                this.dateParserRegexes[z].operate(regres, me.tempdata, refdate);
                 seen = true;
             }
         }
-        while (me.tempdata.noDateSpecific && refdate.getTime() - d.getTime() > 0) d.setDate(d.getDate() + 1);
-        if (seen) return d;
+        while (me.tempdata.noDateSpecific && refdate.getTime() - me.tempdata.d.getTime() > 0) me.tempdata.d.setDate(me.tempdata.d.getDate() + 1);
+        if (seen) return me.tempdata.d;
         else return undefined;
         //returns a Date() object, or undefined.
     }
@@ -281,10 +274,10 @@ function _dateParser() {
         for (let i = 0; i < dateArray.length; i++) {
             let refstart = new Date(dateArray[i].refdate);
             let recurCount = dateArray[i].reps;
-            if (!isNaN(recurCount)){
+            if (!isNaN(recurCount)) {
                 if (recurCount < 0 || recurCount > 100) recurCount = 100;
-            }else{
-                recurCount=1;
+            } else {
+                recurCount = 1;
             }
             do {
                 output = this.richExtractTime(dateArray[i].part, refstart)[0];

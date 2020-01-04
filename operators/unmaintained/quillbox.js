@@ -158,7 +158,7 @@ polymorph_core.registerOperator("quillbox", {
     })
 
     //polymorph_core will call me when an object is focused on from somewhere
-    container.on("focus", function (d) {
+    container.on("focusItem", function (d) {
         let id = d.id;
         let sender = d.sender;
         if (me.settings['focusOperatorID']) {

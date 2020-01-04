@@ -300,19 +300,31 @@ polymorph_core.rect = function (rectID) {
         while (el != this.tabbar) {
             if (el.dataset.containerid) {
                 this.pulledDiv = el;
+                this.startPulling = false;
                 break;
             }
             el = el.parentElement;
         }
     })
+
     document.addEventListener("mousemove", (e) => {
         if (this.pulledDiv) {
-            //lift the item, by setting its display to position absolute
-            this.pulledDiv.style.position = "absolute";
-            this.pulledDiv.style.display = "flex";//instead of inline flex
-            let rect = this.tabbar.getBoundingClientRect();
-            this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
-            this.pulledDiv.style.top = 0;
+            if (this.startPulling) {
+                //lift the item, by setting its display to position absolute
+                this.pulledDiv.style.position = "absolute";
+                this.pulledDiv.style.display = "flex";//instead of inline flex
+                let rect = this.tabbar.getBoundingClientRect();
+                this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
+                this.pulledDiv.style.top = 0;
+            } else {
+                for (let i = 0; i < e.path.length; i++) {
+                    if (e.path[i] == this.pulledDiv) {
+                        break;
+                    } else if (e.path[i] == this.pulledDiv.parentElement) {
+                        this.startPulling = true;
+                    }
+                }
+            }
         }
     })
     document.addEventListener("mouseup", (e) => {

@@ -166,7 +166,7 @@ polymorph_core.registerOperator("turmach", {
     //Tutorial
 
     //////////////////////////// Focusing an item////////////////////
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         if (d.sender == me) return;
         if (itemPointerCache[d.id] && polymorph_core.items[d.id][me.propertyName].viewData[me.settings.currentViewName]) {
             polymorph_core.items[me.settings.currentViewName][me.propertyName].cx = itemPointerCache[d.id].cx();
@@ -452,7 +452,7 @@ polymorph_core.registerOperator("turmach", {
         this.switchView();
     };
 
-    container.on("focus", (e) => {
+    container.on("focusItem", (e) => {
         if (e.sender == me) return;
         if (me.settings.operationMode == "focus") {
             if (e.sender.container.uuid == me.settings.focusOperatorID) {

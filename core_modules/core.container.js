@@ -110,7 +110,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     polymorph_core.on("*", (args, e) => {
-        e.forEach(e=>{
+        e.forEach(e => {
             if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
             this._fire(e, args);
         })
@@ -119,7 +119,7 @@ polymorph_core.container = function container(containerID) {
     //Input event remapping
     //#region
     this.remappingDiv = document.createElement("div");
-    this.remappingDiv.innerHTML = `
+    this.remappingDiv.innerHTML = /*html*/`
     <h3>Input Remaps</h3>
     <p>Remap calls from the polymorph_core to internal calls, to change operator behaviour.</p>
     <p>This operator's ID: ${containerID}</p>
@@ -130,6 +130,9 @@ polymorph_core.container = function container(containerID) {
     <div>
     </div>
     <button>Add another output remap...</button>
+    <h3>Mass import</h3>
+    <p>Type in an operator ID to import all items from that operator to this one.</p>
+    <input class="massImportOperatorID"><button class="importEverythingNow">Import now</button>
     `;
     let newRow = (io) => {
         let elem;
@@ -163,6 +166,7 @@ polymorph_core.container = function container(containerID) {
             insertDiv.appendChild(row);
         })
     }
+
     this.readyRemappingDiv = () => {
         this.remappingDiv.children[2].innerText = `This operator's ID: ${containerID}`;
         for (let i = 0; i < 2; i++) {
@@ -202,6 +206,19 @@ polymorph_core.container = function container(containerID) {
             this.settings.outputRemaps[row.children[0].value].push(row.children[1].value);
         }
     }
+
+    this.remappingDiv.querySelector(".importEverythingNow").addEventListener("click", () => {
+        let otherOperatorID = this.remappingDiv.querySelector(".massImportOperatorID").value;
+        let otherContainer = polymorph_core.containers[otherOperatorID];
+        if (otherContainer) {
+            for (let i in polymorph_core.items) {
+                if (otherContainer.operator.itemRelevant(i)) {
+                    this._fire("createItem", { id: i, sender: this });
+                }
+            }
+        }
+    })
+
     //#endregion
 
     //saving and loading

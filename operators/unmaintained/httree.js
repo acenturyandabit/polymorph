@@ -334,7 +334,7 @@ polymorph_core.registerOperator(
     //This will be called for all items when the items are loaded.
     //This is also called when items are created.
 
-    container.on("focus", function (d) {
+    container.on("focusItem", function (d) {
       let id = d.id;
       let s = d.sender;
       if (s == me) return;

@@ -37,7 +37,33 @@
         }
         return false;
     }
-    let strategies = ["first", "closestNode", "jasons", "enoughbot", "noresting", "fork", "balance"];
+    let aiOptions = [{
+        targeting: ["t_clonode", "t_allfirst"],
+        internal: ["i_jason", "i_balance", "i_normal"],
+        sending: ["s_doublecaution", "s_allnow", "s_075"]
+    }, {
+        targeting: "t_fork",
+        internal: ["i_jason", "i_balance", "i_normal"],
+        sending: ["s_doublecaution", "s_05"]
+    }]
+
+    function composeAI() {
+        let sequence = [];
+        let stack = [aiOptions];
+        while (stack.length) {
+            let top = stack.pop();
+            if (top instanceof Array) {
+                stack.push(top[Math.floor(Math.random() * top.length)]);
+            } else if (typeof top == "string") {
+                sequence.push(top);
+            } else {
+                for (let i in top) {
+                    stack.push(top[i]);
+                }
+            }
+        }
+        return sequence;
+    }
     function player(index) {
         Object.defineProperty(this, "index", {
             get: () => {
@@ -48,10 +74,7 @@
                 }
             }
         })
-        this.strategy = strategies[Math.floor(Math.random() * strategies.length)];
-        if (this.strategy == "noresting") this.sendFreqs = {};
-        if (this.strategy == "fork") this.nodeBlobCount = {};
-        //this.strategy = strategies[index];
+        this.strategy = composeAI();
         Object.defineProperty(this, "color", {
             get: () => {
                 return playerColors[this.index];
@@ -67,6 +90,9 @@
             }
         })
 
+        if (this.strategy.includes("s_doublecaution")) {
+            this.nodeMaxRecords = {};
+        }
         this.update = () => {
             //create packets, or upgrade nodes
             let currentNodes = this.nodes;
@@ -85,104 +111,73 @@
                 }, nextNodes);
             }
             nextNodes = Object.values(nextNodes);
-            switch (this.strategy) {
-                case "first":
-                    nextNodes.sort((a, b) => b.count - a.count);
-                    if (nextNodes.length == 0) return;//GG
-                    let myTarget = nextNodes[0].index;
-                    currentNodes.forEach((i) => {
-                        let selfTarget = pathFrom(i.index, myTarget)[1];
-                        i.sendFreq++;
-                        if (i.blobs > 5 && i.sendFreq > sendFreq) {
-                            _game.sendPacket(this, i.index, selfTarget, i.blobs - 1);
-                            i.sendFreq = 0;
-                        }
-                    });
-                    break;
-                case "enoughbot":
-                case "closestNode":
-                case "noresting":
-                    //each node finds their closest neighbour
-                    nextNodes = nextNodes.map(i => i.index);
-                    currentNodes.forEach((i) => {
-                        let paths = nextNodes.map(n => pathFrom(i.index, n));
-                        let shortestPath = 1000;
-                        let shortestPathNext = -1;
-                        paths.forEach(i => {
-                            if (i.length < shortestPath) {
-                                shortestPath = i.length;
-                                shortestPathNext = i[1];
+            if (nextNodes.length == 0) return;
+            if (this.strategy.includes("t_allfirst")) {
+                nextNodes.sort((a, b) => b.count - a.count);
+                nextNodes = [nextNodes[0]];
+            }
+            nextNodes = nextNodes.map(i => i.index);
+            let trySendTo = (from, to) => {
+                let numToSend = _game.nodes[from].blobs - 1;
+                if (_game.nodes[to].owner != this) {
+                    if (this.strategy.includes("s_doublecaution")) {
+                        numToSend = (this.nodeMaxRecords[to] || 0);
+                    }
+                }
+                if (this.strategy.includes("s_05")) {
+                    numToSend = Math.floor(0.5 * _game.nodes[from].blobs);
+                }
+                if (this.strategy.includes("s_075")) {
+                    numToSend = Math.floor(0.75 * _game.nodes[from].blobs);
+                }
+                _game.sendPacket(this, from, to, numToSend);
+            }
+            currentNodes.forEach((i) => {
+                let paths = nextNodes.map(n => pathFrom(i.index, n));
+                let shortestPath = 1000;
+                let shortestPathNext = -1;
+                paths.forEach(i => {
+                    if (i.length < shortestPath) {
+                        shortestPath = i.length;
+                        shortestPathNext = i[1];
+                    }
+                })
+                if (!i.player[index]) i.player[index] = {};
+                if (!i.player[index].sendFreq) i.player[index].sendFreq = 0;
+                if (this.strategy.includes("s_doublecaution")) {
+                    i.connections.forEach(i => {
+                        this.nodeMaxRecords[i] = Math.max((this.nodeMaxRecords[i] || 0), (2 * _game.nodes[i].blobs) + 5);
+                    })
+                }
+                if (i.blobs > 5 && i.player[index].sendFreq > sendFreq) {
+                    //I'm allowed to send
+                    let sent = false;
+                    if (this.strategy.includes("t_fork")) {
+                        i.connections.forEach(_i => {
+                            if (_game.nodes[_i].owner != this) {
+                                trySendTo(i.index, _i);
+                                sent = true;
                             }
                         })
-                        i.sendFreq++;
-                        if (this.strategy == "noresting" && this.sendFreqs[i.index] != undefined) this.sendFreqs[i.index]++;
-                        if (i.blobs > 5 && shortestPathNext != undefined) {
-                            if (this.strategy == "enoughbot" && _game.nodes[shortestPathNext].owner != this) {
-                                let antagBlobs = _game.nodes[shortestPathNext].blobs * 2;
-                                if (antagBlobs > (i.npacketsToSend || 0)) i.npacketsToSend = antagBlobs;
-                            } else {
-                                i.npacketsToSend = i.blobs - 1;
-                            }
-                            if (this.strategy == "noresting") {
-                                if (!this.sendFreqs[i.index]) this.sendFreqs[i.index] = sendFreq;
-                                if (this.sendFreqs[i.index] > sendFreq) {
-                                    _game.sendPacket(this, i.index, shortestPathNext, i.npacketsToSend);
-                                    this.sendFreqs[i.index] = 0;
-                                    i.npacketsToSend = 0;
-                                }
-                            } else {
-                                if (i.sendFreq > sendFreq) {
-                                    _game.sendPacket(this, i.index, shortestPathNext, i.npacketsToSend);
-                                    i.sendFreq = 0;
-                                    i.npacketsToSend = 0;
-                                }
-                            }
-                        }
-                    });
-                    break;
-                case "fork":
-                    //each node finds their closest neighbour
-                    nextNodes = nextNodes.map(i => i.index);
-                    currentNodes.forEach((i) => {
-                        let paths = nextNodes.map(n => pathFrom(i.index, n));
-                        let shortestPath = 1000;
-                        let shortestPathNext = -1;
-                        paths.forEach(i => {
-                            if (i.length < shortestPath) {
-                                shortestPath = i.length;
-                                shortestPathNext = i[1];
-                            }
-                        })
-                        i.sendFreq++;
-                        var sent = false;
-                        i.connections.forEach(ci => {
-                            if (_game.nodes[ci].owner == this) return;
-                            this.nodeBlobCount[ci] = this.nodeBlobCount[ci] || 0;
-                            let antagBlobs = _game.nodes[ci].blobs * 2;
-                            if (antagBlobs > this.nodeBlobCount[ci]) this.nodeBlobCount[ci] = antagBlobs;
-                        })
-                        if (i.sendFreq > sendFreq) {
-                            i.connections.forEach(ci => {
-                                if (_game.nodes[ci].owner == this) return;
-                                if (i.blobs > this.nodeBlobCount[ci]) {
-                                    _game.sendPacket(this, i.index, ci, this.nodeBlobCount[ci]);
-                                    sent = true;
-                                    i.sendFreq = 0;
+                    }
+                    if (!sent && _game.nodes[shortestPathNext].owner != this) {
+                        trySendTo(i.index, shortestPathNext);
+                        sent = true;
+                    }
+                    if (!sent) {//sending to myself now
+                        if (this.strategy.includes("i_jason")) {
+                            let smolct = 10000;
+                            let smolid = 0;
+                            i.connections.forEach(_i => {
+                                if (!sent && _game.nodes[_i].owner == this) {
+                                    if (_game.nodes[_i].blobs < smolct) {
+                                        smolid = _i;
+                                        smolct = _game.nodes[_i].blobs;
+                                    }
                                 }
                             })
-                            if (!sent && i.blobs > 5 && _game.nodes[shortestPathNext] && _game.nodes[shortestPathNext].owner == this) {
-                                _game.sendPacket(this, i.index, shortestPathNext, i.blobs - 1);
-                                i.sendFreq = 0;
-                            }
-                        }
-                    });
-                    break;
-                case "balance":
-                    //each node finds their closest neighbour
-                    nextNodes = nextNodes.map(i => i.index);
-                    currentNodes.forEach((i) => {
-                        let paths = nextNodes.map(n => pathFrom(i.index, n));
-                        if (i.blobs > 5 && i.sendFreq > sendFreq) {
+                            trySendTo(i.index, smolid);
+                        } else if (this.strategy.includes("i_balance")) {
                             i.totalBlobs = i.blobs;
                             let toSend = {};
                             paths.forEach(p => {
@@ -192,61 +187,58 @@
                             for (let oi in toSend) {
                                 _game.sendPacket(this, i.index, Number(oi), Math.floor(i.totalBlobs * toSend[oi] / paths.length));
                             }
-                            i.sendFreq = 0;
+                        } else {
+                            trySendTo(i.index, shortestPathNext);
+                            sent = true;
                         }
-                        i.sendFreq++;
-                    });
-                    break;
-                case "jasons":
-                    //each node finds their closest neighbour
-                    currentNodes.forEach((i) => {
-                        let smallestNode = -1;
-                        let smallestNodeCount = 10000;
-                        for (let c = 0; c < i.connections.length; c++) {
-                            if (_game.nodes[i.connections[c]].owner != i.owner) {
-                                smallestNode = i.connections[c];
-                                break;
-                            } else {
-                                if (_game.nodes[i.connections[c]].blobs < smallestNodeCount) {
-                                    smallestNodeCount = _game.nodes[i.connections[c]].blobs;
-                                    smallestNode = i.connections[c];
-                                }
-                            }
-                        }
-                        if (smallestNode != -1) {
-                            if (i.blobs > 5 && i.sendFreq > sendFreq) {
-                                _game.sendPacket(this, i.index, smallestNode, Math.floor(i.blobs * 0.75 - 1));
-                                i.sendFreq = 0;
-                            }
-                        }
-                        i.sendFreq++;
-                    });
-                    break;
-            }
+                    }
+                    i.player[index].sendFreq = 0;
+                }
+                i.player[index].sendFreq++;
+            });
         }
     }
-
+    availableGameOptions = ["new_manhattan", "old_manhattan"];
     function game() {
         //create a graph
         this.nodes = [];
         this.packets = [];
         this.edges = [];//store the lines so we can delete them afterwards. 
         this.nodePathCaches = {};
+        gameOptions = [];
+        availableGameOptions.forEach(i => {
+            if (Math.random() > 0.5) {
+                gameOptions.push(i);
+            }
+        })
         //create 100 nodes, spaced at least k apart; 
         for (let i = 0; i < 100; i++) {
             let pad = 0.1;
-            this.nodes.push({
+            let newNode = {
                 //20% pixel padding
                 sendFreq: Math.floor(Math.random() * sendFreq),
                 x: (pad + Math.random() * (1 - 2 * pad)) * document.body.clientWidth,
                 y: (pad + Math.random() * (1 - 2 * pad)) * document.body.clientHeight,
                 blobs: 3,
                 owner: null,
+                player: {},
                 blobTimer: 0,
                 shields: 3,
                 type: "normal", // or 'prod' or 'shield'
                 connections: []
-            })
+            };
+            if (gameOptions.includes("old_manhattan")) {
+                newNode.x = document.body.clientWidth * (pad + (1 - 2 * pad) / 10 * (i % 10));
+                newNode.y = document.body.clientHeight * (pad + (1 - 2 * pad) / 10 * Math.floor(i / 10));
+            }
+            if (gameOptions.includes("new_manhattan")) {
+                let minside = Math.min(document.body.clientWidth, document.body.clientHeight);
+                let sidelen = minside * (1 - 2 * pad) / 10;
+                let rowcount = Math.floor(document.body.clientWidth * (1 - 2 * pad) / sidelen);
+                newNode.x = document.body.clientWidth * pad + sidelen * (i % rowcount);
+                newNode.y = document.body.clientHeight * pad + sidelen * Math.floor(i / rowcount);
+            }
+            this.nodes.push(newNode);
         }
         //trim ones that are too close to prevent inf loop
         for (let i = 0; i < this.nodes.length; i++) {
@@ -261,6 +253,10 @@
         //connect nearby this.nodes
         for (let i = 0; i < this.nodes.length; i++) {
             let numCon = 1 + Math.random() * 2;
+            if (gameOptions.includes("old_manhattan") || gameOptions.includes("new_manhattan")) {
+                numCon = 2 + Math.random() * 2;
+            }
+            numCon = Math.floor(numCon);
             let closests = [];
             for (let j = 0; j < this.nodes.length; j++) {
                 if (i == j) continue;
@@ -348,6 +344,7 @@
         this.players.forEach((v, i) => {
             htmlstr += `<p>${playerColors[i]}:${v.strategy}</p>`
         })
+        htmlstr += `<p>Game:${gameOptions}</p>`;
         hud.innerHTML = htmlstr;
         this.hasFinished = () => {
             let remainingPlayers = this.nodes.reduce((p, i) => {

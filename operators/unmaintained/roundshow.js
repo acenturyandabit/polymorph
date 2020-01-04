@@ -271,7 +271,7 @@ polymorph_core.registerOperator("roundshow", {
         })
     })
 
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         let id = d.id;
         //Show the item at the centre
         me.polymorph_coreText.text(polymorph_core.items[id][this.settings.nameProp]);

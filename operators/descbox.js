@@ -191,7 +191,7 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
     })
 
     //polymorph_core will call this when an object is focused on from somewhere
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         let id = d.id;
         let sender = d.sender;
         let switchTo = (id) => {

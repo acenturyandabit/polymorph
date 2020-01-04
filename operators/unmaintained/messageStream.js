@@ -59,7 +59,7 @@ polymorph_core.registerOperator("messageStream", {
         refreshMessages();
     }
 
-    container.on("focus", (d) => {
+    container.on("focusItem", (d) => {
         //change the focused thread
         if (d.sender == this.settings.focusOperator) {
             setFilter(d.item);

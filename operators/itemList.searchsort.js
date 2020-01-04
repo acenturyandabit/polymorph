@@ -27,7 +27,7 @@ function __itemlist_searchsort() {
 
         }
 
-        let items = this.getRenderedItems();
+        let items = this.renderedItems;
         let toShowItems = [];
         items.forEach((v) => {
             let it = polymorph_core.items[v];

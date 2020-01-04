@@ -43,7 +43,7 @@ polymorph_core.registerOperator("ruigen", function (container) {
         //This is also called when items are created.
     });
 
-    container.on("focus", function (d) {
+    container.on("focusItem", function (d) {
         let id = d.id;
         let s = d.sender;
         // An item was focused.
