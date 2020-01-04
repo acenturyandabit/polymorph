@@ -15,6 +15,8 @@ As always however, all of these are optional, and if you do not find it necessar
 - focusItem
 - [please]createItem 
 - [please]deleteItem
+- [please]onDelete
+- [optional]metaFocus
 - [optional]Refresh
 - [optional]toSaveData
 ### Refresh
@@ -42,6 +44,7 @@ A standard createItem has been provided with polymorph_core.
 Data should be used sparingly. It is not designed to be standard across different operators. Any information about new items should be written to `polymorph_core.items[id]` as soon as possible.
 
 DO NOT fire `container.fire("createItem")` inside your hook. This may result in an infinite loop; we have a few protections but they're not foolproof.
+
 ### deleteItem
 See createItem - same thing. However, some caveats:
 
@@ -49,6 +52,14 @@ For deleteItem, remove your data after firing. This allows you to build data tra
 
 Fire deleteItem a second time once you remove your data. (I'd like it if someone could suggest a more friendly way of doing this.) The second fire allows the garbage collector to collect your item if your item is no longer needed.
 
+### metaFocus
+If for example your list is capable of displaying different filters, you might want your filter to change once another operator has focused on an item. 
+```javascript
+container.on("metaFocus",(data)=>{
+    this.filter=data.id;
+    this.reRenderEverything();
+})
+```
 ### Garbage cleaning
 ```javascript
 this.itemRelevant=(item_id){

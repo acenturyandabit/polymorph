@@ -301,6 +301,18 @@ function _dateParser() {
         return obj;
     }
 
+    this.humanReadableRelativeDate=(datenum)=>{
+        let d=new Date(datenum);
+        let now=new Date();
+        //if same day, just report time
+        //otherwise report day only
+        if (d.getDate()==now.getDate() && d.getFullYear()==now.getFullYear() && d.getMonth()==now.getMonth()){
+            return d.toTimeString().split(" ")[0]
+        }else{
+            return d.toLocaleDateString().split(" ")[0]
+        }
+    }
+
     // quarterMaster.itemComparer = function (a, b) {end
     //     let result;
     //     if (a.done != b.done) result = b.done - a.done;

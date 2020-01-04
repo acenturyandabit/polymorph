@@ -134,13 +134,13 @@ polymorph_core.registerOperator("itemList", function (container) {
                     break;
                 case "date":
                     if (it[i] && it[i].datestring) {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
+                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
                     } else {
                         if (it[i] && typeof it[i] == "string") {
                             it[i] = {
                                 datestring: it[i]
                             };
-                            currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].datestring;
+                            currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
                             // May want to reparse the date aswell.
                             if (this.datereparse) this.datereparse(id);
                         }
@@ -427,6 +427,29 @@ polymorph_core.registerOperator("itemList", function (container) {
         });
     })
 
+    this.taskList.addEventListener("focusout", (e) => {
+        currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+        switch (this.settings.properties[e.target.dataset.role]) {
+            case "date":
+                if (currentItem[e.target.dataset.role] && currentItem[e.target.dataset.role].date) {
+                    currentItem[e.target.dataset.role].prettyDateString = dateParser.humanReadableRelativeDate(currentItem[e.target.dataset.role].date[0].date);
+                    e.target.value = currentItem[e.target.dataset.role].prettyDateString;
+                }
+                break;
+        }
+    })
+
+
+    this.taskList.addEventListener("focusin", (e) => {
+        currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+        switch (this.settings.properties[e.target.dataset.role]) {
+            case "date":
+                if (currentItem[e.target.dataset.role]) {
+                    e.target.value = currentItem[e.target.dataset.role].datestring;
+                }
+                break;
+        }
+    })
     this.taskList.addEventListener("keyup", (e) => {
         if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
             this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);

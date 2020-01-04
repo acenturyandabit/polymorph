@@ -44,3 +44,9 @@ polymorph_core.unlink = function (A, B, settings = {}) {
         polymorph_core.unlink(B, A);
     }
 }
+
+polymorph_core.garbageClean = () => {
+    for (let i in polymorph_core.items){
+        polymorph_core.tryGarbageCollect(i);
+    }
+}

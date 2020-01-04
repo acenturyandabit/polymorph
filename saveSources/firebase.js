@@ -68,13 +68,13 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       await inductor({
         fn: async (id) => {
           let itemData = (await root.collection('items').doc(id).get().then()).data();
-          if (!itemData) itemData = { _lm_: 0 };
-          if (!polymorph_core.items[id]) polymorph_core.items[id] = { _lm_: 0 };
-          if (itemData._lm_ > polymorph_core.items[id]._lm_) {
+          if (!itemData) itemData = { _lu_: 0 };
+          if (!polymorph_core.items[id]) polymorph_core.items[id] = { _lu_: 0 };
+          if (itemData._lu_ > polymorph_core.items[id]._lu_) {
             //pull, it's newer
             polymorph_core.items[id] = itemData;
             toPostUpdate.push(id);
-          } else if (itemData._lm_ < polymorph_core.items[id]._lm_) {
+          } else if (itemData._lu_ < polymorph_core.items[id]._lu_) {
             //push, its older
             root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
           }

@@ -15,7 +15,6 @@
                 let loc = window.location.href
                 loc = loc.replace(/\?o/, "");
                 history.pushState({}, "", loc);
-
                 polymorph_core.filescreen.showSplash();
                 return;
             }
@@ -131,8 +130,8 @@
 
         //make sure all items have an lm property.
         for (let i in data) {
-            if (!data[i]._lm_) {
-                data[i]._lm_ = Date.now();
+            if (!data[i]._lu_) {
+                data[i]._lu_ = Date.now();
             }
         }
 
@@ -276,6 +275,7 @@
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
         polymorph_core.filescreen.saveRecentDocument(polymorph_core.currentDocID, undefined, polymorph_core.items._meta.displayName);
         //trigger saving on all save sources
+        polymorph_core.garbageClean();
         polymorph_core.fire("userSave", d);
     };
 

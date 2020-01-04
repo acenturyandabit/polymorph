@@ -486,7 +486,7 @@
         hidden = "webkitHidden";
     }
 
-    let moveTimer = 400;
+    let moveTimer = 1000;
     function perStep() {
         if (!started) {
             if (polymorph_core.baseRect) {
@@ -516,7 +516,7 @@
                 function exitMouse() {
                     d.children[0].style.opacity = 0.2;
                     hud.style.opacity = 0.1;
-                    moveTimer = 400;
+                    moveTimer = 1000;
                     document.querySelector(".rectspace").style.opacity = 1;
                 }
                 document.querySelector("li.showInfluence").addEventListener("mouseup", exitMouse);

@@ -90,6 +90,8 @@ function _polymorph_core() {
 
     //garbage collection
     this.tryGarbageCollect = (id) => {
+        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return;//never delete rects and operators? this wont end well
+        if (id == "_meta") return;//dont delete the metaitem
         let toDelete = true;
         for (let i in this.containers) {
             if (this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
@@ -98,7 +100,7 @@ function _polymorph_core() {
         }
         if (toDelete) {
             //flag it for future reuse.
-            this.garbagedIDs.push(id);
+            polymorph_core.items[id] = { _lu_: Date.now() }
         }
     }
 
@@ -106,12 +108,17 @@ function _polymorph_core() {
         this.tryGarbageCollect(d.id);
     })
 
-    this.on("updateItem",(d)=>{
-        if (!d.loadProcess)this.items[d.id]._lu_=Date.now();
+    this.on("updateItem", (d) => {
+        if (!d.loadProcess) this.items[d.id]._lu_ = Date.now();
     })
+
+    this.recreateGarbageList = () => {
+        this.garbagedIDs = Object.keys(this.items).filter(i => Object.keys(this.items[i]).length == 1 && Object.keys(this.items[i])[0] == "_lu_");
+    }
 
     //insert an item.
     this.insertItem = (itm) => {
+        this.recreateGarbageList();
         let nuid = guid(6, this.items);
         if (this.garbagedIDs.length) {
             nuid = this.garbagedIDs.pop();
