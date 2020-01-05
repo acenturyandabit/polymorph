@@ -933,7 +933,8 @@ polymorph_core.registerOperator("itemcluster2", {
         for (i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
                 if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
-                it.itemcluster.viewData[i] = { x: 0, y: 0 };
+                //dont recreate viewdata if it exists already.
+                if (!it.itemcluster.viewData[i]) it.itemcluster.viewData[i] = { x: 0, y: 0 };
                 if (this.settings.filter) {
                     it[this.settings.filter] = true;
                 }
