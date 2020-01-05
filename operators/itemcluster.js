@@ -488,7 +488,7 @@ polymorph_core.registerOperator("itemcluster2", {
                 //if not lineing
                 //clear the movingDivs if they need to be cleared
                 this.shouldHighlightMovingDivs++;
-                if (this.movingDivs.length && !e.getModifierState("Control")) {
+                if (this.movingDivs.length && !(e.getModifierState("Control") || e.getModifierState("Meta"))) {
                     //also reset the borders
                     this.clearOutMovingDivs();
                 }
