@@ -156,7 +156,7 @@ polymorph_core.registerOperator("textflow", {
                 newItem[this.settings.titleProperty] = "";
                 let newID = polymorph_core.insertItem(newItem);
                 let oldID = e.target.parentElement.dataset.id;
-                this.rootItems.splice(this.rootItems.indexOf(oldID)+1, 0, newID);
+                this.rootItems.splice(this.rootItems.indexOf(oldID) + 1, 0, newID);
                 container.fire("createItem", { id: newID, sender: this });
                 this.richRenderItem(newID);
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}'] p`));
@@ -201,7 +201,13 @@ polymorph_core.registerOperator("textflow", {
                 if (this.rootItems.indexOf(id) - 1 >= 0) {
                     let prevID = this.rootItems[this.rootItems.indexOf(id) - 1];
                     //not first item
-                    this.rootdiv.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
+                    if (this.rootdiv.querySelector(`span[data-id="${prevID}"]`)) {
+                        this.rootdiv.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
+                    }else{
+                        //on first run, some items may not exist yet. so recurse up.
+                        this.richRenderItem(prevID);
+                        this.rootdiv.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
+                    }
                 } else {
                     //first item
                     this.rootdiv.insertBefore(span, this.rootdiv.children[1]);//style

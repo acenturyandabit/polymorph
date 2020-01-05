@@ -77,6 +77,7 @@ function __itemlist_searchsort() {
     }
 
     this._sortItems = () => {
+        this.isSorting=true; // alert focusout so that it doesnt display prettydate
         if (!this.container.visible()) return;
         if (this.settings.implicitOrder) {
             this.settings.sortby = this.settings.filterProp;
@@ -152,6 +153,7 @@ function __itemlist_searchsort() {
                 }
             }
         }
+        this.isSorting=false;
     }
 
     this.sortcap = new capacitor(500 + isPhone() * 1000, 1000, this._sortItems);

@@ -101,6 +101,35 @@ polymorph_core.rect = function (rectID) {
         }
     })
 
+    Object.defineProperty(this, "otherSiblingID", {
+        get: () => {
+            if (this._otherSiblingID &&
+                polymorph_core.items[this._otherSiblingID]._rd &&
+                polymorph_core.items[this._otherSiblingID]._rd.p == this.settings.p &&
+                this._otherSiblingID != rectID
+            ) return this._otherSiblingID;
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i]._rd && polymorph_core.items[i]._rd.p == this.settings.p && i != rectID) {
+                    this._otherSiblingID = i;
+                    return this._otherSiblingID;
+                }
+            }
+            return undefined;
+        }
+    })
+
+    Object.defineProperty(this, "otherSiblingSettings", {
+        get: () => {
+            return polymorph_core.items[this.otherSiblingID]._rd;
+        }
+    })
+
+    Object.defineProperty(this, "otherSibling", {
+        get: () => {
+            return polymorph_core.rects[this.otherSiblingID];
+        }
+    })
+
     this.split = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will be split into 2 smaller boxes. 
     this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
 
@@ -563,13 +592,19 @@ polymorph_core.rect = function (rectID) {
 
     //handle a resize event.
     this.refresh = () => {
+        //perform some sanity checks; if these fail, do nothing (in worse case that we accidentally manually delete sth)
+        if (this.settings.f != RECT_FIRST_SIBLING && !(this.otherSiblingID)) {
+            console.log(`refresh assert failed for ${rectID}`);
+            return;
+        }
         if (this.settings.x == RECT_ORIENTATION_X) {
             if (this.settings.f == RECT_FIRST_SIBLING) {
                 this.outerDiv.style.left = 0;
                 this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * this.settings.ps;
             } else {
-                this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.settings.ps;
-                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * (1 - this.settings.ps);
+                //dont use this.settings.ps, use my sibling's ps.
+                this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
+                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps);
             }
             this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight;
             this.outerDiv.style.top = 0;
@@ -578,8 +613,8 @@ polymorph_core.rect = function (rectID) {
                 this.outerDiv.style.top = 0;
                 this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * this.settings.ps;
             } else {
-                this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.settings.ps;
-                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * (1 - this.settings.ps);
+                this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
+                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps);
             }
             this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth;
             this.outerDiv.style.left = 0;
@@ -701,10 +736,10 @@ polymorph_core.rect = function (rectID) {
                     this.settings.ps = 1;
                     this.resizing = -1;
                 }
-                if (this.parent) {
-                    this.parent.children[!this.settings.f * 1].settings.ps = this.settings.ps;
+                if (this.parent && this.parent != polymorph_core) {
+                    this.otherSiblingSettings.ps = this.settings.ps;
                     this.refresh();
-                    this.parent.children[!this.settings.f * 1].refresh();
+                    if (this.otherSibling) this.otherSibling.refresh();
                 }
                 e.preventDefault();
                 rectChanged = true;

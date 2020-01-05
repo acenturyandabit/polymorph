@@ -133,16 +133,19 @@ polymorph_core.registerOperator("itemList", function (container) {
                     currentItemSpan.querySelector("[data-role='" + i + "']").value = (it[i] != undefined) ? JSON.stringify(it[i]) : "";
                     break;
                 case "date":
-                    if (it[i] && it[i].datestring) {
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
-                    } else {
-                        if (it[i] && typeof it[i] == "string") {
-                            it[i] = {
-                                datestring: it[i]
-                            };
+                    if (!currentItemSpan.querySelector("[data-role='" + i + "']").matches(":focus")) {
+                        if (it[i] && it[i].datestring) {
+
                             currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
-                            // May want to reparse the date aswell.
-                            if (this.datereparse) this.datereparse(id);
+                        } else {
+                            if (it[i] && typeof it[i] == "string") {
+                                it[i] = {
+                                    datestring: it[i]
+                                };
+                                currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
+                                // May want to reparse the date aswell.
+                                if (this.datereparse) this.datereparse(id);
+                            }
                         }
                     }
                     break;
@@ -428,14 +431,16 @@ polymorph_core.registerOperator("itemList", function (container) {
     })
 
     this.taskList.addEventListener("focusout", (e) => {
-        currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
-        switch (this.settings.properties[e.target.dataset.role]) {
-            case "date":
-                if (currentItem[e.target.dataset.role] && currentItem[e.target.dataset.role].date) {
-                    currentItem[e.target.dataset.role].prettyDateString = dateParser.humanReadableRelativeDate(currentItem[e.target.dataset.role].date[0].date);
-                    e.target.value = currentItem[e.target.dataset.role].prettyDateString;
-                }
-                break;
+        if (!this.isSorting) {
+            currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+            switch (this.settings.properties[e.target.dataset.role]) {
+                case "date":
+                    if (currentItem[e.target.dataset.role] && currentItem[e.target.dataset.role].date) {
+                        currentItem[e.target.dataset.role].prettyDateString = dateParser.humanReadableRelativeDate(currentItem[e.target.dataset.role].date[0].date);
+                        e.target.value = currentItem[e.target.dataset.role].prettyDateString;
+                    }
+                    break;
+            }
         }
     })
 

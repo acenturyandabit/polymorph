@@ -248,6 +248,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.viewDropdownButton.addEventListener("click", () => {
         this.viewDropdown.innerHTML = "";
+        this.currentView
         this.views.forEach(i => {
             let aa = document.createElement("a");
             aa.dataset.listname = i;
@@ -886,7 +887,22 @@ polymorph_core.registerOperator("itemcluster2", {
             viewData: {},
         };
         if (this.settings.createAcrossViews) {
-            this.views.forEach(i => {
+            //find parents of the current view
+            let thisparents = [];
+            if (polymorph_core.items[this.settings.currentViewName].itemcluster.viewData) thisparents = Object.keys(polymorph_core.items[this.settings.currentViewName].itemcluster.viewData);
+            if (this.settings.filter) thisparents = thisparents.filter(i => polymorph_core.items[i][this.settings.filter]);
+            let otherViews = [];
+            if (thisparents.length) {
+                otherViews = this.views.filter(i => {
+                    for (let j = 0; j < thisparents.length; j++) {
+                        if (polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[thisparents[j]]) return true;
+                    }
+                    return false;
+                });
+            } else {
+                otherViews = this.views.filter(i => !(polymorph_core.items[i].itemcluster.viewData) || !(Object.keys(polymorph_core.items[i].itemcluster.viewData)));
+            }
+            otherViews.forEach(i => {
                 itm.itemcluster.viewData[i] = {
                     x: 0,
                     y: 0
