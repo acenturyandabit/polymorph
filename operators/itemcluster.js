@@ -427,6 +427,9 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.itemSpace.addEventListener("click", (e) => {
         //click: anchor and deanchor.
+        if (!e.target.matches(".anchored,.anchored *")) {
+            Array.from(this.itemSpace.querySelectorAll(".anchored")).forEach(i => i.classList.remove("anchored"));
+        }
         if (this.preselected) {
             this.preselected.classList.remove("selected");
             this.preselected.classList.remove("anchored");
