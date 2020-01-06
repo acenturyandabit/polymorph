@@ -13,7 +13,30 @@ polymorph_core.container = function container(containerID) {
         }
     })
 
-    //with our new getter model, default settings are a little harder.
+    Object.defineProperty(this, "rect", {
+        get: () => {
+            return polymorph_core.rects[this.settings.p];
+        }
+    })
+
+    Object.defineProperty(this, "parent", {
+        get: () => {
+            return polymorph_core.rects[this.settings.p];
+        }
+    })
+
+    Object.defineProperty(this, "path", {
+        get: () => {
+            let i = this;
+            let pathArr = [];
+            while (i.parent) {
+                pathArr.push(i.id);
+                i = i.parent;
+            }
+            return pathArr;
+        }
+    })
+
     let defaultSettings = {
         t: "opSelect",
         data: {},
@@ -21,18 +44,22 @@ polymorph_core.container = function container(containerID) {
         },
         outputRemaps: {
             createItem: ["createItem_" + containerID],
-            deleteItem: ["deleteItem_" + containerID]
+            deleteItem: ["deleteItem_" + containerID],
+            focusItem: ["focusItem_" + containerID],
+
         },
         tabbarName: "New Operator"
     };
+    this.path.forEach(i => {
+        let commonOutputs = Object.keys(defaultSettings.outputRemaps);
+        commonOutputs.forEach(o => {
+            defaultSettings.outputRemaps[o].push(o + "_" + i);
+            defaultSettings.inputRemaps[o + "_" + i] = o;
+        });
+    })
+
     Object.assign(defaultSettings, this.settings);
     polymorph_core.items[containerID]._od = defaultSettings;
-
-    Object.defineProperty(this, "rect", {
-        get: () => {
-            return polymorph_core.rects[this.settings.p];
-        }
-    })
 
     //topmost 'root' div.
     this.outerDiv = htmlwrap(`<div style="width:100%;height:100%; background:rgba(230, 204, 255,0.1)"></div>`);
@@ -101,7 +128,7 @@ polymorph_core.container = function container(containerID) {
         e.forEach((e) => {
             if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
             else {
-                e = [e, e + "_" + containerID];
+                e = [e + "_" + containerID];
             }
             e.forEach((v) => {
                 polymorph_core.fire(v, args);
@@ -133,17 +160,14 @@ polymorph_core.container = function container(containerID) {
     <h3>Mass import</h3>
     <p>Type in an operator ID to import all items from that operator to this one.</p>
     <input class="massImportOperatorID"><button class="importEverythingNow">Import now</button>
+    <datalist id="${containerID}_firelist"></datalist>
     `;
     let newRow = (io) => {
         let elem;
         if (io) {
             elem = htmlwrap(`<p>we fire <input>, send out <input><button>x</button></p>`);
         } else {
-            elem = htmlwrap(`<p>polymorph_core fires <input>, we process<select></select><button>x</button></p>`);
-            for (let i in this.events) {
-                if (i == "*") i = "";//replace any with none
-                elem.querySelector("select").appendChild(htmlwrap(`<option>${i}</option>`));
-            }
+            elem = htmlwrap(`<p>polymorph_core fires <input>, we process<input list="${containerID}_firelist"></input><button>x</button></p>`);
         }
         return elem;
     }
@@ -157,6 +181,7 @@ polymorph_core.container = function container(containerID) {
 
     })
     for (let i = 0; i < 2; i++) {
+        //the two add buttons
         this.remappingDiv.querySelectorAll("button")[i].addEventListener("click", (e) => {
             let i;
             if (e.currentTarget.innerText.includes("output")) i = 1;
@@ -169,6 +194,12 @@ polymorph_core.container = function container(containerID) {
 
     this.readyRemappingDiv = () => {
         this.remappingDiv.children[2].innerText = `This operator's ID: ${containerID}`;
+        this.remappingDiv.querySelector("datalist").innerHTML = "";
+        for (let i in this.events) {
+            if (i == "*") continue;//dont do all
+            this.remappingDiv.querySelector("datalist").appendChild(htmlwrap(`<option>${i}</option>`));
+        }
+
         for (let i = 0; i < 2; i++) {
             let div = this.remappingDiv.querySelectorAll("div")[i];
             while (div.children.length) div.children[0].remove();

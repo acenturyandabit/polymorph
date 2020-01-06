@@ -96,7 +96,10 @@ polymorph_core.rect = function (rectID) {
 
     Object.defineProperty(this, "parent", {
         get: () => {
-            if (this.settings.p) return polymorph_core.rects[this.settings.p];
+            if (this.settings.p) {
+                if (polymorph_core.rects[this.settings.p]) return polymorph_core.rects[this.settings.p];
+                else if (polymorph_core.containers[this.settings.p]) return polymorph_core.containers[this.settings.p];
+            }
             else return polymorph_core;
         }
     })
@@ -408,7 +411,7 @@ polymorph_core.rect = function (rectID) {
         }
         contextedOperatorIndex = t.dataset.containerid;
         let tp = t.parentElement;
-        if (this.parent && (this.parent instanceof polymorph_core.rect)) {
+        if (this.parent instanceof polymorph_core.rect) {
             //i have a prent, show subframe parent button
             tabmenu.querySelector(".subframePR").style.display = "block";
         } else {
@@ -736,7 +739,7 @@ polymorph_core.rect = function (rectID) {
                     this.settings.ps = 1;
                     this.resizing = -1;
                 }
-                if (this.parent && this.parent != polymorph_core) {
+                if (this.parent instanceof polymorph_core.rect) {
                     this.otherSiblingSettings.ps = this.settings.ps;
                     this.refresh();
                     if (this.otherSibling) this.otherSibling.refresh();
@@ -837,42 +840,6 @@ polymorph_core.rect = function (rectID) {
             this.tieRect(v);
         }
     })
-
-    this.remove = () => {
-        //signal my brother to promote itself
-        if (this.parent) this.parent._remove(this.settings.f, this);
-    }
-    this._remove = (_firstOrSecond) => {
-        polymorph_core.fire("updateItem", {
-            id: rectID,
-            sender: this
-        });
-        //if remaining innerDiv has an operator, adopt it
-        if (this.children[(!_firstOrSecond) * 1].operators && this.children[(!_firstOrSecond) * 1].operators.length) {
-            for (let i = 0; i < this.children[(!_firstOrSecond) * 1].operators.length; i++) this.tieContainer(this.children[(!_firstOrSecond) * 1].operators[i]);
-            //remove the children
-            this.children[0].outerDiv.remove();
-            this.children[1].outerDiv.remove();
-            this.children = [];
-            //reshow tabbar
-            this.tabbar.style.display = "block";
-        } else {
-            //otherwise adopt the children
-            this.children = this.children[(!_firstOrSecond) * 1].children;
-            while (this.outerDiv.children.length > 1) {
-                this.outerDiv.children[this.outerDiv.children.length - 1].remove();
-            }
-            this.outerDiv.appendChild(this.children[0].outerDiv);
-            this.outerDiv.appendChild(this.children[1].outerDiv);
-            this.children[0].parent = this;
-            this.children[1].parent = this;
-        }
-        //delete this.children[0];
-        //delete this.children[1];
-        this.refresh();
-        this.switchOperator(0);
-    }
-
 }
 
 Object.defineProperty(polymorph_core, "baseRect", {
