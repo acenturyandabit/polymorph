@@ -52,7 +52,7 @@ polymorph_core.registerOperator("scriptrunner", {
         return false;
     });
 
-    let me=this;
+    let me = this;
     function instance() {
         this.log = function (data) {
             let p = document.createElement("p");
@@ -62,20 +62,36 @@ polymorph_core.registerOperator("scriptrunner", {
         this.logEx = (data) => {
             this.log(String(data))
         }
+        this.intervals=[];
+        this.setInterval = (f, t) => {
+            this.intervals.push({ f: f, t: t, t0: t });
+            return this.intervals.length;
+        }
+        this.clearInterval = (n) => {
+            if (this.intervals[n]) this.intervals[n].f = undefined;
+        }
         addEventAPI(this, this.logEx);
     }
-
+    setInterval(() => {
+        this.currentInstance.intervals.forEach(i => {
+            if (i.f && i.t < 0) {
+                i.f();
+                i.t = i.t0;
+            }
+            i.t -= 100;
+        })
+    }, 100)
     this.execute = () => {
         this.currentInstance = new instance();
-        let wrapped = `(function factory(instance){
+        let wrapped = `(function factory(instance, setInterval, clearInterval){
             ${this.settings.script}
         })`;
-        try{
-            eval(wrapped)(this.currentInstance);
-        }catch (e){
+        try {
+            eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval);
+        } catch (e) {
             this.currentInstance.log(e.toString());
         }
-        
+
     }
 
     //this is called when your container is started OR your container loads for the first time
