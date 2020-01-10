@@ -447,6 +447,7 @@ polymorph_core.registerOperator("itemcluster2", {
                 this.preselected = it;
                 it.classList.add("selected");
             }
+            container.fire("focusItem", { id: it.dataset.id, sender: this })
         } else {
             this.preselected = undefined;
         }

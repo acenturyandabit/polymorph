@@ -275,6 +275,7 @@ polymorph_core.rect = function (rectID) {
                 let mySibling = this.parent.children[!myIndex + 0];
                 this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                 Object.assign(mySibling.settings, this.parent.settings);
+                mySibling.settings.p=this.parent.settings.p;//If parent is undefined.
                 this.parent.outerDiv.remove();
                 mySibling.refresh();
                 let pid = this.parent.id;//deleting things messes with the parent getter

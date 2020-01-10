@@ -298,6 +298,10 @@ polymorph_core.registerOperator("itemList", function (container) {
     //auto
     setInterval(() => {
         if (!this.container.visible()) return; //if not shown then dont worryy
+        //its every 10s, we can afford for it to be detailed
+
+        //Create an auto list - formed by checking every date property of every tiem we care about
+
         for (let i in this.settings.properties) {
             if (this.settings.properties[i] == 'date') {
                 let listofitems = this.taskList.querySelectorAll("[data-role='" + i + "']");

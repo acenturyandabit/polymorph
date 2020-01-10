@@ -51,11 +51,15 @@ polymorph_core.container = function container(containerID) {
         tabbarName: "New Operator"
     };
     this.path.forEach(i => {
-        let commonOutputs = Object.keys(defaultSettings.outputRemaps);
-        commonOutputs.forEach(o => {
-            defaultSettings.outputRemaps[o].push(o + "_" + i);
-            defaultSettings.inputRemaps[o + "_" + i] = o;
-        });
+        if (polymorph_core.rects[i] && polymorph_core.rects[i].parent instanceof polymorph_core.rect) {
+            let _i = polymorph_core.rects[i].parent.id;
+            //if we have a rect in a rect, then that's a split view. Otherwise it's tabs and should act independently.
+            let commonOutputs = Object.keys(defaultSettings.outputRemaps);
+            commonOutputs.forEach(o => {
+                defaultSettings.outputRemaps[o].push(o + "_" + _i);
+                defaultSettings.inputRemaps[o + "_" + _i] = o;
+            });
+        }
     })
 
     Object.assign(defaultSettings, this.settings);
@@ -128,7 +132,8 @@ polymorph_core.container = function container(containerID) {
         e.forEach((e) => {
             if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
             else {
-                e = [e + "_" + containerID];
+                if (e != "createItem") e = [e, e + "_" + containerID];
+                else e = [e + "_" + containerID];
             }
             e.forEach((v) => {
                 polymorph_core.fire(v, args);
