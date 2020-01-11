@@ -29,16 +29,15 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
         //container.fire("focusItem", { id: undefined });
     }
 
-    this.itemRelevant=(id)=>{
-        if (this.settings.filter==""){
+    this.itemRelevant = (id) => {
+        if (this.settings.filter == "") {
             return true;//if filter doesnt exist it should be undefined
-        }else{
-            if (polymorph_core.items[id][this.settings.filter]){
+        } else {
+            if (polymorph_core.items[id][this.settings.filter]) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         }
-        return false;
     }
 }

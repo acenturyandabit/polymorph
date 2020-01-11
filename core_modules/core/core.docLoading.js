@@ -82,7 +82,12 @@
             data = {
                 _meta: {
                     displayName: settings.name || polymorph_core.currentDocID,
-                    id: polymorph_core.currentDocID
+                    id: polymorph_core.currentDocID,
+                    contextMenuItems: [
+                        "Delete::polymorph_core.deleteItem",
+                        "Background::item.edit(style.background)",
+                        "Foreground::item.edit(style.color)",
+                    ]
                 }
             };
             if (settings.template) {
@@ -112,11 +117,13 @@
             if (!(data._meta.currentView && data[data._meta.currentView]._rd)) {
                 //Add our first rect
                 let newRectID = guid(6, data);
-                data[newRectID] = { _rd: { //we need some initial data otherwise rect deletion gets weird
-                    x:0,
-                    f:0,
-                    ps:1
-                } };
+                data[newRectID] = {
+                    _rd: { //we need some initial data otherwise rect deletion gets weird
+                        x: 0,
+                        f: 0,
+                        ps: 1
+                    }
+                };
                 data._meta.currentView = newRectID;
 
                 //Also add an operator
@@ -411,6 +418,9 @@
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
         }
     })
-
+    //your run of the mill templates
+    polymorph_core.templates = {
+        brainstorm:JSON.parse(`{"displayName":"New Workspace","currentView":"default","id":"itemcluster","views":{"default":{"o":[{"name":"Itemcluster 2","opdata":{"type":"itemcluster2","uuid":"i33lyy","tabbarName":"Itemcluster 2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"currentViewName":"7hj0","viewpath":["7hj0"]}}}],"s":0,"x":0,"f":1,"p":0}},"items":{"7hj0":{"itemcluster":{"viewName":"New Itemcluster"}}}}`),
+    }
 
 })();

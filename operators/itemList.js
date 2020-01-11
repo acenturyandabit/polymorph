@@ -331,6 +331,11 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     })
 
+    container.on("deleteItem", (d) => {
+        this.deleteItem(d.id);
+        this.renderItem(d.id);
+    })
+
     this.reRenderEverything = () => {
         this.taskList.innerHTML = "";
         for (let i in polymorph_core.items) {
@@ -550,6 +555,30 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.datereparse();
     })
 
+    this.container.registerContextMenu(this.taskList, (el) => {
+        let id = el;
+        while (!id.dataset.id && id != this.taskList) {
+            id = id.parentElement;
+        }
+        if (id.dataset.id) {
+            let obj = { id: id.dataset.id };
+            if (el.dataset.role) obj.role = el.dataset.role;
+            let ls = [];
+            if (this.settings.properties[el.dataset.role] == "date") ls.push("Convert to fixed date::operator.toFixedDate")
+            return { e: obj, ls: ls };
+        }
+    });
+
+    this.ctxCommands = {
+        "toFixedDate": (e, ctr) => {
+            let id = e.id;
+            let contextedProp = e.role;
+            polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();;
+            this.datereparse(id);
+        }
+    }
+
+    /*
     scriptassert([
         ["contextmenu", "genui/contextMenu.js"]
     ], () => {
@@ -610,6 +639,7 @@ polymorph_core.registerOperator("itemList", function (container) {
             .querySelector(".fore input")
             .addEventListener("input", updateStyle);
     })
+    */
 
     //settings dialog
     //#region

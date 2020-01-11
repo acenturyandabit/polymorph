@@ -16,7 +16,6 @@ polymorph_core.registerOperator("inspector", {
         'Text': {
             onInput: (e, it, i) => {
                 it[i] = e.target.value;
-                upc.submit(this.settings.currentItem);
             },
             generate: (id) => {
                 return `<input>`;
@@ -28,13 +27,15 @@ polymorph_core.registerOperator("inspector", {
         'Large Text': {
             onInput: (e, it, i) => {
                 it[i] = e.target.value;
-                upc.submit(this.settings.currentItem);
+                e.target.style.height = e.target.scrollHeight;
             },
             generate: (id) => {
                 return `<textarea style="width:100%"></textarea>`;
             },
             updateValue: (obj, div) => {
                 div.querySelector("textarea").value = obj || "";
+                //tiny nudge so the scroll bar doesnt show up
+                div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
             }
         },
         'Date': {
@@ -50,13 +51,13 @@ polymorph_core.registerOperator("inspector", {
                 return `<input>`;
             },
             updateValue: (obj, div) => {
-                div.querySelector("input").value = obj.datestring || "";
+                if (obj) div.querySelector("input").value = obj.datestring || "";
+                else div.querySelector("input").value = "";
             }
         },
         'Auto': {
             onInput: (e, it, i) => {
                 it[i] = e.target.value;
-                upc.submit(this.settings.currentItem);
             },
             updateValue: (obj, div, i) => {
                 if (typeof (obj) == "object") {
@@ -199,6 +200,7 @@ polymorph_core.registerOperator("inspector", {
             let i = e.target.parentElement.dataset.role;
             if (datatypes[e.target.parentElement.dataset.type]) {
                 datatypes[e.target.parentElement.dataset.type].onInput(e, it, i);
+                upc.submit(this.settings.currentItem);
             }
         }
     })
@@ -450,28 +452,13 @@ polymorph_core.registerOperator("inspector", {
             label: "Focus: listen for every container (regardless of origin)",
         })
     }
-    let more = document.createElement('div');
-    more.innerHTML = `
-    <p> Or, click to target 'focus' events from an container...
-    <input data-role="focusOperatorID" placeholder="container UID (use the button)">
-    <button class="targeter">Select container</button>
-    </br>
-    `;
-    this.dialogDiv.appendChild(more);
     let fields = document.createElement('div');
     fields.innerHTML = `
     <h4> Select visible fields: </h4>
     <div class="apropos"></div>
     `;
     this.dialogDiv.appendChild(fields);
-    let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", () => {
-        polymorph_core.target().then((id) => {
-            this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            this.settings['focusOperatorID'] = id
-            this.focusOperatorID = this.settings['focusOperatorID'];
-        })
-    })
+
     this.showDialog = () => {
         // update your dialog elements with your settings
         //get all available properties.
@@ -483,7 +470,10 @@ polymorph_core.registerOperator("inspector", {
         }
         if (!this.settings.propsOn) this.settings.propsOn = props;
         for (let j in props) {
-            app.appendChild(htmlwrap(`<p data-pname="${j}">${j}<span style="display: block; float: right;"><input type="checkbox" ${(this.settings.propsOn[j]) ? "checked" : ""}> ${ttypes}</span></p>`));
+            let thisPropLine = htmlwrap(`<p data-pname="${j}">${j}<span style="display: block; float: right;"><input type="checkbox" ${(this.settings.propsOn[j]) ? "checked" : ""}> ${ttypes}</span></p>`);
+            thisPropLine.querySelector("[data-role='nttype']").value = this.settings.propsOn[j] || "Text";
+            app.appendChild(thisPropLine);
+
         }
         //fill out some details
         for (i in options) {

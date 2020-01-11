@@ -9,6 +9,7 @@ polymorph_core.registerOperator("scriptrunner", {
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
     //Add content-independent HTML here.
+    this.rootdiv.style.color = "white";
     this.rootdiv.innerHTML = `
         <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>
         <p>Press 'Update' to execute this script.</p>
@@ -62,7 +63,7 @@ polymorph_core.registerOperator("scriptrunner", {
         this.logEx = (data) => {
             this.log(String(data))
         }
-        this.intervals=[];
+        this.intervals = [];
         this.setInterval = (f, t) => {
             this.intervals.push({ f: f, t: t, t0: t });
             return this.intervals.length;
