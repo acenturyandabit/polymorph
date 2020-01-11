@@ -823,7 +823,8 @@ polymorph_core.registerOperator("itemcluster2", {
             let elements = container.div.elementsFromPoint(e.clientX, e.clientY);
             for (let i = 0; i < elements.length; i++) {
                 if (
-                    elements[i].matches("textarea") &&
+                    elements[i].matches("p") &&
+                    //p              fob        group
                     elements[i].parentElement.parentElement.dataset.id != this.linkingDiv.dataset.id
                 ) {
                     linkedTo = elements[i].parentElement.parentElement;
@@ -985,13 +986,16 @@ polymorph_core.registerOperator("itemcluster2", {
     })
 
     this.rootdiv.addEventListener("input", (e) => {
-        if (e.target.parentElement.parentElement.matches("[data-id]")) {
-            let id = e.target.parentElement.parentElement.dataset.id;
-            polymorph_core.items[id].title = e.target.value;
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
+        for (let i = 0; i < e.path.length; i++) {
+            if (e.path[i].dataset.id) {
+                let id = e.path[i].dataset.id;
+                polymorph_core.items[id].title = e.target.value;
+                container.fire("updateItem", {
+                    id: id,
+                    sender: this
+                });
+                break;
+            }
         }
     })
 

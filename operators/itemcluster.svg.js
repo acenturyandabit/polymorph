@@ -9,66 +9,57 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         return ret;
     }
     me.arrangeItem = function (id) {
-        if (!polymorph_core.items[id].itemcluster || (!polymorph_core.items[id].itemcluster.viewData && !polymorph_core.items[id].itemcluster.viewName))
-            return false;
-        if (!polymorph_core.items[id].itemcluster.viewData) return true; // this is not an item - its a view, but we still care about it
-        if (!polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-            //if an item of it exists, hide the item
-            let rect = me.itemPointerCache[id];
-            if (rect) {
-                rect.remove();
+        //first, get the element(s)
+        let previousHandle = me.itemPointerCache[id];
+        //check if item relevant
+        let willShow = true;
+        if (!me.itemRelevant(id)) willShow = false;
+        else if (!polymorph_core.items[id].itemcluster.viewData || !polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) willShow = false;
+
+        //remove the elements if not
+        if (!willShow) {
+            if (previousHandle) {
+                previousHandle.remove();
                 delete me.itemPointerCache[id];
             }
-            return true;
-        }
-        //enforce a property on it with viewName.
-        if (!polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`]) polymorph_core.items[id][`__itemcluster_${me.settings.currentViewName}`] = true;
-        let rect = me.itemPointerCache[id];
-        if (!rect) {
-            //need to make a new rectangle
-            //let _rect = rect.rect(100, 50);
-            rect = me.svg.foreignObject(100, 50).attr({
-                "data-id": id,
-                class: "floatingItem"
-            });
-            rect.appendChild("div");
-            me.itemPointerCache[id] = rect;
-            me.itemPointerCache[id].node.children[0].appendChild(document.createElement("textarea"));
-        }
-        rect.show();
-        if (polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName]) {
-            rect.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
-        }
-        //fill in the textarea inside
-        let tta = me.itemPointerCache[id].node.children[0].children[0];
-        tta.value = polymorph_core.items[id].title || "";
-        if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
-            if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
-                tta.style.background = polymorph_core.items[id].style.background || "";
-                tta.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
-                me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
+            return;
+        } else {
+            if (!previousHandle) {
+                previousHandle = me.svg.group().attr({ "data-id": id, class: "floatingItem" });
+                previousHandle.add(me.svg.circle(10).fill("transparent").stroke({ width: 2, color: "red" }).cx(0).cy(0));
+                let fob = me.svg.foreignObject(50, 20).x(10).y(-10);
+                previousHandle.add(fob);
+                me.itemPointerCache[id] = previousHandle;
+                fob.node.appendChild(htmlwrap("<p contenteditable style='position:absolute; margin:0;'></p>"));
             }
+            //actually update
+            previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
 
-        }
-        if (!polymorph_core.items[id].boxsize) {
-            polymorph_core.items[id].boxsize = {
-                w: "200px",
-                h: "100px"
-            };
-        }
-        me.itemPointerCache[id].node.children[0].style.width = polymorph_core.items[id].boxsize.w || "";
-        me.itemPointerCache[id].node.children[0].style.height = polymorph_core.items[id].boxsize.h || "";
-        rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
+            //fill in the textarea inside
+            let tta = me.itemPointerCache[id].node.querySelector("p");
+            let fob = me.itemPointerCache[id].children()[1];
+            tta.innerText = polymorph_core.items[id].title || "";
+            if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
+                if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
+                    tta.style.background = polymorph_core.items[id].style.background || "";
+                    tta.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+                    me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
+                }
+            }
+            //18 is the base height of a ta.
+            fob.width(tta.scrollWidth);
+            fob.height(tta.scrollHeight);
+            //rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
-        //add icons if necessary
-        if (polymorph_core.items[id].itemcluster.viewName) {
-            //this has a subview, make it known!.
-            let subviewItemCount;
-            if (rect.node.querySelector(".subviewItemCount")) {
-                subviewItemCount = rect.node.querySelector(".subviewItemCount");
-            } else {
-                subviewItemCount = document.createElement("p");
-                subviewItemCount.style.cssText = `
+            //add icons if necessary
+            /*if (polymorph_core.items[id].itemcluster.viewName) {
+                //this has a subview, make it known!.
+                let subviewItemCount;
+                if (rect.node.querySelector(".subviewItemCount")) {
+                    subviewItemCount = rect.node.querySelector(".subviewItemCount");
+                } else {
+                    subviewItemCount = document.createElement("p");
+                    subviewItemCount.style.cssText = `
                     display: block;
                     width: 1em;
                     height: 1em;
@@ -77,34 +68,33 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     text-align: center;
                     background: orange;
                     `;
-                subviewItemCount.classList.add("subviewItemCount");
-                rect.node.children[0].appendChild(subviewItemCount);
-                //also count all the items in my subview and report.
-            }
-            let count = 0;
-            for (let i in polymorph_core.items) {
-                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[id]) count++;
-            }
-            subviewItemCount.innerText = count;
-        } else {
-            if (rect.node.children[0].querySelector(".subviewItemCount")) {
-                rect.node.children[0].querySelector(".subviewItemCount").remove();
-            }
-        }
-        //draw its lines
-        if (polymorph_core.items[id].to) {
-            for (let i in polymorph_core.items[id].to) {
-                if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                    if (i == me.prevFocusID || id == me.prevFocusID) {
-                        me.enforceLine(id, i, "red");
-                    } else {
-                        me.enforceLine(id, i);
+                    subviewItemCount.classList.add("subviewItemCount");
+                    rect.node.children[0].appendChild(subviewItemCount);
+                    //also count all the items in my subview and report.
+                }
+                let count = 0;
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[id]) count++;
+                }
+                subviewItemCount.innerText = count;
+            } else {
+                if (rect.node.children[0].querySelector(".subviewItemCount")) {
+                    rect.node.children[0].querySelector(".subviewItemCount").remove();
+                }
+            }*/
+            //draw its lines
+            if (polymorph_core.items[id].to) {
+                for (let i in polymorph_core.items[id].to) {
+                    if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                        if (i == me.prevFocusID || id == me.prevFocusID) {
+                            me.enforceLine(id, i, "red");
+                        } else {
+                            me.enforceLine(id, i);
+                        }
                     }
                 }
             }
         }
-        //also delete lines associated with it
-        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
