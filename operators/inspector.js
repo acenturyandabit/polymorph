@@ -21,7 +21,8 @@ polymorph_core.registerOperator("inspector", {
                 return `<input>`;
             },
             updateValue: (obj, div) => {
-                div.querySelector("input").value = obj || "";
+                if (obj != undefined) div.querySelector("input").value = obj;
+                else div.querySelector("input").value = "";
             }
         },
         'Large Text': {
@@ -33,7 +34,8 @@ polymorph_core.registerOperator("inspector", {
                 return `<textarea style="width:100%"></textarea>`;
             },
             updateValue: (obj, div) => {
-                div.querySelector("textarea").value = obj || "";
+                if (obj != undefined) div.querySelector("textarea").value = obj;
+                else div.querySelector("textarea").value = "";
                 //tiny nudge so the scroll bar doesnt show up
                 div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
             }
@@ -64,7 +66,8 @@ polymorph_core.registerOperator("inspector", {
                     recursiveRender(obj, div);
                 } else {
                     div.innerHTML = `<p>${i}:</p><input>`;
-                    div.querySelector("input").value = obj || "";
+                    if (obj != undefined) div.querySelector("input").value = obj;
+                    else div.querySelector("input").value = "";
                     //fall through
                 }
             }
@@ -289,7 +292,7 @@ polymorph_core.registerOperator("inspector", {
             clean_obj = JSON.parse(JSON.stringify(polymorph_core.items[id]));
         }
         for (let i in this.settings.propsOn) {
-            if (this.settings.propsOn[i] && (clean_obj[i] || this.settings.showNonexistent)) {
+            if (this.settings.propsOn[i] && (clean_obj[i] != undefined || this.settings.showNonexistent)) {
                 let pdiv = this.internal.querySelector("[data-role='" + i + "']");
                 //create or change type if necessary
                 if (!pdiv || pdiv.dataset.type != this.settings.propsOn[i]) {

@@ -110,7 +110,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         let it = polymorph_core.items[id];
         let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
         //First check if we should show the item
-        if (!mf(this.settings.filter, it)) {
+        if (!this.itemRelevant(id)) {
             //if existent, remove
             if (currentItemSpan) currentItemSpan.remove();
             return false;

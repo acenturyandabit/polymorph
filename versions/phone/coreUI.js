@@ -14,6 +14,8 @@ polymorph_core.userData={
 
 
 polymorph_core.on("UIstart", () => {
+    document.body.style.display = "flex";
+    document.body.style.flexDirection = "column";
     polymorph_core.toggleMenu = function (visible) {
         if (visible == undefined) {
             visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
@@ -41,31 +43,30 @@ polymorph_core.on("UIstart", () => {
     document.querySelector("#opop").addEventListener("click", () => {
         //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
         if (polymorph_core.containers[polymorph_core.currentOperator].operator.dialogDiv) {
-            this.settingsOperator = polymorph_core.containers[polymorph_core.currentOperator].operator;
-            this.settingsOperator.showDialog();
-            this.settingsDiv = document.createElement("div");
-            this.settingsDiv.innerHTML = `<h1>Settings</h1>
+            polymorph_core.settingsOperator = polymorph_core.containers[polymorph_core.currentOperator].operator;
+            polymorph_core.settingsOperator.showDialog();
+            polymorph_core.settingsDiv = document.createElement("div");
+            polymorph_core.settingsDiv.innerHTML = `<h1>Settings</h1>
             <h3> General settings </h3>
             <input class="tabDisplayName" placeholder="Tab display name:"/>
             <h3>Operator settings</h3>`;
-            this.settingsOperator.dialogDiv.style.maxWidth = "50vw";
-            this.settingsDiv.appendChild(this.settingsOperator.dialogDiv);
-            this.settingsDiv.querySelector(".tabDisplayName").value = this.tabbar.querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).children[0].innerText;
+            polymorph_core.settingsOperator.dialogDiv.style.maxWidth = "50vw";
+            polymorph_core.settingsDiv.appendChild(polymorph_core.settingsOperator.dialogDiv);
+            polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.settings.tabbarName;
             //add remapping by the operator
             polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
-            this.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
+            polymorph_core.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
 
-            polymorph_core.dialog.prompt(this.settingsDiv, (d) => {
+            polymorph_core.dialog.prompt(polymorph_core.settingsDiv, (d) => {
                 polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
-                this.tabbar.querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).children[0].innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
-                if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
+                document.querySelector("#oplists").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
+                if (polymorph_core.settingsOperator.dialogUpdateSettings) polymorph_core.settingsOperator.dialogUpdateSettings();
                 polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
                 polymorph_core.fire("updateItem", { id: rectID });
             })
             polymorph_core.dialog.register(polymorph_core.currentOperator);
         }
     })
-
 });
 documentReady(() => {
     document.body.appendChild(htmlwrap(`
@@ -107,6 +108,7 @@ documentReady(() => {
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
+    polymorph_core.fire("titleButtonsReady");
 })
 polymorph_core.on("documentCreated", (id) => {
     polymorph_core.userData.documents[id] = { saveSources: {} };

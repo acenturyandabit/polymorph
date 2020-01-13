@@ -94,8 +94,9 @@ polymorph_core.rect = function (rectID) {
         let ts = document.createElement('div');
         ts.innerText = polymorph_core.containers[id].settings.tabbarName;
         this.outerDiv.appendChild(ts);
+        ts.dataset.containerid = id;
         ts.addEventListener("click", () => {
-            document.querySelector("#menulist").style.display = "none";
+            polymorph_core.toggleMenu(false);
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
             polymorph_core.currentOperator = id;
@@ -136,6 +137,5 @@ polymorph_core.rect = function (rectID) {
             polymorph_core.currentOperator = oneToFocus;
         }
     };
-
-
+    this.toSaveData = () => { };
 };

@@ -33,7 +33,7 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
         if (this.settings.filter == "") {
             return true;//if filter doesnt exist it should be undefined
         } else {
-            if (polymorph_core.items[id][this.settings.filter]) {
+            if (polymorph_core.items[id][this.settings.filter] != undefined) {
                 return true;
             } else {
                 return false;

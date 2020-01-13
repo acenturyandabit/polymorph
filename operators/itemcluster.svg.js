@@ -30,7 +30,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 let fob = me.svg.foreignObject(50, 20).x(10).y(-10);
                 previousHandle.add(fob);
                 me.itemPointerCache[id] = previousHandle;
-                fob.node.appendChild(htmlwrap("<p contenteditable style='position:absolute; margin:0;'></p>"));
+                fob.node.appendChild(htmlwrap("<p contenteditable style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'></p>"));
             }
             //actually update
             previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
@@ -38,7 +38,6 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             //fill in the textarea inside
             let tta = me.itemPointerCache[id].node.querySelector("p");
             let fob = me.itemPointerCache[id].children()[1];
-            tta.innerText = polymorph_core.items[id].title || "";
             if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
                 if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
                     tta.style.background = polymorph_core.items[id].style.background || "";
@@ -46,9 +45,10 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            //18 is the base height of a ta.
-            fob.width(tta.scrollWidth);
-            fob.height(tta.scrollHeight);
+            tta.innerText = polymorph_core.items[id].title || "_";
+            tta.style.width = (Math.sqrt(tta.innerText.length) + 1) * 23;
+            tta.parentElement.setAttribute("width", tta.scrollWidth);
+            tta.parentElement.setAttribute("height", tta.scrollHeight);
             //rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
             //add icons if necessary

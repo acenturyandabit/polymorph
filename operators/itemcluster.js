@@ -989,11 +989,15 @@ polymorph_core.registerOperator("itemcluster2", {
         for (let i = 0; i < e.path.length; i++) {
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
-                polymorph_core.items[id].title = e.target.value;
+                polymorph_core.items[id].title = e.target.innerText;
                 container.fire("updateItem", {
                     id: id,
                     sender: this
                 });
+                let pp = e.target;
+                pp.style.width = (Math.sqrt(pp.innerText.length) + 1) * 23;
+                pp.parentElement.setAttribute("width", pp.scrollWidth);
+                pp.parentElement.setAttribute("height", pp.scrollHeight);
                 break;
             }
         }
