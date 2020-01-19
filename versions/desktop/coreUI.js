@@ -31,6 +31,11 @@ polymorph_core.on("UIsetup", () => {
         80% {opacity: 1; visibility: visible;}
         100% {opacity: 0; visibility: hidden;}
     }
+
+    @keyframes precessBackground {
+        0% {background-position-x: 0%}
+        100% {background-position-x: 100%}
+    }
     </style>`));
     document.body.appendChild(htmlwrap(/*html*/`
     <div style="display:flex; flex-direction:column; height:100%">
@@ -39,7 +44,7 @@ polymorph_core.on("UIsetup", () => {
             <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
             <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
         </div>
-        <div class="rectspace" style="width:100%; background: url('assets/nightsky.jpg'); background-size: cover; flex:1 0 auto;position:relative">
+        <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:1 0 auto;position:relative">
         </div>
     </div>
     `));
