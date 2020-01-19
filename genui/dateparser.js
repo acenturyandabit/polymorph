@@ -159,7 +159,10 @@ function _dateParser() {
                     break;
             }
             data.freeamt *= Number(regres[2]);
-            if (regres[1] == "-") data.freeamt *= -1;
+            if (regres[1] == "-") {
+                data.freeamt *= -1;
+                data.noDateSpecific=false;
+            }
             data.d.setTime(data.d.getTime() + data.freeamt);
         }
     }

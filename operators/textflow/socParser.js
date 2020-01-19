@@ -88,13 +88,17 @@ function __textflow_soc_parser(instance) {
                         if (!polymorph_core.items[interrupt]) polymorph_core.items[interrupt] = {
                             nodes: []
                         };
-                        polymorph_core.items[interrupt].interruptHead = interrupt
+                        polymorph_core.items[interrupt].interruptHead = interrupt;
                         polymorph_core.items[id].interruptTopic = interrupt;
                         if (dataStore.interrupts.length) polymorph_core.items[interrupt].interruptActive = polymorph_core.items[dataStore.interrupts[dataStore.interrupts.length - 1]].interruptActive + 1;
                         else polymorph_core.items[interrupt].interruptActive = 0;
+                        if (dataStore.interrupts.indexOf(interrupt) != -1) {
+                            //dont duplicate it
+                            dataStore.interrupts.splice(dataStore.interrupts.indexOf(interrupt), 1);
+                        }
+                        dataStore.interrupts.push(interrupt);
                         instance.container.fire("updateItem", { id: id });
                         instance.container.fire("updateItem", { id: interrupt });
-                        dataStore.interrupts.push(interrupt);
                         break;
                     case "unshift":
                     case "return":
@@ -123,8 +127,19 @@ function __textflow_soc_parser(instance) {
                         setTimeout(() => instance.container.fire("updateItem", { id: id }), 100);
                         break;
                     case "query":
-                        let queryTopic = command.positionals.join(" ");
-                        let entries = polymorph_core.items[queryTopic].nodes.map(i => polymorph_core.items[i][instance.settings.titleProperty]).join("\n");
+                        let entries=[];
+                        if (command.time) {
+                            let baseTime = (dateParser.extractTime(command.time)).getTime();
+                            for (let i in polymorph_core.items) {
+                                if (polymorph_core.items[i].interruptTopic && polymorph_core.items[i].creationDate && polymorph_core.items[i].creationDate > baseTime) {
+                                    entries.push(polymorph_core.items[i][instance.settings.titleProperty]);
+                                }
+                            }
+                            entries=entries.join("\n");
+                        } else {
+                            let queryTopic = command.positionals.join(" ");
+                            entries = polymorph_core.items[queryTopic].nodes.map(i => polymorph_core.items[i][instance.settings.titleProperty]).join("\n");
+                        }
                         let el = instance.itemListDiv.querySelector(`[data-id="${id}"]`).children[1];
                         el.innerText = entries;
                         el.style.display = "block";
@@ -134,12 +149,16 @@ function __textflow_soc_parser(instance) {
                     case "schedule_interrupt":
                         //take the current interrupt and nerf it
                         if (initialInterrupt) {
+                            let interruptToSchedule = { interrupt: initialInterrupt };
                             if (command.time) {
-                                dataStore.scheduledInterrupts.push({ interrupt: initialInterrupt, date: (dateParser.extractTime(command.time)).getTime() });
+                                interruptToSchedule.date = (dateParser.extractTime(command.time)).getTime();
                             } else {
-                                dataStore.scheduledInterrupts.push({ interrupt: initialInterrupt, date: Date.now() + 1000 * 30 });
+                                interruptToSchedule.date = Date.now() + 1000 * 30;
                             }
+                            dataStore.scheduledInterrupts.push(interruptToSchedule);
                             //but also put it on the log for this thing's setInterval to take care of
+                            polymorph_core.items[initialInterrupt].interruptSchedule = interruptToSchedule.date;
+                            instance.container.fire("updateItem", { id: initialInterrupt });
                             command.command = "return";
                             continue;
                         }
@@ -176,7 +195,7 @@ function __textflow_soc_parser(instance) {
                 }
                 return true;
             })
-            instance.settings.SOCStore.scheduledInterrupts=u;
+            instance.settings.SOCStore.scheduledInterrupts = u;
         }
     }, 100);
 }

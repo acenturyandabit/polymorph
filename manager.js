@@ -14,6 +14,7 @@ var __manager_profiles = {
             ["polymorph_core_itemfx", "core_modules/core/core.itemfx.js"],
             ["polymorph_core_operator", "core_modules/core/core.operator.js"],
             ["polymorph_core_contextMenu", "core_modules/ui/core.contextMenu.js"],
+            ["polymorph_core_dragdrop", "core_modules/ui/core.dragdrop.js"],
             //["templates", "core_modules/core.templates.js"],
 
         ]

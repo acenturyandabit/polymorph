@@ -2,13 +2,12 @@ polymorph_core.registerOperator("terminal", {
     displayName: "Terminal",
     description: "A command-line way of interacting with polymorph. Designed to facilitate integrations with other clients!"
 }, function (container) {
-    let me = this;
-    me.container = container; //you can delete this line - but remember that this is enforced by the container.
-    this.settings = {
-        opmode: "console"
+    let defaultSettings = {
+        opmode: "console",
     };
 
-    this.rootdiv = document.createElement("div");
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
     <textarea style="flex: 1 0 auto"></textarea>
@@ -203,9 +202,9 @@ polymorph_core.registerOperator("terminal", {
             regex: /^cls$/ig,
             name: "cls",
             help: "Clears the screen.",
-            operate: function (regres, state) {
+            operate: (regres, state) => {
                 state.clearScreen();
-                me.settings.record = "";
+                this.settings.record = "";
             }
         },
         mkii: {
@@ -294,37 +293,37 @@ polymorph_core.registerOperator("terminal", {
     container.div.appendChild(this.rootdiv);
     this.state = {
         respondent: 'user',
-        output: function (data) {
-            if (me.state.respondent == "user") {
-                me.state.outputToUser(data);
+        output: (data) => {
+            if (this.state.respondent == "user") {
+                this.state.outputToUser(data);
             } else {
-                me.state.outputToWS(data);
+                this.state.outputToWS(data);
             }
         },
-        outputToUser: function (data) {
+        outputToUser: (data) => {
             if (typeof data != "string") {
                 data = JSON.stringify(data);
             }
-            me.textarea.value += data + "\n";
+            this.textarea.value += data + "\n";
 
         },
-        outputToWS: function (data) {
+        outputToWS: (data) => {
             if (typeof data != "string") {
                 data = JSON.stringify(data);
             }
-            if (me.ws && me.ws.readyState != 3) {//closed
-                me.ws.send(data);
+            if (this.ws && this.ws.readyState != 3) {//closed
+                this.ws.send(data);
             } else {
-                me.state.outputToUser("Websocket not connected - operation aborted.");
-                if (me.settings.wsautocon) {
-                    me.state.outputToUser("Autorestart enabled - attempting to connect...");
-                    me.storedCommand = data;
-                    me.tryEstablishWS();
+                this.state.outputToUser("Websocket not connected - operation aborted.");
+                if (this.settings.wsautocon) {
+                    this.state.outputToUser("Autorestart enabled - attempting to connect...");
+                    this.storedCommand = data;
+                    this.tryEstablishWS();
                 }
             }
         },
-        clearScreen: function () {
-            me.textarea.value = "";
+        clearScreen: () => {
+            this.textarea.value = "";
         },
         future: function (f, t) {
             setTimeout(f, t - Date.now());
@@ -336,153 +335,153 @@ polymorph_core.registerOperator("terminal", {
 
     this.state.state = this.settings.state;
 
-    function processQuery(q, forcedMode) {
+    let processQuery = (q, forcedMode) => {
         //check if intlecho first
         operatorRegexes.intlecho.regex.lastIndex = 0; //force reset regex
         if ((regres = operatorRegexes.intlecho.regex.exec(q))) {
-            operatorRegexes.intlecho.operate(regres, me.state);
+            operatorRegexes.intlecho.operate(regres, this.state);
             return;
         }
-        if (forcedMode == "internal" || !me.settings.wsthru) {
+        if (forcedMode == "internal" || !this.settings.wsthru) {
 
             for (let i in operatorRegexes) {
                 operatorRegexes[i].regex.lastIndex = 0; //force reset regex
                 if ((regres = operatorRegexes[i].regex.exec(q))) {
-                    operatorRegexes[i].operate(regres, me.state);
+                    operatorRegexes[i].operate(regres, this.state);
                 }
             }
         } else {
-            me.state.outputToWS(q);
+            this.state.outputToWS(q);
         }
     }
     this.textarea = this.rootdiv.querySelector("textarea");
     this.querybox = this.rootdiv.querySelector("input");
     this.querybox.addEventListener("keyup", (e) => {
-        if (me.settings.opmode == "console") {
-            let lines = me.textarea.value.split("\n");
+        if (this.settings.opmode == "console") {
+            let lines = this.textarea.value.split("\n");
             switch (e.key) {
                 case "Enter":
-                    if (me.settings.echoOn) {
-                        me.state.outputToUser(me.querybox.value);
+                    if (this.settings.echoOn) {
+                        this.state.outputToUser(this.querybox.value);
                     }
-                    me.state.respondent = "user";
-                    processQuery(me.querybox.value);
-                    me.querybox.value = "";
-                    me.cline = 0;
+                    this.state.respondent = "user";
+                    processQuery(this.querybox.value);
+                    this.querybox.value = "";
+                    this.cline = 0;
                     break;
                 case "ArrowUp":
-                    if (!me.cline) {
-                        me.cline = lines.length - 2;
+                    if (!this.cline) {
+                        this.cline = lines.length - 2;
                     } else {
-                        me.cline--;
+                        this.cline--;
                     }
-                    me.querybox.value = lines[me.cline];//last return
+                    this.querybox.value = lines[this.cline];//last return
                     break;
                 case "ArrowDown":
-                    if (me.cline == lines.length - 1) {
-                        me.cline = 0;
+                    if (this.cline == lines.length - 1) {
+                        this.cline = 0;
                     } else {
-                        me.cline++;
+                        this.cline++;
                     }
-                    me.querybox.value = lines[me.cline];//last return
+                    this.querybox.value = lines[this.cline];//last return
                     break;
             }
         }
     })
     this.button = this.rootdiv.querySelector("button");
     this.button.addEventListener("click", () => {
-        if (me.settings.opmode == "console") {
-            me.state.respondent = "user";
-            processQuery(me.querybox.value);
-            me.querybox.value = "";
-            me.cline = 0;
+        if (this.settings.opmode == "console") {
+            this.state.respondent = "user";
+            processQuery(this.querybox.value);
+            this.querybox.value = "";
+            this.cline = 0;
         } else {
-            me.settings.scriptEnabled = !me.settings.scriptEnabled;
-            if (me.settings.scriptEnabled) {
-                if (me.timerID) clearTimeout(me.timerID);
+            this.settings.scriptEnabled = !this.settings.scriptEnabled;
+            if (this.settings.scriptEnabled) {
+                if (this.timerID) clearTimeout(this.timerID);
                 evalSelf();
             }
 
         }
     })
     //////////////////Handle polymorph_core item updates//////////////////
-    function evalSelf() {
-        if (me.settings.scriptEnabled) {
+    let evalSelf = () => {
+        if (this.settings.scriptEnabled) {
             try {
-                eval(me.textarea.value);
+                eval(this.textarea.value);
             } catch (e) {
                 console.log(e);
             }
         }
         try {
-            me.timerID = setTimeout(evalSelf, me.querybox.value || 1000);
+            this.timerID = setTimeout(evalSelf, this.querybox.value || 1000);
         } catch (err) {
-            me.querybox.value = "Please enter a number!";
+            this.querybox.value = "Please enter a number!";
         }
     }
 
     //Saving and loading
-    this.toSaveData = function () {
+    this.textarea.addEventListener("input", () => {
         if (this.settings.opmode == "console") {
-            this.settings.record = me.textarea.value;
+            this.settings.record = this.textarea.value;
         } else {
-            this.settings.script = me.textarea.value;
+            this.settings.script = this.textarea.value;
         }
-
-        return this.settings;
-    }
-
-    this.updateSettings = function () {
+    })
+    
+    this.updateSettings = () => {
         if (this.settings.opmode == "console") {
-            if (this.settings.record) me.textarea.value = this.settings.record;
+            if (this.settings.record) this.textarea.value = this.settings.record;
             this.tryEstablishWS();
             this.state.state = this.settings.state;
             if (!this.state.state) this.state.state = {};
         } else {
-            me.textarea.value = this.settings.script || "";
-            me.querybox.value = this.settings.interval || "";
+            this.textarea.value = this.settings.script || "";
+            this.querybox.value = this.settings.interval || "";
         }
     }
 
     this.fromSaveData = (d) => {
         //this is called when your container is started OR your container loads for the first time
         Object.assign(this.settings, d);
-        me.textarea.value = this.settings.record;
+        this.textarea.value = this.settings.record;
         if (this.settings.wsthru || this.settings.wsautocon) this.tryEstablishWS();
     }
 
-    this.tryEstablishWS = function () {
+    this.tryEstablishWS = () => {
         //close previous ws if open
         if (this.ws) this.ws.close();
         if (this.settings.wsurl) {
             try {
                 this.ws = new WebSocket(this.settings.wsurl);
-                this.ws.onerror = function (e) {
-                    me.state.outputToUser('Failed to connect.');
+                this.ws.onerror = (e) => {
+                    this.state.outputToUser('Failed to connect.');
                     console.log(e);
                 }
-                this.ws.onmessage = function (e) {
-                    if (me.settings.echoOn) {
-                        me.state.outputToUser("ws:" + e.data);
+                this.ws.onmessage = (e) => {
+                    if (this.settings.echoOn) {
+                        this.state.outputToUser("ws:" + e.data);
                     }
-                    me.state.respondent = "WS";
+                    this.state.respondent = "WS";
                     processQuery(e.data);
                 }
-                this.ws.onopen = function (e) {
-                    me.state.outputToUser('Connnection established!');
-                    if (me.storedCommand) {
-                        me.ws.send(me.storedCommand);
-                        me.storedCommand = undefined;
+                this.ws.onopen = (e) => {
+                    this.state.outputToUser('Connnection established!');
+                    if (this.storedCommand) {
+                        this.ws.send(this.storedCommand);
+                        this.storedCommand = undefined;
                     }
                 }
-                this.ws.onclose = function (e) {
-                    if (me.settings.wsautocon) {
-                        setTimeout(me.tryEstablishWS, 1000);
+                this.ws.onclose = (e) => {
+                    if (this.settings.wsautocon) {
+                        this.state.outputToUser("Connection closed.");
+                        delete this.ws;
+                        setTimeout(this.tryEstablishWS, 1000);
                     }
                 }
             } catch (e) {
-                if (me.settings.wsautocon) setTimeout(me.tryEstablishWS, 1000);
-                me.state.outputToUser('Failed to connect.');
+                if (this.settings.wsautocon) setTimeout(this.tryEstablishWS, 1000);
+                this.state.outputToUser('Failed to connect.');
                 console.log(e);
             }
         }
@@ -529,13 +528,13 @@ polymorph_core.registerOperator("terminal", {
         this.settings.wsurl = this.dialogDiv.querySelector(".wshook").value;
         this.tryEstablishWS();
     })
-    this.showDialog = function () {
-        me.settings.record = me.textarea.value;
+    this.showDialog = () => {
+        this.settings.record = this.textarea.value;
         ops.forEach((op) => { op.load(); });
         if (this.settings.wsurl) this.dialogDiv.querySelector(".wshook").value = this.settings.wsurl;
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = () => {
         this.updateSettings();
         // pull settings and update when your dialog is closed.
     }

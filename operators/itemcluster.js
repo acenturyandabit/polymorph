@@ -719,6 +719,31 @@ polymorph_core.registerOperator("itemcluster2", {
         }
         if (this.gridScroll) {
             this.handleGridScroll(e);
+        } else if (e.shiftKey) {
+            let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
+            if (!ic.XZoomFactor)ic.XZoomFactor=1;
+            let oldXZoomFactor=ic.XZoomFactor;
+            if (e.deltaY > 0) {
+                ic.XZoomFactor *= 1.1;
+            } else {
+                ic.XZoomFactor *= 0.9;
+            }
+            // adjust all relevant items, and rearrange
+            for (let i in polymorph_core.items){
+                try{
+                    let trueX=polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x/oldXZoomFactor;
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x=trueX*ic.XZoomFactor;
+                    this.arrangeItem(i);
+                }catch (e){
+
+                }
+            }
+            //also change the view box so that the mouse position remains the same
+            let dxs=this.mapPageToSvgCoords(e.pageX,e.pageY);
+            dxs.dx=dxs.x-ic.cx
+            dxs.x=dxs.x/oldXZoomFactor*ic.XZoomFactor;
+            ic.cx=dxs.x-dxs.dx;
+            this.viewAdjust();
         } else {
             //calculate old width constant
             let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;

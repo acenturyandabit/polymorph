@@ -244,6 +244,11 @@ polymorph_core.registerOperator("itemList", function (container) {
         });
         this.renderItem(id);
         this.datereparse(id);
+        //also fire a focus event for the item, but don't actually focus (in case of multiple entry)
+        container.fire("focusItem",{
+            id: id,
+            sender: this
+        })
         return id;
     }
 
@@ -792,6 +797,28 @@ polymorph_core.registerOperator("itemList", function (container) {
     //Style tags button
     //#endregion
 
+    // alt click and drag for drag and drop
+    let dragDropID = undefined;
+    container.div.addEventListener("mousedown", (e) => {
+        //figure out which element this is
+        dragDropID = undefined;
+        for (let i = 0; i < e.path.length; i++) {
+            if (!e.path[i].dataset) break; //shadow root
+            if (e.path[i].dataset.id) {
+                dragDropID = e.path[i].dataset.id;
+                break;
+            }
+        }
+    })
 
 
+    container.div.addEventListener("mousemove", (e) => {
+        //if alt, fire UDD
+        if (e.altKey && dragDropID) {
+            //fire UDD
+            polymorph_core.initiateDragDrop(dragDropID, { x: e.clientX, y: e.clientY, sender: container.id });
+            //prevent spamming
+            dragDropID = undefined;
+        }
+    })
 });

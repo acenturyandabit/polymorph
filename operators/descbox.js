@@ -1,4 +1,7 @@
-polymorph_core.registerOperator("descbox", { description: "A simple text entry field." }, function (container) {
+polymorph_core.registerOperator("descbox", {
+    description: "A simple text entry field.",
+    single_store:true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
+}, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
@@ -201,25 +204,13 @@ polymorph_core.registerOperator("descbox", { description: "A simple text entry f
             container.fire("updateItem", { id: this.container.id });
         }
         if (this.settings.operationMode == "focus") {
-            if (this.settings['focusOperatorID']) {
-                if (this.settings['focusOperatorID'] == sender.container.uuid) {
-                    switchTo(id);
-                }
-            } else {
-                if (sender) {
-                    //calculate the base rect of the sender
-                    let baserectSender = sender.container.rect;
-                    while (baserectSender.parent) baserectSender = baserectSender.parent;
-                    //calculate my base rect
-                    let myBaseRect = this.container.rect;
-                    while (myBaseRect.parent) myBaseRect = myBaseRect.parent;
-                    //if they're the same, then update.
-                    if (myBaseRect == baserectSender) {
-                        switchTo(id);
-                    }
-                }
-            }
-        } else if (this.settings.operationMode == "putter") {
+            switchTo(id);
         }
     });
+
+    container.on("createItem", (d) => {
+        if (d.sender == "dragdrop") {
+            container._fire("focusItem", d);
+        }
+    })
 });

@@ -50,6 +50,7 @@ polymorph_core.container = function container(containerID) {
         },
         tabbarName: "New Operator"
     };
+    /*
     this.path.forEach(i => {
         if (polymorph_core.rects[i] && polymorph_core.rects[i].parent instanceof polymorph_core.rect) {
             let _i = polymorph_core.rects[i].parent.id;
@@ -60,7 +61,7 @@ polymorph_core.container = function container(containerID) {
                 defaultSettings.inputRemaps[o + "_" + _i] = o;
             });
         }
-    })
+    })sounds good, doesnt work (operators are created in order, etc)*/
 
     Object.assign(defaultSettings, this.settings);
     polymorph_core.items[containerID]._od = defaultSettings;
@@ -132,7 +133,7 @@ polymorph_core.container = function container(containerID) {
         e.forEach((e) => {
             if (this.settings.outputRemaps[e]) e = this.settings.outputRemaps[e];
             else {
-                if (e != "createItem") e = [e, e + "_" + containerID];
+                if (e == "updateItem") e = [e, e + "_" + containerID];
                 else e = [e + "_" + containerID];
             }
             e.forEach((v) => {
