@@ -34,9 +34,7 @@ function _polymorph_core() {
 
     //Document level functions
     this.updateSettings = () => {
-        document.body.querySelector(
-            ".docName"
-        ).innerText = this.items._meta.displayName;
+        this.documentTitleElement.innerText = this.items._meta.displayName;
         document.querySelector("title").innerHTML =
             this.items._meta.displayName + " - Polymorph";
         this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
@@ -48,7 +46,11 @@ function _polymorph_core() {
     })
     //title updates
     this.on("UIstart", () => {
-        document.querySelector(".docName").addEventListener("keyup", () => {
+        if (!this.documentTitleElement) {
+            this.documentTitleElement = this.topbar.add("titleElement", document.createElement("a"));
+            this.documentTitleElement.contentEditable = true;
+        }
+        this.documentTitleElement.addEventListener("keyup", () => {
             this.items._meta.displayName = document.body.querySelector(".docName").innerText;
             tc.submit();
             document.querySelector("title").innerHTML =

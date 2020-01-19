@@ -38,27 +38,6 @@ polymorph_core.on("UIsetup", () => {
             <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
             <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
             <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
-            <ul class="topbar">
-                <li><a class="docName" contentEditable>New Workspace</a></li>
-                <li>&#128190;
-                    <ul>
-                        <li class="open">Open</li>
-                        <li class="saveSources">Preferences</li> <!-- default is always localforage for now -->
-                    </ul>
-                </li>
-                <li class="viewdialog">🖥️</li>
-                <li>ℹ️
-                    <ul>
-                        <li class="about"><a style="text-decoration:none; color:white" href="/about" target="_blank">README</a></li>
-                        <li class="hleptute">Operator help</li>
-                        <li class="hlepdocs">Help topics</li>
-                        <li class="hlepreport">Report an issue...</li>
-                        <li class="tutorial">Run the tutorial again</li>
-                    </ul>
-                </li>
-                <li class="palettedialog">🎨</li>
-                <li class="showInfluence">🕸</li>
-            </ul>
         </div>
         <div class="rectspace" style="width:100%; background: url('assets/nightsky.jpg'); background-size: cover; flex:1 0 auto;position:relative">
         </div>
@@ -71,17 +50,18 @@ polymorph_core.on("UIsetup", () => {
             <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>
     </div>`));
-    polymorph_core.fire("titleButtonsReady");
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Top bar
+    polymorph_core.topbar = new _topbar(document.querySelector(".banner"));
 })
 
 polymorph_core.on("UIstart", () => {
-    document.querySelector(".topbar .open").addEventListener("click", () => {
+    polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
         window.open(window.location.pathname + "?o", "_blank");
     })
-    document.querySelector(".topbar .tutorial").addEventListener("click", () => {
+    polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
         polymorph_core.resetTutorial();
     })
-    //register some handlers
     window.addEventListener("resize", () => {
         polymorph_core.baseRect.refresh();
     })
@@ -96,17 +76,6 @@ polymorph_core.on("UIstart", () => {
             polymorph_core.showNotification('Saved', 'success');
         }
     });
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Top bar
-    let tbman = new _topbarManager();
-    tbman._init();
-    //select the topbar
-    document.addEventListener("DOMContentLoaded", function () {
-        let t = document.querySelector(".banner");
-        tbman.checkTopbars(t);
-    });
-    tbman.checkTopbars();
 });
 
 polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {

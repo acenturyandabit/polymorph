@@ -347,9 +347,10 @@
             polymorph_core.loadInnerDialog.appendChild(wrapper);
         }
 
-        polymorph_core.on("titleButtonsReady", () => {
-            document.body.appendChild(loadDialog);
-            document.querySelector(".saveSources").addEventListener("click", () => {
+        document.body.appendChild(loadDialog);
+
+        polymorph_core.on("UIstart", () => {
+            polymorph_core.topbar.add("File/Preferences").addEventListener("click", () => {
                 for (let i in polymorph_core.saveSources)
                     if (polymorph_core.saveSources[i].showDialog) polymorph_core.saveSources[i].showDialog();
                 for (let i in polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks) {
@@ -420,7 +421,7 @@
     })
     //your run of the mill templates
     polymorph_core.templates = {
-        brainstorm:JSON.parse(`{"displayName":"New Workspace","currentView":"default","id":"itemcluster","views":{"default":{"o":[{"name":"Itemcluster 2","opdata":{"type":"itemcluster2","uuid":"i33lyy","tabbarName":"Itemcluster 2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"currentViewName":"7hj0","viewpath":["7hj0"]}}}],"s":0,"x":0,"f":1,"p":0}},"items":{"7hj0":{"itemcluster":{"viewName":"New Itemcluster"}}}}`),
+        brainstorm: JSON.parse(`{"displayName":"New Workspace","currentView":"default","id":"itemcluster","views":{"default":{"o":[{"name":"Itemcluster 2","opdata":{"type":"itemcluster2","uuid":"i33lyy","tabbarName":"Itemcluster 2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"currentViewName":"7hj0","viewpath":["7hj0"]}}}],"s":0,"x":0,"f":1,"p":0}},"items":{"7hj0":{"itemcluster":{"viewName":"New Itemcluster"}}}}`),
     }
 
 })();

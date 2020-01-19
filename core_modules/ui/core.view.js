@@ -63,7 +63,7 @@ polymorph_core.on("UIstart", () => {
     })
     innerDialog.appendChild(d);
 
-    document.querySelector(".viewdialog").addEventListener("click", () => {
+    /*document.querySelector(".viewdialog").addEventListener("click", () => {
         //save the current view
         polymorph_core.currentDoc.views[polymorph_core.userData.documents[polymorph_core.currentDocID].currentView] = polymorph_core.baseRect.toSaveData();
         //update the entries in baserects
@@ -75,5 +75,5 @@ polymorph_core.on("UIstart", () => {
             d.querySelector(".views").appendChild(htmlwrap(`<option>${polymorph_core.currentDoc.views[i].prettyName || i}</option>`));
         }
         viewDialog.style.display = "block";
-    })
+    })*/
 });

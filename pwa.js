@@ -37,7 +37,6 @@ var _pwaManager = (() => {
       "genui/useful.js",
       "genui/capacitor.js",
       "genui/contextMenu.js",
-      "genui/bind.js",
       "genui/filescreen.js",
       "genui/queryLoader.js",
       "genui/scriptassert.js",

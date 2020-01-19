@@ -27,18 +27,20 @@ Sample contracted topbar HTML:
 
 */
 
-
-
-function _topbarManager(userSettings) {
-    let me = this;
-    this.settings = {
-        style: `
+function _topbar(parent, options) {
+    this.node = document.createElement("ul");
+    this.node.classList.add("topbar");
+    //check if we need to inject style
+    if (!document.querySelector("style.topbar")) {
+        let s = document.createElement("style");
+        s.classList.add("topbar");
+        s.innerHTML = `
         /*General styling*/
         ul.topbar, ul.topbar ul {
             list-style-type: none;
             margin: 0;
             padding: 0;
-            background: url('assets/nightsky.jpg');
+            background: black;
             overflow: auto;
             font-size: 1em;
             z-index: 1000;
@@ -49,6 +51,10 @@ function _topbarManager(userSettings) {
             cursor: pointer;
             display: inline-block;
             z-index: 1000;
+        }
+
+        ul.topbar li{
+            background:black;
         }
 
         ul.topbar li:hover{
@@ -98,43 +104,51 @@ function _topbarManager(userSettings) {
             padding: 0.5em;
             z-index: 1000;
         }
-        `
+        `;
+        this.node.appendChild(s);
     }
-    Object.assign(this.settings, userSettings);
-    //NON-DOM initialisation
+    if (parent) parent.appendChild(this.node);
 
-    //DOM initalisation
-
-    this._init = function () {
-        let s = document.createElement("style");
-        s.innerHTML = this.settings.style;
-        document.head.append(s);
-    };
-
-    if (document.readyState != "loading") this._init();
-    else document.addEventListener("DOMContentLoaded", () => this._init());
-
-
-    this.checkTopbars=function(_root){
-        if (!_root)_root=document;
-        let els=_root.querySelectorAll("ul.topbar");
-        for (let i=0;i<els.length;i++){
-            let root=els[i];
-            if (!(root.classList.contains('tbmanaged'))){
-                root.classList.add("tbmanaged");
-                let lis = root.querySelectorAll('li');
-                for (let j=0;j<lis.length;j++){
-                    let createdA=document.createElement("a");
-                    for (let k=0;k<lis[j].childNodes.length;k++){
-                        let toInsertNode=lis[j].childNodes[k];
-                        if (toInsertNode.nodeName.toLowerCase()!="ul"){
-                            createdA.append(toInsertNode);
-                            k--;
-                        }
+    let addToList = (el, base, pathName) => {
+        let a = document.createElement("a");
+        let li = document.createElement("li");
+        li.dataset.topbarname = pathName;
+        a.appendChild(el);
+        li.appendChild(a);
+        base.appendChild(li);
+        return li;
+    }
+    this.add = this.appendChild = (string, domEl) => {
+        // string is domel; string is one string, string is path, string is path and domel is domel
+        if (typeof (string) != "string") {
+            domEl = string;
+            string = "";
+        }
+        let bits = string.split("/");
+        if (!domEl) {
+            domEl = document.createElement("a");
+            domEl.innerText = bits[bits.length - 1];
+        }
+        let base = this.node;
+        while (bits.length > 1) {
+            let nextBit = bits.shift();
+            if (nextBit) {
+                let newBase = base.querySelector(`[data-topbarname="${nextBit}"]>ul`);
+                if (!newBase) {
+                    let newBaseLi = base.querySelector(`[data-topbarname="${nextBit}"]`);
+                    if (!newBaseLi) {
+                        let tempA = document.createElement("a");
+                        tempA.innerText = nextBit;
+                        newBaseLi = addToList(tempA, base, nextBit);
                     }
-                    lis[j].prepend(createdA);
+                    base = document.createElement("ul");
+                    newBaseLi.appendChild(base);
+                } else {
+                    base = newBase;
                 }
             }
         }
+        addToList(domEl, base, bits[0]);
+        return domEl;
     }
 }

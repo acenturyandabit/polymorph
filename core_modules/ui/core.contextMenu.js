@@ -20,7 +20,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
             commandStrings.push.apply(commandStrings, container.settings.commandStrings);
         }
         currentContainer = currentContainer.parent;
-    } while (currentContainer != polymorph_core);
+    } while (currentContainer && currentContainer != polymorph_core);
     // format: 
     /*
         polymorph_core, operator, item = or just dot.
@@ -150,16 +150,16 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         //TODO: on inputs
         container.ctxMenuCache = ctxMenu;
         container.cacheCTXMenuStrings = JSON.stringify(commandStrings);
-        container.div.addEventListener("click", (e) => {
+        document.body.addEventListener("mousedown", (e) => {
             if (!e.path.includes(ctxMenu)) ctxMenu.style.display = "none";
         })
     }
     //actually show it
-    container.div.appendChild(container.ctxMenuCache);
+    document.body.appendChild(container.ctxMenuCache);
     container.ctxMenuCache.style.display = "block";
     container.ctxMenuCache.style.position = "absolute";
-    container.ctxMenuCache.style.top = settings.y;
-    container.ctxMenuCache.style.left = settings.x;
+    container.ctxMenuCache.style.top = polymorph_core._contextMenuData.mouseY;
+    container.ctxMenuCache.style.left = polymorph_core._contextMenuData.mouseX;
     //load all the inputs
     Array.from(container.ctxMenuCache.querySelectorAll("input")).forEach(i => {
         i.value = getItemProp(i.dataset.property);
@@ -185,3 +185,10 @@ polymorph_core.container.prototype.registerContextMenu = function (el, delegateF
         }
     })
 }
+
+polymorph_core._contextMenuData = {};
+
+document.addEventListener("mousemove", (e) => {
+    polymorph_core._contextMenuData.mouseX = e.clientX;
+    polymorph_core._contextMenuData.mouseY = e.clientY;
+})
