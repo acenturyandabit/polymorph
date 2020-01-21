@@ -51,7 +51,7 @@ function _polymorph_core() {
             this.documentTitleElement.contentEditable = true;
         }
         this.documentTitleElement.addEventListener("keyup", () => {
-            this.items._meta.displayName = document.body.querySelector(".docName").innerText;
+            this.items._meta.displayName = this.documentTitleElement.innerText;
             tc.submit();
             document.querySelector("title").innerHTML =
                 this.items._meta.displayName + " - Polymorph";

@@ -9,6 +9,21 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         return ret;
     }
     me.arrangeItem = function (id) {
+        let sel = me.rootdiv.getRootNode().getSelection();
+        let prerange = null;
+        if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.parentElement.parentElement.dataset.id == id) {
+            let _prerange = sel.getRangeAt(0);
+            prerange = {}
+            let props = ["collapsed"
+                , "commonAncestorContainer"
+                , "endContainer"
+                , "endOffset"
+                , "startContainer"
+                , "startOffset"];
+            props.forEach(i => {
+                prerange[i] = _prerange[i];
+            })
+        }
         //first, get the element(s)
         let previousHandle = me.itemPointerCache[id];
         //check if item relevant
@@ -37,7 +52,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
 
             //fill in the textarea inside
             let tta = me.itemPointerCache[id].node.querySelector("p");
-            let fob = me.itemPointerCache[id].children()[1];
+            //let fob = me.itemPointerCache[id].children()[1];
             if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
                 if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
                     tta.style.background = polymorph_core.items[id].style.background || "";
@@ -93,6 +108,22 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                         }
                     }
                 }
+            }
+            if (prerange) {
+                let newRange = new Range();
+                newRange.setStart(tta.childNodes[0], prerange.startOffset);
+                newRange.setEnd(tta.childNodes[0], prerange.endOffset);
+                /*let props = ["collapsed"
+                    , "commonAncestorContainer"
+                    , "endContainer"
+                    , "endOffset"
+                    , "startContainer"
+                    , "startOffset"];
+                props.forEach(i => {
+                    newRange[i] = prerange[i];
+                })*/
+                sel.removeAllRanges();
+                sel.addRange(newRange);
             }
         }
     }

@@ -29,6 +29,7 @@ polymorph_core.registerOperator("scriptrunner", {
             e.target.value = e.target.value.substring(0, e.target.selectionStart) + "\t" + e.target.value.substring(e.target.selectionEnd);
             e.target.selectionEnd = s + 1;
         }
+        this.settings.script = this.rootdiv.querySelector("textarea").value;
     });
 
 
@@ -57,7 +58,8 @@ polymorph_core.registerOperator("scriptrunner", {
     function instance() {
         this.log = function (data) {
             let p = document.createElement("p");
-            p.innerHTML = JSON.stringify(data);
+            p.style.whiteSpace="pre-wrap";
+            p.innerHTML = JSON.stringify(data, null, 4);
             me.rootdiv.querySelector("#output").appendChild(p);
         }
         this.logEx = (data) => {
@@ -74,7 +76,7 @@ polymorph_core.registerOperator("scriptrunner", {
         addEventAPI(this, this.logEx);
     }
     setInterval(() => {
-        this.currentInstance.intervals.forEach(i => {
+        if (this.currentInstance) this.currentInstance.intervals.forEach(i => {
             if (i.f && i.t < 0) {
                 i.f();
                 i.t = i.t0;
@@ -103,6 +105,7 @@ polymorph_core.registerOperator("scriptrunner", {
         //don't execute, just flag this as needing attention
         textarea.style.background = "green";
     }
+
 
     this.rootdiv.querySelector("button").addEventListener("click", () => {
         textarea.style.background = "white";

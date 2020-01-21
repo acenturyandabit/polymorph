@@ -721,28 +721,28 @@ polymorph_core.registerOperator("itemcluster2", {
             this.handleGridScroll(e);
         } else if (e.shiftKey) {
             let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
-            if (!ic.XZoomFactor)ic.XZoomFactor=1;
-            let oldXZoomFactor=ic.XZoomFactor;
+            if (!ic.XZoomFactor) ic.XZoomFactor = 1;
+            let oldXZoomFactor = ic.XZoomFactor;
             if (e.deltaY > 0) {
                 ic.XZoomFactor *= 1.1;
             } else {
                 ic.XZoomFactor *= 0.9;
             }
             // adjust all relevant items, and rearrange
-            for (let i in polymorph_core.items){
-                try{
-                    let trueX=polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x/oldXZoomFactor;
-                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x=trueX*ic.XZoomFactor;
+            for (let i in polymorph_core.items) {
+                try {
+                    let trueX = polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x / oldXZoomFactor;
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = trueX * ic.XZoomFactor;
                     this.arrangeItem(i);
-                }catch (e){
+                } catch (e) {
 
                 }
             }
             //also change the view box so that the mouse position remains the same
-            let dxs=this.mapPageToSvgCoords(e.pageX,e.pageY);
-            dxs.dx=dxs.x-ic.cx
-            dxs.x=dxs.x/oldXZoomFactor*ic.XZoomFactor;
-            ic.cx=dxs.x-dxs.dx;
+            let dxs = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            dxs.dx = dxs.x - ic.cx
+            dxs.x = dxs.x / oldXZoomFactor * ic.XZoomFactor;
+            ic.cx = dxs.x - dxs.dx;
             this.viewAdjust();
         } else {
             //calculate old width constant
@@ -814,11 +814,13 @@ polymorph_core.registerOperator("itemcluster2", {
             //adding to another view
             for (let i = 0; i < elements.length; i++) {
                 if (
-                    elements[i].matches(".floatingItem") &&
-                    elements[i].dataset.id != cid && (e.ctrlKey || e.metaKey)
+                    elements[i].parentElement &&
+                    elements[i].parentElement.matches(".floatingItem") &&
+                    elements[i].parentElement.dataset.id != cid && (e.ctrlKey || e.metaKey)
                 ) {
-                    polymorph_core.items[elements[i].dataset.id].itemcluster.viewName = polymorph_core.items[elements[i].dataset.id].itemcluster.viewName || polymorph_core.items[elements[i].dataset.id].title || elements[i].dataset.id; //yay implicit ors
-                    polymorph_core.items[cid].itemcluster.viewData[elements[i].dataset.id] = {
+                    let otherID = elements[i].parentElement.dataset.id;
+                    polymorph_core.items[otherID].itemcluster.viewName = polymorph_core.items[otherID].itemcluster.viewName || polymorph_core.items[otherID].title || otherID; //yay implicit ors
+                    polymorph_core.items[cid].itemcluster.viewData[otherID] = {
                         x: 0,
                         y: 0
                     };
@@ -827,7 +829,7 @@ polymorph_core.registerOperator("itemcluster2", {
                         this.arrangeItem(cid);
                         this.movingDivs = [];//clear movingdivs so it doesnt come back
                     }
-                    this.arrangeItem(elements[i].dataset.id);
+                    this.arrangeItem(otherID);
                     //this.switchView(elements[i].dataset.id, true, true);
                     break;
                 }
@@ -1116,9 +1118,6 @@ polymorph_core.registerOperator("itemcluster2", {
       <option value="standalone">Standalone</option>
       <option value="focus">Display view from focused item</option>
       </select>
-      <h2>container to link focus to:<h2>
-      <input data-role="focusOperatorID" placeholder="container UID (use the button)">
-      <button class="targeter">Select container</button>
       `;
     let options = {
         tray: new _option({
@@ -1150,14 +1149,6 @@ polymorph_core.registerOperator("itemcluster2", {
             label: "Show the 'Add new view button'."
         })
     }
-    let targeter = this.dialogDiv.querySelector("button.targeter");
-    targeter.addEventListener("click", () => {
-        polymorph_core.target().then((id) => {
-            this.dialogDiv.querySelector("[data-role='focusOperatorID']").value = id;
-            this.settings['focusOperatorID'] = id
-            this.focusOperatorID = this.settings['focusOperatorID'];
-        })
-    });
     this.showDialog = () => {
         for (i in this.settings) {
             let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
