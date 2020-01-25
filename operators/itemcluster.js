@@ -325,11 +325,13 @@ polymorph_core.registerOperator("itemcluster2", {
                     }
                 }
             }
-            //kill all lines
-            for (let i in this.activeLines) {
-                for (let j in this.activeLines[i]) {
-                    this.activeLines[i][j].remove();
-                    delete this.activeLines[i][j];
+            //kill all lines, if geuninely switching and not using this as part of refresh
+            if (!previousView == id) {
+                for (let i in this.activeLines) {
+                    for (let j in this.activeLines[i]) {
+                        this.activeLines[i][j].remove();
+                        delete this.activeLines[i][j];
+                    }
                 }
             }
             //reposition all items, also updating viewbox

@@ -39,7 +39,7 @@ function __itemlist_searchsort() {
                     if (searchboxes[i].value) {
                         switch (this.settings.properties[searchboxes[i].dataset.role]) {
                             case "text":
-                                if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].indexOf(searchboxes[i].value) > -1) {
+                                if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].toLowerCase().indexOf(searchboxes[i].value.toLowerCase()) > -1) {
                                     toShowItems.push(el);
                                 }
                                 break;

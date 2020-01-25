@@ -47,8 +47,9 @@ function _polymorph_core() {
     //title updates
     this.on("UIstart", () => {
         if (!this.documentTitleElement) {
-            this.documentTitleElement = this.topbar.add("titleElement", document.createElement("a"));
+            this.documentTitleElement = document.createElement("a");
             this.documentTitleElement.contentEditable = true;
+            this.topbar.add("titleElement", this.documentTitleElement);
         }
         this.documentTitleElement.addEventListener("keyup", () => {
             this.items._meta.displayName = this.documentTitleElement.innerText;
@@ -96,7 +97,7 @@ function _polymorph_core() {
         if (id == "_meta") return;//dont delete the metaitem
         let toDelete = true;
         for (let i in this.containers) {
-            if (this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
                 toDelete = false;
             }
         }

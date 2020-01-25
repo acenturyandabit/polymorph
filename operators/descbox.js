@@ -164,13 +164,6 @@ polymorph_core.registerOperator("descbox", {
             property: "property",
             label: "Property of item to display:"
         }),
-        placeholder: new _option({
-            div: this.dialogDiv,
-            type: "text",
-            object: this.settings,
-            property: "property",
-            label: "Property of item to display:"
-        }),
         showWordCount: new _option({
             div: this.dialogDiv,
             type: "bool",

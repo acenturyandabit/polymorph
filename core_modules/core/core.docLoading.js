@@ -166,7 +166,7 @@
     polymorph_core.registerSaveSource = function (id, f) {
         polymorph_core.saveSources[id] = new f(polymorph_core);
         //create a wrapper for it in the loading dialog
-        polymorph_core.addToDialog(id);
+        polymorph_core.addToSaveDialog(id);
     }
 
     polymorph_core.fetchDoc = async function (source, data, state) {
@@ -329,7 +329,7 @@
 
         //delegate toggle event handlers
 
-        polymorph_core.addToDialog = function (id) {
+        polymorph_core.addToSaveDialog = function (id) {
             let wrapperText = `
         <div data-saveref='${id}'>
             <h2>${polymorph_core.saveSources[id].prettyName || id}</h2>

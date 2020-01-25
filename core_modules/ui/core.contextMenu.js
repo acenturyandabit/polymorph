@@ -10,7 +10,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     }
     */
     //This should be configurable in future.
-    let commandStrings = polymorph_core.currentDoc.contextMenuItems || [];
+    let commandStrings = polymorph_core.currentDoc.globalContextMenuOptions || [];
     //add operator recommends
     commandStrings.push.apply(commandStrings, options);
     //add users' stuff
@@ -50,6 +50,9 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         //only really used for edit; so getItemProp only.
         let props = propStr.split(".");
         let itm = polymorph_core.items[container._tempCtxSettings.id];
+        if (propStr.startsWith("item")){
+            props.shift();
+        }
         for (let i = 0; i < props.length; i++) {
             if (!itm[props[i]]) {
                 itm = "";
@@ -73,7 +76,12 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         div._sctxbox_{
             position:absolute;
             left: 100%;
+            top:0;
+            display:none;
             background:white;
+        }
+        div:hover>div._sctxbox_{
+            display:block;
         }
         </style>
         </div>`);
@@ -88,14 +96,15 @@ polymorph_core.showContextMenu = (container, settings, options) => {
                     } else {
                         _cctx = htmlwrap(`<div class="_ctxbox_" data-name="${parts[i]}"><span>${parts[i]}</span><div class="_sctxbox_"></div></div>`);
                         cctx.appendChild(_cctx);
-                        cctx = _cctx;
+                        cctx = _cctx.children[1];
                     }
                 } else {
                     if (/^item.edit\(.+\)$/.exec(parts[i]) != null) {
                         //its an editable, so also put in an input
                         //remove the text inside first
+                        cctx = cctx.parentElement;
                         cctx.children[0].remove();
-                        cctx.insertBefore(htmlwrap(`<input data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`), cctx.children[0])
+                        cctx.insertBefore(htmlwrap(`<input style="display:block;" data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`), cctx.children[0])
                     }
                     break;
                 }
@@ -145,9 +154,12 @@ polymorph_core.showContextMenu = (container, settings, options) => {
             if (e.target.tagName != "INPUT") ctxMenu.style.display = "none";
         });
         ctxMenu.addEventListener("input", (e) => {
-            setItemProp(e.target.dataset.property, e.target.value);
+            let assign = false;
+            if (e.target.dataset.property.startsWith("item")) {
+                assign = true;
+            }
+            setItemProp(e.target.dataset.property, e.target.value, assign);
         })
-        //TODO: on inputs
         container.ctxMenuCache = ctxMenu;
         container.cacheCTXMenuStrings = JSON.stringify(commandStrings);
         document.body.addEventListener("mousedown", (e) => {
@@ -156,6 +168,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     }
     //actually show it
     document.body.appendChild(container.ctxMenuCache);
+    //update item props
     container.ctxMenuCache.style.display = "block";
     container.ctxMenuCache.style.position = "absolute";
     container.ctxMenuCache.style.top = polymorph_core._contextMenuData.mouseY;
@@ -191,4 +204,28 @@ polymorph_core._contextMenuData = {};
 document.addEventListener("mousemove", (e) => {
     polymorph_core._contextMenuData.mouseX = e.clientX;
     polymorph_core._contextMenuData.mouseY = e.clientY;
+});
+
+
+// add a topbar element that does it.
+polymorph_core.on("UIstart", () => {
+    let contextMenuDialog = htmlwrap(/*html*/`
+    <div>
+        <h2>Context menu settings</h2>
+        <textarea></textarea>
+    </div>
+    `);
+    polymorph_core.on("updateSettings", () => {
+        if (!polymorph_core.currentDoc.globalContextMenuOptions) polymorph_core.currentDoc.globalContextMenuOptions = [
+            "Style::Item Background::item.edit(item.style.background)",
+            "Style::Text color::item.edit(item.style.color)"
+        ];
+        contextMenuDialog.querySelector("textarea").value = polymorph_core.currentDoc.globalContextMenuOptions.join("\n");
+    })
+    contextMenuDialog.querySelector("textarea").addEventListener("input", () => {
+        polymorph_core.currentDoc.globalContextMenuOptions = contextMenuDialog.querySelector("textarea").value.split("\n");
+    });
+    polymorph_core.topbar.add("Settings/Context menu").addEventListener("click", () => {
+        polymorph_core.dialog.prompt(contextMenuDialog);
+    })
 })

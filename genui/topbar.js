@@ -1,29 +1,11 @@
-// V0.1 top bar (file bar? idk what to call it) manager.
+// V1.0 top bar (file bar? idk what to call it) manager.
 
 /*TODO:
 
 */
 
 /*
-Sample expanded topbar HTML:
-<ul class="topbar">
-    <li><a>Item 1</a></li>
-    <li><a>Item 2</a></li>
-    <li><a>Item 3</a></li>
-    <li><a>Item 4</a></li>
-</ul>
 
-Sample contracted topbar HTML:
-<ul class="topbar">
-    <li>Item 1</li>
-    <li>Item 2</li>
-    <li>Item 3</li>
-    <li>Item 4
-        <ul>
-        <li>SubItem 1</li>
-        </ul>
-    </li>
-</ul>
 
 */
 
@@ -148,7 +130,6 @@ function _topbar(parent, options) {
                 }
             }
         }
-        addToList(domEl, base, bits[0]);
-        return domEl;
+        return addToList(domEl, base, bits[0]);
     }
 }

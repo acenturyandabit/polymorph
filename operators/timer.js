@@ -8,7 +8,8 @@ polymorph_core.registerOperator("timer", {
         focusedItem: undefined,
         started: false,
         startLock: true,
-        timerTotalProp: "timer"
+        timerTotalProp: "timer",
+        timeString: "10:00"
     };
 
     //this.rootdiv, this.settings, this.container instantiated here.
@@ -27,6 +28,11 @@ polymorph_core.registerOperator("timer", {
         let timeString = this.rootdiv.querySelector("input").value;
         this.startTimer(timeString);
     })
+
+    this.rootdiv.querySelector("input").addEventListener("input", () => {
+        this.settings.timeString = this.rootdiv.querySelector("input").value;
+    });
+    this.rootdiv.querySelector("input").value = this.settings.timeString;
 
     scriptassert([["intervalParser", "genui/intervalParser.js"]], () => {
         container.on("focusItem,updateItem", (d) => {
@@ -61,12 +67,16 @@ polymorph_core.registerOperator("timer", {
                 //park at 0 so we don't end up with the time showing as :59
                 this.settings.remainingTime = 0;
                 this.notify("Time's up!");
-                this.started = false;
+                this.settings.started = false;
+                if (this.settings.loop) {
+                    let timeString = this.rootdiv.querySelector("input").value;
+                    this.startTimer(timeString);
+                }
             }
         }
         let remainingTimeDate = new Date(Number(this.settings.remainingTime) + (new Date(Number(this.settings.remainingTime))).getTimezoneOffset() * 60 * 1000);
         this.rootdiv.children[1].innerText = remainingTimeDate.toTimeString().split(" ")[0];
-        setTimeout(doTimer,100);//this rather than setInterval because then it'll nerf itself if you delete the operator
+        setTimeout(doTimer, 100);//this rather than setInterval because then it'll nerf itself if you delete the operator
     }
     doTimer();
 
@@ -103,6 +113,13 @@ polymorph_core.registerOperator("timer", {
             object: this.settings,
             property: "pushnotifs",
             label: "Show notifications?"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "loop",
+            label: "Loop timer indefinitely?"
         })
     ];
 
