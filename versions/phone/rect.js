@@ -82,28 +82,35 @@ polymorph_core.rect = function (rectID) {
         }
     })
 
-    this.split = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will be split into 2 smaller boxes. 
-    this.resizing = -1; // if this flag is >=0, on the next mousemove that reenters the box, the box will resize. 
-
-    // Create the outerDiv: the one with the active borders.
-    this.outerDiv = document.createElement("div");
+    this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
+    this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
     this.tieRect = function (id) {
-        polymorph_core.rects[id].outerDiv = this.outerDiv;
+        polymorph_core.rects[id].listContainer = this.listContainer;
     }
-    this.tieContainer = function (id) {
-        let ts = document.createElement('div');
-        ts.innerText = polymorph_core.containers[id].settings.tabbarName;
-        this.outerDiv.appendChild(ts);
-        ts.dataset.containerid = id;
-        ts.addEventListener("click", () => {
-            polymorph_core.toggleMenu(false);
-            Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
-            document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
-            polymorph_core.currentOperator = id;
-        })
-        polymorph_core.containers[id].outerDiv.dataset.container = id;
-        polymorph_core.containers[id].outerDiv.style.display = "none";
-        document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
+
+    this.switchOperator = (id) => {
+        polymorph_core.toggleMenu(false);
+        Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
+        document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
+        polymorph_core.currentOperator = id;
+    }
+
+    this.tieContainer = (id) => {
+        if (this.listContainer.querySelector(`[data-containerid='${id}']`)) {
+            this.listContainer.querySelector(`[data-containerid='${id}']`).innerText = polymorph_core.containers[id].settings.tabbarName;
+        } else {
+            let ts = document.createElement('div');
+            ts.innerText = polymorph_core.containers[id].settings.tabbarName;
+            this.listContainer.insertBefore(ts, this.listContainer.children[0]);
+            ts.dataset.containerid = id;
+            ts.addEventListener("click", (e) => {
+                this.switchOperator(id);
+                e.stopPropagation();//so that the lower level divs dont get triggered
+            })
+            polymorph_core.containers[id].outerDiv.dataset.container = id;
+            polymorph_core.containers[id].outerDiv.style.display = "none";
+            document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
+        }
     }
 
     //connect to my parent
@@ -115,6 +122,9 @@ polymorph_core.rect = function (rectID) {
             if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
+    } else {
+        //attach myself to the rectlist
+        document.querySelector("#rectList").appendChild(this.listContainer);
     }
 
     //Signal all children waiting for this that they can connect to this now.
@@ -137,5 +147,17 @@ polymorph_core.rect = function (rectID) {
             polymorph_core.currentOperator = oneToFocus;
         }
     };
+
+
+    //operator creation
+    this.newContainerBtn.addEventListener("click", (e) => {
+        let newContainer = { _od: { t: "opSelect", p: rectID } };
+        let newContainerID = polymorph_core.insertItem(newContainer);
+        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+        //containers tie themselves.
+        //this.tieContainer(newContainerID);
+        this.switchOperator(newContainerID);
+    })
+
     this.toSaveData = () => { };
 };

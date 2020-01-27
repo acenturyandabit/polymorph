@@ -77,6 +77,7 @@ polymorph_core.on("UIstart", () => {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //Also handle individual tutorials.
+/* TODO: change this to topbar format.
 polymorph_core.on("titleButtonsReady", () => {
   document.querySelector("li.hleptute").addEventListener("click", () => {
     polymorph_core.target().then((id) => {
@@ -91,3 +92,4 @@ polymorph_core.on("titleButtonsReady", () => {
     window.open("mailto:steeven.liu2@gmail.com?subject=Polymorph - Issue");
   })
 })
+*/

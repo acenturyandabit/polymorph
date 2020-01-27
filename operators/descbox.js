@@ -1,28 +1,88 @@
 polymorph_core.registerOperator("descbox", {
     description: "A simple text entry field.",
-    single_store:true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
+    single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
         operationMode: "focus",
-        staticItem: ""
+        staticItem: "",
+        auxProperty: "title",
+        showTags: false
     };
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
     //Add div HTML here
-    this.rootdiv.innerHTML = `<p style="margin: 1px;"></p><textarea style="width:100%; flex: 1 0 auto; resize:none;"></textarea>`;
+    this.rootdiv.innerHTML = `<p class="auxProp" style="margin: 1px;"></p><p class="parsedTags" style="margin: 1px;"></p><p style="margin: 1px;"></p><textarea style="width:100%; flex: 1 0 auto; resize:none;"></textarea>`;
     this.rootdiv.style.cssText = "height:100%; display:flex; flex-direction: column;"
     this.textarea = this.rootdiv.querySelector("textarea");
-    this.currentIDNode = this.rootdiv.querySelector("p");
+    this.currentIDNode = this.rootdiv.querySelector(".auxProp");
+    this.parsedTagsNode = this.rootdiv.querySelector(".parsedTags");
 
     container.div.appendChild(this.rootdiv);
 
+    let parseTags = (id) => {
+        let text = polymorph_core.items[id][this.settings.property];
+        let regexes = [/@(tag)=([\w_]+)/g, /@(from)=([\w_]+)/g, /@(to)=([\w_])+/g];
+        //undo older tags
+        if (polymorph_core.items[id]["_tags_" + this.settings.property] && polymorph_core.items[id]["_tags_" + this.settings.property]['tag']) {
+            polymorph_core.items[id]["_tags_" + this.settings.property]['tag'].forEach(i => {
+                delete polymorph_core.items[id]["_tag_" + i];
+            })
+
+        }
+        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {
+        };
+
+        polymorph_core.items[id]["_displayTags_" + this.settings.property] = "";
+
+        regexes.forEach((i) => {
+            while (matches = i.exec(text)) {
+                if (!tagObj[matches[1]]) tagObj[matches[1]] = [];
+                tagObj[matches[1]].push(matches[2]);
+                switch (matches[1]) {
+                    case "tag":
+                        if (!polymorph_core.items["_tag_" + matches[2]]) polymorph_core.items["_tag_" + matches[2]] = {};
+                        polymorph_core.items["_tag_" + matches[2]][id] = true;
+                        polymorph_core.items[id]["_tag_" + matches[2]] = true;
+                        break;
+                    case "from":
+                        if (!polymorph_core.items[matches[2]].to) {
+                            polymorph_core.items[matches[2]].to = {};
+                        }
+                        polymorph_core.items[matches[2]].to[id] = true;
+                        break;
+                    case "to":
+                        if (!polymorph_core.items[id].to) polymorph_core.items[id].to = {};
+                        polymorph_core.items[id].to[matches[2]] = true;
+                        break;
+                }
+                polymorph_core.items[id]["_displayTags_" + this.settings.property] += matches[0] + "  ";
+            }
+        });
+    }
+
+    this.updateMeta = (id) => {
+        if (this.settings.auxProperty == "id") {
+            this.currentIDNode.innerText = id;
+        } else {
+            this.currentIDNode.innerText = polymorph_core.items[id][this.settings.auxProperty];
+        }
+        if (this.settings.showTags) {
+            parseTags(id);
+            this.parsedTagsNode.innerHTML = polymorph_core.items[id]["_displayTags_" + this.settings.property];
+            this.parsedTagsNode.style.display = "block";
+        } else {
+            this.parsedTagsNode.style.display = "none";
+        }
+    }
+
     //Handle item updates
     this.updateItem = (id) => {
-        this.currentIDNode.innerText = id;
+        this.updateMeta(id);
+
         //if focused, ignore
         if (this.settings.operationMode != "putter") {
             if (id == this.settings.currentID && id && polymorph_core.items[id]) {
@@ -99,6 +159,7 @@ polymorph_core.registerOperator("descbox", {
     let upc = new capacitor(100, 40, (id, data) => {
         if (id && polymorph_core.items[id] && this.changed) {
             polymorph_core.items[id][this.settings.property] = data;
+            this.updateMeta(id);
             container.fire("updateItem", {
                 id: id,
                 sender: this
@@ -164,12 +225,26 @@ polymorph_core.registerOperator("descbox", {
             property: "property",
             label: "Property of item to display:"
         }),
+        property: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "auxProperty",
+            label: "Auxillary property to display:"
+        }),
         showWordCount: new _option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "showWordCount",
             label: "Show wordcount?"
+        }),
+        showTags: new _option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "showTags",
+            label: "Show and parse tags?"
         })
     };
     this.showDialog = () => {

@@ -349,20 +349,25 @@
 
         document.body.appendChild(loadDialog);
 
+        //make it a function so that phone can use it
+        polymorph_core.showSavePreferencesDialog = () => {
+            for (let i in polymorph_core.saveSources)
+                if (polymorph_core.saveSources[i].showDialog) polymorph_core.saveSources[i].showDialog();
+            for (let i in polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks) {
+                try {
+                    polymorph_core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            autosaveOp.load();
+            loadDialog.style.display = "block";
+        }
+
         polymorph_core.on("UIstart", () => {
             polymorph_core.topbar.add("File/Preferences").addEventListener("click", () => {
-                for (let i in polymorph_core.saveSources)
-                    if (polymorph_core.saveSources[i].showDialog) polymorph_core.saveSources[i].showDialog();
-                for (let i in polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks) {
-                    try {
-                        polymorph_core.loadInnerDialog.querySelector(`div[data-saveref='${i}'] [data-role='tsync']`).checked = true;
-                    }
-                    catch (e) {
-                        console.log(e);
-                    }
-                }
-                autosaveOp.load();
-                loadDialog.style.display = "block";
+                polymorph_core.showSavePreferencesDialog();
             });
         });
         loadDialog.querySelector(".cb").addEventListener("click", polymorph_core.saveUserData);

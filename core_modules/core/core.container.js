@@ -266,6 +266,19 @@ polymorph_core.container = function container(containerID) {
         return this.settings;// doesn't hurt, helps with subframing too
     };
 
+    //Attach myself to a rect
+    //do this early so that subframe-eseque operators in phone version have something to hook onto
+    if (this.settings.p && polymorph_core.items[this.settings.p]._rd) {
+        //there is or will be a rect for it.
+        if (polymorph_core.rects[this.settings.p]) {
+            polymorph_core.rects[this.settings.p].tieContainer(containerID);
+        } else {
+            if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+            polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+        }
+    }
+
+
     //parse options and decide what to do re: a div
     if (polymorph_core.operators[this.settings.t]) {
         let options = polymorph_core.operators[this.settings.t].options;
@@ -291,16 +304,6 @@ polymorph_core.container = function container(containerID) {
     }
     //#endregion
 
-    //Attach myself to a rect
-    if (this.settings.p && polymorph_core.items[this.settings.p]._rd) {
-        //there is or will be a rect for it.
-        if (polymorph_core.rects[this.settings.p]) {
-            polymorph_core.rects[this.settings.p].tieContainer(containerID);
-        } else {
-            if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
-            polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
-        }
-    }
 
 };
 
