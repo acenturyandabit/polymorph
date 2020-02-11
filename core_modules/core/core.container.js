@@ -1,4 +1,18 @@
 //container. Wrapper around an operator.
+polymorph_core.newContainer = function (parent, ID) {
+    if (!ID) ID = polymorph_core.insertItem({
+        _od: {
+            p: parent
+        }
+    })
+    else {
+        polymorph_core.items[ID]._od = {
+            p: parent,
+        }
+    }
+    polymorph_core.containers[ID] = new polymorph_core.container(ID);
+    return ID;
+}
 //child is this.operator.
 polymorph_core.container = function container(containerID) {
     this.id = containerID;// necessary when rect passes container down to chilren.
@@ -306,33 +320,3 @@ polymorph_core.container = function container(containerID) {
 
 
 };
-
-
-
-// targeter
-polymorph_core.targeter = undefined;
-polymorph_core.dialoghide = false;
-polymorph_core.submitTarget = function (id) {
-    if (me.targeter) {
-        me.targeter(id); //resolves promise
-        me.targeter = undefined;
-        //untarget everything
-        me.baseRect.deactivateTargets();
-        if (polymorph_core.dialoghide) {
-            me.dialog.div.style.display = "block";
-            polymorph_core.dialoghide = false;
-        }
-    }
-}
-polymorph_core.target = function () {
-    // activate targeting
-    me.baseRect.activateTargets();
-    if (me.dialog.div.style.display == "block") {
-        polymorph_core.dialoghide = true;
-        me.dialog.div.style.display = "none";
-    }
-    let promise = new Promise((resolve) => {
-        me.targeter = resolve;
-    })
-    return promise;
-}

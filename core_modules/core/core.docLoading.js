@@ -5,8 +5,14 @@
         let source;
         if (params.has("doc")) {
             //Load from polymorph_core.userData
-            source = params.get("src") || 'lf';
-            polymorph_core.currentDocID = params.get("doc");
+            let id = polymorph_core.currentDocID = params.get("doc");
+            if (!polymorph_core.userData.documents[id]) {
+                polymorph_core.userData.documents[id] = {};
+            }
+            if (!polymorph_core.userData.documents[id].defaultSource) {
+                polymorph_core.userData.documents[id].defaultSource = params.get("src") || 'lf';
+            }
+            source = polymorph_core.userData.documents[id].defaultSource;
             handled = true;
         } else if (window.location.search) {
             //check open flag, for file>open
@@ -33,7 +39,13 @@
         }
         let d;
 
-        if (!handled) polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
+        if (!handled) {
+            polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
+            polymorph_core.userData.documents[polymorph_core.currentDocID] = {
+                defaultSource: "lf"
+            }
+            source = "lf";
+        }
 
         // update savedata because fetchdoc depends on it.
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, source);
@@ -51,7 +63,7 @@
         window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}&src=${source}`);
 
         //if the current document userData doesnt exist, then create it.
-        // e.g. user starts, user presses new, we get redirected to ?doc=etc&src=lf, but there is no entry.
+        // e.g. user starts, user presses new, we get redirected to ?doc=etc, but there is no entry.
 
         let template;
         //if there is a template, knock off the template from the url and remember it (discreetly)
@@ -211,7 +223,7 @@
                     polymorph_core.saveUserData();
                     function f() {
                         if (polymorph_core.savedOK) {
-                            window.location.href = `?doc=${polymorph_core.currentDocID}&source=lf`;
+                            window.location.href = `?doc=${polymorph_core.currentDocID}`;
                         } else {
                             setTimeout(f, 1);
                         }
@@ -361,6 +373,7 @@
                     console.log(e);
                 }
             }
+            polymorph_core.loadInnerDialog.querySelector(`div[data-saveref=${polymorph_core.userData.documents[polymorph_core.currentDocID].defaultSource}] input[name='defaultSource']`).checked = true;
             autosaveOp.load();
             loadDialog.style.display = "block";
         }
@@ -386,6 +399,12 @@
                 delete polymorph_core.userData.documents[polymorph_core.currentDocID].saveHooks[csource];
             }
             polymorph_core.saveUserData();
+        } else if (e.target.matches(`input[name="defaultSource"]`)) {
+            let it = e.target;
+            while (!it.dataset.saveref) {
+                it = it.parentElement;
+            }
+            polymorph_core.userData.documents[polymorph_core.currentDocID].defaultSource = it.dataset.saveref;
         }
     })
 

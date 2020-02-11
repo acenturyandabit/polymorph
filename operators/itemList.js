@@ -1,6 +1,5 @@
 polymorph_core.registerOperator("itemList", function (container) {
     //initialisation
-    //#region
     let defaultSettings = {
         properties: {
             title: "text"
@@ -17,8 +16,6 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.settings.filter = this.settings.filterProp;
         delete this.settings.filterProp;
     }
-    this.settingsBar = document.createElement('div');
-    this.settingsBar.innerHTML = `<div></div>`
     this.taskListBar = document.createElement("div");
     this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
     //top / insert 
@@ -103,8 +100,6 @@ polymorph_core.registerOperator("itemList", function (container) {
             return items.map((i) => i.dataset.id);
         }
     })
-
-    //#endregion
 
     this.renderItem = (id) => {
         let it = polymorph_core.items[id];
@@ -245,7 +240,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         this.renderItem(id);
         this.datereparse(id);
         //also fire a focus event for the item, but don't actually focus (in case of multiple entry)
-        container.fire("focusItem",{
+        container.fire("focusItem", {
             id: id,
             sender: this
         })
@@ -285,10 +280,6 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     });
 
-    //#endregion
-
-    //Item updating
-    //#region
     container.on("updateItem", (d) => {
         let id = d.id;
         let s = d.sender;
@@ -376,7 +367,7 @@ polymorph_core.registerOperator("itemList", function (container) {
 
     this.updateSettings = () => {
         //Look at the settings and apply any relevant changes
-        let htmlstring = ``
+        let htmlstring = `<span class="draghandle">&#10247;</span>`
         for (i in this.settings.properties) {
             switch (this.settings.properties[i]) {
                 case "text":
@@ -583,68 +574,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     }
 
-    /*
-    scriptassert([
-        ["contextmenu", "genui/contextMenu.js"]
-    ], () => {
-        let ctm = new _contextMenuManager(container.div);
-        let contextedItem;
-        let contextedInput;
-        let contextedProp;
-        let menu;
 
-        let filter = (e) => {
-            contextedInput = e.target;
-            contextedProp = contextedInput.dataset.role;
-            let id = contextedInput;
-            while (!id.dataset.id) {
-                id = id.parentElement;
-            }
-            contextedItem = id.dataset.id;
-            if (this.settings.properties[e.target.dataset.role] == "date") {
-                menu.querySelector(".fixed").style.display = "block";
-            } else {
-                menu.querySelector(".fixed").style.display = "none";
-            }
-            if (polymorph_core.items[contextedItem].style) {
-                menu.querySelector(".background").value = polymorph_core.items[contextedItem].style.background || "";
-                menu.querySelector(".color").value = polymorph_core.items[contextedItem].style.color || "";
-            } else {
-                menu.querySelector(".background").value = "";
-                menu.querySelector(".color").value = "";
-            }
-            return true;
-        }
-        menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>
-        <li class="back"><input class="background" placeholder="Background color"></input></li>
-        <li class="fore"><input class="color" placeholder="Foreground color"></input></li>
-        `, this.taskList, "input", filter)
-        menu.querySelector(".fixed").addEventListener("click", (e) => {
-            let id = contextedItem;
-            contextedInput.value = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
-            polymorph_core.items[id][contextedProp].datestring = contextedInput.value;
-            this.datereparse(id);
-            menu.style.display = "none";
-        })
-
-        function updateStyle(e) {
-            let cid = contextedItem;
-
-            if (!polymorph_core.items[cid].style) polymorph_core.items[cid].style = {};
-            polymorph_core.items[cid].style[e.target.className] = e.target.value;
-            container.fire("updateItem", {
-                sender: this,
-                id: cid
-            });
-        }
-        menu
-            .querySelector(".back input")
-            .addEventListener("input", updateStyle);
-        menu
-            .querySelector(".fore input")
-            .addEventListener("input", updateStyle);
-    })
-    */
 
     //settings dialog
     //#region
@@ -811,6 +741,20 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     })
 
+    // normal click and drag on element to drag and drop
+    container.div.addEventListener("mousedown", (e) => {
+        //figure out which element this is
+        if (e.target.matches(".dragHandle")) {
+            let liRow = e.target.parentElement.parentElement;
+            this.relrect = e.target.getRootNode().host.getBoundingClientRect();
+            liRow.style.position = "absolute";
+            liRow.style.left = e.clientX - this.relrect.x;
+            liRow.style.top = e.clientY - this.relrect.y;
+            this.worryRow = liRow;
+            //temporarily disable user select on everything else
+            Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "none");
+        }
+    })
 
     container.div.addEventListener("mousemove", (e) => {
         //if alt, fire UDD
@@ -820,5 +764,19 @@ polymorph_core.registerOperator("itemList", function (container) {
             //prevent spamming
             dragDropID = undefined;
         }
+        if (this.worryRow) {
+            this.worryRow.style.left = e.clientX - this.relrect.x;
+            this.worryRow.style.top = e.clientY - this.relrect.y;
+
+        }
     })
+    let ddmouseExitHandler = (e) => {
+        if (this.worryRow) {
+            this.worryRow.style.position = "static";
+            Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "unset");
+            delete this.worryRow;
+        }
+    }
+    container.div.addEventListener("mouseup", ddmouseExitHandler);
+    container.div.addEventListener("mouseleave", ddmouseExitHandler);
 });

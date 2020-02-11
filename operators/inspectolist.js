@@ -1,8 +1,40 @@
 //todo: putter mode for inspector
-polymorph_core.registerOperator("inspector", {
-    displayName: "Inspector",
-    description: "Inspect all properties of a given element."
+polymorph_core.registerOperator("inspectolist", {
+    displayName: "Inspectolist",
+    description: "Combination between inspector and list. Gives detailed information about specific items."
 }, function (container) {
+    let defaultSettings = {
+        dumpProp: "description",
+        currentItem: guid(4)
+    };
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
+
+    let getContainer = (id) => {
+        let thisItemContainer = this.rootdiv.querySelector(`[data-item="${id}"]`);
+        if (!thisItemContainer) {
+            thisItemContainer = document.createElement('div');
+            thisItemContainer.dataset.item = id;
+            this.list.appendChild(thisItemContainer);
+        }
+        return thisItemContainer;
+    }
+
+    let renderTopbar = (id) => {
+        let itemContainer = getContainer(id);
+        let topbar = itemContainer.querySelector(`[data-role='topbar']`);
+        if (!topbar) {
+            topbar = htmlwrap(`<div data-role="topbar"></div>`);
+            itemContainer.insertBefore(itemContainer.children[0], topbar);
+        }
+        topbar.innerText = polymorph_core.items[id][this.settings.dumpProp].split("\n")[0];
+    }
+
+    container.on("updateItem", (d) => {
+        if (d.sender==this)return;
+        renderTopbar(d.id);
+    })
+
 
     let upc = new capacitor(300, 40, (id) => {
         container.fire("updateItem", {
@@ -80,15 +112,9 @@ polymorph_core.registerOperator("inspector", {
 
 
 
-    let defaultSettings = {
-        operationMode: "focus",
-        currentItem: "",
-        globalEnabled: false,// whether or not it's enabled globally
-    };
-    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     this.rootdiv.style.cssText = `
     overflow:auto;
-    height: 100%;
+    height: 100%;polymorph_core.items[it][dateprop]
     color: white;
     `
     let ttypes = `<select data-role="nttype">

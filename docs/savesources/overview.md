@@ -1,3 +1,7 @@
+# rationale for the save source query parameter
+So that links are transferrable to other users. unlike google, we can't just load everything from a single centralised source. so: always make the link shareable? If i enter the link from anywhere, if PM can fetch it it will fetch it? I feel like that's unrealistic for now. we can deal with it later. the perogative is to get default loading from WS working now.
+
+
 # Save sources
 Look in savesources/template.
 

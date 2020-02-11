@@ -65,17 +65,19 @@ polymorph_core.registerOperator("descbox", {
     }
 
     this.updateMeta = (id) => {
-        if (this.settings.auxProperty == "id") {
-            this.currentIDNode.innerText = id;
-        } else {
-            this.currentIDNode.innerText = polymorph_core.items[id][this.settings.auxProperty];
-        }
-        if (this.settings.showTags) {
-            parseTags(id);
-            this.parsedTagsNode.innerHTML = polymorph_core.items[id]["_displayTags_" + this.settings.property];
-            this.parsedTagsNode.style.display = "block";
-        } else {
-            this.parsedTagsNode.style.display = "none";
+        if (id) {
+            if (this.settings.auxProperty == "id") {
+                this.currentIDNode.innerText = id;
+            } else {
+                this.currentIDNode.innerText = polymorph_core.items[id][this.settings.auxProperty];
+            }
+            if (this.settings.showTags) {
+                parseTags(id);
+                this.parsedTagsNode.innerHTML = polymorph_core.items[id]["_displayTags_" + this.settings.property];
+                this.parsedTagsNode.style.display = "block";
+            } else {
+                this.parsedTagsNode.style.display = "none";
+            }
         }
     }
 
