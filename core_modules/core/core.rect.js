@@ -17,15 +17,23 @@ const RECT_BORDER_COLOR = "transparent";
 //.polymorph_core property
 //
 
-polymorph_core.newRect = function (parent) {
-    let ID = polymorph_core.insertItem({
+polymorph_core.newRect = function (parent, ID) {
+    if (!ID) ID = polymorph_core.insertItem({
         _rd: {
             p: parent,
             f: RECT_FIRST_SIBLING,
             x: RECT_ORIENTATION_X,
             ps: 1
         }
-    });
+    })
+    else {
+        polymorph_core.items[ID]._rd = {
+            p: parent,
+            f: RECT_FIRST_SIBLING,
+            x: RECT_ORIENTATION_X,
+            ps: 1
+        }
+    }
     polymorph_core.rects[ID] = new polymorph_core.rect(ID);
     return ID;
 }
@@ -275,7 +283,7 @@ polymorph_core.rect = function (rectID) {
                 let mySibling = this.parent.children[!myIndex + 0];
                 this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                 Object.assign(mySibling.settings, this.parent.settings);
-                mySibling.settings.p=this.parent.settings.p;//If parent is undefined.
+                mySibling.settings.p = this.parent.settings.p;//If parent is undefined.
                 this.parent.outerDiv.remove();
                 mySibling.refresh();
                 let pid = this.parent.id;//deleting things messes with the parent getter
