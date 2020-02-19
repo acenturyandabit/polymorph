@@ -218,6 +218,11 @@ function hslToRgb(h, s, l) {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
+function randBriteCol(){
+    let rgb=hslToRgb(Math.random(),1,0.5);
+    return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+}
+
 function waitForFn(property) {
     let me = this;
     if (!this[property]) this[property] = function (args) {
@@ -225,3 +230,9 @@ function waitForFn(property) {
     }
 }
 //waitForFn.apply(obj,["run"]);
+
+
+String.prototype.replaceAll = function(str1, str2, ignore) 
+{
+    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+}

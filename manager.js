@@ -27,6 +27,7 @@ var __manager_profiles = {
             //["stack", "operators/stack.js"],
             ["terminal", "operators/terminal.js"],
             ["inspector", "operators/inspector.js"],
+            ["inspectolist", "operators/inspectolist.js"],
             //["sorter", "operators/sorter.js"],
             //["httree", "operators/httree.js"],
             //["chat", "operators/chat.js"],
