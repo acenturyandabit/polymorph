@@ -7,25 +7,21 @@
 
     polymorph_core.handleURL = async function () {
         let params = new URLSearchParams(window.location.search);
-        let handled = false;
         polymorph_core.resetDocument();
         if (params.has("doc")) {
             //Load from polymorph_core.userData
             let id = polymorph_core.currentDocID = params.get("doc");
-            if (!polymorph_core.userData.documents[id]) {
-                polymorph_core.userData.documents[id] = {};
-            }
+            polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
             if (params.has('src')) {
                 //try to _also_ pull from the source as described
                 if (!polymorph_core.userData.documents[id].saveSources[params.get('src')]) {
                     polymorph_core.userData.documents[id].saveSources[params.get('src')] = {};
                 }
                 polymorph_core.userData.documents[id].saveHooks[params.get('src')] = true;
-                if (!polymorph_core.userData.documents[id].loadHooks)polymorph_core.userData.documents[id].loadHooks={};
+                if (!polymorph_core.userData.documents[id].loadHooks) polymorph_core.userData.documents[id].loadHooks = {};
                 polymorph_core.userData.documents[id].loadHooks[params.get('src')] = true;
                 polymorph_core.saveUserData();
             }
-            handled = true;
         } else if (window.location.search) {
             //check open flag, for file>open
             if (params.has("o")) {
@@ -42,23 +38,19 @@
                 if (polymorph_core.saveSources[i].canHandle) {
                     polymorph_core.currentDocID = await polymorph_core.saveSources[i].canHandle(params);
                     if (polymorph_core.currentDocID) {
-                        handled = true;
+                        polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, i);
                         break;
                     }
                 }
             }
         }
 
-        if (!handled) {
+        if (!polymorph_core.currentDocID) {
             polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
-            polymorph_core.userData.documents[polymorph_core.currentDocID] = {
-                saveHooks: {
-                    lf: true
-                },
-                loadHooks: {
-                    lf: true
-                }
-            }
+            polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, 'lf');
+        }
+        if (!polymorph_core.userData.documents[polymorph_core.currentDocID].loadHooks || Object.keys(polymorph_core.userData.documents[polymorph_core.currentDocID].loadHooks).length == 0) {
+            polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID, 'lf');
         }
 
         for (let i in polymorph_core.userData.documents[polymorph_core.currentDocID].loadHooks) {
@@ -95,7 +87,8 @@
                         "Delete::polymorph_core.deleteItem",
                         "Background::item.edit(style.background)",
                         "Foreground::item.edit(style.color)",
-                    ]
+                    ],
+                    _lu_:0
                 }
             };
             polymorph_core.fire("documentCreated", { id: polymorph_core.currentDocID, data: data });
@@ -192,7 +185,7 @@
                 polymorph_core.items[i] = data[i];
             }
         }
-        if (!polymorph_core.rects)polymorph_core.rects={};
+        if (!polymorph_core.rects) polymorph_core.rects = {};
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
             if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
@@ -201,7 +194,7 @@
             }
         }
 
-        if (!polymorph_core.containers)polymorph_core.containers={};
+        if (!polymorph_core.containers) polymorph_core.containers = {};
         for (let i in data) {
             if (polymorph_core.items[i]._od && !polymorph_core.containers[i]) {
                 polymorph_core.containers[i] = new polymorph_core.container(i);
@@ -232,9 +225,6 @@
         } catch (e) {
             alert("Something went wrong with the save source: " + e);
             document.querySelector(".wall").style.display = "none";
-            return;
-        }
-        if (!d) {
             return;
         }
         document.querySelector(".wall").style.display = "none";

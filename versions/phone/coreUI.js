@@ -87,6 +87,12 @@ polymorph_core.on("UIsetup", () => {
     document.querySelector(".savesources").addEventListener("click", () => {
         polymorph_core.showSavePreferencesDialog();
     });
+
+    document.querySelector(".open").addEventListener("click", () => {
+        polymorph_core.filescreen.showSplash();
+        polymorph_core.toggleMenu(false);//hide on direct taps
+
+    });
     document.querySelector("#opop").addEventListener("click", () => {
         //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
         if (polymorph_core.containers[polymorph_core.currentOperator].operator.dialogDiv) {

@@ -110,6 +110,7 @@ polymorph_core.rect = function (rectID) {
             polymorph_core.containers[id].outerDiv.dataset.container = id;
             polymorph_core.containers[id].outerDiv.style.display = "none";
             document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
+            this.switchOperator(id);
         }
     }
 
@@ -123,7 +124,7 @@ polymorph_core.rect = function (rectID) {
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
     }
-    if (polymorph_core.items._meta.currentView==rectID){
+    if (polymorph_core.items._meta.currentView == rectID) {
         //attach myself to the rectlist
         document.querySelector("#rectList").appendChild(this.listContainer);
     }
