@@ -122,7 +122,8 @@ polymorph_core.rect = function (rectID) {
             if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
-    } else {
+    }
+    if (polymorph_core.items._meta.currentView==rectID){
         //attach myself to the rectlist
         document.querySelector("#rectList").appendChild(this.listContainer);
     }

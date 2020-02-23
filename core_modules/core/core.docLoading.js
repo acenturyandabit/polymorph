@@ -192,7 +192,7 @@
                 polymorph_core.items[i] = data[i];
             }
         }
-
+        if (!polymorph_core.rects)polymorph_core.rects={};
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
             if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
@@ -201,6 +201,7 @@
             }
         }
 
+        if (!polymorph_core.containers)polymorph_core.containers={};
         for (let i in data) {
             if (polymorph_core.items[i]._od && !polymorph_core.containers[i]) {
                 polymorph_core.containers[i] = new polymorph_core.container(i);
