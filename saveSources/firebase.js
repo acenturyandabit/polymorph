@@ -34,7 +34,11 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       snapshot.docs.forEach(doc => {
         fulldoc[doc.id] = doc.data()
       });
-      lastPulledFBID = fulldoc._meta.fbID || undefined;
+      if (fulldoc._meta) {
+        lastPulledFBID = fulldoc._meta.fbID || undefined;
+      } else {
+        lastPulledFBID = polymorph_core.currentDocID;
+      }
       if (res) res(fulldoc);
       else return fulldoc;
     }

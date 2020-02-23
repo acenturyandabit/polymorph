@@ -117,7 +117,7 @@ polymorph_core.on("UIsetup", () => {
 });
 documentReady(() => {
     polymorph_core.on("documentCreated", (id) => {
-        polymorph_core.userData.documents[id] = { saveSources: {} };
+        if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
         polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
     })
 

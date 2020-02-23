@@ -8,6 +8,7 @@ var __manager_profiles = {
             ["polymorph_core_tutorial", "core_modules/ui/core.tutorial.js"],
             ["polymorph_filescreen", "versions/filescreen.js"],
             ["polymorph_core_docLoading", "core_modules/core/core.docLoading.js"],
+            ["polymorph_core_loadSaveUI", "core_modules/ui/core.loadSaveUI.js"],
             ["polymorph_core_dataUtils", "core_modules/core/core.dataUtils.js"],
             ["polymorph_core_view", "core_modules/ui/core.view.js"],
             ["polymorph_core_container", "core_modules/core/core.container.js"],

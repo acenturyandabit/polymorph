@@ -16,9 +16,9 @@ polymorph_core.datautils.precompress = function (data, type) {
     data = JSON.parse(JSON.stringify(data));
 
     if (!data.compressions) {
-        data={
-            compressions:[],
-            items:data
+        data = {
+            compressions: [],
+            items: data
         }
     }
     data.compressions.push({ type: type });
@@ -146,10 +146,10 @@ polymorph_core.datautils.viewToItems = (obj) => {
             createObjectFromRect(r.c[0], newID);
             createObjectFromRect(r.c[1], newID);
         } else if (r.o) {
-            let oids=r.o.map((o) => {
+            let oids = r.o.map((o) => {
                 return createObjectFromOperator(o, newID);
             })
-            obj._rd.s=oids[r.s];
+            obj._rd.s = oids[r.s];
         }
         delete obj._rd.c;
         delete obj._rd.o;
@@ -166,13 +166,14 @@ polymorph_core.datautils.viewToItems = (obj) => {
 //called by docloading, and called when the preferences dialog is closed.
 
 polymorph_core.datautils.upgradeSaveData = function (id, source) {
-    let defaultDoc={ saveSources: {}, saveHooks: {} };
-    Object.assign(defaultDoc,polymorph_core.userData.documents[id]);
-    polymorph_core.userData.documents[id] = defaultDoc; 
+    let defaultDoc = { saveSources: {}, saveHooks: {}, loadHooks: {} };
+    Object.assign(defaultDoc, polymorph_core.userData.documents[id]);
+    polymorph_core.userData.documents[id] = defaultDoc;
     if (source) {
         if (!polymorph_core.userData.documents[id].saveSources[source]) {
             //if the source didnt exist, then we assume it didnt exist and we hook it, unless explicitly stated otherwise.
             polymorph_core.userData.documents[id].saveHooks[source] = true;
+            polymorph_core.userData.documents[id].loadHooks[source] = true;
         }
         polymorph_core.userData.documents[id].saveSources[source] = polymorph_core.userData.documents[id].saveSources[source] || id;
     }

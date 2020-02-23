@@ -860,3 +860,5 @@ Object.defineProperty(polymorph_core, "baseRect", {
         }
     }
 })
+
+polymorph_core.rects={};

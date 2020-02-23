@@ -23,7 +23,7 @@ function _polymorph_core() {
         this.fire("UIsetup");
         this.fire("UIstart");
         this.resetDocument();
-        this.loadDocument();
+        this.handleURL();
     }
 
     Object.defineProperty(this, "currentDoc", {

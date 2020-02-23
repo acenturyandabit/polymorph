@@ -49,12 +49,6 @@ polymorph_core.registerOperator("ruigen", {
         return this.settings;
     }
 
-    this.fromSaveData = function (d) {
-        //this is called when your container is started OR your container loads for the first time
-        Object.assign(this.settings, d);
-        this.loadDisplay(this.settings.display);
-    }
-
     //Handle the settings dialog click!
     this.dialogDiv=document.createElement("div");
     this.dialogDiv.innerHTML=``;

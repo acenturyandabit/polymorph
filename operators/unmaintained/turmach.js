@@ -15,7 +15,7 @@ polymorph_core.registerOperator("turmach", {
         }
     };
     this.rootdiv = document.createElement("div");
-    //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
+    //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
     <style>
     .viewNameDrop{
@@ -1582,20 +1582,6 @@ polymorph_core.registerOperator("turmach", {
         }
         this.settings.viewpath.push(this.settings.currentViewName);
         return this.settings;
-    }
-
-    this.fromSaveData = function (d) {
-        //this is called when your container is started OR your container loads for the first time
-        Object.assign(this.settings, d);
-        if (this.settings.viewpath) {
-            this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
-            for (let i = 0; i < this.settings.viewpath.length; i++) {
-                me.switchView(this.settings.viewpath[i], true, true);
-            }
-        } else {//for older versions
-            me.switchView(me.settings.currentViewName, true, true);
-        }
-        updateSettings();
     }
 
     //Handle the settings dialog click!

@@ -3,7 +3,7 @@ polymorph_core.registerOperator("treant", function (container) {
     this.settings = {};
 
     this.rootdiv = document.createElement("div");
-    //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
+    //Add content-independent HTML here.
     this.rootdiv.innerHTML = ``;
     
     scriptassert([["jquery","3pt/jquery.min.js"],["treant","3pt/Treant.js","3pt/Treant.css"]],()=>{
@@ -97,12 +97,6 @@ polymorph_core.registerOperator("treant", function (container) {
     this.toSaveData = function () {
         return this.settings;
     }
-
-    this.fromSaveData = function (d) {
-        Object.assign(this.settings, d);
-        this.processSettings();
-    }
-
 
 
     //Handle a change in settings (either from load or from the settings dialog or somewhere else)

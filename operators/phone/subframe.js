@@ -47,13 +47,6 @@ polymorph_core.registerOperator("subframe", { targetForward: true, hidden: true 
         return this.settings;
     }
 
-    this.fromSaveData = function (d) {
-        Object.assign(this.settings, d);
-        this.rect.fromSaveData(this.settings.rectUnderData);
-        this.rect.refresh();
-        this.processSettings();
-    }
-
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `Nothing to show yet :3`;

@@ -99,12 +99,6 @@
             return this.settings;
         }
 
-        this.fromSaveData = function (d) {
-            Object.assign(this.settings, d);
-            this.processSettings();
-        }
-
-
 
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
         this.processSettings = function () {
