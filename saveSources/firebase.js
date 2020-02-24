@@ -4,9 +4,9 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
   this.createable = true;
   //initialise firebase
   me.unsub = {};
-  scriptassert([["firebase", "3pt/firebase-app.js"], ["firestore", "3pt/firebase-firestore.js"]], () => {
+  scriptassert([["firebase", "3pt/firebase-app.js"], ["firestore", "3pt/firebase-firestore.js"],["firedb", "3pt/firebase-database.js"]], () => {
     if (!polymorph_core.firebase) {
-      polymorph_core.firebase = {}
+      polymorph_core.firebase = {};
       firebase.initializeApp({
         apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
         authDomain: "backbits-567dd.firebaseapp.com",
@@ -16,11 +16,9 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
         messagingSenderId: "894862693076"
       })
       polymorph_core.firebase.db = firebase.firestore();
-      console.log("i inited fb");
     }
     this.db = polymorph_core.firebase.db;
-    //lastPulledFBID is necessary because on load, we can't directly access items._meta.
-    let lastPulledFBID;
+
     this.pullAll = async function (res) {
       if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
         polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
@@ -43,10 +41,44 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       else return fulldoc;
     }
 
+    this._pushAll = async () => {
+      let root = this.db
+        .collection("polymorph")
+        .doc(polymorph_core.saveSourceData["fb"].docName);
+      //check if online
+      firebase.database().ref('.info/connected').on('value', async(snap) => {
+        if (snap.val() == true) {
+          await inductor({
+            fn: async (id) => {
+              let itemData = (await root.collection('items').doc(id).get().then()).data();
+              if (!itemData) itemData = { _lu_: 0 };
+              if (!polymorph_core.items[id]) polymorph_core.items[id] = { _lu_: 0 };
+              if (itemData._lu_ > polymorph_core.items[id]._lu_) {
+                //pull, it's newer
+                polymorph_core.items[id] = itemData;
+                toPostUpdate.push(id);
+              } else if (itemData._lu_ < polymorph_core.items[id]._lu_) {
+                //push, its older
+                root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
+              }
+              console.log("merged " + id);
+            },
+            data: Object.keys(polymorph_core.items),
+            numPerRound: 100,
+            roundTime: 5000,
+          });
+        }else{
+          console.log('FIREBASE OFFLINE.');
+        }
+      })
+
+    }
+
     this.hook = async () => {
       if (!(polymorph_core.saveSourceData["fb"] && polymorph_core.saveSourceData["fb"].docName)) {
         polymorph_core.saveSourceData["fb"] = { docName: polymorph_core.currentDocID }
       }
+      /*
       //add FBID to meta, so we can check if docs are different
       let ourfbID;
       if (polymorph_core.items._meta) {
@@ -57,11 +89,12 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       } else {
         ourfbID = lastPulledFBID
       }
-      let _meta = (await this.db.collection("polymorph").doc(polymorph_core.saveSourceData["fb"].docName).collection("items").doc("meta").get()).data();
+      let _meta = (await this.db.collection("polymorph").doc(polymorph_core.saveSourceData["fb"].docName).collection("items").doc("_meta").get()).data();
       if (_meta && _meta.fbID != ourfbID) {
         alert("Error: FB ID Mismatch - the remote document you are merging with your current document is not the same. PM is preventing this operation to prevent data loss.");
         return;
       }
+      */
       let root = this.db
         .collection("polymorph")
         .doc(polymorph_core.saveSourceData["fb"].docName);
@@ -69,23 +102,8 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
       //Fetch all items and merge; use some time-pagination (ooh!)
       let toPostUpdate = [];
 
-      await inductor({
-        fn: async (id) => {
-          let itemData = (await root.collection('items').doc(id).get().then()).data();
-          if (!itemData) itemData = { _lu_: 0 };
-          if (!polymorph_core.items[id]) polymorph_core.items[id] = { _lu_: 0 };
-          if (itemData._lu_ > polymorph_core.items[id]._lu_) {
-            //pull, it's newer
-            polymorph_core.items[id] = itemData;
-            toPostUpdate.push(id);
-          } else if (itemData._lu_ < polymorph_core.items[id]._lu_) {
-            //push, its older
-            root.collection('items').doc(id).set(JSON.parse(JSON.stringify(polymorph_core.items[id])));
-          }
-        },
-        data: Object.keys(polymorph_core.items),
-        numPerRound: 100
-      });
+      await this._pushAll();
+
       //Sync by pushing all items (seeing as we've loaded already, this should not affect anything if we are up to date)
 
       //remote
@@ -164,7 +182,7 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
   };
   this.dialog = document.createElement("div");
   let generatedURL = htmlwrap(`<input placeholder="URL for sharing"></input>`);
-  me.addrop = new _option({
+  me.ops = [new _option({
     div: this.dialog,
     type: "text",
     object: () => {
@@ -175,11 +193,21 @@ polymorph_core.registerSaveSource("fb", function () { // a sample save source, i
     afterInput: (e) => {
       generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
     }
-  });
+  }),
+  new _option({
+    div: this.dialog,
+    type: "button",
+    fn: async () => {
+      await this._pushAll();
+      alert("all items delivered");
+    },
+    label: "Force push all",
+  })
+  ];
   this.dialog.appendChild(generatedURL);
   this.showDialog = function () {
     if (!polymorph_core.saveSourceData["fb"]) polymorph_core.saveSourceData["fb"] = {};
-    me.addrop.load();
+    me.ops.forEach(i => i.load());
     if (polymorph_core.saveSourceData["fb"]) generatedURL.value = location.origin + location.pathname + `?doc=${polymorph_core.currentDocID}&src=fb`;
   }
 })

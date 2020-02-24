@@ -11,7 +11,7 @@ polymorph_core.registerOperator("itemcluster2", {
             scale: 1
         },
         filter: guid(6),
-        tray: true,
+        tray: false,
         createAcrossViews: true,
         showNewViewButton: false
     };

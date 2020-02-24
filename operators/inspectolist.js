@@ -27,8 +27,8 @@ polymorph_core.registerOperator("inspectolist", {
         }
     </style>
     `));
-    this.rootdiv.style.overflow="auto";
-    this.rootdiv.style.height="100%";
+    this.rootdiv.style.overflow = "auto";
+    this.rootdiv.style.height = "100%";
     // Add the search/entry box
     let searchEntryBox = document.createElement("div");
     searchEntryBox.contentEditable = true;
@@ -154,9 +154,9 @@ polymorph_core.registerOperator("inspectolist", {
         if (!richtext) {
             richtext = htmlwrap(`<div data-role="richtext" contenteditable></div>`);
             itemContainer.appendChild(richtext);
+            richtext.style.display = "none";
         }
         richtext.innerText = polymorph_core.items[id][this.settings.dumpProp];
-        richtext.style.display = "none";
     }
 
     container.on("updateItem", (d) => {
@@ -168,7 +168,7 @@ polymorph_core.registerOperator("inspectolist", {
         }
     })
 
-    let expand = (id) => {
+    let expand = (id, focus = true) => {
         //hide all others
         Array.from(this.rootdiv.querySelectorAll("[data-role='richtext']")).forEach(i => {
             //i.style.height = "0px";
@@ -176,7 +176,7 @@ polymorph_core.registerOperator("inspectolist", {
         });
         let richtext = this.rootdiv.querySelector(`[data-item='${id}'] [data-role='richtext']`);
         richtext.style.display = "block";
-        richtext.focus();
+        if (focus) richtext.focus();
     }
 
     this.rootdiv.addEventListener("click", (e) => {
@@ -257,16 +257,44 @@ polymorph_core.registerOperator("inspectolist", {
         deleteItem(d.id);
     });
 
+    container.on("createItem", (d) => {
+        if (d.sender == this) return;
+        polymorph_core.items[d.id][this.settings.filter] = true;
+    });
+
     //polymorph_core will call this when an object is focused on from somewhere
     container.on("focusItem", (d) => {
         let id = d.id;
         if (d.sender == this) return;
         if (this.rootdiv.querySelector(`[data-item='${id}'] [data-role='richtext']`)) {
-            expand(id);
+            expand(id, false);
         }
     });
 
     this.dialogDiv = document.createElement("div");
+    this.importSys = {
+        importTitle: "title",
+        importDesc: "description",
+        importFilter: "",
+        import: () => {
+            for (let i in polymorph_core.items) {
+                if (this.importSys.importFilter && !polymorph_core.items[i][this.importSys.importFilter]) continue;
+                if (polymorph_core.items[i][this.importSys.importTitle]) {
+                    let data = polymorph_core.items[i][this.importSys.importTitle];
+                    let importDescs = this.importSys.importDesc.split(",");
+                    for (let d of importDescs) {
+                        if (polymorph_core.items[i][d]) {
+                            data += "\n";
+                            data += polymorph_core.items[i][d];
+                        }
+                    }
+                    polymorph_core.items[i][this.settings.dumpProp] = data;
+                    polymorph_core.items[i][this.settings.filter] = true;
+                    container.fire('updateItem', { id: i });
+                }
+            }
+        }
+    }
     let options = {
         filter: new _option({
             div: this.dialogDiv,
@@ -274,7 +302,41 @@ polymorph_core.registerOperator("inspectolist", {
             object: this.settings,
             property: "filter",
             label: "Filter:"
-        })
+        }),
+        dumpprop: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "dumpProp",
+            label: "Property:"
+        }),
+        importTitle: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.importSys,
+            property: "importTitle",
+            label: "Import title property:"
+        }),
+        importDesc: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.importSys,
+            property: "importDesc",
+            label: "Import description properties (csv):"
+        }),
+        importFilter: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.importSys,
+            property: "importFilter",
+            label: "Import filter property:"
+        }),
+        importNow: new _option({
+            div: this.dialogDiv,
+            type: "button",
+            label: "Import now",
+            fn: this.importSys.import
+        }),
     }
     this.showDialog = () => {
         for (i in options) options[i].load();

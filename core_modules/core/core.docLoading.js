@@ -169,13 +169,20 @@
         polymorph_core.addToSaveDialog(id);
     }
 
-    polymorph_core.integrateData = function (data) {
+    polymorph_core.integrateData = function (data,source) {
         //sanity check, decompress etc the data
         data = polymorph_core.sanityCheckDoc(data);
         //ensure the data id is matching; if not then @ the user
         if (data._meta.id != polymorph_core.currentDocID) {
-            if (confirm(`A source seems to be storing a different document (${data._meta.id}) to the one you requested (${polymorph_core.currentDocID}). Continue loading?`)) {
-                data._meta.id = polymorph_core.currentDocID;
+            if (confirm(`A source (${source}) seems to be storing a different document (${data._meta.id}) to the one you requested (${polymorph_core.currentDocID}). Continue loading?`)) {
+                if (confirm(`Overwrite the data ID to ${polymorph_core.currentDocID}? [OK] Or load the imported data in a separate window [cancel]?`)){
+                    data._meta.id = polymorph_core.currentDocID;
+                }else{
+                    polymorph_core.datautils.upgradeSaveData(data._meta.id,source);
+                    polymorph_core.userData.documents[data._meta.id].saveSources[source]=polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[source];
+                    polymorph_core.saveUserData();
+                    window.location.href=`?doc=${data._meta.id}`;
+                }
             } else {
                 return;
             }
@@ -228,7 +235,7 @@
             return;
         }
         document.querySelector(".wall").style.display = "none";
-        polymorph_core.integrateData(d);
+        polymorph_core.integrateData(d,source);
     }
 
     polymorph_core.toSaveData = function () {
