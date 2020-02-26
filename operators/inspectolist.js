@@ -25,6 +25,9 @@ polymorph_core.registerOperator("inspectolist", {
             background: black;
             border-radius: 3px;
         }
+        [data-role='subItemBox']{
+            padding-left: 10px;
+        }
     </style>
     `));
     this.rootdiv.style.overflow = "auto";
@@ -53,13 +56,13 @@ polymorph_core.registerOperator("inspectolist", {
     this.unmatchbox = this.unmatchbox.querySelector("div");
 
     this.currentFilters = {};
-    let similarish = (setA, setB) => {
+    let similarish = (filterA, filterB) => {
         let indexA = indexB = 0;
         let simscore = 0;
-        while (indexA < setA.length && indexB < setB.length) {
-            if (setA[indexA][0] > setB[indexB][0]) {
+        while (indexA < filterA.words.length && indexB < filterB.words.length) {
+            if (filterA.words[indexA][0] > filterB.words[indexB][0]) {
                 indexB++;
-            } else if (setA[indexA][0] < setB[indexB][0]) {
+            } else if (filterA.words[indexA][0] < filterB.words[indexB][0]) {
                 indexA++;
             } else {
                 //they are the same
@@ -69,7 +72,10 @@ polymorph_core.registerOperator("inspectolist", {
         return false;
     }
     let generateFilter = (currentText) => {
-        let currentFilter = {};
+        let currentFilter = {
+            words: undefined,
+            parent: undefined
+        };
         let re = /[#\w]+/g;
         let wrd = undefined;
         while (wrd = re.exec(currentText)) {
@@ -77,8 +83,13 @@ polymorph_core.registerOperator("inspectolist", {
             currentFilter[cwd] = currentFilter[cwd] | 0;
             currentFilter[cwd]++;
         }
-        currentFilter = Object.entries(currentFilter);
-        currentFilter = currentFilter.sort((a, b) => a[0] > b[0] ? 1 : -1);
+        currentFilter.words = Object.entries(currentFilter);
+        currentFilter.words = currentFilter.words.sort((a, b) => a[0] > b[0] ? 1 : -1);
+
+        //find parent
+        if (wrd = />p:([\d\w]+)/.exec(currentText)) {
+            currentFilter.parent = wrd[1];
+        }
         return currentFilter;
     }
 
@@ -90,9 +101,7 @@ polymorph_core.registerOperator("inspectolist", {
             it[this.settings.filter] = true;
             let id = polymorph_core.insertItem(it);
             container.fire("createItem", { id: id, sender: this });
-            renderTopbar(id);
-            renderRichText(id);
-            this.currentFilters[id] = generateFilter(polymorph_core.items[id][this.settings.dumpProp]);
+            updateRenderedItem(id, true);
             e.target.innerHTML = "";
             expand(id);
             this.rootdiv.querySelector(`[data-item="${id}"] [data-role="richtext"]`).focus();
@@ -106,20 +115,58 @@ polymorph_core.registerOperator("inspectolist", {
         currentFilter = generateFilter(e.target.innerText);
         for (let i in this.currentFilters) {
             if (similarish(this.currentFilters[i], currentFilter)) {
-                this.matchbox.appendChild(this.rootdiv.querySelector(`[data-item="${i}"]`));
+                updateRenderedItem(i, true);
             } else {
-                this.unmatchbox.appendChild(this.rootdiv.querySelector(`[data-item="${i}"]`));
+                updateRenderedItem(i, false);
             }
         }
     })
+
+
+    /*updateRenderedItem called when:
+    updateItem: dont care about matched or not (persist)
+    key press: dont care about matched or not (persist)
+    */
+    let updateRenderedItem = (id, matched) => {
+        let addIfNotAdded = (p, c) => {
+            if (!Array.from(p.children).includes(c)) p.appendChild(c);
+        }
+
+
+        this.currentFilters[id] = generateFilter(polymorph_core.items[id][this.settings.dumpProp]);
+        renderTopbar(id);
+        let cnt = getContainer(id);
+        let userFocused = cnt.contains(this.rootdiv.getRootNode().getSelection().anchorNode);
+        if (!userFocused) renderRichText(id);
+        //figure out where it is
+        if (matched == undefined) {//dont relocate
+            matched = this.matchbox.contains(cnt);
+        }
+        if (matched) {
+            addIfNotAdded(this.matchbox, cnt);
+        } else {
+            if (this.currentFilters[id].parent) {
+                if (this.rootdiv.querySelector(`[data-item="${this.currentFilters[id].parent}"]`)) {
+                    //append it to that div
+                    addIfNotAdded(this.rootdiv.querySelector(`[data-item="${this.currentFilters[id].parent}"]>[data-role='subItemBox']`), cnt);
+                } else {
+                    addIfNotAdded(this.unmatchbox, cnt);
+                }
+            } else {
+                addIfNotAdded(this.unmatchbox, cnt);
+            }
+        }
+    }
 
     let getContainer = (id) => {
         let thisItemContainer = this.rootdiv.querySelector(`[data-item="${id}"]`);
         if (!thisItemContainer) {
             thisItemContainer = document.createElement('div');
             thisItemContainer.dataset.item = id;
+            thisItemContainer.appendChild(htmlwrap('<div data-role="subItemBox"></div>'));
             this.matchbox.appendChild(thisItemContainer);
         }
+        //also put it in the right place
         return thisItemContainer;
     }
 
@@ -132,7 +179,8 @@ polymorph_core.registerOperator("inspectolist", {
         }
         if (polymorph_core.items[id][this.settings.dumpProp]) {
             let innerText = polymorph_core.items[id][this.settings.dumpProp];
-            let toptext = innerText.split("\n")[0];
+            let toptext = `<span style="color:pink">#id:${id}; </span>`;
+            toptext += innerText.split("\n")[0];
             let tagfilter = /#(\w+)(:[\w\d]+)?/g;
             let seenTags = {};
             while (result = tagfilter.exec(innerText)) {
@@ -145,6 +193,7 @@ polymorph_core.registerOperator("inspectolist", {
                     seenTags[result[0]] = true;
                 }
             }
+            //add the ID property
             topbar.innerHTML = toptext;
         }
     }
@@ -153,7 +202,7 @@ polymorph_core.registerOperator("inspectolist", {
         let richtext = itemContainer.querySelector(`[data-role='richtext']`);
         if (!richtext) {
             richtext = htmlwrap(`<div data-role="richtext" contenteditable></div>`);
-            itemContainer.appendChild(richtext);
+            itemContainer.insertBefore(richtext, itemContainer.children[1]);
             richtext.style.display = "none";
         }
         richtext.innerText = polymorph_core.items[id][this.settings.dumpProp];
@@ -162,9 +211,7 @@ polymorph_core.registerOperator("inspectolist", {
     container.on("updateItem", (d) => {
         if (d.sender == this) return;
         if (this.itemRelevant(d.id)) {
-            renderTopbar(d.id);
-            renderRichText(d.id);
-            this.currentFilters[d.id] = generateFilter(polymorph_core.items[d.id][this.settings.dumpProp]);
+            updateRenderedItem(d.id);
         }
     })
 
@@ -214,16 +261,17 @@ polymorph_core.registerOperator("inspectolist", {
                     if (preRange == range.startOffset && preEl == range.startContainer) {
                         if (ckey == "ArrowDown") {
                             if (ctarget.parentElement.nextElementSibling) {
-                                toFocusOnSpan = ctarget.parentElement.nextElementSibling.dataset.item;
-                                expand(toFocusOnSpan);
-                            } else if (ctarget.innerText) {
-                                let oldID = ctarget.parentElement.dataset.id;
-                                this.createItem(oldID);
+                                expand(ctarget.parentElement.nextElementSibling.dataset.item);
+                            } else if (ctarget.parentElement.parentElement.dataset.role == 'subItemBox') {
+                                if (ctarget.parentElement.parentElement.parentElement.nextElementSibling) {
+                                    expand(ctarget.parentElement.parentElement.parentElement.nextElementSibling.dataset.item);
+                                }
                             }
                         } else {
                             if (ctarget.parentElement.previousElementSibling) {
-                                let toFocusOnSpan = ctarget.parentElement.previousElementSibling.dataset.item;
-                                if (toFocusOnSpan) expand(toFocusOnSpan);
+                                expand(ctarget.parentElement.previousElementSibling.dataset.item);
+                            } else if (ctarget.parentElement.parentElement.dataset.role == 'subItemBox') {
+                                expand(ctarget.parentElement.parentElement.parentElement.dataset.item);
                             }
                         }
                     }
@@ -245,8 +293,7 @@ polymorph_core.registerOperator("inspectolist", {
                 } else {
                     polymorph_core.items[cid][this.settings.dumpProp] = e.target.innerText;
                     container.fire("updateItem", { id: cid, sender: this });
-                    this.currentFilters[cid] = generateFilter(polymorph_core.items[cid][this.settings.dumpProp]);
-                    renderTopbar(cid);
+                    updateRenderedItem(cid);
                 }
             }
         }
@@ -303,7 +350,7 @@ polymorph_core.registerOperator("inspectolist", {
             property: "filter",
             label: "Filter:"
         }),
-        dumpprop: new _option({
+        dumpProp: new _option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,

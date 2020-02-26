@@ -157,10 +157,13 @@ polymorph_core.container = function container(containerID) {
     }
 
     polymorph_core.on("*", (args, e) => {
-        e.forEach(e => {
-            if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
-            this._fire(e, args);
-        })
+        if (this.settings) {
+            //occasionally when containers are deleted this will throw errors. so dont();
+            e.forEach(e => {
+                if (this.settings.inputRemaps[e] != undefined) e = this.settings.inputRemaps[e];
+                this._fire(e, args);
+            })
+        }
     })
 
     //Input event remapping
