@@ -278,6 +278,11 @@ polymorph_core.registerOperator("descbox", {
         }
     });
 
+    //static items get deleted without this mod
+    this.itemRelevant = (id) => {
+        if (this.settings.operationMode=="static" && id==this.settings.staticItem)return true;
+    }
+
     container.on("createItem", (d) => {
         if (d.sender == "dragdrop") {
             container._fire("focusItem", d);
