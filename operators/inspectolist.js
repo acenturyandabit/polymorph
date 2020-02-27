@@ -76,14 +76,15 @@ polymorph_core.registerOperator("inspectolist", {
             words: undefined,
             parent: undefined
         };
+        let wrds={};
         let re = /[#\w]+/g;
         let wrd = undefined;
         while (wrd = re.exec(currentText)) {
             let cwd = wrd[0].toLowerCase();
-            currentFilter[cwd] = currentFilter[cwd] | 0;
-            currentFilter[cwd]++;
+            wrds[cwd] = wrds[cwd] | 0;
+            wrds[cwd]++;
         }
-        currentFilter.words = Object.entries(currentFilter);
+        currentFilter.words = Object.entries(wrds);
         currentFilter.words = currentFilter.words.sort((a, b) => a[0] > b[0] ? 1 : -1);
 
         //find parent
