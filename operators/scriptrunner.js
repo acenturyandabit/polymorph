@@ -4,7 +4,8 @@ polymorph_core.registerOperator("scriptrunner", {
 }, function (container) {
     let defaultSettings = {
         autorun: false,
-        reallyAutorun: false
+        reallyAutorun: false,
+        forceCareAbout: ""
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -15,7 +16,8 @@ polymorph_core.registerOperator("scriptrunner", {
         <p>Press 'Update' to execute this script.</p>
         <textarea style="width: 100%; height: 50%"; placeholder="Enter script here:"></textarea>
         <br>
-        <button>Update</button>
+        <button class="updatebtn">Update</button>
+        <button class="stopbtn">Stop script</button>
         <div id="output" style="overflow-y: auto; height: 30%;"></div>
     `;
 
@@ -58,7 +60,7 @@ polymorph_core.registerOperator("scriptrunner", {
     function instance() {
         this.log = function (data) {
             let p = document.createElement("p");
-            p.style.whiteSpace="pre-wrap";
+            p.style.whiteSpace = "pre-wrap";
             p.innerHTML = JSON.stringify(data, null, 4);
             me.rootdiv.querySelector("#output").appendChild(p);
         }
@@ -84,6 +86,9 @@ polymorph_core.registerOperator("scriptrunner", {
             i.t -= 100;
         })
     }, 100)
+    this.stop=()=>{
+        delete this.currentInstance;
+    }
     this.execute = () => {
         this.currentInstance = new instance();
         let wrapped = `(function factory(instance, setInterval, clearInterval){
@@ -107,10 +112,15 @@ polymorph_core.registerOperator("scriptrunner", {
     }
 
 
-    this.rootdiv.querySelector("button").addEventListener("click", () => {
+    this.rootdiv.querySelector(".updatebtn").addEventListener("click", () => {
         textarea.style.background = "white";
         this.settings.script = this.rootdiv.querySelector("textarea").value;
         this.execute();
+    })
+
+    this.rootdiv.querySelector(".stopbtn").addEventListener("click", () => {
+        this.stop();
+        textarea.style.background = "green";
     })
 
 
@@ -130,8 +140,17 @@ polymorph_core.registerOperator("scriptrunner", {
             object: this.settings,
             property: "reallyAutorun",
             label: "Confirm autorun on start"
+        }),
+        new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "forceCareAbout",
+            label: "Items to keep safe from garbage collector (csv)"
         })
     ];
+
+    this.itemRelevant = (id) => this.settings.forceCareAbout.split(",").includes(id);
 
     this.showDialog = function () {
         ops.forEach((op) => { op.load(); });
