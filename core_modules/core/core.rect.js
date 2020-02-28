@@ -634,7 +634,11 @@ polymorph_core.rect = function (rectID) {
         //also refresh any of my children
         if (this.children) {
             this.outerDiv.style.border = "";
-            this.children.forEach((c) => c.refresh());
+            //when tieing doubly-nested rects, sometimes a refresh is called on a child before it is tied, resulting in parentElement error.
+            //so check parentElement before refreshing
+            this.children.forEach((c) => {
+                if (c.outerDiv.parentElement) c.refresh()
+            });
         } else {
             //show my container
             this.switchOperator(this.settings.s);
@@ -861,4 +865,4 @@ Object.defineProperty(polymorph_core, "baseRect", {
     }
 })
 
-polymorph_core.rects={};
+polymorph_core.rects = {};
