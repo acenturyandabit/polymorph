@@ -11,6 +11,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         linkProperty: "to"
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+    this.rootdiv.remove(); //we dont want this
     //upgrade older ones
     if (this.settings.filterProp) {
         this.settings.filter = this.settings.filterProp;

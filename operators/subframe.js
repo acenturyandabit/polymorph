@@ -1,5 +1,6 @@
 polymorph_core.registerOperator("subframe", {}, function (container) {
     polymorph_core.operatorTemplate.call(this, container, {});
+    this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
     this.outerDiv = document.createElement("div");
     //Add div HTML here
     this.outerDiv.innerHTML = ``;

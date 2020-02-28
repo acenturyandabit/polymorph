@@ -18,8 +18,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
 
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-
-    this.rootdiv = document.createElement("div");
+    this.rootdiv.style.overflow="hidden";
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
     <style>
