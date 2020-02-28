@@ -7,6 +7,7 @@ polymorph_core.registerOperator("inspectolist", {
         dumpProp: "description",
         currentItem: guid(4),
         filter: guid(4),
+        permafilter: "",
         tagColors: {}
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -76,7 +77,7 @@ polymorph_core.registerOperator("inspectolist", {
             words: undefined,
             parent: undefined
         };
-        let wrds={};
+        let wrds = {};
         let re = /[#\w]+/g;
         let wrd = undefined;
         while (wrd = re.exec(currentText)) {
@@ -289,8 +290,8 @@ polymorph_core.registerOperator("inspectolist", {
                 upc.submit(cid);
                 if (e.target.innerText == "") {
                     //delete the item
-                    container.fire("deleteItem", { id: cid, sender: this });
                     deleteItem(cid);
+                    container.fire("deleteItem", { id: cid, sender: this });
                 } else {
                     polymorph_core.items[cid][this.settings.dumpProp] = e.target.innerText;
                     container.fire("updateItem", { id: cid, sender: this });
@@ -358,6 +359,13 @@ polymorph_core.registerOperator("inspectolist", {
             property: "dumpProp",
             label: "Property:"
         }),
+        permafilter: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "permafilter",
+            label: "Additional filter string:"
+        }),
         importTitle: new _option({
             div: this.dialogDiv,
             type: "text",
@@ -389,7 +397,12 @@ polymorph_core.registerOperator("inspectolist", {
     this.showDialog = () => {
         for (i in options) options[i].load();
     }
-
-
-
+    this.dialogUpdateSettings = () => {
+        for (let i in polymorph_core.items) {
+            if (this.itemRelevant(i)) updateRenderedItem(i);
+        }
+        container.fire("updateItem", { id: this.container.id });
+        // pull settings and update when your dialog is closed.
+    }
+    this.dialogUpdateSettings();
 });
