@@ -225,6 +225,7 @@ polymorph_core.on("UIstart", () => {
     contextMenuDialog.querySelector("textarea").addEventListener("input", () => {
         polymorph_core.currentDoc.globalContextMenuOptions = contextMenuDialog.querySelector("textarea").value.split("\n");
     });
+    polymorph_core.topbar.add("File");//add it so that it comes first before settings.
     polymorph_core.topbar.add("Settings/Context menu").addEventListener("click", () => {
         polymorph_core.dialog.prompt(contextMenuDialog);
     })

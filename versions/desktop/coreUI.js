@@ -70,17 +70,6 @@ polymorph_core.on("UIstart", () => {
     window.addEventListener("resize", () => {
         polymorph_core.baseRect.refresh();
     })
-    document.body.addEventListener("keydown", e => {
-        if ((e.ctrlKey || e.metaKey) && e.key == "s") {
-            e.preventDefault();
-            polymorph_core.userSave();
-            polymorph_core.unsaved = false;
-            //also do the server save
-
-            // success for green notification box, alert for red box. If second parameter is left out, the box is black
-            polymorph_core.showNotification('Saved', 'success');
-        }
-    });
 });
 
 polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {

@@ -1,9 +1,9 @@
-polymorph_core.registerSaveSource("srv", function (polymorph_core) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("srv", function (save_source_data) { // a sample save source, implementing a number of functions.
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
     this.prettyName = "Save to server";
     //initialise here
-    this.pushAll = async function (saveData, data) {
+    this.pushAll = async function (data) {
         //push to the source (force save)
-        let settings = polymorph_core.saveSourceData['srv'];
         let compressedData = polymorph_core.datautils.IDCompress.compress(data);
         let xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
@@ -11,16 +11,12 @@ polymorph_core.registerSaveSource("srv", function (polymorph_core) { // a sample
                 //alert("Save success!");
             }
         };
-        xmlhttp.open("POST", settings.saveTo, true);
+        xmlhttp.open("POST", this.settings.data.saveTo, true);
         xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xmlhttp.send(JSON.stringify(compressedData));
     }
-    let thisSourceSettings = (id) => {
-        if (!id) id = polymorph_core.currentDocID;
-        return polymorph_core.userData.documents[id].saveSources['websocket'];
-    };
+
     this.pullAll = async function () {
-        let settings = polymorph_core.saveSourceData['srv'];
         let xmlhttp = new XMLHttpRequest();
         let p = new Promise((resolve, reject) => {
             xmlhttp.onreadystatechange = function () {
@@ -44,56 +40,58 @@ polymorph_core.registerSaveSource("srv", function (polymorph_core) { // a sample
                 reject("An error occured...");
             }
         });
-        xmlhttp.open("GET", settings.loadFrom, true);
+        xmlhttp.open("GET", this.settings.data.loadFrom, true);
         xmlhttp.send();
         return p;
     }
-    this.hook = async function () {
-        //hook to pull changes and push changes. 
-        //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
-        //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
-        this.toSave = true;
-    }
 
     polymorph_core.on("userSave", (d) => {
-        if (this.toSave) {
-            this.pushAll(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['srv'], d);
+        if (this.settings.save) {
+            if (this.settings.data.throttle && this.settings.data.throttle != "") {
+                if (!this.settings.tmpthrottle) {
+                    this.settings.tmpthrottle = 0;
+                }
+                if (this.settings.tmpthrottle > Number(this.settings.data.throttle)) {
+                    this.settings.tmpthrottle = 0;
+                    this.pushAll(d);
+                } else {
+                    this.settings.tmpthrottle++;
+                }
+            } else {
+                this.pushAll(d);
+            }
             return true; //return true if we save
         } else {
             return false;
         }
     })
 
-    // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async function () {
-        //unhook previous hooks.
-        this.toSave = false;
-    }
-
     this.dialog = document.createElement("div");
-    let addrop = new _option({
-        div: this.dialog,
-        type: "text",
-        object: () => {
-            return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv
-        },
-        property: "saveTo",
-        label: "Full server save address (include document name)"
-    });
-    let loop = new _option({
-        div: this.dialog,
-        type: "text",
-        object: () => {
-            return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv
-        },
-        property: "loadFrom",
-        label: "Full server load address (include document name)"
-    });
+    polymorph_core.addToSaveDialog(this);
+    let ops = [
+        new _option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "saveTo",
+            label: "Full server save address (include document name)"
+        }),
+        new _option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "loadFrom",
+            label: "Full server load address (include document name)"
+        }),
+        new _option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "throttle",
+            label: "Throttle (leave blank for no throttling)"
+        })
+    ]
     this.showDialog = function () {
-        if (!polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv || typeof polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv != "object") {
-            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.srv = {};
-        }
-        addrop.load();
-        loop.load();
+        ops.forEach(i => i.load());
     }
 })

@@ -1,4 +1,5 @@
-polymorph_core.registerSaveSource("fb", function () { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("fb", function (instance) { // a sample save source, implementing a number of functions.
+  polymorph_core.saveSourceTemplate.call(this,instance);
   let me = this;
   this.prettyName = "Firebase (Real time collaboration)";
   this.createable = true;

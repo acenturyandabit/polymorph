@@ -130,6 +130,9 @@ function _topbar(parent, options) {
                 }
             }
         }
-        return addToList(domEl, base, bits[0]);
+        //check if the domelement already exists; it might
+        if (!base.querySelector(`[data-topbarname="${bits[0]}"]`)) {
+            return addToList(domEl, base, bits[0]);
+        }
     }
 }

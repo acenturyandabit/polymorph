@@ -1,11 +1,12 @@
-polymorph_core.registerSaveSource("lf", function (polymorph_core) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sample save source, implementing a number of functions.
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
     this.createable = true;
     this.prettyName = "Localforage (offline storage)";
-    this.pushAll = async function (id, data) {
-
+    this.pushAll = async function (data) {
+        //used by user to force push. 
     }
     this.pullAll = async function () {
-        let d = await localforage.getItem("__polymorph_" + polymorph_core.currentDocID);
+        let d = await localforage.getItem("__polymorph_" + save_source_data.data.id);
         return d;
     }
 
@@ -16,9 +17,13 @@ polymorph_core.registerSaveSource("lf", function (polymorph_core) { // a sample 
     </span>
     `;
     this.showDialog = function () {
-        this.dialog.querySelector(".svid").value = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['lf'];
+        if (!save_source_data.data.id)save_source_data.data.id=polymorph_core.currentDocID;
+        this.dialog.querySelector(".svid").value = save_source_data.data.id;
     }
-    this.hook = async function (id) {
+
+    polymorph_core.addToSaveDialog(this);
+
+    this.hook = async function () {
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -27,6 +32,7 @@ polymorph_core.registerSaveSource("lf", function (polymorph_core) { // a sample 
 
     polymorph_core.on("userSave", (d) => {
         if (this.toSave) {
+            this.pushAll(d);
             polymorph_core.savedOK = false;
             localforage.setItem("__polymorph_" + polymorph_core.currentDocID, d).then(() => {
                 polymorph_core.savedOK = true; /// SUPER HACKY PLS FORMALISE

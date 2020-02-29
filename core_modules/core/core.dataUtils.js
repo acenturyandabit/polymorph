@@ -165,16 +165,26 @@ polymorph_core.datautils.viewToItems = (obj) => {
 
 //called by docloading, and called when the preferences dialog is closed.
 
-polymorph_core.datautils.upgradeSaveData = function (id, source) {
-    let defaultDoc = { saveSources: {}, saveHooks: {}, loadHooks: {} };
-    Object.assign(defaultDoc, polymorph_core.userData.documents[id]);
-    polymorph_core.userData.documents[id] = defaultDoc;
-    if (source) {
-        if (!polymorph_core.userData.documents[id].saveSources[source]) {
-            //if the source didnt exist, then we assume it didnt exist and we hook it, unless explicitly stated otherwise.
-            polymorph_core.userData.documents[id].saveHooks[source] = true;
-            polymorph_core.userData.documents[id].loadHooks[source] = true;
+polymorph_core.datautils.upgradeSaveData = function (id) {
+    if (!polymorph_core.userData.documents[id])polymorph_core.userData.documents[id]={};
+    if (!polymorph_core.userData.documents[id].saveSources)polymorph_core.userData.documents[id].saveSources=[];
+    if (!polymorph_core.userData.documents[id].saveSources.length){
+        //old save source, we need to upgrade
+        let newSaveSources=[];
+        for (let i in polymorph_core.userData.documents[id].saveSources){
+            let new_save_source_record = {
+                load: (polymorph_core.userData.documents[id].loadHooks[i])?true:false,
+                save: (polymorph_core.userData.documents[id].saveHooks[i])?true:false,
+                data: polymorph_core.userData.documents[id].saveSources[i],
+                type: i
+            }
+            if (typeof new_save_source_record.data=='string'){
+                new_save_source_record.data={
+                    id:new_save_source_record.data
+                };
+            }
+            newSaveSources.push(new_save_source_record);
         }
-        polymorph_core.userData.documents[id].saveSources[source] = polymorph_core.userData.documents[id].saveSources[source] || id;
+        polymorph_core.userData.documents[id].saveSources=newSaveSources;
     }
 }

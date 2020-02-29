@@ -1,9 +1,13 @@
-# rationale for the save source query parameter
-So that links are transferrable to other users. unlike google, we can't just load everything from a single centralised source. so: always make the link shareable? If i enter the link from anywhere, if PM can fetch it it will fetch it? I feel like that's unrealistic for now. we can deal with it later. the perogative is to get default loading from WS working now.
-
-
 # Save sources
 Look in savesources/template.
+
+## Save source design
+
+4 basic functions of save sources:
+- I pull data from you, when asked.
+- I receive change orders from you, and push them to the user.
+- I push change orders to you, when I change
+- I push data to you, when I save.
 
 ## Flag
 Since savesources are standalone, their flags can be declared as `this.flag=value` in the instantiation.
@@ -13,13 +17,13 @@ Since savesources are standalone, their flags can be declared as `this.flag=valu
 ## Methods
 You can implement any number of the following methods, if not all of them.
 
-- async this.hook(): Sync the existing document with the one in the savesource (if necessary). Then:
+- async this.hook(sourceData): Sync the existing document with the one in the savesource (if necessary). Then:
     - If you do not handle live sync (e.g. a local storage), get ready to handle polymorph_core.on('userSave',(data)=>{});
     - If you do handle live sync (e.g. through a database), get ready to handle polymorph_core.on('updateItemSave',(id)=>{}). This will be called once polymorph_core is satisfied that the item has been updated.
         - Additionally, fire polymorph_core.fire('updateItemRemote',{d:id}) when you recieve and post an update. polymorph_core will keep track of updateItemRemote and updateItemSave to ensure there are no infinite loops.
-- async this.unhook(): Unsync the existing document, so that you don't respond to all the triggers you do above.
-- async this.pullAll(): Get a complete copy of the data from storage, and return it.
-- async this.pushAll(data): Push a complete copy of the data to storage. This is only called by the dialog, but you can use it for internal operations too.
+- async this.unhook(sourcedata): Unsync the existing document, so that you don't respond to all the triggers you do above.
+- async this.pullAll(sourceData): Get a complete copy of the data from storage, and return it.
+- async this.pushAll(sourceData,data): Push a complete copy of the data to storage. This is only called by the dialog, but you can use it for internal operations too.
 
 This is a little tricky to get right the first time - if you need help or inspiration, check out localforage2.js.
 
