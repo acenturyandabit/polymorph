@@ -83,13 +83,30 @@
         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push.apply(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources, sourcesToAdd);
 
         if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length == 0) {
-            confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Automatically add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.");
+            if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Automatically add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")){
+                polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
+                    {
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id:polymorph_core.currentDocID
+                        }
+                    }
+                )
+            };
         }
 
         let successfulLoads = 0;
-        for (let i of polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources) {
+        for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
+            let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
             if (!polymorph_core.saveSources[i.type]) {
-                alert(`Ack! Looks like the ${i.type} save source is not working right now.`);
+                if (confirm(`Ack! Looks like the ${i.type} save source is not working right now. Remove it?`)) {
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
+                    polymorph_core.saveUserData();
+                    u--;
+                };
+                continue;
             } else {
                 let newInstance = new polymorph_core.saveSources[i.type](i);
                 polymorph_core.saveSourceInstances.push(newInstance);
