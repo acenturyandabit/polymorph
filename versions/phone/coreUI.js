@@ -84,6 +84,12 @@ polymorph_core.on("UIsetup", () => {
             polymorph_core.toggleMenu(false);//hide on direct taps
         }
     });
+
+    document.querySelector(".viewdialog").addEventListener("click", () => {
+        let v=prompt("Switch to another view:");
+        if (v)polymorph_core.switchView(v);
+    });
+
     document.querySelector(".savesources").addEventListener("click", () => {
         polymorph_core.showSavePreferencesDialog();
     });
@@ -167,8 +173,4 @@ polymorph_core.topbar = {
     add: () => {
         return document.createElement("div");
     }
-}
-
-polymorph_core.switchView = () => {
-    return;
 }

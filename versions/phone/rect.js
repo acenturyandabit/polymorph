@@ -81,8 +81,9 @@ polymorph_core.rect = function (rectID) {
             else return polymorph_core;
         }
     })
-
     this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
+    //when resetting document it expects an outerdiv. remove this instead.
+    this.outerDiv=this.listContainer;
     this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
     this.tieRect = function (id) {
         polymorph_core.rects[id].listContainer = this.listContainer;
@@ -163,3 +164,10 @@ polymorph_core.rect = function (rectID) {
 
     this.toSaveData = () => { };
 };
+
+polymorph_core.switchView = (id) => {
+    polymorph_core.currentDoc.currentView=id;
+    document.querySelector("#rectList").children[0].remove();
+    document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
+    return;
+}

@@ -83,14 +83,14 @@
         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push.apply(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources, sourcesToAdd);
 
         if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length == 0) {
-            if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Automatically add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")){
+            if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Automatically add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")) {
                 polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
                     {
                         load: true,
                         save: true,
                         type: 'lf',
                         data: {
-                            id:polymorph_core.currentDocID
+                            id: polymorph_core.currentDocID
                         }
                     }
                 )
@@ -111,21 +111,20 @@
                 let newInstance = new polymorph_core.saveSources[i.type](i);
                 polymorph_core.saveSourceInstances.push(newInstance);
                 if (i.load) {
-                    try {
-                        d = await newInstance.pullAll();
-                        polymorph_core.integrateData(d, i.type);
-                        successfulLoads++;
-                    } catch (e) {
-                        alert("Something went wrong with the save source: " + e);
-                    }
+                    (async () => {
+                        try {
+
+                            d = await newInstance.pullAll();
+                            polymorph_core.integrateData(d, i.type);
+                        } catch (e) {
+                            alert("Something went wrong with the save source: " + e);
+                        }
+
+                    })();
                 }
             }
         }
-        if (successfulLoads == 0) {
-            //uhhh we probably want to load a new document or alert the user or something
-            alert(`Something went wrong and we weren't able to load anything. Please seek help.`);
-        }
-
+        //try and catch when there is no data at all
         for (let i of polymorph_core.saveSourceInstances) {
             if (i.unhook) i.unhook();
             if (i.settings.save) {
