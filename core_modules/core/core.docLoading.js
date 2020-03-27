@@ -280,7 +280,7 @@
 
         for (let i in data) {
             //shouldnt hurt to fire update on other items
-            polymorph_core.fire('updateItem', { id: i });
+            polymorph_core.fire('updateItem', { id: i , loadProcess:true});
         }
         //show the prevailing rect
         polymorph_core.switchView(polymorph_core.items._meta.currentView);

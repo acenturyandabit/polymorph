@@ -102,17 +102,24 @@ function _polymorph_core() {
             }
         }
         if (toDelete) {
+            //dont redelete old things, otherwise deleted things reused by other instances will constantly be updated to useless things.
+            let oldkeys = Object.keys(polymorph_core.items[id])
+            if (!(oldkeys.length == 1 && oldkeys[0] == "_lu_")) {
+                polymorph_core.items[id] = { _lu_: Date.now() }
+            }
             //flag it for future reuse.
-            polymorph_core.items[id] = { _lu_: Date.now() }
         }
     }
 
     this.on("__polymorph_core_deleteItem", (d) => {
         this.tryGarbageCollect(d.id);
     })
-
+    this.oldCache = {}; // literally a copy of polymorph_core.items.
     this.on("updateItem", (d) => {
-        if (!d.loadProcess) this.items[d.id]._lu_ = Date.now();
+        if (!d.loadProcess && !d.unedit) {
+            if (JSON.stringify(this.items[d.id]) != this.oldCache[d.id]) this.items[d.id]._lu_ = Date.now();
+        }
+        this.oldCache[d.id] = JSON.stringify(this.items[d.id]);
     })
 
     this.recreateGarbageList = () => {

@@ -18,7 +18,9 @@ polymorph_core.registerOperator("itemcluster2", {
 
 
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-    this.rootdiv.style.overflow="hidden";
+    this.rootdiv.style.cssText=`
+    overflow:hidden;
+    `;
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
     this.rootdiv.innerHTML = `
     <style>
@@ -79,8 +81,8 @@ polymorph_core.registerOperator("itemcluster2", {
         resize: none;
     }
     </style>
-<div>
-    <div class="itemcluster-container">
+<div style="height:100%">
+    <div class="itemcluster-container" style="height:100%; display:flex; flex-direction:column;">
         <div class="itemcluster-banner">
             <span class="topbar" style="user-select: none; color:white; background:rgb(113, 28, 156);">
                 <a>View:</a>

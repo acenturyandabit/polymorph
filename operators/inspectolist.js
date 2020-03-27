@@ -5,10 +5,12 @@ polymorph_core.registerOperator("inspectolist", {
 }, function (container) {
     let defaultSettings = {
         dumpProp: "description",
+        headerCopyProp: "title",
         currentItem: guid(4),
         filter: guid(4),
         permafilter: "",
-        tagColors: {}
+        tagColors: {},
+        scomCommands: []
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     this.rootdiv.style.color = "white";
@@ -94,12 +96,43 @@ polymorph_core.registerOperator("inspectolist", {
         }
         return currentFilter;
     }
+    let scombox = document.createElement("div");
+    this.rootdiv.insertBefore(scombox, searchEntryBox);
 
-    searchEntryBox.addEventListener("keydown", (e) => {
+    //slash command processing
+    let scomprocess = (command) => {
+        command = command.split(":");
+        switch (command[0]) {
+            case "filter":
+                //apply a global filter: change settings filter and fire update on all items.
+                for (let i in polymorph_core.items) {
+                    container.fire("updateItem", { id: i, unedit: true });
+                }
+                //add the command to the command list.
+                scombox.appendChild(htmlwrap(`<span>${command.join(":")}&nbsp;</span>`));
+                this.settings.scomCommands.push(command);
+                break;
+        }
+    }
+
+    let scommod = (item) => {
+        for (let i of this.settings.scomCommands) {
+            switch (i[0]) {
+                case "filter":
+                    if (!item[this.settings.dumpProp].includes(i[1])) {
+                        item[this.settings.dumpProp] += i[1];
+                    }
+            }
+        }
+    }
+
+    searchEntryBox.addEventListener("keyup", (e) => {
         if (e.key == "Enter" && e.getModifierState("Shift") == false) {
             //create a new item
             let it = {};
             it[this.settings.dumpProp] = e.target.innerText;
+            // perform scom modifications
+            scommod(it);
             it[this.settings.filter] = true;
             let id = polymorph_core.insertItem(it);
             container.fire("createItem", { id: id, sender: this });
@@ -109,21 +142,25 @@ polymorph_core.registerOperator("inspectolist", {
             this.rootdiv.querySelector(`[data-item="${id}"] [data-role="richtext"]`).focus();
             e.preventDefault();
         } else {
-
-        }
-    })
-    searchEntryBox.addEventListener("input", (e) => {
-        //perform searchfilter
-        currentFilter = generateFilter(e.target.innerText);
-        for (let i in this.currentFilters) {
-            if (similarish(this.currentFilters[i], currentFilter)) {
-                updateRenderedItem(i, true);
-            } else {
-                updateRenderedItem(i, false);
+            //check slash commands
+            let it = e.target.innerText;
+            let slashcomm = /\\(.+?)\\/g.exec(e.target.innerText);
+            if (slashcomm) {
+                scomprocess(slashcomm[1]);
+                it = it.replace(slashcomm[0], "");
+                e.target.innerText = it;
+            }
+            //perform searchfilter
+            currentFilter = generateFilter(it);
+            for (let i in this.currentFilters) {
+                if (similarish(this.currentFilters[i], currentFilter)) {
+                    updateRenderedItem(i, true);
+                } else {
+                    updateRenderedItem(i, false);
+                }
             }
         }
     })
-
 
     /*updateRenderedItem called when:
     updateItem: dont care about matched or not (persist)
@@ -183,6 +220,10 @@ polymorph_core.registerOperator("inspectolist", {
             let innerText = polymorph_core.items[id][this.settings.dumpProp];
             let toptext = `<span style="color:pink">#id:${id}; </span>`;
             toptext += innerText.split("\n")[0];
+            
+            polymorph_core.items[id][this.settings.headerCopyProp] = innerText.split("\n")[0];
+            container.fire('updateItem', { sender: this, id: id });
+
             let tagfilter = /#(\w+)(:[\w\d]+)?/g;
             let seenTags = {};
             while (result = tagfilter.exec(innerText)) {

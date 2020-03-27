@@ -27,6 +27,7 @@ var __manager_profiles = {
             ["calendar", "operators/calendar.js"],
             //["stack", "operators/stack.js"],
             ["terminal", "operators/terminal.js"],
+            ["richbox", "operators/richbox.js"],
             ["inspector", "operators/inspector.js"],
             ["inspectolist", "operators/inspectolist.js"],
             //["sorter", "operators/sorter.js"],
