@@ -33,11 +33,11 @@ function _polymorph_core() {
     })
 
     //Document level functions
-    this.updateSettings = () => {
+    this.updateSettings = (isLoading) => {
         this.documentTitleElement.innerText = this.items._meta.displayName;
         document.querySelector("title").innerHTML =
             this.items._meta.displayName + " - Polymorph";
-        this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
+        if (!isLoading)this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
         this.fire("updateSettings");
     };
 

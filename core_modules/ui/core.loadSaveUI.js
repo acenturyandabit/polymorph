@@ -178,7 +178,7 @@
     //a little nicety to warn user of unsaved items.
     polymorph_core.unsaved = false;
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.load) {//if event was not triggered by a loading action
+        if (!e || !e.loadProcess) {//if event was not triggered by a loading action
             polymorph_core.unsaved = true;
         }
     })

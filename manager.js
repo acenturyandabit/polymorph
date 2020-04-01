@@ -34,6 +34,7 @@ var __manager_profiles = {
             //["httree", "operators/httree.js"],
             //["chat", "operators/chat.js"],
             ["itemcluster", "operators/itemcluster.js"],
+            ["welcome", "operators/welcome.js"],
             //["turmach", "operators/turmach.js"],
             //["roundshow", "operators/roundshow.js"],
             //["tester", "operators/tester.js"],
