@@ -124,7 +124,7 @@ polymorph_core.container = function container(containerID) {
 
     //Interfacing with the underlying operator
     this.visible = () => {
-        return this.outerDiv.offsetHeight != 0;
+        return this.parent.containerVisible(containerID);
     }
 
     this.refresh = function () {
@@ -268,6 +268,7 @@ polymorph_core.container = function container(containerID) {
             for (let i in polymorph_core.items) {
                 if (otherContainer.operator.itemRelevant(i)) {
                     this._fire("createItem", { id: i, sender: this });
+                    this._fire("updateItem", { id: i, sender: this });
                 }
             }
         }

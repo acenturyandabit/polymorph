@@ -1,14 +1,15 @@
-polymorph_core.registerSaveSource("template", function () { // a sample save source, implementing a number of functions.
-
+polymorph_core.registerSaveSource("template", function (save_source_data) { // a sample save source, implementing a number of functions.
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
-    this.prettyName="NAME_TO_DISPLAY_IN_DIALOG"
+    this.prettyName="NAME_TO_DISPLAY_IN_DIALOG";
+    this.createable = true; // false if the user should not be able to create this data source.
     
 
 
     //optional function: given a set of urlparams, can you handle opening the file? If no, return false, do not implement, or delete.
     this.canHandle=function(params){
         //if you return true, be prepared to handle id as a set of urlparams instead.
-        //at which point, please do what you need to do to initialise, then change it to a url of the format ?doc=""&src=savesourcename
+        //at which point, please do what you need to do to initialise, then return {id: name_of_doc, source:data_you_need_to_load}
     }
 
     //ID will be a string if the object is loaded; otherwise a custom object that you have set in the past

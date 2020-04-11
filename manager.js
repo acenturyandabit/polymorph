@@ -27,6 +27,7 @@ var __manager_profiles = {
             ["calendar", "operators/calendar.js"],
             //["stack", "operators/stack.js"],
             ["terminal", "operators/terminal.js"],
+            ["collapsigant", "operators/collapsigant.js"],
             ["richbox", "operators/richbox.js"],
             ["inspector", "operators/inspector.js"],
             ["inspectolist", "operators/inspectolist.js"],
@@ -49,6 +50,7 @@ var __manager_profiles = {
         files: [
             ["outputToText", "saveSources/outputToText.js"],
             ["localforage2", "saveSources/localforage2.js"],
+            ["permalink", "saveSources/permalink.js"],
             ["firebase_savesource", "saveSources/firebase.js"],
             ["server", "saveSources/server.js"],
             ["gdrive", "saveSources/gdrive.js"],

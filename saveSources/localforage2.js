@@ -31,7 +31,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     }
 
     polymorph_core.on("userSave", (d) => {
-        if (this.toSave) {
+        if (save_source_data.save) {
             this.pushAll(d);
             polymorph_core.savedOK = false;
             localforage.setItem("__polymorph_" + polymorph_core.currentDocID, d).then(() => {

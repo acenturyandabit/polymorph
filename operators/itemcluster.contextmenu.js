@@ -74,6 +74,7 @@ function _itemcluster_extend_contextmenu(me) {
                         x: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
                         y: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
                         children: Object.keys(polymorph_core.items[i].to || {}),
+                        parents:[]
                     });
                 }
             }
@@ -93,39 +94,38 @@ function _itemcluster_extend_contextmenu(me) {
                             i--;
                         } else {
                             //assign the to item a parent
-                            visibleItems[pos].parent = _i;
+                            visibleItems[pos].parents.push(_i);
                         }
                     }
                 }
             })
             //figure out the level of the item (its level in the hierarchy)
+            let queue = [];
             for (let i = 0; i < visibleItems.length; i++) {
-                let stack = [];
-                if (visibleItems[i].level == undefined) {
-                    stack.push(i);
+                //identify root nodes, add them to the queue
+                if (visibleItems[i].parents.length==0) {
+                    queue.push.apply(queue,visibleItems[i].children);
+                    visibleItems[i].level = 0;
+                    visibleItems[i].parent=undefined;
                 }
-                while (stack.length) {
-                    let li = stack[stack.length - 1];
-                    if (visibleItems[li].level != undefined) {
-                        stack.pop();
-                        continue;
-                    }
-                    if (visibleItems[li].parent != undefined) {
-                        if (visibleItems[visibleItems[li].parent].level != undefined) {
-                            visibleItems[li].level = visibleItems[visibleItems[li].parent].level + 1;
-                            stack.pop();
-                        } else if (stack.indexOf(visibleItems[li].parent) != -1) {
-                            //cycle - abort
-                            visibleItems[li].level = 0;
-                            stack.pop();
-                        } else {
-                            stack.push(visibleItems[li].parent);
+            }
+            while (queue.length){
+                let top=queue.shift();
+                top=visibleItemIds.indexOf(top);
+                if (visibleItems[top].parents.reduce((p,i)=>p&visibleItems[i].level!=undefined,true)){
+                    //if all my parents have a defined level
+                    let maxmax=visibleItems[top].parents.reduce((p,i)=>{
+                        if (p[0]<visibleItems[i].level){
+                            p[0]=visibleItems[i].level;
+                            p[1]=i;
                         }
-                    } else {
-                        //I am a root node, set my level to 0
-                        visibleItems[li].level = 0;
-                        stack.pop();
-                    }
+                        return p;
+                    },[0,visibleItems[top].parents[0]]);
+                    visibleItems[top].level=maxmax[0]+1;
+                    visibleItems[top].parent=visibleItems[maxmax[1]].id;
+                    queue.push.apply(queue,visibleItems[top].children);
+                }else{
+                    queue.push(visibleItems[top].id);
                 }
             }
             return visibleItems;
@@ -147,13 +147,13 @@ function _itemcluster_extend_contextmenu(me) {
             function getWidth(id) {
                 let c = visibleItems[indexedOrder.indexOf(id)].children;
                 if (!c || !c.length) {
-                    return Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
+                    return Number(/\d+/.exec(me.itemPointerCache[id].children()[1].width())) + 10;
                 } else {
                     let sum = 0;
                     for (let i = 0; i < c.length; i++) {
-                        sum = sum + getWidth(c[i]);
+                        if (visibleItems[indexedOrder.indexOf(c[i])].parent==id)sum = sum + getWidth(c[i]);
                     }
-                    let alt = Number(/\d+/.exec(polymorph_core.items[id].boxsize.w)) + 10;
+                    let alt = Number(/\d+/.exec(me.itemPointerCache[id].children()[1].width())) + 10;
                     if (sum < alt) sum = alt;
                     return sum;
                 }
@@ -174,11 +174,11 @@ function _itemcluster_extend_contextmenu(me) {
             let currenty = e.clientY - rect.top;
 
             function render(itm, tx, ty) { // itm is a visibleItem
-                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(polymorph_core.items[itm.id].boxsize.w))) / 2;
+                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(me.itemPointerCache[itm.id].first().width))) / 2;
                 polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
                 let ctx = tx;
                 for (let i = 0; i < itm.children.length; i++) {
-                    ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
+                    if (visibleItems[indexedOrder.indexOf(itm.children[i])].parent==itm.id)ctx += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctx, ty + 200);
                 }
                 return itm.width;
             }
@@ -456,7 +456,7 @@ function _itemcluster_extend_contextmenu(me) {
             me.searchArray = [];
             for (let id in polymorph_core.items) {
                 if (me.itemIsOurs(id)) {
-                    if (polymorph_core.items[id].title && polymorph_core.items[id].title.includes(me.rootcontextMenu.querySelector(".search input").value)) {
+                    if (polymorph_core.items[id][this.settings.textProp] && polymorph_core.items[id][this.settings.textProp].includes(me.rootcontextMenu.querySelector(".search input").value)) {
                         me.searchArray.push(id);
                     }
                 }
@@ -649,7 +649,7 @@ function _itemcluster_extend_contextmenu(me) {
                     me.contextedElement.dataset.id
                 ].itemcluster.viewName = polymorph_core.items[
                     me.contextedElement.dataset.id
-                ].title;
+                ][this.settings.textProp];
                 me.switchView(me.contextedElement.dataset.id, true, true);
                 me.itemContextMenu.style.display = "none";
             });

@@ -13,12 +13,14 @@ polymorph_core.registerOperator("itemcluster2", {
         filter: guid(6),
         tray: false,
         createAcrossViews: true,
-        showNewViewButton: false
+        showNewViewButton: false,
+        textProp: "title",
+        focusExtendProp: "description"// when we focus, show this in a separate div
     };
 
 
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-    this.rootdiv.style.cssText=`
+    this.rootdiv.style.cssText = `
     overflow:hidden;
     `;
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.
@@ -80,6 +82,11 @@ polymorph_core.registerOperator("itemcluster2", {
         height:100%;
         resize: none;
     }
+
+    .tta, .ttb{
+        margin:0;
+    }
+
     </style>
 <div style="height:100%">
     <div class="itemcluster-container" style="height:100%; display:flex; flex-direction:column;">
@@ -116,7 +123,7 @@ polymorph_core.registerOperator("itemcluster2", {
     })
 
     this.tray.addEventListener("input", (e) => {
-        polymorph_core.items[e.target.parentElement.dataset.id].title = e.target.value;
+        polymorph_core.items[e.target.parentElement.dataset.id][this.settings.textProp] = e.target.value;
         container.fire('updateItem', { sender: this, id: e.target.parentElement.dataset.id });
     })
 
@@ -129,8 +136,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
     //////////////////////////// Focusing an item////////////////////
     container.on("focusItem", (d) => {
-        if (d.sender instanceof polymorph_core.operators["itemcluster2"].constructor) return;
-        //^ prevent focus teleport when multiple itemclusters with the same view are in play.
+        if (d.sender == this) return;
         if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[this.settings.currentViewName]) {
             polymorph_core.items[this.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
             polymorph_core.items[this.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
@@ -334,22 +340,24 @@ polymorph_core.registerOperator("itemcluster2", {
                         delete this.activeLines[i][j];
                     }
                 }
-            }
-            //reposition all items, also updating viewbox
-            for (i in polymorph_core.items) {
-                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    //invalidate cached style so it recolours them.
-                    this.cachedStyle[i] = undefined;
-                    if (this.arrangeItem) this.arrangeItem(i);
-                    //position the item appropriately.
+
+                //reposition all items, also updating viewbox
+                for (i in polymorph_core.items) {
+                    if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
+                        //invalidate cached style so it recolours them.
+                        this.cachedStyle[i] = undefined;
+                        if (this.arrangeItem) this.arrangeItem(i);
+                        //position the item appropriately.
+                    }
+                }
+                for (i in polymorph_core.items) {
+                    if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
+                        if (this.arrangeItem) this.arrangeItem(i);
+                        //twice so that all lines show up. How efficient.
+                    }
                 }
             }
-            for (i in polymorph_core.items) {
-                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    if (this.arrangeItem) this.arrangeItem(i);
-                    //twice so that all lines show up. How efficient.
-                }
-            }
+
             this.viewAdjust();
         }
     };
@@ -822,7 +830,7 @@ polymorph_core.registerOperator("itemcluster2", {
                     elements[i].parentElement.dataset.id != cid && (e.ctrlKey || e.metaKey)
                 ) {
                     let otherID = elements[i].parentElement.dataset.id;
-                    polymorph_core.items[otherID].itemcluster.viewName = polymorph_core.items[otherID].itemcluster.viewName || polymorph_core.items[otherID].title || otherID; //yay implicit ors
+                    polymorph_core.items[otherID].itemcluster.viewName = polymorph_core.items[otherID].itemcluster.viewName || polymorph_core.items[otherID][this.settings.textProp] || otherID; //yay implicit ors
                     polymorph_core.items[cid].itemcluster.viewData[otherID] = {
                         x: 0,
                         y: 0
@@ -853,11 +861,11 @@ polymorph_core.registerOperator("itemcluster2", {
             let elements = container.div.elementsFromPoint(e.clientX, e.clientY);
             for (let i = 0; i < elements.length; i++) {
                 if (
-                    elements[i].matches("p") &&
+                    elements[i].matches("foreignObject") &&
                     //p              fob        group
-                    elements[i].parentElement.parentElement.dataset.id != this.linkingDiv.dataset.id
+                    elements[i].parentElement.dataset.id != this.linkingDiv.dataset.id
                 ) {
-                    linkedTo = elements[i].parentElement.parentElement;
+                    linkedTo = elements[i].parentElement;
                     break;
                 }
             }
@@ -875,11 +883,13 @@ polymorph_core.registerOperator("itemcluster2", {
                 });
             }
         } else if (this.preselected) {
+            /*resizes don't exist anymore, dont do anything pls
             if (!polymorph_core.items[this.preselected.dataset.id].boxsize) polymorph_core.items[this.preselected.dataset.id].boxsize = {};
             bs = polymorph_core.items[this.preselected.dataset.id].boxsize;
             bs.w = this.preselected.children[0].style.width;
             bs.h = this.preselected.children[0].style.height;
             this.arrangeItem(this.preselected.dataset.id); // handle resizes
+            */
         }
     };
     this.itemSpace.addEventListener("mousedown", (e) => {
@@ -917,7 +927,7 @@ polymorph_core.registerOperator("itemcluster2", {
         let itm = {};
         //register it with the polymorph_core
         let id = polymorph_core.insertItem(itm);
-        itm.title = "";
+        itm[this.settings.textProp] = "";
         itm.itemcluster = {
             viewData: {},
         };
@@ -995,6 +1005,21 @@ polymorph_core.registerOperator("itemcluster2", {
         });
     };
 
+    container.on("deleteItem", (d) => {
+        if (d.sender == this) return;
+        let id = d.id;
+        delete polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName];
+        //hide all the lines
+        for (let i in this.activeLines) {
+            for (let j in this.activeLines[i]) {
+                if (i == id || j == id) {// this could STILL be done better
+                    this.toggleLine(i, j);
+                }
+            }
+        }
+        this.arrangeItem(id);
+    })
+
     this.tryFocus = function (id, fromContainer) {
         if (this.prevFocusID != id) {
             this.redrawLines(id, "red");
@@ -1003,6 +1028,18 @@ polymorph_core.registerOperator("itemcluster2", {
                 sender: this
             });
             this.redrawLines(this.prevFocusID); //clear old lines to black
+            //also show the rich property of the item
+            if (this.itemPointerCache[id]) {
+                let dvd = this.itemPointerCache[id].node.querySelector("div");
+                dvd.parentElement.setAttribute("height", dvd.scrollHeight);
+            }
+            //and unshow the rich property of the previously focused item
+            if (this.itemPointerCache[this.prevFocusID]) {
+                let dvd = this.itemPointerCache[this.prevFocusID].node.querySelector("div");
+                let tta = this.itemPointerCache[this.prevFocusID].node.querySelector("p.tta");
+                dvd.parentElement.setAttribute("height", tta.scrollHeight);
+            }
+
             this.prevFocusID = id;
         }
     }
@@ -1019,12 +1056,13 @@ polymorph_core.registerOperator("itemcluster2", {
         for (let i = 0; i < e.path.length; i++) {
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
-                polymorph_core.items[id].title = e.target.innerText;
+                if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
+                else polymorph_core.items[id][this.settings.focusExtendProp] = e.target.innerText;
                 container.fire("updateItem", {
                     id: id,
                     sender: this
                 });
-                let pp = e.target;
+                let pp = e.target.parentElement;
                 pp.style.width = (Math.sqrt(pp.innerText.length) + 1) * 23;
                 pp.parentElement.setAttribute("width", pp.scrollWidth);
                 pp.parentElement.setAttribute("height", pp.scrollHeight);
@@ -1045,7 +1083,7 @@ polymorph_core.registerOperator("itemcluster2", {
             `);
             this.tray.appendChild(cti);
         }
-        cti.querySelector("textarea").value = polymorph_core.items[id].title;
+        cti.querySelector("textarea").value = polymorph_core.items[id][this.settings.textProp];
     }
 
     this.removeFromTray = (id) => {
@@ -1150,6 +1188,13 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "showNewViewButton",
             label: "Show the 'Add new view button'."
+        }),
+        textProp: new _option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "textProp",
+            label: "Text property to display..."
         })
     }
     this.showDialog = () => {

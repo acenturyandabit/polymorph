@@ -8,10 +8,12 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         ret.y = (pageY - rels.y) / rels.height * vb.height + vb.y;
         return ret;
     }
+    let linePerformanceCache = {};// in start+end, cache [[x,y],[x,y]]
+
     me.arrangeItem = function (id) {
         let sel = me.rootdiv.getRootNode().getSelection();
         let prerange = null;
-        if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.parentElement.parentElement.dataset.id == id) {
+        if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
             let _prerange = sel.getRangeAt(0);
             prerange = {}
             let props = ["collapsed"
@@ -23,6 +25,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             props.forEach(i => {
                 prerange[i] = _prerange[i];
             })
+            prerange["node"] = _prerange.startContainer.parentElement;
         }
         //first, get the element(s)
         let previousHandle = me.itemPointerCache[id];
@@ -45,25 +48,38 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 let fob = me.svg.foreignObject(50, 20).x(10).y(-10);
                 previousHandle.add(fob);
                 me.itemPointerCache[id] = previousHandle;
-                fob.node.appendChild(htmlwrap("<p contenteditable style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'></p>"));
+                fob.node.appendChild(htmlwrap(`<div style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'><p contenteditable class="tta"></p><p style="background:white; color:black" contenteditable class="ttb"></p></div>`));
             }
-            //actually update
-            previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+            //actually update, only if necessary, to save processor time.
+            let positionChanged=Math.abs(previousHandle.x() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x) > 0.01 && Math.abs(previousHandle.y() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y) > 0.01;
+            if (positionChanged) {
+                previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+                //draw its lines
+            }
 
             //fill in the textarea inside
-            let tta = me.itemPointerCache[id].node.querySelector("p");
+            let tta = me.itemPointerCache[id].node.querySelector("p.tta");
+            let ttb = me.itemPointerCache[id].node.querySelector("p.ttb");
+            let dvd = me.itemPointerCache[id].node.querySelector("div");
             //let fob = me.itemPointerCache[id].children()[1];
             if (polymorph_core.items[id].style) { // dont update this if it hasn't changed.
                 if (JSON.stringify(polymorph_core.items[id].style) != JSON.stringify(me.cachedStyle[id])) {
-                    tta.style.background = polymorph_core.items[id].style.background || "";
-                    tta.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#ffffff'])[0]);
+                    dvd.style.background = polymorph_core.items[id].style.background || "";
+                    previousHandle.first().style("color", polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(tta).background) || ['#000000'])[0]));
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            tta.innerText = polymorph_core.items[id].title || "_";
-            tta.style.width = (Math.sqrt(tta.innerText.length) + 1) * 23;
-            tta.parentElement.setAttribute("width", tta.scrollWidth);
-            tta.parentElement.setAttribute("height", tta.scrollHeight);
+            if ((tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp])) {
+                tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
+                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
+                dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
+                dvd.parentElement.setAttribute("width", dvd.scrollWidth);
+                if (me.prevFocusID == id) {
+                    dvd.parentElement.setAttribute("height", dvd.scrollHeight);
+                } else {
+                    dvd.parentElement.setAttribute("height", tta.scrollHeight);
+                }
+            }
             //rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
             //add icons if necessary
@@ -96,8 +112,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 if (rect.node.children[0].querySelector(".subviewItemCount")) {
                     rect.node.children[0].querySelector(".subviewItemCount").remove();
                 }
+                positionChanged || !(linePerformanceCache[id])) && 
             }*/
-            //draw its lines
+
             if (polymorph_core.items[id].to) {
                 for (let i in polymorph_core.items[id].to) {
                     if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
@@ -109,10 +126,11 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     }
                 }
             }
+
             if (prerange) {
                 let newRange = new Range();
-                newRange.setStart(tta.childNodes[0], prerange.startOffset);
-                newRange.setEnd(tta.childNodes[0], prerange.endOffset);
+                newRange.setStart(prerange.node.childNodes[0], prerange.startOffset);
+                newRange.setEnd(prerange.node.childNodes[0], prerange.endOffset);
                 /*let props = ["collapsed"
                     , "commonAncestorContainer"
                     , "endContainer"
@@ -157,6 +175,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }
         }
     }
+
+
     me.enforceLine = function (start, end, style = "black") {
         let sd = me.itemPointerCache[start];
         let ed = me.itemPointerCache[end];
@@ -183,6 +203,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.hide();
             return;
         } else {
+            if (!(!(linePerformanceCache[start])
+                || !(linePerformanceCache[start][end])
+                || !(Math.abs(linePerformanceCache[start][end][0][0] - sd.x()) < 0.01)
+                || !(Math.abs(linePerformanceCache[start][end][0][1] - sd.y()) < 0.01)
+                || !(Math.abs(linePerformanceCache[start][end][1][0] - ed.x()) < 0.01)
+                || !(Math.abs(linePerformanceCache[start][end][1][1] - ed.y()) < 0.01)
+                || !(linePerformanceCache[start][end][2]==style)
+                )) return;
             let x = [sd.cx(), 0, ed.cx()];
             let y = [sd.cy(), 0, ed.cy()];
             x[1] = (x[0] + x[2]) / 2;
@@ -190,6 +218,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.plot(`M ${x[0]} ${y[0]} L ${x[1]} ${y[1]} L ${x[2]} ${y[2]}`);
             cp.stroke({ width: 2, color: style });
             cp.back();
+            if (!linePerformanceCache[start]) linePerformanceCache[start] = {};
+            linePerformanceCache[start][end] = [[sd.x(), sd.y()], [ed.x(), ed.y()],style];
         }
     };
 

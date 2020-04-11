@@ -4,9 +4,7 @@ polymorph_core.registerOperator("welcome", {
     hidden: true
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
-    let defaultSettings = {
-        somesetting: "somevalue"
-    };
+    let defaultSettings = {};
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);

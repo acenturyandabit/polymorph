@@ -102,7 +102,11 @@ function documentReady(f) {
 function htmlwrap(html, el) {
     let d = document.createElement(el || 'div');
     d.innerHTML = html;
-    if (d.children.length == 1) return d.children[0];
+    if (d.children.length == 1) {
+        let dd=d.children[0];
+        dd.remove();
+        return dd;
+    }
     else return d;
 }
 /*

@@ -48,8 +48,8 @@
             polymorph_core.currentDocID = params.get("doc");
         } else {
             for (let i in polymorph_core.saveSources) {
-                if (polymorph_core.saveSources[i].canHandle) {
-                    let result = await polymorph_core.saveSources[i].canHandle(params);
+                if (polymorph_core.saveSourceOptions[i].canHandle) {
+                    let result = await polymorph_core.saveSourceOptions[i].canHandle(params);
                     if (result) {
                         polymorph_core.currentDocID = result.id;
                         sourcesToAdd.push({
@@ -233,13 +233,16 @@
         polymorph_core.saveSourceInstances = [];
     }
 
-    polymorph_core.saveSources = [];
+    polymorph_core.saveSources = {};
+    polymorph_core.saveSourceOptions = {};
 
-    polymorph_core.registerSaveSource = function (id, f) {
+    polymorph_core.registerSaveSource = function (id, f, ops) {
         polymorph_core.saveSources[id] = f;
+        polymorph_core.saveSourceOptions[id]=ops || {};
         //create a wrapper for it in the loading dialog
-        //THIS IS A CROSSOVER. IT SHOULD NOT EXIST.
+        //THIS IS A CROSSOVER WITH loadsavedialog.js. Please formalise
         polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${id}</option>`));
+
     }
 
     polymorph_core.integrateData = function (data, source) { // source: string

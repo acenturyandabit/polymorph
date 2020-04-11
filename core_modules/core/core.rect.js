@@ -342,7 +342,6 @@ polymorph_core.rect = function (rectID) {
             if (el.dataset.containerid) {
                 this.pulledDiv = el;
                 this.startPulling = false;
-                break;
             }
             el = el.parentElement;
         }
@@ -670,6 +669,14 @@ polymorph_core.rect = function (rectID) {
         polymorph_core.rects[rectID].refresh();
     }
 
+    this.containerVisible=(id)=>{
+        return this.settings.s==id && (this.parent == polymorph_core || this.parent.visible());
+    }
+
+    this.visible=()=>{
+        if (this.parent==polymorph_core)return true;
+        else rturn (this.parentElement.visible());
+    }
 
     //events
     //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
