@@ -3,7 +3,7 @@ polymorph_core.registerOperator("turmach", {
     description: "A turn based state machine. For emulating very simple consciousnesses...?"
 }, function (container) {
     let me = this;
-    addEventAPI(this);
+    polymorph_core.addEventAPI(this);
     me.propertyName = 'turmach';//use turmach to store our data rather than itemcluster...
 
     me.container = container; //not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
@@ -317,7 +317,7 @@ polymorph_core.registerOperator("turmach", {
             }
             //If no views, make a new view to switch to.
             if (!switched) {
-                this.switchView(guid(4), true);
+                this.switchView(polymorph_core.guid(4), true);
             }
             //Show blank
         } else {
@@ -1596,14 +1596,14 @@ polymorph_core.registerOperator("turmach", {
       <button class="targeter">Select container</button>
       `;
     let options = {
-        tray: new _option({
+        tray: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "tray",
             label: "Show item tray"
         }),
-        filter: new _option({
+        filter: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,

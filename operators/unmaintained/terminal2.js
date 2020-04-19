@@ -4,7 +4,7 @@ polymorph_core.registerOperator("terminal2", {
 }, function (container) {
     let defaultSettings = {
         queryHistory:[],
-        filter:guid(4),
+        filter:polymorph_core.guid(4),
         userFilters: {}
     };
 

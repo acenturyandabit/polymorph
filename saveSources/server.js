@@ -69,21 +69,21 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
     this.dialog = document.createElement("div");
     polymorph_core.addToSaveDialog(this);
     let ops = [
-        new _option({
+        new polymorph_core._option({
             div: this.dialog,
             type: "text",
             object: this.settings.data,
             property: "saveTo",
             label: "Full server save address (include document name)"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialog,
             type: "text",
             object: this.settings.data,
             property: "loadFrom",
             label: "Full server load address (include document name)"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialog,
             type: "text",
             object: this.settings.data,

@@ -75,7 +75,7 @@ polymorph_core.registerOperator("scriptrunner", {
         this.clearInterval = (n) => {
             if (this.intervals[n]) this.intervals[n].f = undefined;
         }
-        addEventAPI(this, this.logEx);
+        polymorph_core.addEventAPI(this, this.logEx);
     }
     setInterval(() => {
         if (this.currentInstance) this.currentInstance.intervals.forEach(i => {
@@ -128,20 +128,20 @@ polymorph_core.registerOperator("scriptrunner", {
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS IN GENERAL!`;
     let ops = [
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "autorun",
             label: "Autorun on start"
-        }), new _option({
+        }), new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "reallyAutorun",
             label: "Confirm autorun on start"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,

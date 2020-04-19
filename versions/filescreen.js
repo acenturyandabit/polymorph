@@ -32,7 +32,7 @@ polymorph_core.filescreen.baseDiv.querySelector(".mknu").addEventListener("click
     let template = polymorph_core.filescreen.baseDiv.querySelector(".tmplt").value;
     let source = polymorph_core.filescreen.baseDiv.querySelector(".source").value;
     let nm = polymorph_core.filescreen.baseDiv.querySelector("[data-role='nm']").value || "New Workspace";
-    let id = guid(5);
+    let id = polymorph_core.guid(5);
     //redirect to a creation URL, thats all
     let newURL=window.location.href.split("?")[0];
     newURL+=`?doc=${id}&src=${source}`;

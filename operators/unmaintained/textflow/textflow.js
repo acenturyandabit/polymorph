@@ -4,7 +4,7 @@ polymorph_core.registerOperator("textflow", {
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
-        itemRootProperty: "textflow_irp_" + guid(5),
+        itemRootProperty: "textflow_irp_" + polymorph_core.guid(5),
         titleProperty: "title",
         richtextProperty: "description",
         renderMode: "templateStrings",
@@ -258,14 +258,14 @@ polymorph_core.registerOperator("textflow", {
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = ``;
     let options = {
-        oneTimeImport: new _option({
+        oneTimeImport: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "oneTimeImport",
             label: "Filter for one time import"
         }),
-        importNow: new _option({
+        importNow: new polymorph_core._option({
             div: this.dialogDiv,
             type: "button",
             fn: () => {
@@ -280,7 +280,7 @@ polymorph_core.registerOperator("textflow", {
             },
             label: "Import now"
         }),
-        print: new _option({
+        print: new polymorph_core._option({
             div: this.dialogDiv,
             type: "button",
             fn: () => {
@@ -293,7 +293,7 @@ polymorph_core.registerOperator("textflow", {
             },
             label: "Print this document"
         }),
-        renderMode: new _option({
+        renderMode: new polymorph_core._option({
             div: this.dialogDiv,
             type: "select",
             object: this.settings,

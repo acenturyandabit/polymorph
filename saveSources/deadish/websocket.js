@@ -58,14 +58,14 @@ polymorph_core.registerSaveSource("websocket", function () { // a sample save so
 
 
     this.dialog = document.createElement("div");
-    let addrop = new _option({
+    let addrop = new polymorph_core._option({
         div: this.dialog,
         type: "text",
         object: thisSourceSettings,
         property: "saveTo",
         label: "Full server save address (include ws entrypoint)"
     });
-    let loop = new _option({
+    let loop = new polymorph_core._option({
         div: this.dialog,
         type: "text",
         object: thisSourceSettings,

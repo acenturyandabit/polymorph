@@ -548,7 +548,7 @@ polymorph_core.registerOperator(
     <p>Only show items with the following property:</p>
     <input class="filterclass"></input>
     `;
-    let attr = new _option({
+    let attr = new polymorph_core._option({
       div: me.dialogDiv,
       type: "text",
       object: me.settings,

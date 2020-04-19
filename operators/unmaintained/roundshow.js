@@ -7,7 +7,7 @@ polymorph_core.registerOperator("roundshow", {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
     this.settings = {
-        filter: guid(),
+        filter: polymorph_core.guid(),
         nameProp: "title",
         confidenceProp: "confidence"
     };
@@ -316,20 +316,20 @@ polymorph_core.registerOperator("roundshow", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    let ops = [new _option({
+    let ops = [new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "filter",
         label: "Filter items by:"
-    }), new _option({
+    }), new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "nameProp",
         label: "Property to use for name:"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,

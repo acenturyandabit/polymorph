@@ -202,42 +202,42 @@
             this.dialogDiv = document.createElement("div");
 
             let ops = [
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "text",
                     object: this.settings,
                     property: "titleproperty",
                     label: "Enter the title property:"
                 }),
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
                     label: "Enter the title property:"
                 }),
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
                     object: this.settings,
                     property: "pushnotifs",
                     label: "Show push notifications?"
                 }),
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
                     object: this.settings,
                     property: "wsOn",
                     label: "Send events to a websocket?"
                 }),
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "text",
                     object: this.settings,
                     property: "wsurl",
                     label: "Websocket address"
                 }),
-                new _option({
+                new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
                     object: this.settings,

@@ -254,21 +254,21 @@ polymorph_core.registerOperator("calendar2", {
         <input data-role='titleproperty' placeholder="Enter the property for calendar item names.">
         `;
 
-        let ops = [new _option({
+        let ops = [new polymorph_core._option({
                 div: this.dialogDiv,
                 type: "bool",
                 object: this.settings,
                 property: "pushnotifs",
                 label: "Show push notifications?"
             }),
-            new _option({
+            new polymorph_core._option({
                 div: this.dialogDiv,
                 type: "bool",
                 object: this.settings,
                 property: "wsOn",
                 label: "Send events to a websocket?"
             }),
-            new _option({
+            new polymorph_core._option({
                 div: this.dialogDiv,
                 type: "text",
                 object: this.settings,

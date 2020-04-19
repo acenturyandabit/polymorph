@@ -85,7 +85,7 @@ polymorph_core.registerOperator("timer", {
     this.dialogDiv.innerHTML = ``;
     //select
     let opts = [
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "select",
             object: this.settings,
@@ -93,28 +93,28 @@ polymorph_core.registerOperator("timer", {
             source: ["focus", "standalone"],
             label: "Operation mode"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "timerTotalProp",
             label: "Focus property"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "startLock",
             label: "Lock focus on start"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "pushnotifs",
             label: "Show notifications?"
         }),
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,

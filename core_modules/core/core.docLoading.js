@@ -72,7 +72,7 @@
         }
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
-            polymorph_core.currentDocID = guid(6, polymorph_core.userData.documents);
+            polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
             //add a local save source automatically; and then the user can add more save sources if they'd like
             polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
             polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
@@ -188,7 +188,7 @@
             //if still not good, then add a new views
             if (!(data._meta.currentView && data[data._meta.currentView]._rd)) {
                 //Add our first rect
-                let newRectID = guid(6, data);
+                let newRectID = polymorph_core.guid(6, data);
                 data[newRectID] = {
                     _rd: { //we need some initial data otherwise rect deletion gets weird
                         x: 0,
@@ -199,7 +199,7 @@
                 data._meta.currentView = newRectID;
 
                 //Also add an operator
-                let newOperatorID = guid(6, data);
+                let newOperatorID = polymorph_core.guid(6, data);
                 data[newOperatorID] = {
                     _od: { t: "opSelect", p: newRectID }
                 }
@@ -244,6 +244,15 @@
         polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${id}</option>`));
 
     }
+
+    polymorph_core.switchView = function (view) {
+        polymorph_core.items._meta.currentView = view;
+        while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
+        document.body.querySelector(".rectspace").appendChild(polymorph_core.rects[polymorph_core.items._meta.currentView].outerDiv);
+        //reset and present a view
+        polymorph_core.rects[polymorph_core.items._meta.currentView].refresh();
+    };
+    
 
     polymorph_core.integrateData = function (data, source) { // source: string
         //sanity check, decompress etc the data

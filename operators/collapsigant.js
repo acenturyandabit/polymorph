@@ -7,7 +7,7 @@ polymorph_core.registerOperator("collapsigant", {
         windowStart:Date.now(),
         scalingFactor:1000*60*60*24/50, // one day is 50 px
         zeroMS: 1000*60*60*24, // how long zero width is
-        filter:guid(6)
+        filter:polymorph_core.guid(6)
     };
 
     //this.rootdiv, this.settings, this.container instantiated here.

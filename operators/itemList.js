@@ -5,7 +5,7 @@ polymorph_core.registerOperator("itemList", function (container) {
             title: "text"
         },
         propertyWidths: {},
-        filter: guid(),
+        filter: polymorph_core.guid(),
         enableEntry: true,
         implicitOrder: true,
         linkProperty: "to"
@@ -605,21 +605,21 @@ polymorph_core.registerOperator("itemList", function (container) {
     <button class="targeter">Select container</button>
     `;
     let options = {
-        entryok: new _option({
+        entryok: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "enableEntry",
             label: "Enable adding new items"
         }),
-        implicitOrder: new _option({
+        implicitOrder: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "implicitOrder",
             label: "Implicit ordering"
         }),
-        linkProperty: new _option({
+        linkProperty: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,

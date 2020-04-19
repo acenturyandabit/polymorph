@@ -5,7 +5,7 @@ polymorph_core.registerOperator("richbox", {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         rowIDs:[''],
-        filter: guid(4)
+        filter: polymorph_core.guid(4)
     };
 
     //this.rootdiv, this.settings, this.container instantiated here.

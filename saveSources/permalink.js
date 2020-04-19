@@ -25,7 +25,7 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) { // 
                         if(xmlhttp.status == 200) {
                             try{
                                 var obj = JSON.parse(xmlhttp.responseText);
-                                let tempID = guid(6,polymorph_core.userData.documents);
+                                let tempID = polymorph_core.guid(6,polymorph_core.userData.documents);
                                 obj._meta.id=tempID;
                                 res({id: tempID, source:obj});
                             }catch (e){

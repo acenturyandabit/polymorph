@@ -1,13 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////
 //View level functions
 
-polymorph_core.switchView = function (view) {
-    polymorph_core.items._meta.currentView = view;
-    while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
-    document.body.querySelector(".rectspace").appendChild(polymorph_core.rects[polymorph_core.items._meta.currentView].outerDiv);
-    //reset and present a view
-    polymorph_core.rects[polymorph_core.items._meta.currentView].refresh();
-};
 
 
 polymorph_core.resetView = function () {
@@ -50,14 +43,14 @@ polymorph_core.on("UIstart", () => {
         polymorph_core.baseRect.refresh();
     })
     d.querySelector(".nvu").addEventListener("click", () => {
-        let newViewName = guid();
-        while (polymorph_core.currentDoc.views[newViewName]) newViewName = guid();
+        let newViewName = polymorph_core.guid();
+        while (polymorph_core.currentDoc.views[newViewName]) newViewName = polymorph_core.guid();
         polymorph_core.currentDoc.views[newViewName] = {};
         d.querySelector(".views").appendChild(htmlwrap(`<option>${newViewName}</option>`));
     })
     d.querySelector(".clnvu").addEventListener("click", () => {
-        let newViewName = guid();
-        while (polymorph_core.currentDoc.views[newViewName]) newViewName = guid();
+        let newViewName = polymorph_core.guid();
+        while (polymorph_core.currentDoc.views[newViewName]) newViewName = polymorph_core.guid();
         polymorph_core.currentDoc.views[newViewName] = JSON.parse(JSON.stringify(polymorph_core.currentDoc.views[polymorph_core.userData.documents[polymorph_core.currentDocID].currentView]));
         d.querySelector(".views").appendChild(htmlwrap(`<option>${newViewName}</option>`));
     })

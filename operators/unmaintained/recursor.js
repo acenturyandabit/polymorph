@@ -4,7 +4,7 @@ polymorph_core.registerOperator("template", {
 }, function (container) {
     let me = this;
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
-    this.settings = {polymorph_corel:guid(7)};
+    this.settings = {polymorph_corel:polymorph_core.guid(7)};
     polymorph_core.items[this.settings.polymorph_corel]={};
     this.rootdiv = document.createElement("div");
     //Add content-independent HTML here. fromSaveData will be called if there are any items to load.

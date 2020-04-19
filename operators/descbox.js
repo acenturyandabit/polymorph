@@ -174,7 +174,9 @@ polymorph_core.registerOperator("descbox", {
         }
     })
     //Register changes with polymorph_core
-    this.somethingwaschanged = () => {
+    this.somethingwaschanged = (e) => {
+        //Check ctrl-S so that we dont save then
+        if (e.key=="Control" || e.key=="Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s"))return;
         if (this.settings.operationMode != "putter") {
             upc.submit(this.settings.currentID, this.textarea.value);
         }
@@ -201,7 +203,7 @@ polymorph_core.registerOperator("descbox", {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     let options = {
-        operationMode: new _option({
+        operationMode: new polymorph_core._option({
             div: this.dialogDiv,
             type: "select",
             object: this.settings,
@@ -213,35 +215,35 @@ polymorph_core.registerOperator("descbox", {
             },
             label: "Select operation mode:"
         }),
-        staticItem: new _option({
+        staticItem: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "staticItem",
             label: "Static item to display:"
         }),
-        property: new _option({
+        property: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "property",
             label: "Property of item to display:"
         }),
-        property: new _option({
+        property: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "auxProperty",
             label: "Auxillary property to display:"
         }),
-        showWordCount: new _option({
+        showWordCount: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "showWordCount",
             label: "Show wordcount?"
         }),
-        showTags: new _option({
+        showTags: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,

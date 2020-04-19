@@ -2,7 +2,7 @@ polymorph_core.registerOperator("itemcluster2", {
     displayName: "Itemcluster 2",
     description: "A brainstorming board. Add items, arrange them, and connect them with lines."
 }, function (container) {
-    addEventAPI(this);
+    polymorph_core.addEventAPI(this);
 
     let defaultSettings = {
         itemcluster: {
@@ -10,7 +10,7 @@ polymorph_core.registerOperator("itemcluster2", {
             cy: 0,
             scale: 1
         },
-        filter: guid(6),
+        filter: polymorph_core.guid(6),
         tray: false,
         createAcrossViews: true,
         showNewViewButton: false,
@@ -294,7 +294,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             //If no views, make a new view to switch to.
             if (!switched) {
-                this.switchView(guid(4), true);
+                this.switchView(polymorph_core.guid(4), true);
             }
             //Show blank
         } else {
@@ -1161,35 +1161,35 @@ polymorph_core.registerOperator("itemcluster2", {
       </select>
       `;
     let options = {
-        tray: new _option({
+        tray: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "tray",
             label: "Show item tray"
         }),
-        filter: new _option({
+        filter: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "filter",
             label: "Filter items by string:"
         }),
-        createAcrossViews: new _option({
+        createAcrossViews: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "createAcrossViews",
             label: "Create items across all views, always"
         }),
-        showNewViewButton: new _option({
+        showNewViewButton: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "showNewViewButton",
             label: "Show the 'Add new view button'."
         }),
-        textProp: new _option({
+        textProp: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,

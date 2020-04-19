@@ -500,19 +500,19 @@ polymorph_core.registerOperator("terminal", {
         <button class="wsset">Set websocket</button>
     `;
     let ops = [
-        new _option({
+        new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "echoOn",
             label: "Echo commands"
-        }), new _option({
+        }), new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "wsautocon",
             label: "Autoconnect websocket on disconnect"
-        }), new _option({
+        }), new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,

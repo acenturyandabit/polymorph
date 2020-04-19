@@ -6,7 +6,7 @@ polymorph_core.registerOperator("tester", {
     me.container = container;//not strictly compulsory bc this is expected and automatically enforced - just dont touch it pls.
 
     this.settings = {
-        filter: guid(),
+        filter: polymorph_core.guid(),
         testing: true,
         validateTestInput: true,
         inputParent: "",
@@ -398,49 +398,49 @@ polymorph_core.registerOperator("tester", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    let ops = [new _option({
+    let ops = [new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "filter",
         label: "Filter items by:"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "bool",
         object: this.settings,
         property: "testing",
         label: "Testing or Entry"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "bool",
         object: this.settings,
         property: "validateTestInput",
         label: "Validate input? (vs manual validation)"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "parentItem",
         label: "Parent item to test from"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "cardAProp",
         label: "Card A Property"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "text",
         object: this.settings,
         property: "cardBProp",
         label: "Card B property"
     }),
-    new _option({
+    new polymorph_core._option({
         div: this.dialogDiv,
         type: "bool",
         object: this.settings,

@@ -151,7 +151,7 @@ documentReady(() => {
 
     /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
         // create a new workspace, then load it
-        window.location.href += "?doc=" + guid(7) + "&src=lf";
+        window.location.href += "?doc=" + polymorph_core.guid(7) + "&src=lf";
     })*/
 
 

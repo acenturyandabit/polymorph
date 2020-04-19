@@ -1,3 +1,40 @@
+async function inductor(_settings) {
+  let settings = {
+      fn: (i) => { return i },
+      data: [],
+      numPerRound: 20,
+      roundTime: 300,
+      asyncMode: "sync" // or 'await' - await each one; or 'promise_all'. - (promise_all is actually the same as sync ;))
+  }
+  Object.assign(settings, _settings);
+  let total = 0;
+  let results = [];
+  return new Promise((res) => {
+      async function doWork() {
+          if (total > settings.data.length) {
+              res(await Promise.all(results));
+              return;
+          } else {
+              for (let i = 0; i < settings.numPerRound; i++) {
+                  total++;
+                  if (total>=settings.data.length)break;
+                  switch (settings.asyncMode) {
+                      case "sync":
+                      case "promise_all":
+                          results.push(settings.fn(settings.data[total]));
+                          break;
+                      case 'await':
+                          results.push(await settings.fn(settings.data[total]));
+                          break;
+                  }
+              }
+              setTimeout(doWork, settings.roundTime);
+          }
+      }
+      doWork();
+  })
+}
+
 polymorph_core.registerSaveSource("fb", function (instance) { // a sample save source, implementing a number of functions.
   polymorph_core.saveSourceTemplate.call(this,instance);
   let me = this;
@@ -84,7 +121,7 @@ polymorph_core.registerSaveSource("fb", function (instance) { // a sample save s
       let ourfbID;
       if (polymorph_core.items._meta) {
         if (!polymorph_core.items._meta.fbID) {
-          polymorph_core.items._meta.fbID = Date.now() + "_" + guid(10); // hopefully unique...
+          polymorph_core.items._meta.fbID = Date.now() + "_" + polymorph_core.guid(10); // hopefully unique...
         }
         ourfbID = polymorph_core.items._meta.fbID;
       } else {
@@ -183,7 +220,7 @@ polymorph_core.registerSaveSource("fb", function (instance) { // a sample save s
   };
   this.dialog = document.createElement("div");
   let generatedURL = htmlwrap(`<input placeholder="URL for sharing"></input>`);
-  me.ops = [new _option({
+  me.ops = [new polymorph_core._option({
     div: this.dialog,
     type: "text",
     object: () => {
@@ -195,7 +232,7 @@ polymorph_core.registerSaveSource("fb", function (instance) { // a sample save s
       generatedURL.value = location.origin + location.pathname + `?doc=${e.currentTarget.value}&src=fb`;
     }
   }),
-  new _option({
+  new polymorph_core._option({
     div: this.dialog,
     type: "button",
     fn: async () => {

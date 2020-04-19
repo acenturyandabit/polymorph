@@ -1,9 +1,8 @@
+
+
 function _itemcluster_extend_contextmenu(me) {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
-    scriptassert([
-        ["contextmenu", "genui/contextMenu.js"]
-    ], () => {
         let contextMenuManager = new _contextMenuManager(me.rootdiv);
         let centreXY = {};
         function chk(e) {
@@ -667,5 +666,4 @@ function _itemcluster_extend_contextmenu(me) {
             me.container.fire("updateItem", { id: me.trayContextedElement });
             me.trayContextMenu.style.display = "none";
         })
-    });
 }

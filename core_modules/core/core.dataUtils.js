@@ -121,7 +121,7 @@ polymorph_core.datautils.viewToItems = (obj) => {
             obj._od.p = parent;
         }
         //ID is needed before subframe processing
-        let newID = guid(6, newObj);
+        let newID = polymorph_core.guid(6, newObj);
         newObj[newID] = obj;
         //you need to deal with subrects here as well ://)
         if (obj._od.t == "subframe") {
@@ -140,7 +140,7 @@ polymorph_core.datautils.viewToItems = (obj) => {
         } else if (parent) {
             obj._rd.p = parent;
         }
-        let newID = guid(6, newObj);
+        let newID = polymorph_core.guid(6, newObj);
         newObj[newID] = {};//stake claim to the newID
         if (r.c) {
             createObjectFromRect(r.c[0], newID);

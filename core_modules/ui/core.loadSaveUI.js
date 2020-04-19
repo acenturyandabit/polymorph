@@ -5,9 +5,7 @@
         //upgrade older save systems
         let d = polymorph_core.items;
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
-        polymorph_core.filescreen.saveRecentDocument(polymorph_core.currentDocID, undefined, polymorph_core.items._meta.displayName);
         //trigger saving on all save sources
-        polymorph_core.garbageClean();
         polymorph_core.fire("userSave", d);
     };
 
@@ -50,7 +48,7 @@
           `;
 
 
-        let autosaveOp = new _option({
+        let autosaveOp = new polymorph_core._option({
             div: polymorph_core.loadInnerDialog,
             type: "bool",
             object: () => {

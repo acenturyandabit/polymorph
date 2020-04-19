@@ -86,7 +86,7 @@ polymorph_core.container = function container(containerID) {
     //inner div. for non shadow divs. has a uuid for an id so that it can be referred to uniquely by the operator. (this is pretty redundant imo)
     this.innerdiv = document.createElement("div");
     this.outerDiv.appendChild(this.innerdiv);
-    this.innerdiv.id = guid(12);
+    this.innerdiv.id = polymorph_core.guid(12);
 
     //shadow root.
     this.shader = document.createElement("div");
@@ -132,7 +132,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     //event remapping
-    addEventAPI(this);
+    polymorph_core.addEventAPI(this);
     this._fire = this.fire;
 
     this.fire = (e, args) => {
@@ -157,6 +157,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     polymorph_core.on("*", (args, e) => {
+        if (e=="documentCreated")return;
         if (this.settings) {
             //occasionally when containers are deleted this will throw errors. so dont();
             e.forEach(e => {

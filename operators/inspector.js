@@ -385,7 +385,7 @@ polymorph_core.registerOperator("inspector", {
     this.dialogDiv.appendChild(this.optionsDiv);
     this.optionsDiv.style.width = "30vw";
     let options = {
-        operationMode: new _option({
+        operationMode: new polymorph_core._option({
             div: this.optionsDiv,
             type: "select",
             object: this.settings,
@@ -396,42 +396,42 @@ polymorph_core.registerOperator("inspector", {
             },
             label: "Select operation mode:"
         }),
-        currentItem: new _option({
+        currentItem: new polymorph_core._option({
             div: this.optionsDiv,
             type: "text",
             object: this.settings,
             property: "currentItem",
             label: "Set item to display:"
         }),
-        focusOperatorID: new _option({
+        focusOperatorID: new polymorph_core._option({
             div: this.optionsDiv,
             type: "text",
             object: this.settings,
             property: "focusOperatorID",
             label: "Set container UID to focus from:"
         }),
-        orientation: new _option({
+        orientation: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,
             property: "orientation",
             label: "Horizontal orientation"
         }),
-        showNonexistent: new _option({
+        showNonexistent: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,
             property: "showNonexistent",
             label: "Show enabled but not currently filled fields"
         }),
-        commitChanges: new _option({
+        commitChanges: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,
             property: "commitChanges",
             label: "Manually commit changes",
         }),
-        dataEntry: new _option({
+        dataEntry: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,
@@ -447,7 +447,7 @@ polymorph_core.registerOperator("inspector", {
                 }
             }
         }),
-        dataEntry: new _option({
+        dataEntry: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,

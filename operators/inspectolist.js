@@ -6,8 +6,8 @@ polymorph_core.registerOperator("inspectolist", {
     let defaultSettings = {
         dumpProp: "description",
         headerCopyProp: "title",
-        currentItem: guid(4),
-        filter: guid(4),
+        currentItem: polymorph_core.guid(4),
+        filter: polymorph_core.guid(4),
         permafilter: "",
         tagColors: {},
         scomCommands: []
@@ -386,49 +386,49 @@ polymorph_core.registerOperator("inspectolist", {
         }
     }
     let options = {
-        filter: new _option({
+        filter: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "filter",
             label: "Filter:"
         }),
-        dumpProp: new _option({
+        dumpProp: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "dumpProp",
             label: "Property:"
         }),
-        permafilter: new _option({
+        permafilter: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "permafilter",
             label: "Additional filter string:"
         }),
-        importTitle: new _option({
+        importTitle: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.importSys,
             property: "importTitle",
             label: "Import title property:"
         }),
-        importDesc: new _option({
+        importDesc: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.importSys,
             property: "importDesc",
             label: "Import description properties (csv):"
         }),
-        importFilter: new _option({
+        importFilter: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.importSys,
             property: "importFilter",
             label: "Import filter property:"
         }),
-        importNow: new _option({
+        importNow: new polymorph_core._option({
             div: this.dialogDiv,
             type: "button",
             label: "Import now",

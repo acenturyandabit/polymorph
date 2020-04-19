@@ -173,14 +173,14 @@ polymorph_core.registerOperator("workflow", {
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = ``;
     let options = {
-        oneTimeImport: new _option({
+        oneTimeImport: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "oneTimeImport",
             label: "Filter for one time import"
         }),
-        implicitOrder: new _option({
+        implicitOrder: new polymorph_core._option({
             div: this.dialogDiv,
             type: "button",
             fn: () => {

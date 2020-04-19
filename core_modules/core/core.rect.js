@@ -330,7 +330,6 @@ polymorph_core.rect = function (rectID) {
             //nerf the item
             delete polymorph_core.containers[containerid];
             delete polymorph_core.items[containerid]._od;
-            polymorph_core.tryGarbageCollect(containerid);
         }
     })
 
@@ -518,7 +517,7 @@ polymorph_core.rect = function (rectID) {
         //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
         //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
         let collatedItems = polymorph_core.items;
-        tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${guid(5)}","views":{"default":{
+        tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
         "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
     })*/
 
@@ -529,7 +528,6 @@ polymorph_core.rect = function (rectID) {
         this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
         delete polymorph_core.containers[containerid];
         delete polymorph_core.items[containerid]._od;
-        polymorph_core.tryGarbageCollect(containerid);
         let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
         polymorph_core.items[newID]._od.p = rectID;
         polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID;//facilitate subframe deep copy
