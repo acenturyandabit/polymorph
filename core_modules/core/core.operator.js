@@ -11,7 +11,7 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
     Object.assign(this.settings, defaultSettings);
     this.rootdiv = document.createElement("div");
     this.rootdiv.style.height="100%";
-    this.rootdiv.style.overflow="auto";
+    this.rootdiv.style.overflow="scroll";
     container.div.appendChild(this.rootdiv);
 
     this.createItem = (id) => {

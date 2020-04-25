@@ -4,7 +4,7 @@ polymorph_core.registerOperator("template", {
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
-        somesetting: "somevalue"
+        filter: polymorph_core.guid() // used by the operator template to determine whether items are relevant to it.
     };
 
     //this.rootdiv, this.settings, this.container instantiated here.

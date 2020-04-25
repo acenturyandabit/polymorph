@@ -176,7 +176,7 @@ polymorph_core.registerOperator("descbox", {
     //Register changes with polymorph_core
     this.somethingwaschanged = (e) => {
         //Check ctrl-S so that we dont save then
-        if (e.key=="Control" || e.key=="Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s"))return;
+        if (e.key == "Control" || e.key == "Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s")) return;
         if (this.settings.operationMode != "putter") {
             upc.submit(this.settings.currentID, this.textarea.value);
         }
@@ -186,7 +186,16 @@ polymorph_core.registerOperator("descbox", {
 
     this.textarea.addEventListener("input", this.somethingwaschanged);
     this.textarea.addEventListener("keyup", this.somethingwaschanged);
-
+    document.addEventListener('keydown', (e) => {
+        if (this.textarea.matches(":focus-within")) {
+            var keycode1 = (e.keyCode ? e.keyCode : e.which);
+            if (keycode1 == 0 || keycode1 == 9) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.execCommand('insertText', false /*no UI*/, "    ");
+            }
+        }
+    })
     this.createItem = (id, data) => {
         polymorph_core.items[id][this.settings.property] = data;
     }
@@ -282,7 +291,7 @@ polymorph_core.registerOperator("descbox", {
 
     //static items get deleted without this mod
     this.itemRelevant = (id) => {
-        if (this.settings.operationMode=="static" && id==this.settings.staticItem)return true;
+        if (this.settings.operationMode == "static" && id == this.settings.staticItem) return true;
     }
 
     container.on("createItem", (d) => {

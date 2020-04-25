@@ -21,6 +21,9 @@
                 polymorph_core.showNotification('Saved', 'success');
             }catch (e){
             }
+            let recents=JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
+            recents[polymorph_core.currentDocID]={url:window.location.href,displayName:polymorph_core.currentDoc.displayName};
+            localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
         }
     });
 

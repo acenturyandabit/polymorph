@@ -660,11 +660,27 @@ polymorph_core.rect = function (rectID) {
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
 
+    this.rectsTied=[];
     this.tieRect = (rectID) => {
         this.innerDivContainer.remove();
         this.tabbar.remove();
         this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
         polymorph_core.rects[rectID].refresh();
+        this.rectsTied.push(rectID);
+        if (this.rectsTied.length>2){
+            console.log("multiple rect ties BAD; arbitration in progress");
+            //first group rects
+            let sideA={};
+            let sideB={};
+            for (let r of this.rectsTied){
+                console.log(r);
+                console.log(polymorph_core.items[r]._rd);
+            }
+            
+            // case 1: two rects conflicting
+            // case 2: one pair and one lone rect conflicting
+            // case 3: two pairs of rects conflicting
+        }
     }
 
     this.containerVisible=(id)=>{
@@ -673,7 +689,7 @@ polymorph_core.rect = function (rectID) {
 
     this.visible=()=>{
         if (this.parent==polymorph_core)return true;
-        else rturn (this.parentElement.visible());
+        else return (this.parent.visible());
     }
 
     //events

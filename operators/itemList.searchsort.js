@@ -156,7 +156,7 @@ function __itemlist_searchsort() {
         this.isSorting=false;
     }
 
-    this.sortcap = new capacitor(500 + isPhone() * 1000, 1000, this._sortItems);
+    this.sortcap = new capacitor(500, 1000, this._sortItems);
 
     this.sortItems = () => {
         this.sortcap.submit();

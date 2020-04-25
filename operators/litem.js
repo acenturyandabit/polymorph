@@ -1,0 +1,290 @@
+//line as item operator
+// it has a focused state and a defocus state. focusability?
+// gotta deal with the cursor too great
+// um use a bunch of spans. constant width font, get up and down arrows working (hmm, sounds familiar)
+
+
+polymorph_core.registerOperator("lynerlist", {
+    displayName: "Lynerlist",
+    description: "An advanced item listing tool."
+}, function (container) {
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
+        filter: polymorph_core.guid(),
+        rowsOrder: ["----"]
+    };
+
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
+    //Add content-independent HTML here.
+    this.rootdiv.innerHTML = `<style>
+    span{
+        font-family:monospace;
+        color:white;
+    }
+    [data-id]{
+        width:100%;
+        display:inline-flex;
+    }
+    [contenteditable]{
+        flex: 1 0 10%;
+    }
+    </style>
+    <span data-id="----"><span>----</span>&nbsp;&nbsp;<span contenteditable></span></span> <!--this is always final line-->
+    `;
+    Object.defineProperty(this, 'currentFocusedLine', {
+        get: () => {
+            let r = this.rootdiv.getRootNode();
+            if (!r.activeElement) return undefined;
+            else {
+                //construct an object
+                let obj = {};
+                obj.id = r.activeElement.parentElement.dataset.id;
+                obj.contents = r.activeElement.innerText;
+                obj.editableSpan = r.activeElement;
+                obj.backTag = r.activeElement.parentElement.children[0];
+                obj.root = r.activeElement.parentElement;
+                return obj;
+            }
+        }
+    }
+    )
+
+    this.updateRowsOrder = () => {
+        this.settings.rowsOrder = [];
+        Array.from(this.rootdiv.children).forEach(i => {
+            if (i.dataset.id) this.settings.rowsOrder.push(i.dataset.id);
+        })
+        if (this.settings.rowsOrder.length == 0) this.settings.rowsOrder = ["----"];
+    }
+
+    let renderise = (id, prevItem) => {
+        let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
+        if (id != "----") {
+            copydiv.children[0].innerText = " " + id.slice(id.length - 4);
+            copydiv.dataset.id = id;
+            copydiv.children[1].innerText = polymorph_core.items[id].contents;
+        }
+        this.rootdiv.insertBefore(copydiv, prevItem);
+        return copydiv;
+    }
+
+    //initial render
+    let baseItem = this.rootdiv.querySelector(`[data-id="----"]`);
+    this.settings.rowsOrder.forEach(i => {
+        baseItem = renderise(i, baseItem.nextElementSibling);
+        this.rootdiv.appendChild(baseItem);
+    })
+    //there will be an extra ---- so we can just remove it.
+    this.rootdiv.children[1].remove();
+
+    let candidateDie = false;
+
+    this.rootdiv.addEventListener('keydown', (e) => {
+        if (e.key == "Enter") {
+            e.preventDefault();
+            //create a new line
+            let prevstr = this.currentFocusedLine.contents;
+            let pretab = /^(\s+)/.exec(prevstr);
+            if (!pretab)pretab="";
+            else pretab=pretab[0];
+            pretab=Array.from(pretab).map(i=>"&nbsp;").join("");
+            let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
+            copydiv.children[1].innerHTML=pretab;
+            this.rootdiv.insertBefore(copydiv, this.currentFocusedLine.root.nextElementSibling);
+            //go up a line
+            var selection = this.rootdiv.getRootNode().getSelection();
+            var range = document.createRange();
+            if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length);
+            else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+            //range.setEnd(copydiv.children[1].firstChild, 0);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            e.preventDefault();
+            //check the tab state of the previous line and match it.
+            this.updateRowsOrder();
+        } else if (e.key == "ArrowUp") {
+            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling) {
+                var selection = this.rootdiv.getRootNode().getSelection();
+                let oldRange = selection.getRangeAt(0);
+                var range = document.createRange();
+                let newStartOffset = oldRange.startOffset;
+                if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) {
+                    if (newStartOffset > this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length;
+                    range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, newStartOffset);
+                } else {
+                    range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
+                }
+                //range.setEnd(copydiv.children[1].firstChild, 0);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                e.preventDefault();
+            }
+        } else if (e.key == "ArrowDown") {
+            if (this.currentFocusedLine && this.currentFocusedLine.root.nextElementSibling) {
+                var selection = this.rootdiv.getRootNode().getSelection();
+                let oldRange = selection.getRangeAt(0);
+                var range = document.createRange();
+                let newStartOffset = oldRange.startOffset;
+                if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) {
+                    if (newStartOffset > this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length;
+                    range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, newStartOffset);
+                } else {
+                    range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+                }
+                //range.setEnd(copydiv.children[1].firstChild, 0);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                e.preventDefault();
+            }
+        } else if (e.key == "ArrowLeft") {
+            var selection = this.rootdiv.getRootNode().getSelection();
+            let oldRange = selection.getRangeAt(0);
+            if (oldRange.startOffset == 0 && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName == "SPAN") {
+                //go up a line
+                var selection = this.rootdiv.getRootNode().getSelection();
+                var range = document.createRange();
+                if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length);
+                else range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
+                //range.setEnd(copydiv.children[1].firstChild, 0);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                e.preventDefault();
+            }
+        } else if (e.key == "ArrowRight") {
+            var selection = this.rootdiv.getRootNode().getSelection();
+            let oldRange = selection.getRangeAt(0);
+            if ((!(oldRange.startContainer.length) || oldRange.startOffset == oldRange.startContainer.length) && this.currentFocusedLine.root.nextElementSibling) {
+                //go up a line
+                var selection = this.rootdiv.getRootNode().getSelection();
+                var range = document.createRange();
+                if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, 0);
+                else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+                //range.setEnd(copydiv.children[1].firstChild, 0);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                e.preventDefault();
+            }
+        } else if (e.key == "Backspace") {
+            if (this.currentFocusedLine && this.currentFocusedLine.contents.length == 0) {
+                candidateDie = true;
+            }
+        } else if (e.key == "Tab") {
+            e.preventDefault();
+            e.stopPropagation();
+            document.execCommand('insertText', false /*no UI*/, "    ");
+        }
+    });
+    this.rootdiv.addEventListener('keyup', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key == "s") {
+            return; //so that saving works
+        }
+        //create new items when a --- line is touched
+        if (this.currentFocusedLine) {
+            if (this.currentFocusedLine.id == "----") {
+                if (/\S/.exec(this.currentFocusedLine.contents)) {
+                    //create a new item
+                    let oldContents = this.currentFocusedLine.contents;
+                    let newID = polymorph_core.insertItem({ contents: oldContents });
+                    let copydiv = renderise(newID, this.currentFocusedLine.root);
+
+                    this.currentFocusedLine.editableSpan.innerText = "";
+
+                    if (this.currentFocusedLine.root.nextElementSibling) {
+                        this.currentFocusedLine.root.remove();
+                    }
+                    this.updateRowsOrder();
+                    copydiv.children[1].focus();
+                    var selection = window.getSelection();
+                    var range = document.createRange();
+                    range.setStart(copydiv.children[1].firstChild, copydiv.children[1].firstChild.length);
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    container.fire('updateItem', { id: this.currentFocusedLine.id, sender: this });
+                }
+            } else {
+                polymorph_core.items[this.currentFocusedLine.id].contents = this.currentFocusedLine.contents;
+                container.fire('updateItem', { id: this.currentFocusedLine.id, sender: this });
+            }
+        }
+        //catch enter keys
+        if (e.key == "Backspace") {
+            if (candidateDie) {
+                // go up a line
+                let prevLine = { id: this.currentFocusedLine.id, root: this.currentFocusedLine.root };
+                if (this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName != "STYLE") {
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    var range = document.createRange();
+                    if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length);
+                    else range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else if (this.currentFocusedLine.root.nextElementSibling) {
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    var range = document.createRange();
+                    if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, 0);
+                    else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
+                } else {
+                    //no spare lines; return
+                    return;
+                }
+
+
+                if (prevLine.id == "----") {
+
+                } else {
+                    polymorph_core.items[prevLine.id] = {};
+                    container.fire('updateItem', { id: prevLine.id, sender: this });
+                }
+                prevLine.root.remove();
+                this.updateRowsOrder();
+                candidateDie = false;
+            }
+        }
+    })
+    // for each line, you can define a linestructure. You can change the linestructure by using hyper>changeLineStructure.
+    // There is also the default LHS, which unobtrusively shows item id's (just cos).
+    //for each line: there is the LHS, which is unobtrusive item ids(used for debugging); the tabspace [literally used for tabs]; the middlespace (used for anything); the orgspac
+
+    //return true if we care about an item and dont want it garbage-cleaned :(
+
+
+    container.on("createItem", (id) => {
+
+    })
+
+    container.on("deleteItem", (id) => {
+
+    })
+
+    //this is called when an item is updated (e.g. by another container)
+    container.on("updateItem", (d) => {
+        let id = d.id;
+        if (this.itemRelevant(id)) {
+            //render the item, if we care about it.
+        }
+        //do stuff with the item.
+    });
+
+    this.refresh = function () {
+        // This is called when the parent container is resized.
+    }
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
+    this.showDialog = function () {
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings = function () {
+        // This is called when your dialog is closed. Use it to update your container!
+    }
+
+});
