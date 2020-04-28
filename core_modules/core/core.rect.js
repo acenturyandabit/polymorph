@@ -217,7 +217,7 @@ polymorph_core.rect = function (rectID) {
     }
 
 
-    this.innerDivContainer = htmlwrap(`<div style="height:100%; width:100%;"></div>`);
+    this.innerDivContainer = htmlwrap(`<div style="flex:1 1 auto; overflow-y:auto; width:100%; "></div>`);
     this.outerDiv.appendChild(this.innerDivContainer);
 
     //Function for adding an operator to this rect. Operator must already exist.
@@ -236,12 +236,18 @@ polymorph_core.rect = function (rectID) {
         // Just move the tabbar around, and attach some information to the tabbar so 
         // we know what to do when a button is clicked.
         let currentTabSpan = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
-        if (!currentTabSpan) currentTabSpan = this.createTabSpan(containerid);
+        if (currentTabSpan) {
+            currentTabSpan.remove();// clear and reapply since tiecontainer should be overwrite
+            index--;
+        }
+        currentTabSpan = this.createTabSpan(containerid);
+
         currentTabSpan.children[0].innerText = container.settings.tabbarName;
         this.tabbar.insertBefore(currentTabSpan, this.tabbar.children[index]);
 
         let currentInnerDiv = this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`);
-        if (!currentInnerDiv) currentInnerDiv = this.createInnerDiv(containerid);
+        if (currentInnerDiv) currentInnerDiv.remove(); 
+        currentInnerDiv = this.createInnerDiv(containerid);
         currentInnerDiv.appendChild(container.outerDiv);
         this.innerDivContainer.insertBefore(currentInnerDiv, this.innerDivContainer.children[index]);
 

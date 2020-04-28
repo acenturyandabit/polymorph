@@ -276,8 +276,13 @@ polymorph_core.registerOperator("itemcluster2", {
         this.viewDropdown.style.display = "none";
     });
     waitForFn.apply(this, ["viewGrid"]);
+    this.wasPreviouslyVisible=undefined;
     this.switchView = (id, assert, subview) => {
         let previousView = this.settings.currentViewName;
+        if (container.visible()!=this.wasPreviouslyVisible){
+            this.wasPreviouslyVisible=container.visible();
+            previousView=undefined;
+        }
         this.settings.currentViewName = id;
         if (!this.settings.currentViewName) {
             //if not switching to any particular view, switch to first available view.
@@ -333,7 +338,7 @@ polymorph_core.registerOperator("itemcluster2", {
                 }
             }
             //kill all lines, if geuninely switching and not using this as part of refresh
-            if (!previousView == id) {
+            if (previousView != id) {
                 for (let i in this.activeLines) {
                     for (let j in this.activeLines[i]) {
                         this.activeLines[i][j].remove();
@@ -1243,4 +1248,5 @@ polymorph_core.registerOperator("itemcluster2", {
     scriptassert([["itemcluster_scalegrid", "operators/itemcluster.scalegrid.js"]], () => {
         _itemcluster_extend_scalegrid(this);
     })
+
 });

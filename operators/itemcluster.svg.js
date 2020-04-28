@@ -61,7 +61,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         return ret;
     }
     let linePerformanceCache = {};// in start+end, cache [[x,y],[x,y]]
-
+    
     me.arrangeItem = function (id) {
         let sel = me.rootdiv.getRootNode().getSelection();
         let prerange = null;
@@ -126,12 +126,15 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
-                let fob = me.itemPointerCache[id].children()[1];
                 if (me.prevFocusID == id) {
                     dvd.parentElement.setAttribute("height", dvd.scrollHeight);
                 } else {
                     dvd.parentElement.setAttribute("height", tta.scrollHeight);
                 }
+            }
+            let fob = me.itemPointerCache[id].children()[1];
+            if (fob.width()==0){// when container starts invisible, fob does not show.
+                fob.size(dvd.scrollWidth,tta.scrollHeight);
             }
             //rect.size(Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.w)[0]), Number(/\d+/ig.exec(polymorph_core.items[id].boxsize.h)[0]));
 
@@ -249,6 +252,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
+            //problem: when lines are cleared, lines do not redraw because lineperformancecache is not clear.
+            if (linePerformanceCache[start])delete linePerformanceCache[start][end];
         }
 
         //if either is not visible, then dont draw

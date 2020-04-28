@@ -1,4 +1,7 @@
-polymorph_core.registerOperator("metasubframe", {}, function (container) {
+polymorph_core.registerOperator("metasubframe", {
+
+    
+}, function (container) {
     polymorph_core.operatorTemplate.call(this, container, {
         currentRectID: undefined
     });

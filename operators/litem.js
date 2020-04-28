@@ -62,11 +62,21 @@ polymorph_core.registerOperator("lynerlist", {
     let renderise = (id, prevItem) => {
         let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
         if (id != "----") {
+            if (this.rootdiv.querySelector(`[data-id="${id}"]`)) {
+                copydiv = this.rootdiv.querySelector(`[data-id="${id}"]`);
+            }
             copydiv.children[0].innerText = " " + id.slice(id.length - 4);
             copydiv.dataset.id = id;
             copydiv.children[1].innerText = polymorph_core.items[id].contents;
         }
         this.rootdiv.insertBefore(copydiv, prevItem);
+        if (id != "----" && polymorph_core.items[id].to) {
+            for (let i in polymorph_core.items[id].to) {
+                if (this.settings.rowsOrder.indexOf(i) != -1) {
+                    copydiv=renderise(i, copydiv.nextElementSibling);
+                }
+            }
+        }
         return copydiv;
     }
 
@@ -79,6 +89,95 @@ polymorph_core.registerOperator("lynerlist", {
     //there will be an extra ---- so we can just remove it.
     this.rootdiv.children[1].remove();
 
+
+    let processCommands = (c) => {
+        c = c.split("\\")[1];
+        c = c.split(" ");
+        switch (c[0]) {
+            case "sort":
+                let sortables = [];
+                for (let i of this.settings.rowsOrder) {
+                    if (i == "----") continue;
+                    if (polymorph_core.items[i].contents[0] != " " && polymorph_core.items[i][c[1]]) {
+                        sortables.push({
+                            id: i,
+                            d: polymorph_core.items[i][c[1]]
+                        });
+                    }
+                }
+                if (c[2]=="date"){
+                    sortables.forEach(i=>{
+                        let d=i.d;
+                        d=d.split("/").map(Number);
+                        let r=0; //in days
+                        while (d.length){
+                            switch (d.length){
+                                case 3:
+                                    r+=d[d.length-1]*365;
+                                    break;
+                                case 2:
+                                    r+=d[d.length-1]*31;//better than 30
+                                    break;
+                                case 1:
+                                    r+=d[d.length-1];
+                            }
+                            d.pop();
+                        }
+                        i.d=r;
+                    })   
+                }
+                if (c.includes("reverse")){
+                    sortables.sort((a, b) => (a.d > b.d) ? 1 : -1);
+                }else{
+                    sortables.sort((a, b) => (a.d > b.d) ? -1 : 1);
+                }
+                let cd=this.rootdiv.children[2];
+                for (let i of sortables) {
+                    renderise(i.id, cd).nextElementSibling;
+                    //arrange
+                }
+        }
+    }
+
+    this.parseLine = (id) => {
+        if (id == "----") return;
+        let itm = this.rootdiv.querySelector(`[data-id="${id}"]`);
+        let itmt = itm.children[1].innerText;
+
+        let precedingSpaceCount = 0;
+        while (/\s/.exec(itmt[precedingSpaceCount])) precedingSpaceCount++;
+        if (precedingSpaceCount > 0) {
+            let prepointer = itm.previousElementSibling;
+            while (prepointer.tagName == "SPAN") {
+                let pre_precedingSpaceCount = 0;
+                let itmpt = prepointer.children[1].innerText;
+                while (/\s/.exec(itmpt[pre_precedingSpaceCount])) pre_precedingSpaceCount++;
+                if (pre_precedingSpaceCount < precedingSpaceCount) {
+                    //anchor the to
+                    if (!polymorph_core.items[prepointer.dataset.id].to) polymorph_core.items[prepointer.dataset.id].to = {};
+                    polymorph_core.items[prepointer.dataset.id].to[id] = true;
+                    break;
+                } else {
+                    prepointer = prepointer.previousElementSibling;
+                }
+            }
+        }
+        polymorph_core.items[id].contents = itmt;
+        let str = itmt;
+        let parser = /\[(.+?):(.+?)\]/g;
+        let res;
+        while (res = parser.exec(str)) {
+            polymorph_core.items[id][res[1]] = res[2];
+        }
+        container.fire('updateItem', { id: id, sender: this });
+    }
+
+    this.hardReparseAll = () => { //debugging function. not called by user, unless in devtools.
+        for (let i of this.settings.rowsOrder) {
+            this.parseLine(i);
+        }
+    }
+
     let candidateDie = false;
 
     this.rootdiv.addEventListener('keydown', (e) => {
@@ -87,11 +186,11 @@ polymorph_core.registerOperator("lynerlist", {
             //create a new line
             let prevstr = this.currentFocusedLine.contents;
             let pretab = /^(\s+)/.exec(prevstr);
-            if (!pretab)pretab="";
-            else pretab=pretab[0];
-            pretab=Array.from(pretab).map(i=>"&nbsp;").join("");
+            if (!pretab) pretab = "";
+            else pretab = pretab[0];
+            pretab = Array.from(pretab).map(i => "&nbsp;").join("");
             let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
-            copydiv.children[1].innerHTML=pretab;
+            copydiv.children[1].innerHTML = pretab;
             this.rootdiv.insertBefore(copydiv, this.currentFocusedLine.root.nextElementSibling);
             //go up a line
             var selection = this.rootdiv.getRootNode().getSelection();
@@ -205,8 +304,32 @@ polymorph_core.registerOperator("lynerlist", {
                     container.fire('updateItem', { id: this.currentFocusedLine.id, sender: this });
                 }
             } else {
-                polymorph_core.items[this.currentFocusedLine.id].contents = this.currentFocusedLine.contents;
-                container.fire('updateItem', { id: this.currentFocusedLine.id, sender: this });
+                let cid = this.currentFocusedLine.id;
+                this.parseLine(cid);
+                //also parse commands
+                let str=this.currentFocusedLine.contents;
+                parser = /\\.+\\/g;
+                if (res = parser.exec(str)) {
+                    let bits = str.split(res[0]);
+                    bits = bits.join("");
+
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    var crange = selection.getRangeAt(0).startOffset;
+                    this.currentFocusedLine.root.children[1].innerText = bits;
+
+                    var range = document.createRange();
+                    range.setStart(this.currentFocusedLine.root.children[1].firstChild, crange - res[0].length);
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    polymorph_core.items[cid].contents = bits;
+
+                    //process last, as processing may reshuffle rows                    
+                    processCommands(res[0]);
+                    container.fire('updateItem', { id: cid, sender: this });
+                }
+
             }
         }
         //catch enter keys
