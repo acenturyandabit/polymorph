@@ -16,7 +16,7 @@ polymorph_core.registerOperator("lynerlist", {
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-
+    this.itemRelevant=(id)=>this.settings.rowsOrder.indexOf(id)!=-1;
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `<style>
     span{
@@ -133,9 +133,52 @@ polymorph_core.registerOperator("lynerlist", {
                 }
                 let cd=this.rootdiv.children[2];
                 for (let i of sortables) {
-                    renderise(i.id, cd).nextElementSibling;
+                    renderise(i.id, cd);
                     //arrange
                 }
+                break;
+            case "depsort":
+                let allItems = this.settings.rowsOrder.map(i=>i);
+                let toSort = {};
+                let nextToAnchor=undefined;
+                allItems.forEach(i=>{
+                    if (i=="----")return;
+                    if (polymorph_core.items[i][c[2]]){
+                        toSort[polymorph_core.items[i][c[2]]]={
+                            id:i
+                        }
+                        if (polymorph_core.items[i][c[1]]){
+                            toSort[polymorph_core.items[i][c[2]]].deps=polymorph_core.items[i][c[1]].split(",");
+                        }else{
+                            toSort[polymorph_core.items[i][c[2]]].deps=[];
+                        }
+                    }else{
+                        nextToAnchor=renderise(i,nextToAnchor).nextElementSibling;
+                    }
+                })
+                let tsk = Object.keys(toSort);
+                let emplaced={};
+                while (tsk.length){
+                    console.log(tsk);
+                    let top=tsk.shift();
+                    if (toSort[top]){
+                        //items will be deleted once they have been seen
+                        if (emplaced[top]){
+                            //there is a loop, abort
+                            //render now
+                            nextToAnchor=renderise(toSort[top].id,nextToAnchor).nextElementSibling;
+                            console.log("got "+top);
+                            delete toSort[top];
+                        }else{
+                            emplaced[top]=true;
+                            toSort[top].deps=toSort[top].deps.filter(i=>!emplaced[i]);
+                            toSort[top].deps.forEach(i=>tsk.push(i));
+                            tsk.push(top);
+                        }
+                    }
+                }
+                Array.from(this.rootdiv.querySelectorAll("[data-id='----']")).forEach(i=>this.rootdiv.appendChild(i));
+                //move all newlines to bottom
         }
     }
 
@@ -204,7 +247,7 @@ polymorph_core.registerOperator("lynerlist", {
             //check the tab state of the previous line and match it.
             this.updateRowsOrder();
         } else if (e.key == "ArrowUp") {
-            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling) {
+            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName=="SPAN") {
                 var selection = this.rootdiv.getRootNode().getSelection();
                 let oldRange = selection.getRangeAt(0);
                 var range = document.createRange();
@@ -315,7 +358,8 @@ polymorph_core.registerOperator("lynerlist", {
 
                     var selection = this.rootdiv.getRootNode().getSelection();
                     var crange = selection.getRangeAt(0).startOffset;
-                    this.currentFocusedLine.root.children[1].innerText = bits;
+                    this.currentFocusedLine.root.children[1].innerText = bits || " ";
+                    
 
                     var range = document.createRange();
                     range.setStart(this.currentFocusedLine.root.children[1].firstChild, crange - res[0].length);
