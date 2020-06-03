@@ -16,7 +16,7 @@ polymorph_core.registerOperator("lynerlist", {
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-    this.itemRelevant=(id)=>this.settings.rowsOrder.indexOf(id)!=-1;
+    this.itemRelevant = (id) => this.settings.rowsOrder.indexOf(id) != -1;
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `<style>
     span{
@@ -61,7 +61,11 @@ polymorph_core.registerOperator("lynerlist", {
 
     let renderise = (id, prevItem) => {
         let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
-        if (id != "----") {
+        if (typeof (id) != 'string') {
+            copydiv = id;
+            id = id.dataset.id;
+        }
+        else if (id != "----") {
             if (this.rootdiv.querySelector(`[data-id="${id}"]`)) {
                 copydiv = this.rootdiv.querySelector(`[data-id="${id}"]`);
             }
@@ -73,7 +77,7 @@ polymorph_core.registerOperator("lynerlist", {
         if (id != "----" && polymorph_core.items[id].to) {
             for (let i in polymorph_core.items[id].to) {
                 if (this.settings.rowsOrder.indexOf(i) != -1) {
-                    copydiv=renderise(i, copydiv.nextElementSibling);
+                    copydiv = renderise(i, copydiv.nextElementSibling);
                 }
             }
         }
@@ -86,8 +90,12 @@ polymorph_core.registerOperator("lynerlist", {
         baseItem = renderise(i, baseItem.nextElementSibling);
         this.rootdiv.appendChild(baseItem);
     })
-    //there will be an extra ---- so we can just remove it.
-    this.rootdiv.children[1].remove();
+    //there may be an extra ---- so we can just remove it.
+    if (this.rootdiv.querySelector(`[data-id="----"]:last-child`)) {
+        this.rootdiv.children[1].remove();
+    } else {
+        this.rootdiv.appendChild(this.rootdiv.children[1]);
+    }
 
 
     let processCommands = (c) => {
@@ -96,6 +104,8 @@ polymorph_core.registerOperator("lynerlist", {
         switch (c[0]) {
             case "sort":
                 let sortables = [];
+                if (!c[1]) c[1] = 'contents';
+                this.updateRowsOrder();
                 for (let i of this.settings.rowsOrder) {
                     if (i == "----") continue;
                     if (polymorph_core.items[i].contents[0] != " " && polymorph_core.items[i][c[1]]) {
@@ -105,80 +115,74 @@ polymorph_core.registerOperator("lynerlist", {
                         });
                     }
                 }
-                if (c[2]=="date"){
-                    sortables.forEach(i=>{
-                        let d=i.d;
-                        d=d.split("/").map(Number);
-                        let r=0; //in days
-                        while (d.length){
-                            switch (d.length){
-                                case 3:
-                                    r+=d[d.length-1]*365;
-                                    break;
-                                case 2:
-                                    r+=d[d.length-1]*31;//better than 30
-                                    break;
-                                case 1:
-                                    r+=d[d.length-1];
-                            }
-                            d.pop();
-                        }
-                        i.d=r;
-                    })   
+                if (c[2] == "date") {
+                    sortables.forEach(i => {
+                        let dt = dateParser.extractTime(i.d, new Date());
+                        if (dt) i.d = dt.getTime();
+                        else i.d = 0;
+                    })
                 }
-                if (c.includes("reverse")){
+                if (c.includes("reverse")) {
                     sortables.sort((a, b) => (a.d > b.d) ? 1 : -1);
-                }else{
+                } else {
                     sortables.sort((a, b) => (a.d > b.d) ? -1 : 1);
                 }
-                let cd=this.rootdiv.children[2];
+                let cd = this.rootdiv.children[2];
                 for (let i of sortables) {
                     renderise(i.id, cd);
                     //arrange
                 }
                 break;
             case "depsort":
-                let allItems = this.settings.rowsOrder.map(i=>i);
+                //sort based on some abstract dependency chain. deps and id property. \depsort [dependency prop] [id prop]\
+                let allItems = this.settings.rowsOrder.map(i => i);
                 let toSort = {};
-                let nextToAnchor=undefined;
-                allItems.forEach(i=>{
-                    if (i=="----")return;
-                    if (polymorph_core.items[i][c[2]]){
-                        toSort[polymorph_core.items[i][c[2]]]={
-                            id:i
+                let nextToAnchor = undefined;
+                allItems.forEach(i => {
+                    if (i == "----") return;
+                    if (polymorph_core.items[i][c[2]]) {
+                        toSort[polymorph_core.items[i][c[2]]] = {
+                            id: i
                         }
-                        if (polymorph_core.items[i][c[1]]){
-                            toSort[polymorph_core.items[i][c[2]]].deps=polymorph_core.items[i][c[1]].split(",");
-                        }else{
-                            toSort[polymorph_core.items[i][c[2]]].deps=[];
+                        if (polymorph_core.items[i][c[1]]) {
+                            toSort[polymorph_core.items[i][c[2]]].deps = polymorph_core.items[i][c[1]].split(",");
+                        } else {
+                            toSort[polymorph_core.items[i][c[2]]].deps = [];
                         }
-                    }else{
-                        nextToAnchor=renderise(i,nextToAnchor).nextElementSibling;
+                    } else {
+                        nextToAnchor = renderise(i, nextToAnchor).nextElementSibling;
                     }
                 })
                 let tsk = Object.keys(toSort);
-                let emplaced={};
-                while (tsk.length){
+                let emplaced = {};
+                while (tsk.length) {
                     console.log(tsk);
-                    let top=tsk.shift();
-                    if (toSort[top]){
+                    let top = tsk.shift();
+                    if (toSort[top]) {
                         //items will be deleted once they have been seen
-                        if (emplaced[top]){
+                        if (emplaced[top]) {
                             //there is a loop, abort
                             //render now
-                            nextToAnchor=renderise(toSort[top].id,nextToAnchor).nextElementSibling;
-                            console.log("got "+top);
+                            nextToAnchor = renderise(toSort[top].id, nextToAnchor).nextElementSibling;
+                            console.log("got " + top);
                             delete toSort[top];
-                        }else{
-                            emplaced[top]=true;
-                            toSort[top].deps=toSort[top].deps.filter(i=>!emplaced[i]);
-                            toSort[top].deps.forEach(i=>tsk.push(i));
+                        } else {
+                            emplaced[top] = true;
+                            toSort[top].deps = toSort[top].deps.filter(i => !emplaced[i]);
+                            toSort[top].deps.forEach(i => tsk.push(i));
                             tsk.push(top);
                         }
                     }
                 }
-                Array.from(this.rootdiv.querySelectorAll("[data-id='----']")).forEach(i=>this.rootdiv.appendChild(i));
+                Array.from(this.rootdiv.querySelectorAll("[data-id='----']")).forEach(i => this.rootdiv.appendChild(i));
                 //move all newlines to bottom
+                break;
+            case 'nowtd':
+                //literally spew a current formatted datestring here.
+                return (new Date()).toLocaleTimeString() + " " + (new Date()).toLocaleDateString();
+            case 'nowdt':
+                //literally spew a current formatted datestring here.
+                return (new Date()).toLocaleDateString() + " " + (new Date()).toLocaleTimeString();
         }
     }
 
@@ -191,7 +195,7 @@ polymorph_core.registerOperator("lynerlist", {
         while (/\s/.exec(itmt[precedingSpaceCount])) precedingSpaceCount++;
         if (precedingSpaceCount > 0) {
             let prepointer = itm.previousElementSibling;
-            while (prepointer.tagName == "SPAN") {
+            while (prepointer.tagName == "SPAN" && prepointer.dataset.id != "----") {
                 let pre_precedingSpaceCount = 0;
                 let itmpt = prepointer.children[1].innerText;
                 while (/\s/.exec(itmpt[pre_precedingSpaceCount])) pre_precedingSpaceCount++;
@@ -223,7 +227,19 @@ polymorph_core.registerOperator("lynerlist", {
 
     let candidateDie = false;
 
+    let smartfocus = (root, range, offset) => {
+        if (root.children[1].firstChild) {
+            if (offset > root.children[1].firstChild.length) offset = root.children[1].firstChild.length;
+            range.setStart(root.children[1].firstChild, offset);
+        } else {
+            range.setStart(root.children[1], 0);
+        }
+    }
+
     this.rootdiv.addEventListener('keydown', (e) => {
+        if (e.key == 'Alt') {
+            e.preventDefault();
+        }
         if (e.key == "Enter") {
             e.preventDefault();
             //create a new line
@@ -247,38 +263,66 @@ polymorph_core.registerOperator("lynerlist", {
             //check the tab state of the previous line and match it.
             this.updateRowsOrder();
         } else if (e.key == "ArrowUp") {
-            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName=="SPAN") {
-                var selection = this.rootdiv.getRootNode().getSelection();
-                let oldRange = selection.getRangeAt(0);
-                var range = document.createRange();
-                let newStartOffset = oldRange.startOffset;
-                if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) {
-                    if (newStartOffset > this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length;
-                    range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, newStartOffset);
+            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName == "SPAN") {
+                if (e.getModifierState("Alt")) {
+                    //move up
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    let oldRange = selection.getRangeAt(0);
+                    var range = document.createRange();
+                    let oldso = oldRange.startOffset;
+                    let newroot = renderise(this.currentFocusedLine.root, this.currentFocusedLine.root.previousElementSibling);
+                    this.updateRowsOrder();
+                    smartfocus(newroot, range, oldso);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
                 } else {
-                    range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    let oldRange = selection.getRangeAt(0);
+                    var range = document.createRange();
+                    let newStartOffset = oldRange.startOffset;
+                    if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) {
+                        if (newStartOffset > this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length;
+                        range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, newStartOffset);
+                    } else {
+                        range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
+                    }
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
                 }
-                //range.setEnd(copydiv.children[1].firstChild, 0);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                e.preventDefault();
             }
         } else if (e.key == "ArrowDown") {
             if (this.currentFocusedLine && this.currentFocusedLine.root.nextElementSibling) {
-                var selection = this.rootdiv.getRootNode().getSelection();
-                let oldRange = selection.getRangeAt(0);
-                var range = document.createRange();
-                let newStartOffset = oldRange.startOffset;
-                if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) {
-                    if (newStartOffset > this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length;
-                    range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, newStartOffset);
+                if (e.getModifierState("Alt")) {
+                    //move down
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    let oldRange = selection.getRangeAt(0);
+                    var range = document.createRange();
+                    let oldso = oldRange.startOffset;
+                    let newroot = renderise(this.currentFocusedLine.root, this.currentFocusedLine.root.nextElementSibling.nextElementSibling);
+                    this.updateRowsOrder();
+                    smartfocus(newroot, range, oldso);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
                 } else {
-                    range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+                    var selection = this.rootdiv.getRootNode().getSelection();
+                    let oldRange = selection.getRangeAt(0);
+                    var range = document.createRange();
+                    let newStartOffset = oldRange.startOffset;
+                    if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) {
+                        if (newStartOffset > this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length;
+                        range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, newStartOffset);
+                    } else {
+                        range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
+                    }
+                    //range.setEnd(copydiv.children[1].firstChild, 0);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
                 }
-                //range.setEnd(copydiv.children[1].firstChild, 0);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                e.preventDefault();
             }
         } else if (e.key == "ArrowLeft") {
             var selection = this.rootdiv.getRootNode().getSelection();
@@ -350,19 +394,23 @@ polymorph_core.registerOperator("lynerlist", {
                 let cid = this.currentFocusedLine.id;
                 this.parseLine(cid);
                 //also parse commands
-                let str=this.currentFocusedLine.contents;
+                let str = this.currentFocusedLine.contents;
                 parser = /\\.+\\/g;
                 if (res = parser.exec(str)) {
                     let bits = str.split(res[0]);
+                    let cojoin = processCommands(res[0]);
+                    if (cojoin) bits.splice(1, 0, cojoin);
+                    else cojoin = "";//for length calcs laters
                     bits = bits.join("");
+
 
                     var selection = this.rootdiv.getRootNode().getSelection();
                     var crange = selection.getRangeAt(0).startOffset;
                     this.currentFocusedLine.root.children[1].innerText = bits || " ";
-                    
+
 
                     var range = document.createRange();
-                    range.setStart(this.currentFocusedLine.root.children[1].firstChild, crange - res[0].length);
+                    range.setStart(this.currentFocusedLine.root.children[1].firstChild, crange - res[0].length + cojoin.length);
                     //range.setEnd(copydiv.children[1].firstChild, 0);
                     selection.removeAllRanges();
                     selection.addRange(range);
@@ -370,7 +418,6 @@ polymorph_core.registerOperator("lynerlist", {
                     polymorph_core.items[cid].contents = bits;
 
                     //process last, as processing may reshuffle rows                    
-                    processCommands(res[0]);
                     container.fire('updateItem', { id: cid, sender: this });
                 }
 
@@ -423,8 +470,9 @@ polymorph_core.registerOperator("lynerlist", {
     //return true if we care about an item and dont want it garbage-cleaned :(
 
 
-    container.on("createItem", (id) => {
-
+    container.on("createItem", (d) => {
+        this.settings.rowsOrder.push(d.id);
+        renderise(d.id, this.rootdiv.querySelector(`[data-id="----"]`));
     })
 
     container.on("deleteItem", (id) => {

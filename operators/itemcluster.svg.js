@@ -66,6 +66,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         let sel = me.rootdiv.getRootNode().getSelection();
         let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
+            //return immediately, delay the fn call
             let _prerange = sel.getRangeAt(0);
             prerange = {}
             let props = ["collapsed"
@@ -103,9 +104,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 fob.node.appendChild(htmlwrap(`<div style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'><p contenteditable class="tta"></p><p style="background:white; color:black" contenteditable class="ttb"></p></div>`));
             }
             //actually update, only if necessary, to save processor time.
-            let positionChanged=Math.abs(previousHandle.x() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x) > 0.01 && Math.abs(previousHandle.y() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y) > 0.01;
+            let positionChanged=Math.abs(previousHandle.x() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x*polymorph_core.items[me.settings.currentViewName].itemcluster.XZoomFactor) > 0.01 || Math.abs(previousHandle.y() - polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y) > 0.01;
             if (positionChanged) {
-                previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
+                previousHandle.move(polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x*polymorph_core.items[me.settings.currentViewName].itemcluster.XZoomFactor, polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y);
                 //draw its lines
             }
 
@@ -127,9 +128,13 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {
-                    dvd.parentElement.setAttribute("height", dvd.scrollHeight);
+                    setTimeout(()=>{
+                        dvd.parentElement.setAttribute("height", dvd.scrollHeight);
+                    })
                 } else {
-                    dvd.parentElement.setAttribute("height", tta.scrollHeight);
+                    setTimeout(()=>{
+                        dvd.parentElement.setAttribute("height", tta.scrollHeight);
+                    })
                 }
             }
             let fob = me.itemPointerCache[id].children()[1];

@@ -11,7 +11,7 @@ Look in savesources/template.
 
 ## Flag
 Since savesources are standalone, their flags can be declared as `this.flag=value` in the instantiation.
-- creatable: Can you create a document from this source?
+- createable: Can you create a document from this source?
 - prettyName: The name to be displayed to the user, and on the name of your dialog entry in preferences.
 
 ## Methods

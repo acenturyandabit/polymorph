@@ -14,10 +14,11 @@ polymorph_core.registerOperator("scriptrunner", {
     this.rootdiv.innerHTML = `
         <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>
         <p>Press 'Update' to execute this script.</p>
-        <textarea style="width: 100%; height: 50%"; placeholder="Enter script here:"></textarea>
+        <textarea style="width: 100%; height: 50%; tab-size:4" placeholder="Enter script here:"></textarea>
         <br>
         <button class="updatebtn">Update</button>
         <button class="stopbtn">Stop script</button>
+        <button class="clogs">Clear logs</button>
         <div id="output" style="overflow-y: auto; height: 30%;"></div>
     `;
 
@@ -47,10 +48,10 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
-    container.on("updateItem,deleteItem,createItem", (d, e) => {
-        if (d.sender != "GARBAGE_COLLECTOR") {
+    container.on("*", (d, e) => {
+        if (!d.sender || d.sender != "GARBAGE_COLLECTOR") {
             e.forEach(e => {
-                if (this.currentInstance) this.currentInstance.fire(e, d);
+                if (this.currentInstance) this.currentInstance._fire(e, d);
             })
         }
         return false;
@@ -76,17 +77,26 @@ polymorph_core.registerOperator("scriptrunner", {
             if (this.intervals[n]) this.intervals[n].f = undefined;
         }
         polymorph_core.addEventAPI(this, this.logEx);
+        this._fire = this.fire;
+        this.fire = (e, d) => {
+            //overwrite the fire fn for internal use (firing updateitems)
+            container.fire(e, d);
+        }
     }
     setInterval(() => {
         if (this.currentInstance) this.currentInstance.intervals.forEach(i => {
             if (i.f && i.t < 0) {
-                i.f();
+                try {
+                    i.f();
+                } catch (e) {
+                    this.currentInstance.logEx(e);
+                }
                 i.t = i.t0;
             }
             i.t -= 100;
         })
     }, 100)
-    this.stop=()=>{
+    this.stop = () => {
         delete this.currentInstance;
     }
     this.execute = () => {
@@ -110,6 +120,11 @@ polymorph_core.registerOperator("scriptrunner", {
         //don't execute, just flag this as needing attention
         textarea.style.background = "green";
     }
+
+    this.rootdiv.querySelector(".clogs").addEventListener("click", () => {
+        let op = this.rootdiv.querySelector("#output");
+        while (op.children.length) op.children[0].remove();
+    });
 
 
     this.rootdiv.querySelector(".updatebtn").addEventListener("click", () => {

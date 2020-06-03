@@ -16,13 +16,13 @@
             polymorph_core.unsaved = false;
             //also do the server save
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
-            try{
+            try {
                 //try catch because mobile mode. TODO: Fix this.
                 polymorph_core.showNotification('Saved', 'success');
-            }catch (e){
+            } catch (e) {
             }
-            let recents=JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
-            recents[polymorph_core.currentDocID]={url:window.location.href,displayName:polymorph_core.currentDoc.displayName};
+            let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
+            recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
             localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
         }
     });
@@ -73,8 +73,8 @@
         let nss = polymorph_core.loadInnerDialog.querySelector('.nss');
         nss.querySelector("button").addEventListener("click", () => {
             let newSaveSource = {
-                load: true,
-                save: true,
+                load: false,
+                save: false,
                 type: nss.querySelector('select').value,
                 data: {
                     id: polymorph_core.currentDocID
@@ -92,7 +92,7 @@
             //called by instance on load.
             let wrapperText = `
         <div>
-            <h2>${save_source_instance.prettyName || save_source_instance.settings.type}</h2>
+            <h2>${polymorph_core.saveSourceOptions[save_source_instance.settings.type].prettyName || save_source_instance.settings.type}</h2>
             <span>`;
             wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
             wrapperText += `<label>Load from this source<input data-role="lsync" type="checkbox"></input></label>`;

@@ -92,6 +92,9 @@
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "",window.location.href+"?doc="+polymorph_core.currentDocID);
+            
+            let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
+            polymorph_core.saveSourceInstances.push(newInstance);
         } else {
             polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
 
@@ -241,7 +244,7 @@
         polymorph_core.saveSourceOptions[id]=ops || {};
         //create a wrapper for it in the loading dialog
         //THIS IS A CROSSOVER WITH loadsavedialog.js. Please formalise
-        polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${id}</option>`));
+        if (ops.createable)polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${ops.prettyName || id}</option>`));
 
     }
 
@@ -260,7 +263,7 @@
         //ensure the data id is matching; if not then @ the user
         if (data._meta.id != polymorph_core.currentDocID) {
             if (confirm(`A source (${source}) seems to be storing a different document (${data._meta.id}) to the one you requested (${polymorph_core.currentDocID}). Continue loading?`)) {
-                if (confirm(`Overwrite the data ID to ${polymorph_core.currentDocID}? [OK] Or load the imported data in a separate window [cancel]?`)) {
+                if (confirm(`Overwrite the incoming data ID to ${polymorph_core.currentDocID}? [OK] Or load the imported data in a separate window [cancel]?`)) {
                     data._meta.id = polymorph_core.currentDocID;
                 } else {
                     polymorph_core.datautils.upgradeSaveData(data._meta.id, source);

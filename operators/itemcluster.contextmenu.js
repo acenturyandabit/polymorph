@@ -6,8 +6,11 @@ function _itemcluster_extend_contextmenu(me) {
     let contextMenuManager = new _contextMenuManager(me.rootdiv);
     let centreXY = {};
     function chk(e) {
-        if (e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) return true;//only activate on clicks to the background.
-        centerXY = me.mapPageToSvgCoords(e.pageX, e.pageY);
+        if (!e.target.matches("g[data-id] *")) {
+            //if (e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) {
+            centerXY = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            return true;//only activate on clicks to the background.  
+        }
     }
     me.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
@@ -215,8 +218,11 @@ function _itemcluster_extend_contextmenu(me) {
             if (visibleItems[i].parent == undefined) currentx += render(visibleItems[i], currentx, currenty);
         }
     }
-
+    let rings = [];
     function radialHierarchy(e, visibleItems) {
+        //nerf all the rings
+        rings.forEach(i => i.remove());
+        rings = [];
         //sort for rendering
         if (e.target.classList.contains('stepped')) {
             //stepping
@@ -267,13 +273,13 @@ function _itemcluster_extend_contextmenu(me) {
             existing[id] = 1;
             let c = visibleItems[indexedOrder.indexOf(id)].children;
             if (!c || !c.length) {
-                existing[id] = 1;
+                existing[id] = 1 / (visibleItems[indexedOrder.indexOf(id)].level + 1);
             } else {
-                let sum = 1;
+                let sum = 0;
                 for (let i = 0; i < c.length; i++) {
                     if (visibleItems[indexedOrder.indexOf(c[i])].parent == id) sum = sum + getAngle(c[i]);
                 }
-                if (sum > 1) sum--;
+                if (sum < 1 / (visibleItems[indexedOrder.indexOf(id)].level + 1)) sum = 1 / (visibleItems[indexedOrder.indexOf(id)].level + 1);
                 existing[id] = sum;
             }
             return existing[id];
@@ -307,7 +313,7 @@ function _itemcluster_extend_contextmenu(me) {
             if (lastLevel != visibleItems[i].level) {
                 let tdeviation = (visibleItems[i - 1].angle + visibleItems[lastLevelZero].angle) / 2;
                 if (tdeviation < minTheta) minTheta = tdeviation;
-                radii[lastLevel] = Math.max(radii[previous] + 300, 200 / minTheta);
+                radii[lastLevel] = Math.max(radii[previous] + 200, 200 / minTheta);
                 previous = lastLevel;
                 lastLevel = visibleItems[i].level;
                 minTheta = Math.PI * 3;//reset
@@ -317,6 +323,7 @@ function _itemcluster_extend_contextmenu(me) {
                 if (tdeviation < minTheta) minTheta = tdeviation;
             }
         }
+
         //final one
         let tdeviation = (visibleItems[visibleItems.length - 1] + visibleItems[lastLevelZero]) / 2;
         if (tdeviation < minTheta) minTheta = tdeviation;
@@ -346,6 +353,9 @@ function _itemcluster_extend_contextmenu(me) {
         for (let i = 0; i < visibleItems.length; i++) {
             if (visibleItems[i].parent == undefined) currentT += render(visibleItems[i], currentT, 0);
         }
+        radii = Object.entries(radii).filter(i => i[0] > 0).sort((a, b) => a[0] - b[0]).map(i => i[1]);
+        // now add the rings
+        rings = radii.map(i => me.svg.circle(2 * i).cx(0).cy(0).stroke('red').fill('transparent').back());
     }
 
     function biradialHierarchy(e, visibleItems) {
@@ -495,7 +505,7 @@ function _itemcluster_extend_contextmenu(me) {
             me.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
             let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
             ic.scale = 1;
-            ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x;
+            ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x*ic.XZoomFactor;
             ic.cy = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
             me.viewAdjust();
             me.viewGrid();

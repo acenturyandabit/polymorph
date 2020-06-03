@@ -210,7 +210,7 @@ polymorph_core.registerOperator("terminal", {
         mkii: {
             regex: /^mkii (.+?)$/ig,
             name: "mkii",
-            help: "Make an item from JSON.",
+            help: "Make an item from JSON. Usage: mkii [JSON]",
             operate: function (regres, state) {
                 let itm = {};
                 let _itm = JSON.parse(regres[1]);
@@ -222,6 +222,7 @@ polymorph_core.registerOperator("terminal", {
                 id = polymorph_core.insertItem(itm);
                 state.output("Item created with id " + id);
                 //query "https://www.ycombinator.com/companies/" "tr"
+                container.fire("createItem", { id: id });
                 container.fire("updateItem", { id: id });
             }
         },
@@ -311,9 +312,9 @@ polymorph_core.registerOperator("terminal", {
             if (typeof data != "string") {
                 data = JSON.stringify(data);
             }
-            if (this.ws && this.ws.readyState != 3) {//closed
+            if (this.ws && this.ws.readyState == WebSocket.OPEN) {//closed
                 this.ws.send(data);
-            } else {
+            } else if (this.ws.readyState>=WebSocket.CLOSING){
                 this.state.outputToUser("Websocket not connected - operation aborted.");
                 if (this.settings.wsautocon) {
                     this.state.outputToUser("Autorestart enabled - attempting to connect...");
@@ -451,7 +452,7 @@ polymorph_core.registerOperator("terminal", {
     this.tryEstablishWS = () => {
         //close previous ws if open
         if (this.ws) this.ws.close();
-        if (this.settings.wsurl) {
+        else if (this.settings.wsurl) {
             try {
                 this.ws = new WebSocket(this.settings.wsurl);
                 this.ws.onerror = (e) => {
@@ -467,7 +468,7 @@ polymorph_core.registerOperator("terminal", {
                 }
                 this.ws.onopen = (e) => {
                     this.state.outputToUser('Connnection established!');
-                    if (this.storedCommand) {
+                    if (this.storedCommand && this.ws.readyState==WebSocket.OPEN) {
                         this.ws.send(this.storedCommand);
                         this.storedCommand = undefined;
                     }
@@ -475,8 +476,9 @@ polymorph_core.registerOperator("terminal", {
                 this.ws.onclose = (e) => {
                     if (this.settings.wsautocon) {
                         this.state.outputToUser("Connection closed.");
+                        this.state.outputToUser("Retrying in 5...");
                         delete this.ws;
-                        setTimeout(this.tryEstablishWS, 1000);
+                        setTimeout(this.tryEstablishWS, 5000);
                     }
                 }
             } catch (e) {

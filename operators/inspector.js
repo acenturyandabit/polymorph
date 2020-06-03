@@ -344,6 +344,8 @@ polymorph_core.registerOperator("inspector", {
 
     //loading and saving
     this.updateSettings = () => {
+        /*
+        //this is broken because staticitem does not exist???
         if (this.settings.operationMode == 'static') {
             //create if it does not exist
             if (!polymorph_core.items[staticItem]) {
@@ -354,7 +356,7 @@ polymorph_core.registerOperator("inspector", {
                     id: staticItem
                 });
             }
-        }
+        }*/
         if (this.settings.dataEntry) {
             insertbtn.style.display = "block";
         } else {
@@ -402,13 +404,6 @@ polymorph_core.registerOperator("inspector", {
             object: this.settings,
             property: "currentItem",
             label: "Set item to display:"
-        }),
-        focusOperatorID: new polymorph_core._option({
-            div: this.optionsDiv,
-            type: "text",
-            object: this.settings,
-            property: "focusOperatorID",
-            label: "Set container UID to focus from:"
         }),
         orientation: new polymorph_core._option({
             div: this.optionsDiv,
@@ -511,10 +506,13 @@ polymorph_core.registerOperator("inspector", {
         let id = d.id;
         let sender = d.sender;
         if (this.settings.operationMode == "focus") {
+            this.settings.currentItem = id;
+            this.renderItem(id);
+            //using new focus paradigm we can skip this step, hopefully
+            /*
             if (this.settings['focusOperatorID']) {
                 if (this.settings['focusOperatorID'] == sender.container.uuid) {
-                    this.settings.currentItem = id;
-                    this.renderItem(id);
+
                 }
             } else {
                 //calculate the base rect of the sender
@@ -531,6 +529,7 @@ polymorph_core.registerOperator("inspector", {
                     }
                 }
             }
+            */
         }
     });
     container.on("deleteItem", (d) => {

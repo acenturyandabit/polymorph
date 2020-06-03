@@ -1,6 +1,5 @@
 polymorph_core.registerSaveSource("srv", function (save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
-    this.prettyName = "Save to server";
     //initialise here
     this.pushAll = async function (data) {
         //push to the source (force save)
@@ -94,4 +93,7 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
     this.showDialog = function () {
         ops.forEach(i => i.load());
     }
+},{
+    prettyName:"Save to server",
+    createable:true
 })

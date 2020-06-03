@@ -217,6 +217,7 @@ function _polymorph_core() {
                     }
                 }
             }
+            this.appendedElement = appendedElement;
         }
 
         return _option;
@@ -321,7 +322,7 @@ function _polymorph_core() {
 
     let _Rixits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
 
-    function b64(n){
+    function b64(n) {
         var rixit; // like 'digit', only in some non-decimal radix 
         var residual = n;
         var result = '';
@@ -331,7 +332,7 @@ function _polymorph_core() {
             residual = Math.floor(residual / 64);
             if (residual == 0)
                 break;
-            }
+        }
         return result;
     }
 

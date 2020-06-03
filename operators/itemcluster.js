@@ -102,7 +102,7 @@ polymorph_core.registerOperator("itemcluster2", {
                 </span>
             </span>
         </div>
-        <div class="itemcluster"  style="flex: 1 1 100%;position: relative; background:transparent;">
+        <div class="itemcluster"  style="flex: 1 1 100%;position: relative; background:transparent;  overflow:hidden">
         <div class="tray">
         </div>
         </div>
@@ -156,11 +156,14 @@ polymorph_core.registerOperator("itemcluster2", {
     //lazily double up updates so that we can fix the lines
     // but only update items that are visible; and only update if we are visible
     let doubleUpdateCapacitor = new capacitor(200, 1000, () => {
-        for (let i in polymorph_core.items) {
+        for (let i in this.itemPointerCache) {
+            this.arrangeItem(i);// henceforth zoomfactor will only be a renderer thing. i hope this works
+        }
+        /*for (let i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
                 this.arrangeItem(i);
             }
-        }
+        }//rm if works*/
     })
     this.itemRelevant = (id) => {
         // I will be shown at some point by this container
@@ -276,12 +279,12 @@ polymorph_core.registerOperator("itemcluster2", {
         this.viewDropdown.style.display = "none";
     });
     waitForFn.apply(this, ["viewGrid"]);
-    this.wasPreviouslyVisible=undefined;
+    this.wasPreviouslyVisible = undefined;
     this.switchView = (id, assert, subview) => {
         let previousView = this.settings.currentViewName;
-        if (container.visible()!=this.wasPreviouslyVisible){
-            this.wasPreviouslyVisible=container.visible();
-            previousView=undefined;
+        if (container.visible() != this.wasPreviouslyVisible) {
+            this.wasPreviouslyVisible = container.visible();
+            previousView = undefined;
         }
         this.settings.currentViewName = id;
         if (!this.settings.currentViewName) {
@@ -337,6 +340,7 @@ polymorph_core.registerOperator("itemcluster2", {
                     }
                 }
             }
+            polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor = polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor || 1;//enforce xzoomfactor
             //kill all lines, if geuninely switching and not using this as part of refresh
             if (previousView != id) {
                 for (let i in this.activeLines) {
@@ -745,15 +749,11 @@ polymorph_core.registerOperator("itemcluster2", {
                 ic.XZoomFactor *= 0.9;
             }
             // adjust all relevant items, and rearrange
-            for (let i in polymorph_core.items) {
-                try {
-                    let trueX = polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x / oldXZoomFactor;
-                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = trueX * ic.XZoomFactor;
-                    this.arrangeItem(i);
-                } catch (e) {
-
-                }
+            for (let i in this.itemPointerCache) {
+                this.arrangeItem(i);// henceforth zoomfactor will only be a renderer thing. i hope this works
             }
+            doubleUpdateCapacitor.submit();
+
             //also change the view box so that the mouse position remains the same
             let dxs = this.mapPageToSvgCoords(e.pageX, e.pageY);
             dxs.dx = dxs.x - ic.cx
@@ -904,10 +904,10 @@ polymorph_core.registerOperator("itemcluster2", {
     });
 
     this.itemSpace.addEventListener("dblclick", (e) => {
-        if (e.target == this.itemSpace || e.target.tagName.toLowerCase() == "svg" || e.target == this.tempTR.node) {
+        if (e.target.matches("svg *") && (!e.target.matches("g[data-id] *"))) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
             this.createItem(
-                coords.x,
+                coords.x / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor,
                 coords.y
             );
             // Make a new item
@@ -920,7 +920,7 @@ polymorph_core.registerOperator("itemcluster2", {
         if (!polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName]) polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
         //if there is a grid, then deal with it
         this.alignGrid(it);
-        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x();
+        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x()/polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
         polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         container.fire("updateItem", {
             id: id
@@ -972,6 +972,7 @@ polymorph_core.registerOperator("itemcluster2", {
             id: id
         });
         this.arrangeItem(id);
+        return id;
     };
 
     container.on("createItem", (d) => {
@@ -1059,6 +1060,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.rootdiv.addEventListener("input", (e) => {
         for (let i = 0; i < e.path.length; i++) {
+            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
                 if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
@@ -1145,15 +1147,17 @@ polymorph_core.registerOperator("itemcluster2", {
         this.settings.viewpath.push(this.settings.currentViewName);
         return this.settings;
     }
-
-    if (this.settings.viewpath) {
-        this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
-        for (let i = 0; i < this.settings.viewpath.length; i++) {
-            this.switchView(this.settings.viewpath[i], true, true);
+    setTimeout(() => {
+        if (this.settings.viewpath) {
+            this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
+            for (let i = 0; i < this.settings.viewpath.length; i++) {
+                this.switchView(this.settings.viewpath[i], true, true);
+            }
+        } else {//for older versions
+            this.switchView(this.settings.currentViewName, true, true);
         }
-    } else {//for older versions
-        this.switchView(this.settings.currentViewName, true, true);
-    }
+    }); // wait until all other containers are intitalised otherwise we will check visibility in switchview before subframe parent exists which will break things.
+
     this.updateSettings();
 
 
@@ -1165,7 +1169,7 @@ polymorph_core.registerOperator("itemcluster2", {
       <option value="focus">Display view from focused item</option>
       </select>
       `;
-    let options = {
+    this.dialogOptions = {
         tray: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
@@ -1207,8 +1211,8 @@ polymorph_core.registerOperator("itemcluster2", {
             let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
             if (it) it.value = this.settings[i];
         }
-        for (i in options) {
-            options[i].load();
+        for (i in this.dialogOptions) {
+            this.dialogOptions[i].load();
         }
         // update your dialog elements with your settings
     }
@@ -1248,5 +1252,7 @@ polymorph_core.registerOperator("itemcluster2", {
     scriptassert([["itemcluster_scalegrid", "operators/itemcluster.scalegrid.js"]], () => {
         _itemcluster_extend_scalegrid(this);
     })
-
+    scriptassert([["itemcluster_rapidentry", "operators/itemcluster.rapidentry.js"]], () => {
+        _itemcluster_rapid_entry.apply(this);
+    })
 });

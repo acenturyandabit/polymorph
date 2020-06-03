@@ -207,7 +207,7 @@ var __manager_profiles = {
     },
     saveSources: {
         files: [
-            //["outputToText", "saveSources/outputToText.js"],
+            ["outputToText", "saveSources/outputToText.js"],
             ["localforage2", "saveSources/localforage2.js"],
             ["permalink", "saveSources/permalink.js"],
             //["firebase_savesource", "saveSources/firebase.js"],

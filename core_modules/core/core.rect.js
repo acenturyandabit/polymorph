@@ -690,7 +690,8 @@ polymorph_core.rect = function (rectID) {
     }
 
     this.containerVisible=(id)=>{
-        return this.settings.s==id && (this.parent == polymorph_core || this.parent.visible());
+        if (this.parent) return this.settings.s==id && (this.parent == polymorph_core || this.parent.visible());
+        else return false;
     }
 
     this.visible=()=>{
