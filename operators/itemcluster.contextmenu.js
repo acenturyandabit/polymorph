@@ -505,7 +505,7 @@ function _itemcluster_extend_contextmenu(me) {
             me.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
             let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
             ic.scale = 1;
-            ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x*ic.XZoomFactor;
+            ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x * ic.XZoomFactor;
             ic.cy = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
             me.viewAdjust();
             me.viewGrid();
@@ -555,17 +555,18 @@ function _itemcluster_extend_contextmenu(me) {
     });
     me.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
-          <li class="cpybtn">Copy (between views)</li>
-          <li class="subview">Open Subview</li>
-          <li>Edit style
-          <ul class="submenu">
+        <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="cpybtn">Copy (between views)</li>
+        <li class="subview">Open Subview</li>
+        <li>Edit style
+        <ul class="submenu">
             <li class="cstyl">Copy style</li>
             <li class="pstyl">Paste style</li>
             <li><input class="background" placeholder="Background"></li>
             <li><input class="color" placeholder="Color"></li>
-          </ul>
-          </li>
-          <li class="orientation">Reorient subitems</li>
+        </ul>
+        </li>
+        <li class="orientation">Reorient subitems</li>
           `,
         me.rootdiv,
         ".floatingItem",
@@ -663,6 +664,49 @@ function _itemcluster_extend_contextmenu(me) {
                 //delete the div and delete its corresponding item
                 me.removeItem(cid);
             })
+            me.itemContextMenu.style.display = "none";
+        });
+    me.itemContextMenu
+        .querySelector(".cascadebtn")
+        .addEventListener("click", e => {
+            let innerText = polymorph_core.items[me.contextedElement.dataset.id][me.settings.textProp];
+            innerText = innerText.split(/(?=[\.\?\n]+)/g);
+            //filter out newlinefullstops; todo filter out numbered lists?
+            //quick adjustement since lookbehinds are not a thing yet
+            for (let i = 0; i < innerText.length; i++) {
+                if (innerText[i][0] == '.' || innerText[i][0] == '?') {
+                    if (i > 0) {
+                        innerText[i - 1] += innerText[i][0];
+                    }
+                }
+                innerText[i] = innerText[i].slice(1);// also slices newline chars
+            }
+            //first
+            polymorph_core.items[me.contextedElement.dataset.id][me.settings.textProp] = innerText.shift();
+            me.container.fire("updateItem", { id: me.contextedElement.dataset.id, sender: me });
+            me.arrangeItem(me.contextedElement.dataset.id);
+            //create a bunch of items
+            let VDT = polymorph_core.items[me.contextedElement.dataset.id].itemcluster.viewData[me.settings.currentViewName];
+            let lasty = VDT.y;
+            let lastItem = polymorph_core.items[me.contextedElement.dataset.id];
+            if (!lastItem.to) lastItem.to = {};
+            innerText.forEach(i => {
+                let newItem = {
+                    itemcluster: {
+                        viewData: {
+                        }
+                    },
+                    to: {}
+                };
+                newItem[me.settings.textProp] = i;
+                newItem[me.settings.filter] = true;
+                newItem.itemcluster.viewData[me.settings.currentViewName] = { x: VDT.x, y: lasty += 50 };
+                newID = polymorph_core.insertItem(newItem);
+                lastItem.to[newID] = true;
+                lastItem = polymorph_core.items[newID];
+                me.container.fire("updateItem", { id: newID, sender: me });
+                me.arrangeItem(newID);
+            });
             me.itemContextMenu.style.display = "none";
         });
     me.itemContextMenu
