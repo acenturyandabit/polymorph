@@ -19,76 +19,70 @@
             // this.cstyle.href = "3pt/fullcalendar.min.css";
             this.rootdiv.appendChild(this.cstyle);
 
-            scriptassert([
-                ['jquery', '3pt/jquery.min.js'],
-                ['moment', '3pt/moment.min.js'],
-                ['fullcalendar', '3pt/fullcalendar.min.js']
-            ], () => {
-                $(this.rootdiv).fullCalendar({
-                    events: (start, end, timezone, callback) => {
-                        let allList = [];
-                        if (this.settings.pushnotifs) {
-                            this.notifstack = [];
-                        }
+            $(this.rootdiv).fullCalendar({
+                events: (start, end, timezone, callback) => {
+                    let allList = [];
+                    if (this.settings.pushnotifs) {
+                        this.notifstack = [];
+                    }
+                    let tzd = new Date();
+                    for (let i in polymorph_core.items) {
                         let tzd = new Date();
-                        for (let i in polymorph_core.items) {
-                            let tzd = new Date();
-                            try {
-                                for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
-                                    if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
-                                        let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
-                                        for (let j = 0; j < result.length; j++) {
-                                            if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
-                                                //prevent auto now spam
-                                                this.notifstack.push({
-                                                    txt: polymorph_core.items[i][this.settings.titleproperty],
-                                                    time: result[j].date
-                                                });
-                                            }
-                                            let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
-                                            let eisostring;
-                                            if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
-                                            else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
-
-                                            isostring = isostring.toISOString();
-                                            eisostring = eisostring.toISOString();
-                                            let col = "";
-                                            let bak = "";
-                                            if (polymorph_core.items[i].style) {
-                                                bak = polymorph_core.items[i].style.background;
-                                                col = polymorph_core.items[i].style.color || matchContrast(polymorph_core.items[i].style.background);
-                                            }
-                                            allList.push({
-                                                id: i,
-                                                title: polymorph_core.items[i][this.settings.titleproperty],
-                                                backgroundColor: bak,
-                                                textColor: col,
-                                                start: isostring,
-                                                end: eisostring
+                        try {
+                            for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
+                                if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
+                                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
+                                    for (let j = 0; j < result.length; j++) {
+                                        if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
+                                            //prevent auto now spam
+                                            this.notifstack.push({
+                                                txt: polymorph_core.items[i][this.settings.titleproperty],
+                                                time: result[j].date
                                             });
                                         }
+                                        let isostring = new Date(result[j].date - tzd.getTimezoneOffset() * 60 * 1000 + 1000);
+                                        let eisostring;
+                                        if (result[j].endDate) eisostring = new Date(result[j].endDate - tzd.getTimezoneOffset() * 60 * 1000 - 1000);
+                                        else eisostring = new Date(isostring.getTime() + 60 * 60 * 1000 - 1000);
+
+                                        isostring = isostring.toISOString();
+                                        eisostring = eisostring.toISOString();
+                                        let col = "";
+                                        let bak = "";
+                                        if (polymorph_core.items[i].style) {
+                                            bak = polymorph_core.items[i].style.background;
+                                            col = polymorph_core.items[i].style.color || matchContrast(polymorph_core.items[i].style.background);
+                                        }
+                                        allList.push({
+                                            id: i,
+                                            title: polymorph_core.items[i][this.settings.titleproperty],
+                                            backgroundColor: bak,
+                                            textColor: col,
+                                            start: isostring,
+                                            end: eisostring
+                                        });
                                     }
                                 }
-                            } catch (e) {
-
                             }
+                        } catch (e) {
+
                         }
-                        callback(allList);
-                    },
-                    eventClick: (calEvent, jsEvent, view) => {
-                        container.fire("focusItem", {
-                            id: calEvent.id,
-                            sender: this
-                        })
-                    },
-                    header: {
-                        left: 'title',
-                        center: '',
-                        right: 'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
-                    },
-                    defaultView: this.settings.defaultView,
-                    height: "parent"
-                });
+                    }
+                    callback(allList);
+                },
+                eventClick: (calEvent, jsEvent, view) => {
+                    container.fire("focusItem", {
+                        id: calEvent.id,
+                        sender: this
+                    })
+                },
+                header: {
+                    left: 'title',
+                    center: '',
+                    right: 'month agendaWeek listWeek basicWeek agendaDay  today prev,next'
+                },
+                defaultView: this.settings.defaultView,
+                height: "parent"
             });
 
             //Handle item updates
@@ -183,14 +177,11 @@
                 if (this.ws) this.ws.send(data);
             }
 
-            waitForFn.apply(this, ["notify"]);
-            scriptassert([["quickNotify", "genui/quickNotify.js"]], () => {
-                this.notify = (txt, ask) => {
-                    quickNotify(txt, ask, () => {
-                        this.settings.pushnotifs = false;
-                    })
-                }
-            })
+            this.notify = (txt, ask) => {
+                quickNotify(txt, ask, () => {
+                    this.settings.pushnotifs = false;
+                })
+            }
 
             //Saving and loading
             this.toSaveData = function () {

@@ -360,11 +360,7 @@ polymorph_core.registerOperator("itemList", function (container) {
         }
     })
 
-    waitForFn.apply(this, ["setSearchTemplate"]);
-    waitForFn.apply(this, ["sortItems"]);
-    scriptassert([["itemlist searchsort", "operators/itemList.searchsort.js"]], () => {
-        __itemlist_searchsort.apply(this);
-    })
+    __itemlist_searchsort.apply(this);
 
     this.updateSettings = () => {
         //Look at the settings and apply any relevant changes
@@ -503,54 +499,50 @@ polymorph_core.registerOperator("itemList", function (container) {
     });
 
 
-    scriptassert([
-        ['dateparser', 'genui/dateparser.js']
-    ], () => {
-        this.datereparse = (it) => {
-            let dateprop = "";
-            for (let i in this.settings.properties) {
-                if (this.settings.properties[i] == 'date') {
-                    dateprop = i;
-                    //specifically reparse the date on it;
-                    if (it) {
-                        if (polymorph_core.items[it][dateprop]) {
-                            polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
-                            if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
-                            //ds=this.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
-                        }
+    this.datereparse = (it) => {
+        let dateprop = "";
+        for (let i in this.settings.properties) {
+            if (this.settings.properties[i] == 'date') {
+                dateprop = i;
+                //specifically reparse the date on it;
+                if (it) {
+                    if (polymorph_core.items[it][dateprop]) {
+                        polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
+                        if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
+                        //ds=this.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
                     }
-                    // get a list of Items
-                    let its = [];
-                    this.taskList.querySelectorAll("[data-id]").forEach(e => {
-                        let itm = {
-                            id: e.dataset.id
-                        };
-                        if (!polymorph_core.items[itm.id]) {
-                            //nerf the e that spawned this, then break
-                            //idek how this happens :(
-                            e.remove();
-                            return;
-                        }
-                        //we are going to upgrade all dates that don't match protocol)
-                        if (polymorph_core.items[itm.id][dateprop] && polymorph_core.items[itm.id][dateprop].date) {
-                            if (typeof polymorph_core.items[itm.id][dateprop].date == "number") {
-                                polymorph_core.items[itm.id][dateprop].date = [{
-                                    date: polymorph_core.items[itm.id][dateprop].date
-                                }];
-                            }
-                            if (polymorph_core.items[itm.id][dateprop].date[0]) itm.date = polymorph_core.items[itm.id][dateprop].date[0].date;
-                            else itm.date = Date.now() * 10000;
-                        } else itm.date = Date.now() * 10000;
-                        its.push(itm);
-                    });
                 }
+                // get a list of Items
+                let its = [];
+                this.taskList.querySelectorAll("[data-id]").forEach(e => {
+                    let itm = {
+                        id: e.dataset.id
+                    };
+                    if (!polymorph_core.items[itm.id]) {
+                        //nerf the e that spawned this, then break
+                        //idek how this happens :(
+                        e.remove();
+                        return;
+                    }
+                    //we are going to upgrade all dates that don't match protocol)
+                    if (polymorph_core.items[itm.id][dateprop] && polymorph_core.items[itm.id][dateprop].date) {
+                        if (typeof polymorph_core.items[itm.id][dateprop].date == "number") {
+                            polymorph_core.items[itm.id][dateprop].date = [{
+                                date: polymorph_core.items[itm.id][dateprop].date
+                            }];
+                        }
+                        if (polymorph_core.items[itm.id][dateprop].date[0]) itm.date = polymorph_core.items[itm.id][dateprop].date[0].date;
+                        else itm.date = Date.now() * 10000;
+                    } else itm.date = Date.now() * 10000;
+                    its.push(itm);
+                });
             }
-            //sort everything
-            this.sortItems();
-            container.fire("dateUpdate");
         }
-        this.datereparse();
-    })
+        //sort everything
+        this.sortItems();
+        container.fire("dateUpdate");
+    }
+    this.datereparse();
 
     this.container.registerContextMenu(this.taskList, (el) => {
         let id = el;

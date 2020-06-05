@@ -50,6 +50,12 @@ polymorph_core.registerOperator("welcome", {
                     <li><a>A reconfigurable UI</a></li>
                     <li><a>A collaboration tool</a></li>-->
                 </ul>
+                <h2>Examples</h2>
+                <span>Want to see what polymorph is capable of? Check out some examples:</span>
+                <ul class="templateList">
+                    <li><a href="permalink/techtree">A technology tree of the human race</a></li>
+                    <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
+                </ul>
             </div>
             <div>
                 <h2>Customise</h2>

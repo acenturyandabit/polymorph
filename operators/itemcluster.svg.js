@@ -74,7 +74,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!prerange && (tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp])) {
+            if (!prerange && ((tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
                 tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
@@ -141,8 +141,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }
             if (prerange) {
                 let newRange = new Range();
-                newRange.setStart(prerange.node.childNodes[0], prerange.startOffset);
-                newRange.setEnd(prerange.node.childNodes[0], prerange.endOffset);
+                newRange.setStart(prerange.startContainer, prerange.startOffset);
+                newRange.setEnd(prerange.startContainer, prerange.endOffset);
                 let props = ["collapsed"
                     , "commonAncestorContainer"
                     , "endContainer"

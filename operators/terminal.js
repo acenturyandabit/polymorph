@@ -245,14 +245,11 @@ polymorph_core.registerOperator("terminal", {
             name: "cron",
             help: "Schedule a command to run.",
             operate: function (regres, state) {
-                scriptassert([["dateparser", "genui/dateparser.js"]], () => {
-                    let dp = new _dateParser();
-                    let tm = dp.extractTime(regres[2]);
-                    state.future(() => {
-                        state.process(regres[1]);
-                    }, tm.getTime());
-                })
-
+                let dp = new _dateParser();
+                let tm = dp.extractTime(regres[2]);
+                state.future(() => {
+                    state.process(regres[1]);
+                }, tm.getTime());
             }
         },
         call: {
@@ -314,7 +311,7 @@ polymorph_core.registerOperator("terminal", {
             }
             if (this.ws && this.ws.readyState == WebSocket.OPEN) {//closed
                 this.ws.send(data);
-            } else if (this.ws.readyState>=WebSocket.CLOSING){
+            } else if (this.ws.readyState >= WebSocket.CLOSING) {
                 this.state.outputToUser("Websocket not connected - operation aborted.");
                 if (this.settings.wsautocon) {
                     this.state.outputToUser("Autorestart enabled - attempting to connect...");
@@ -429,7 +426,7 @@ polymorph_core.registerOperator("terminal", {
             this.settings.script = this.textarea.value;
         }
     })
-    
+
     this.updateSettings = () => {
         if (this.settings.opmode == "console") {
             if (this.settings.record) this.textarea.value = this.settings.record;
@@ -468,7 +465,7 @@ polymorph_core.registerOperator("terminal", {
                 }
                 this.ws.onopen = (e) => {
                     this.state.outputToUser('Connnection established!');
-                    if (this.storedCommand && this.ws.readyState==WebSocket.OPEN) {
+                    if (this.storedCommand && this.ws.readyState == WebSocket.OPEN) {
                         this.ws.send(this.storedCommand);
                         this.storedCommand = undefined;
                     }

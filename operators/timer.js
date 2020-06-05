@@ -34,28 +34,23 @@ polymorph_core.registerOperator("timer", {
     });
     this.rootdiv.querySelector("input").value = this.settings.timeString;
 
-    scriptassert([["intervalParser", "genui/intervalParser.js"]], () => {
-        container.on("focusItem,updateItem", (d) => {
-            if (this.settings.mode == "focus" && !(this.settings.startLock && this.settings.started)) {
-                this.settings.focusedItem = d.id;
-                let timeString = polymorph_core.items[this.settings.focusedItem][this.settings.timerTotalProp];
-                this.rootdiv.querySelector("input").value = timeString;
-            }
-        })
-        this.startTimer = (timeString) => {
-            let ctimeLeft = intervalParser.extractTime(timeString);
-            if (ctimeLeft) this.settings.remainingTime = ctimeLeft.t;
+    container.on("focusItem,updateItem", (d) => {
+        if (this.settings.mode == "focus" && !(this.settings.startLock && this.settings.started)) {
+            this.settings.focusedItem = d.id;
+            let timeString = polymorph_core.items[this.settings.focusedItem][this.settings.timerTotalProp];
+            this.rootdiv.querySelector("input").value = timeString;
         }
     })
+    this.startTimer = (timeString) => {
+        let ctimeLeft = intervalParser.extractTime(timeString);
+        if (ctimeLeft) this.settings.remainingTime = ctimeLeft.t;
+    }
 
-    waitForFn.apply(this, ["notify"]);
-    scriptassert([["quickNotify", "genui/quickNotify.js"]], () => {
-        this.notify = (txt, ask) => {
-            quickNotify(txt, ask, () => {
-                this.settings.pushnotifs = false;
-            })
-        }
-    })
+    this.notify = (txt, ask) => {
+        quickNotify(txt, ask, () => {
+            this.settings.pushnotifs = false;
+        })
+    }
 
     let doTimer = () => {
         if (this.settings.started) {

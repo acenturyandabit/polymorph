@@ -208,35 +208,27 @@ polymorph_core.registerOperator("inspector", {
         }
     })
 
-    scriptassert([
-        ['dateparser', 'genui/dateparser.js']
-    ], () => {
-        this.datereparse = (it, i) => {
-            it[i].date = dateParser.richExtractTime(it[i].datestring);
-            if (!it[i].date.length) it[i].date = undefined;
-            container.fire("dateUpdate");
-        }
-    });
+    this.datereparse = (it, i) => {
+        it[i].date = dateParser.richExtractTime(it[i].datestring);
+        if (!it[i].date.length) it[i].date = undefined;
+        container.fire("dateUpdate");
+    }
 
-    scriptassert([
-        ["contextmenu", "genui/contextMenu.js"]
-    ], () => {
-        let ctm = new _contextMenuManager(container.div);
-        let contextedItem;
-        let menu;
+    let ctm = new _contextMenuManager(container.div);
+    let contextedItem;
+    let menu;
 
-        function filter(e) {
-            contextedItem = e.target;
-            return true;
-        }
-        menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, this.rootdiv, "[data-type='Date'] input", filter)
-        menu.querySelector(".fixed").addEventListener("click", (e) => {
-            if (!polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].date) this.datereparse(polymorph_core.items[this.settings.currentItem], contextedItem.parentElement.dataset.role);
-            contextedItem.value = new Date(polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].date[0].date).toLocaleString();
-            polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].datestring = contextedItem.value;
-            this.datereparse(polymorph_core.items[this.settings.currentItem], contextedItem.parentElement.dataset.role);
-            menu.style.display = "none";
-        })
+    function filter(e) {
+        contextedItem = e.target;
+        return true;
+    }
+    menu = ctm.registerContextMenu(`<li class="fixed">Convert to fixed date</li>`, this.rootdiv, "[data-type='Date'] input", filter)
+    menu.querySelector(".fixed").addEventListener("click", (e) => {
+        if (!polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].date) this.datereparse(polymorph_core.items[this.settings.currentItem], contextedItem.parentElement.dataset.role);
+        contextedItem.value = new Date(polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].date[0].date).toLocaleString();
+        polymorph_core.items[this.settings.currentItem][contextedItem.parentElement.dataset.role].datestring = contextedItem.value;
+        this.datereparse(polymorph_core.items[this.settings.currentItem], contextedItem.parentElement.dataset.role);
+        menu.style.display = "none";
     })
 
     //render an item on focus or on settings update.

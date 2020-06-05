@@ -192,6 +192,9 @@ polymorph_core.on("UIstart", () => {
     polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
         window.open(window.location.pathname + "?o", "_blank");
     })
+    polymorph_core.topbar.add("File/New").addEventListener("click", () => {
+        window.open(window.location.pathname + "?o", "_blank");
+    })
     polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
         polymorph_core.resetTutorial();
     })

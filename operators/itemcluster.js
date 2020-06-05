@@ -443,14 +443,8 @@ polymorph_core.registerOperator("itemcluster2", {
     //Items
     this.itemPointerCache = {};
     this.cachedStyle = {};
-    scriptassert([
-        ["svg", "3pt/svg.min.js"],
-        ["foreignobject", "3pt/svg.foreignobject.js"]
-    ], () => {
-        scriptassert([["itemcluster_svg", "operators/itemcluster.svg.js"]], () => {
-            _itemcluster_extend_svg(this);
-        });
-    });
+
+    _itemcluster_extend_svg(this);
 
     //More items shenanigans
 
@@ -1255,13 +1249,7 @@ polymorph_core.registerOperator("itemcluster2", {
             return id;
         }
     }
-    scriptassert([["itemcluster_contextmenu", "operators/itemcluster.contextmenu.js"]], () => {
-        _itemcluster_extend_contextmenu.apply(this);
-    })
-    scriptassert([["itemcluster_scalegrid", "operators/itemcluster.scalegrid.js"]], () => {
-        _itemcluster_extend_scalegrid(this);
-    })
-    scriptassert([["itemcluster_rapidentry", "operators/itemcluster.rapidentry.js"]], () => {
-        _itemcluster_rapid_entry.apply(this);
-    })
+    _itemcluster_extend_contextmenu.apply(this);
+    _itemcluster_extend_scalegrid(this);
+    _itemcluster_rapid_entry.apply(this);
 });
