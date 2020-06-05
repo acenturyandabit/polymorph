@@ -134,20 +134,25 @@ polymorph_core.registerOperator("itemcluster2", {
         }
     })
 
+    this.centreAndFocus = (id) => {
+        polymorph_core.items[this.settings.currentViewName].itemcluster.cx = this.itemPointerCache[id].cx();
+        polymorph_core.items[this.settings.currentViewName].itemcluster.cy = this.itemPointerCache[id].cy();
+        this.viewAdjust();
+        if (this.preselected) {
+            this.preselected.classList.remove("selected");
+            this.preselected.classList.remove("anchored");
+        }
+        this.preselected = this.itemPointerCache[id].node;
+        this.preselected.classList.add("anchored");
+        this.tryFocus(id, true);
+    };
+
     //////////////////////////// Focusing an item////////////////////
     container.on("focusItem", (d) => {
         if (d.sender == this) return;
         if (this.itemPointerCache[d.id] && polymorph_core.items[d.id].itemcluster.viewData[this.settings.currentViewName]) {
-            polymorph_core.items[this.settings.currentViewName].itemcluster.cx = this.itemPointerCache[d.id].cx();
-            polymorph_core.items[this.settings.currentViewName].itemcluster.cy = this.itemPointerCache[d.id].cy();
-            this.viewAdjust();
-            if (this.preselected) {
-                this.preselected.classList.remove("selected");
-                this.preselected.classList.remove("anchored");
-            }
-            this.preselected = this.itemPointerCache[d.id].node;
-            this.preselected.classList.add("anchored");
-            this.tryFocus(d.id, true);
+            this.centreAndFocus(d.id);
+
         }
     })
 
@@ -165,6 +170,10 @@ polymorph_core.registerOperator("itemcluster2", {
             }
         }//rm if works*/
     })
+
+    this.redrawAllLines = () => {
+        doubleUpdateCapacitor.submit();
+    }
     this.itemRelevant = (id) => {
         // I will be shown at some point by this container
         let isFiltered = (polymorph_core.items[id][this.settings.filter] != undefined);
@@ -920,7 +929,7 @@ polymorph_core.registerOperator("itemcluster2", {
         if (!polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName]) polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName] = {};
         //if there is a grid, then deal with it
         this.alignGrid(it);
-        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x()/polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
+        polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x = it.x() / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
         polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].y = it.y();
         container.fire("updateItem", {
             id: id
@@ -1247,7 +1256,7 @@ polymorph_core.registerOperator("itemcluster2", {
         }
     }
     scriptassert([["itemcluster_contextmenu", "operators/itemcluster.contextmenu.js"]], () => {
-        _itemcluster_extend_contextmenu(this);
+        _itemcluster_extend_contextmenu.apply(this);
     })
     scriptassert([["itemcluster_scalegrid", "operators/itemcluster.scalegrid.js"]], () => {
         _itemcluster_extend_scalegrid(this);

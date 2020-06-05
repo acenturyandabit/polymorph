@@ -1,18 +1,18 @@
 
 
-function _itemcluster_extend_contextmenu(me) {
+function _itemcluster_extend_contextmenu() {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
-    let contextMenuManager = new _contextMenuManager(me.rootdiv);
+    let contextMenuManager = new _contextMenuManager(this.rootdiv);
     let centreXY = {};
-    function chk(e) {
+    let chk = (e) => {
         if (!e.target.matches("g[data-id] *")) {
-            //if (e.target.tagName.toLowerCase() == "svg" || e.target == me.tempTR.node) {
-            centerXY = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            //if (e.target.tagNathis.toLowerCase() == "svg" || e.target == this.tempTR.node) {
+            centerXY = this.mapPageToSvgCoords(e.pageX, e.pageY);
             return true;//only activate on clicks to the background.  
         }
     }
-    me.rootcontextMenu = contextMenuManager.registerContextMenu(`
+    this.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
@@ -25,56 +25,56 @@ function _itemcluster_extend_contextmenu(me) {
         </ul>
         </li>
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
-        `, me.rootdiv, undefined, chk);
-    me.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
+        `, this.rootdiv, undefined, chk);
+    this.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
         if (polymorph_core.shared.itemclusterCopyElement) {
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
             polymorph_core.shared.itemclusterCopyElement.forEach((v) => {
-                polymorph_core.items[v.id].itemcluster.viewData[me.settings.currentViewName] = {
+                polymorph_core.items[v.id].itemcluster.viewData[this.settings.currentViewName] = {
                     x: coords.x + v.x,
                     y: coords.y + v.y,
                 }
-                if (me.settings.filter) polymorph_core.items[v.id][me.settings.filter] = true;
-                me.arrangeItem(v.id);
-                me.container.fire("updateItem", {
+                if (this.settings.filter) polymorph_core.items[v.id][this.settings.filter] = true;
+                this.arrangeItem(v.id);
+                this.container.fire("updateItem", {
                     id: v.id,
-                    sender: me
+                    sender: this
                 });
             });
             //arrange everything again for new links to show up
             for (let i in polymorph_core.items) {
-                me.arrangeItem(i);
+                this.arrangeItem(i);
             }
-            me.rootcontextMenu.style.display = "none";
+            this.rootcontextMenu.style.display = "none";
         }
     })
-    me.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
-        let rect = me.itemSpace.getBoundingClientRect();
+    this.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
+        let rect = this.itemSpace.getBoundingClientRect();
         for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
-                polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].x = e.clientX - rect.left;
-                polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].y = e.clientY - rect.top;
-                me.arrangeItem(i);
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
+                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
+                this.arrangeItem(i);
             }
         }
         for (let i in polymorph_core.items) {
             //second update to fix lines; also alert everyone of changes.
-            me.container.fire("updateItem", {
+            this.container.fire("updateItem", {
                 id: i
             });
         }
     })
     //hierarchy buttons
 
-    function generateHierarchy() {
+    let generateHierarchy = () => {
         //get position of items, and the links to other items
         let visibleItems = [];
         for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
                 visibleItems.push({
                     id: i,
-                    x: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].x,
-                    y: polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName].y,
+                    x: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x,
+                    y: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y,
                     children: Object.keys(polymorph_core.items[i].to || {}),
                     parents: []
                 });
@@ -159,7 +159,7 @@ function _itemcluster_extend_contextmenu(me) {
         return visibleItems;
     }
 
-    function cartesianHierarchy(e, visibleItems) {
+    let cartesianHierarchy = (e, visibleItems) => {
         //sort for rendering
         visibleItems.sort((a, b) => {
             return (a.level - b.level) + (a.level == b.level) * (a.x - b.x);
@@ -172,17 +172,17 @@ function _itemcluster_extend_contextmenu(me) {
             }
         })
         //calculate widths
-        function getWidth(id) {
+        let getWidth = (id) => {
             if (id == '0') return 0;
             let c = visibleItems[indexedOrder.indexOf(id)].children;
             if (!c || !c.length) {
-                return Number(/\d+/.exec(me.itemPointerCache[id].children()[1].width())) + 10;
+                return Number(/\d+/.exec(this.itemPointerCache[id].children()[1].width())) + 10;
             } else {
                 let sum = 0;
                 for (let i = 0; i < c.length; i++) {
                     if (visibleItems[indexedOrder.indexOf(c[i])].parent == id) sum = sum + getWidth(c[i]);
                 }
-                let alt = Number(/\d+/.exec(me.itemPointerCache[id].children()[1].width())) + 10;
+                let alt = Number(/\d+/.exec(this.itemPointerCache[id].children()[1].width())) + 10;
                 if (sum < alt) sum = alt;
                 return sum;
             }
@@ -198,14 +198,14 @@ function _itemcluster_extend_contextmenu(me) {
             if (visibleItems[i].parent == undefined) tw += visibleItems[i].width;
             else break;
         }
-        let rect = me.itemSpace.getBoundingClientRect();
+        let rect = this.itemSpace.getBoundingClientRect();
         let currentx = e.clientX - rect.left - tw / 2;
         let currenty = e.clientY - rect.top;
 
-        function render(itm, tx, ty) { // itm is a visibleItem
+        let render = (itm, tx, ty) => { // itm is a visibleItem
             if (itm.id != '0') {
-                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(me.itemPointerCache[itm.id].first().width))) / 2;
-                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = ty;
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].x = tx + (itm.width - Number(/\d+/ig.exec(this.itemPointerCache[itm.id].first().width))) / 2;
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].y = ty;
             }
             let ctx = tx;
             for (let i = 0; i < itm.children.length; i++) {
@@ -219,7 +219,7 @@ function _itemcluster_extend_contextmenu(me) {
         }
     }
     let rings = [];
-    function radialHierarchy(e, visibleItems) {
+    let radialHierarchy = (e, visibleItems) => {
         //nerf all the rings
         rings.forEach(i => i.remove());
         rings = [];
@@ -265,7 +265,7 @@ function _itemcluster_extend_contextmenu(me) {
         //start rendering
         //calculate angles
         let existing = {};
-        function getAngle(id) {
+        let getAngle = (id) => {
             if (existing[id]) {
                 if (existing[id] < 0) return 1;
                 else return existing[id];
@@ -333,20 +333,20 @@ function _itemcluster_extend_contextmenu(me) {
         //Start rendering!
         let currentT = 0;
         let triedRendering = [];
-        function render(itm, tT, dp) { // itm is a visibleItem
+        let render = (itm, tT, dp) => { // itm is a visibleItem
             if (triedRendering.indexOf(itm.id) != -1) return itm.angle;
             else triedRendering.push(itm.id);
             let r = radii[itm.level];
             if (itm.id != '0') {
-                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].x = r * Math.cos(tT + itm.angle / 2);
-                polymorph_core.items[itm.id].itemcluster.viewData[me.settings.currentViewName].y = r * Math.sin(tT + itm.angle / 2);
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].x = r * Math.cos(tT + itm.angle / 2);
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].y = r * Math.sin(tT + itm.angle / 2);
                 //polymorph_core.items[itm.id].title += "rn1";
             }
             let ctT = tT;
             for (let i = 0; i < itm.children.length; i++) {
                 if (visibleItems[indexedOrder.indexOf(itm.children[i])].parent == itm.id) ctT += render(visibleItems[indexedOrder.indexOf(itm.children[i])], ctT, dp + 1);
             }
-            //me.arrangeItem(itm.id);
+            //this.arrangeItem(itm.id);
             return itm.angle;
         }
 
@@ -355,10 +355,10 @@ function _itemcluster_extend_contextmenu(me) {
         }
         radii = Object.entries(radii).filter(i => i[0] > 0).sort((a, b) => a[0] - b[0]).map(i => i[1]);
         // now add the rings
-        rings = radii.map(i => me.svg.circle(2 * i).cx(0).cy(0).stroke('red').fill('transparent').back());
+        rings = radii.map(i => this.svg.circle(2 * i).cx(0).cy(0).stroke('red').fill('transparent').back());
     }
 
-    function biradialHierarchy(e, visibleItems) {
+    let biradialHierarchy = (e, visibleItems) => {
         //sort for rendering
         //set parents, get children to calculate their angle relative to parent, and sort by that
         let indexedOrder = visibleItems.map(v => v.id);
@@ -383,7 +383,7 @@ function _itemcluster_extend_contextmenu(me) {
         indexedOrder = visibleItems.map(v => v.id);
         //render
 
-        function binarySolve(start, end, f, epsilon = 0.1) {
+        let binarySolve = (start, end, f, epsilon = 0.1) => {
             let pme, me;
             let cycleCount = 0;
             me = 2 * epsilon;
@@ -449,26 +449,26 @@ function _itemcluster_extend_contextmenu(me) {
             visibleItems[i].cumulativeAngle = 0;
             if (visibleItems[i].level == 0) {
                 if (visibleItems[i].id != '0') {
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = 0;
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = 0;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].x = 0;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].y = 0;
                 }
             } else {
                 visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle += visibleItems[i].angle / 2;
                 if (visibleItems[i].parent != '0') {
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].x +
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].x = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[this.settings.currentViewName].x +
                         Math.cos(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[me.settings.currentViewName].y +
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].y = polymorph_core.items[visibleItems[i].parent].itemcluster.viewData[this.settings.currentViewName].y +
                         Math.sin(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
                 } else {
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].x = Math.cos(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
-                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[me.settings.currentViewName].y = Math.sin(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].x = Math.cos(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
+                    polymorph_core.items[visibleItems[i].id].itemcluster.viewData[this.settings.currentViewName].y = Math.sin(visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle) * visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].r;
                 }
                 visibleItems[indexedOrder.indexOf(visibleItems[i].parent)].cumulativeAngle += visibleItems[i].angle / 2;
             }
         }
     }
 
-    me.rootcontextMenu.addEventListener("click", (e) => {
+    this.rootcontextMenu.addEventListener("click", (e) => {
         if (!e.target.classList.contains("hierarchy")) return;
         let visibleItems = generateHierarchy();
         //visible items looks like this:
@@ -489,73 +489,74 @@ function _itemcluster_extend_contextmenu(me) {
         }
 
         for (let i in polymorph_core.items) {
-            me.container.fire("updateItem", {
+            this.container.fire("updateItem", {
                 id: i
             });
         }
 
     })
-    me.searchArray = [];
+    this.searchArray = [];
     let searchArrayIndex = 0;
-    function focusSearchItem(index) {
-        let id = me.searchArray[index];
+    let focusSearchItem = (index) => {
+        let id = this.searchArray[index];
         if (!id) {
-            me.rootcontextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
+            this.rootcontextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
         } else {
-            me.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
-            let ic = polymorph_core.items[me.settings.currentViewName].itemcluster;
+            this.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
+            let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
             ic.scale = 1;
-            ic.cx = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].x * ic.XZoomFactor;
-            ic.cy = polymorph_core.items[id].itemcluster.viewData[me.settings.currentViewName].y;
-            me.viewAdjust();
-            me.viewGrid();
+            ic.cx = polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x * ic.XZoomFactor;
+            ic.cy = polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].y;
+            this.viewAdjust();
+            this.viewGrid();
         }
     }
-    me.rootcontextMenu.querySelector(".search input").addEventListener("input", () => {
+    this.rootcontextMenu.querySelector(".search input").addEventListener("input", () => {
         //create the search array
-        me.searchArray = [];
+        this.searchArray = [];
         for (let id in polymorph_core.items) {
-            if (me.itemIsOurs(id)) {
-                if (polymorph_core.items[id][this.settings.textProp] && polymorph_core.items[id][this.settings.textProp].includes(me.rootcontextMenu.querySelector(".search input").value)) {
-                    me.searchArray.push(id);
+            if (this.itemIsOurs(id)) {
+                if (polymorph_core.items[id][this.settings.textProp] && polymorph_core.items[id][this.settings.textProp].includes(this.rootcontextMenu.querySelector(".search input").value)) {
+                    this.searchArray.push(id);
                 }
             }
         }
-        if (searchArrayIndex > me.searchArray.length) searchArrayIndex = 0;
+        if (searchArrayIndex > this.searchArray.length) searchArrayIndex = 0;
         focusSearchItem(searchArrayIndex);
     });
-    me.rootcontextMenu.querySelector(".searchNextResult").addEventListener("click", () => {
+    this.rootcontextMenu.querySelector(".searchNextResult").addEventListener("click", () => {
         searchArrayIndex++;
-        if (searchArrayIndex > me.searchArray.length) {
+        if (searchArrayIndex > this.searchArray.length) {
             searchArrayIndex = 0;
         }
         focusSearchItem(searchArrayIndex);
     })
-    me.viewContextMenu = contextMenuManager.registerContextMenu(
+    this.viewContextMenu = contextMenuManager.registerContextMenu(
         `<li class="viewDeleteButton">Delete</li>
             <li class="viewCloneButton">Clone view</li>
             <li class="viewAsItemButton">Copy view as item</li>`,
-        me.viewDropdownContainer
+        this.viewDropdownContainer
     );
-    me.viewContextMenu.querySelector(".viewAsItemButton").addEventListener("click", e => {
-        polymorph_core.shared.itemclusterCopyElement = [{ id: me.settings.currentViewName, x: 0, y: 0 }];
-        polymorph_core.items[me.settings.currentViewName].itemcluster.viewData = {};
-        me.viewContextMenu.style.display = "none";
+    this.viewContextMenu.querySelector(".viewAsItemButton").addEventListener("click", e => {
+        polymorph_core.shared.itemclusterCopyElement = [{ id: this.settings.currentViewName, x: 0, y: 0 }];
+        polymorph_core.items[this.settings.currentViewName].itemcluster.viewData = {};
+        this.viewContextMenu.style.display = "none";
     });
 
-    me.viewContextMenu.querySelector(".viewDeleteButton").addEventListener("click", e => {
-        me.destroyView(me.settings.currentViewName);
-        me.viewContextMenu.style.display = "none";
+    this.viewContextMenu.querySelector(".viewDeleteButton").addEventListener("click", e => {
+        this.destroyView(this.settings.currentViewName);
+        this.viewContextMenu.style.display = "none";
     });
 
-    me.viewCloneButton = me.viewContextMenu.querySelector(".viewCloneButton");
-    me.viewCloneButton.addEventListener("click", e => {
-        me.cloneView(me.settings.currentViewName);
-        me.viewContextMenu.style.display = "none";
+    this.viewCloneButton = this.viewContextMenu.querySelector(".viewCloneButton");
+    this.viewCloneButton.addEventListener("click", e => {
+        this.cloneView(this.settings.currentViewName);
+        this.viewContextMenu.style.display = "none";
     });
-    me.itemContextMenu = contextMenuManager.registerContextMenu(
+    this.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="collcon">Collect connected items</li>
         <li class="cpybtn">Copy (between views)</li>
         <li class="subview">Open Subview</li>
         <li>Edit style
@@ -568,108 +569,122 @@ function _itemcluster_extend_contextmenu(me) {
         </li>
         <li class="orientation">Reorient subitems</li>
           `,
-        me.rootdiv,
+        this.rootdiv,
         ".floatingItem",
         e => {
             let cte = e.target;
             while (!cte.matches(".floatingItem")) cte = cte.parentElement;
-            me.contextedElement = cte;
+            this.contextedElement = cte;
             if (polymorph_core.items[cte.dataset.id].style) {
-                me.itemContextMenu.querySelector(".background").value = polymorph_core.items[cte.dataset.id].style.background || "";
-                me.itemContextMenu.querySelector(".color").value = polymorph_core.items[cte.dataset.id].style.color || "";
+                this.itemContextMenu.querySelector(".background").value = polymorph_core.items[cte.dataset.id].style.background || "";
+                this.itemContextMenu.querySelector(".color").value = polymorph_core.items[cte.dataset.id].style.color || "";
             } else {
-                me.itemContextMenu.querySelector(".background").value = "";
-                me.itemContextMenu.querySelector(".color").value = "";
+                this.itemContextMenu.querySelector(".background").value = "";
+                this.itemContextMenu.querySelector(".color").value = "";
             }
             return true;
         }
     );
 
-    function updateStyle(e) {
-        let cids = [me.contextedElement.dataset.id];
+    let updateStyle = (e) => {
+        let cids = [this.contextedElement.dataset.id];
         let applyToAll = false;
-        me.movingDivs.forEach((v) => {
+        this.movingDivs.forEach((v) => {
             if (v.el.node.dataset.id == cids[0]) {
                 //apply to all moving divs.
                 applyToAll = true;
             }
         });
         if (applyToAll) {
-            cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
+            cids = this.movingDivs.map((v) => { return v.el.node.dataset.id });
         }
         cids.forEach((cid) => {
             if (!polymorph_core.items[cid].style) polymorph_core.items[cid].style = {};
             polymorph_core.items[cid].style[e.target.className] = e.target.value;
-            me.container.fire("updateItem", {
-                sender: me,
+            this.container.fire("updateItem", {
+                sender: this,
                 id: cid
             });
-            me.arrangeItem(cid);
+            this.arrangeItem(cid);
         })
     }
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".cstyl")
         .addEventListener("click", () => {
-            let cid = me.contextedElement.dataset.id;
-            me.copiedStyle = Object.assign({}, polymorph_core.items[cid].style);
-            me.itemContextMenu.style.display = "none";
+            let cid = this.contextedElement.dataset.id;
+            this.copiedStyle = Object.assign({}, polymorph_core.items[cid].style);
+            this.itemContextMenu.style.display = "none";
         });
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".pstyl")
         .addEventListener("click", () => {
-            let cids = [me.contextedElement.dataset.id];
+            let cids = [this.contextedElement.dataset.id];
             let applyToAll = false;
-            me.movingDivs.forEach((v) => {
+            this.movingDivs.forEach((v) => {
                 if (v.el.node.dataset.id == cids[0]) {
                     //apply to all moving divs.
                     applyToAll = true;
                 }
             });
             if (applyToAll) {
-                cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
+                cids = this.movingDivs.map((v) => { return v.el.node.dataset.id });
             }
             cids.forEach((cid) => {
-                polymorph_core.items[cid].style = Object.assign({}, me.copiedStyle);
-                me.arrangeItem(cid);
-                me.container.fire("updateItem", {
-                    sender: me,
+                polymorph_core.items[cid].style = Object.assign({}, this.copiedStyle);
+                this.arrangeItem(cid);
+                this.container.fire("updateItem", {
+                    sender: this,
                     id: cid
                 });
             })
-            me.itemContextMenu.style.display = "none";
+            this.itemContextMenu.style.display = "none";
         });
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".background")
         .addEventListener("input", updateStyle);
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".color")
         .addEventListener("input", updateStyle);
 
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".deleteButton")
         .addEventListener("click", e => {
-            let cids = [me.contextedElement.dataset.id];
+            let cids = [this.contextedElement.dataset.id];
             let applyToAll = false;
-            me.movingDivs.forEach((v) => {
+            this.movingDivs.forEach((v) => {
                 if (v.el.node.dataset.id == cids[0]) {
                     //apply to all moving divs.
                     applyToAll = true;
                 }
             });
             if (applyToAll) {
-                cids = me.movingDivs.map((v) => { return v.el.node.dataset.id });
-                me.clearOutMovingDivs();
+                cids = this.movingDivs.map((v) => { return v.el.node.dataset.id });
+                this.clearOutMovingDivs();
             }
             cids.forEach((cid) => {
                 //delete the div and delete its corresponding item
-                me.removeItem(cid);
+                this.removeItem(cid);
             })
-            me.itemContextMenu.style.display = "none";
+            this.itemContextMenu.style.display = "none";
         });
-    me.itemContextMenu
+
+    this.itemContextMenu
+        .querySelector(".collcon")
+        .addEventListener("click", e => {
+            let thisit = polymorph_core.items[this.contextedElement.dataset.id];
+            let toCollect = Object.keys(thisit.to);
+            toCollect.forEach((v, i) => {
+                polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].x = thisit.itemcluster.viewData[this.settings.currentViewName].x + 250 * Math.cos(0.2 + 2 * Math.PI * i / toCollect.length) / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
+                polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].y = thisit.itemcluster.viewData[this.settings.currentViewName].y + 250 * Math.sin(0.2 + 2 * Math.PI * i / toCollect.length);
+                this.container.fire("updateItem", { id: v, sender: this });
+                this.arrangeItem(v);
+            })
+            this.redrawAllLines();
+        });
+    this.itemContextMenu
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
-            let innerText = polymorph_core.items[me.contextedElement.dataset.id][me.settings.textProp];
+            let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
             innerText = innerText.split(/(?=[\.\?\n]+)/g);
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
@@ -682,13 +697,13 @@ function _itemcluster_extend_contextmenu(me) {
                 innerText[i] = innerText[i].slice(1);// also slices newline chars
             }
             //first
-            polymorph_core.items[me.contextedElement.dataset.id][me.settings.textProp] = innerText.shift();
-            me.container.fire("updateItem", { id: me.contextedElement.dataset.id, sender: me });
-            me.arrangeItem(me.contextedElement.dataset.id);
+            polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
+            this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
+            this.arrangeItem(this.contextedElement.dataset.id);
             //create a bunch of items
-            let VDT = polymorph_core.items[me.contextedElement.dataset.id].itemcluster.viewData[me.settings.currentViewName];
+            let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
             let lasty = VDT.y;
-            let lastItem = polymorph_core.items[me.contextedElement.dataset.id];
+            let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
             if (!lastItem.to) lastItem.to = {};
             innerText.forEach(i => {
                 let newItem = {
@@ -698,77 +713,77 @@ function _itemcluster_extend_contextmenu(me) {
                     },
                     to: {}
                 };
-                newItem[me.settings.textProp] = i;
-                newItem[me.settings.filter] = true;
-                newItem.itemcluster.viewData[me.settings.currentViewName] = { x: VDT.x, y: lasty += 50 };
+                newItem[this.settings.textProp] = i;
+                newItem[this.settings.filter] = true;
+                newItem.itemcluster.viewData[this.settings.currentViewName] = { x: VDT.x, y: lasty += 50 };
                 newID = polymorph_core.insertItem(newItem);
                 lastItem.to[newID] = true;
                 lastItem = polymorph_core.items[newID];
-                me.container.fire("updateItem", { id: newID, sender: me });
-                me.arrangeItem(newID);
+                this.container.fire("updateItem", { id: newID, sender: this });
+                this.arrangeItem(newID);
             });
-            me.itemContextMenu.style.display = "none";
+            this.itemContextMenu.style.display = "none";
         });
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".cpybtn")
         .addEventListener("click", e => {
             //may be multiple
-            let coords = me.mapPageToSvgCoords(e.pageX, e.pageY);
-            let cids = [me.contextedElement.dataset.id];
+            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
+            let cids = [this.contextedElement.dataset.id];
             let applyToAll = false;
-            me.movingDivs.forEach((v) => {
+            this.movingDivs.forEach((v) => {
                 if (v.el.node.dataset.id == cids[0]) {
                     //apply to all moving divs.
                     applyToAll = true;
                 }
             });
             if (applyToAll) {
-                cids = me.movingDivs.map((v) => v.el.node.dataset.id);
-                me.clearOutMovingDivs();
+                cids = this.movingDivs.map((v) => v.el.node.dataset.id);
+                this.clearOutMovingDivs();
             }
             let els = cids.map((v) => {
                 return {
                     id: v,
-                    x: polymorph_core.items[v].itemcluster.viewData[me.settings.currentViewName].x - coords.x,
-                    y: polymorph_core.items[v].itemcluster.viewData[me.settings.currentViewName].y - coords.y
+                    x: polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].x - coords.x,
+                    y: polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].y - coords.y
                 };
             })
             polymorph_core.shared.itemclusterCopyElement = els;
-            me.itemContextMenu.style.display = "none";
+            this.itemContextMenu.style.display = "none";
         });
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".orientation")
         .addEventListener("click", e => {
             //toggle the itemcluster orientation
-            polymorph_core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation = !polymorph_core.items[me.contextedElement.dataset.id].itemcluster.subitemOrientation;
+            polymorph_core.items[this.contextedElement.dataset.id].itemcluster.subitemOrientation = !polymorph_core.items[this.contextedElement.dataset.id].itemcluster.subitemOrientation;
             //reupdate
-            me.arrangeItem(me.contextedElement.dataset.id);
-            me.itemContextMenu.style.display = "none";
+            this.arrangeItem(this.contextedElement.dataset.id);
+            this.itemContextMenu.style.display = "none";
         });
 
-    me.itemContextMenu
+    this.itemContextMenu
         .querySelector(".subView")
         .addEventListener("click", e => {
             polymorph_core.items[
-                me.contextedElement.dataset.id
+                this.contextedElement.dataset.id
             ].itemcluster.viewName = polymorph_core.items[
-            me.contextedElement.dataset.id
+            this.contextedElement.dataset.id
             ][this.settings.textProp];
-            me.switchView(me.contextedElement.dataset.id, true, true);
-            me.itemContextMenu.style.display = "none";
+            this.switchView(this.contextedElement.dataset.id, true, true);
+            this.itemContextMenu.style.display = "none";
         });
-    me.trayContextMenu = contextMenuManager.registerContextMenu(`
+    this.trayContextMenu = contextMenuManager.registerContextMenu(`
         <li class="delete">Delete</li>
-        `, me.tray, "textarea", (e) => {
-        me.trayContextedElement = e.target.parentElement.dataset.id;
+        `, this.tray, "textarea", (e) => {
+        this.trayContextedElement = e.target.parentElement.dataset.id;
         return true;
     });
-    me.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
-        if (me.settings.filter) delete polymorph_core.items[me.trayContextedElement][me.settings.filter];
+    this.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
+        if (this.settings.filter) delete polymorph_core.items[this.trayContextedElement][this.settings.filter];
         else {
-            polymorph_core.items[me.trayContextedElement].itemcluster.viewData = {};//nerf it completely
+            polymorph_core.items[this.trayContextedElement].itemcluster.viewData = {};//nerf it completely
         }
-        me.container.fire("updateItem", { id: me.trayContextedElement });
-        me.trayContextMenu.style.display = "none";
+        this.container.fire("updateItem", { id: this.trayContextedElement });
+        this.trayContextMenu.style.display = "none";
     })
 }

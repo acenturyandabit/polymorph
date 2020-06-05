@@ -14,11 +14,23 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
 
     me.arrangeItem = function (id) {
         let sel = me.rootdiv.getRootNode().getSelection();
-        //let prerange = null;
+        let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
             //return immediately, delay the fn call
-            setTimeout(() => me.arrangeItem(id), 1000);
-            return;
+            //setTimeout(() => me.arrangeItem(id), 1000);
+            //return;
+            let _prerange = sel.getRangeAt(0);
+            prerange = {}
+            let props = ["collapsed"
+                , "commonAncestorContainer"
+                , "endContainer"
+                , "endOffset"
+                , "startContainer"
+                , "startOffset"];
+            props.forEach(i => {
+                prerange[i] = _prerange[i];
+            })
+            prerange["node"] = _prerange.startContainer.parentElement;
         }
         //first, get the element(s)
         let previousHandle = me.itemPointerCache[id];
@@ -62,7 +74,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if ((tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp])) {
+            if (!prerange && (tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp])) {
                 tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
@@ -127,12 +139,11 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     }
                 }
             }
-            /*
             if (prerange) {
                 let newRange = new Range();
                 newRange.setStart(prerange.node.childNodes[0], prerange.startOffset);
                 newRange.setEnd(prerange.node.childNodes[0], prerange.endOffset);
-                /*let props = ["collapsed"
+                let props = ["collapsed"
                     , "commonAncestorContainer"
                     , "endContainer"
                     , "endOffset"
@@ -144,7 +155,6 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 sel.removeAllRanges();
                 sel.addRange(newRange);
             }
-            */
         }
     }
 
