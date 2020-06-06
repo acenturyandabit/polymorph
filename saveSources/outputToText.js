@@ -35,9 +35,10 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
 
     this.dialog.querySelector(".loitem").addEventListener("click", () => {
         let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
-        for (let i of newItems){
-            polymorph_core.createItem(i);
-        }
+        newItems = newItems.map(i => polymorph_core.insertItem(i));
+        newItems.forEach(e => {
+            polymorph_core.fire('updateItem', { id: e });
+        });
     });
 
     this.pushAll = async function (data) {
@@ -48,7 +49,7 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
         obj = polymorph_core.datautils.decompress(obj);
         return obj;
     }
-    this.hook = async ()=>{
+    this.hook = async () => {
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -56,7 +57,7 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
     }
 
     // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async ()=>{
+    this.unhook = async () => {
         //unhook previous hooks.
         this.toSave = false;
     }

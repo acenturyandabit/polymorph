@@ -685,17 +685,20 @@ function _itemcluster_extend_contextmenu() {
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
-            innerText = innerText.split(/(?=[\.\?\n]+)/g);
+            innerText = innerText.replace(/([\.\?\n]+)/g,"$1*$*");
+            innerText = innerText.replace(/\n/g,"");
+            innerText = innerText.split(/\*\$\*/g);
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
-            for (let i = 0; i < innerText.length; i++) {
+            /*for (let i = 0; i < innerText.length; i++) {
                 if (innerText[i][0] == '.' || innerText[i][0] == '?') {
                     if (i > 0) {
                         innerText[i - 1] += innerText[i][0];
                     }
                 }
-                innerText[i] = innerText[i].slice(1);// also slices newline chars
             }
+            for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
+            */
             //first
             polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
             this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });

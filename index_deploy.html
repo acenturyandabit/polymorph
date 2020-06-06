@@ -1,0 +1,67 @@
+<html style='height:100%'>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymorph</title>
+    <!-- 
+        Wondering where the CSS is? 
+        To make the source files as self-contained and modular as possible, the CSS is deployed by the javascript at runtime. 
+        Maybe it's not super efficient but I hope it'll help improve the logical flow of the code. 
+        If you know a build tool that can help me, let me know! steeven.liu2@gmail.com
+    -->
+    <style>
+        h1 {
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        input,
+        button {
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--External libraries-->
+    <script src="3pt/localforage.min.js"></script>
+    <script src="pwa.js"></script>
+    <script src="deploy.js"></script>
+    <script>
+        //ok now the PWA manager
+        var pwaManager = new _pwaManager({
+            prompt: (e) => {
+                try {
+                    document.querySelector(".installPrompt").style.display = "block";
+                    document.querySelector(".installPrompt button").addEventListener("click", () => {
+                        e.prompt();
+                        document.querySelector(".installPrompt").style.display = "none";
+                    })
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        });
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-145664924-1"></script>
+    <script>
+        if (window.location.href.includes("acenturyandabit")) {
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-145664924-1');
+        }
+    </script>
+    <script>
+        // start everything
+        polymorph_core.start();
+    </script>
+</body>
+
+</html>
