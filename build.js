@@ -35,7 +35,7 @@ let { execSync } = require("child_process");
     }
     console.log("minifying....");
     await compressor.minify({
-        compressor: 'uglify.js',
+        compressor: 'uglifyjs',
         input: files,
         output: 'deploy.js',
     });
