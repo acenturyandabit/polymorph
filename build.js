@@ -50,7 +50,7 @@ let { execSync } = require("child_process");
             options: {
                 createSourceMap: true,
                 compilationLevel: 'WHITESPACE_ONLY',
-                languageIn: 'ECMASCRIPT6'
+                languageIn: 'ECMASCRIPT8'
             }
         });
     } catch (e) {
