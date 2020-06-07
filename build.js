@@ -8,6 +8,12 @@ let { execSync } = require("child_process");
     execSync("git add .");
     execSync('git commit -m "auto pre-push commit" ');
     execSync("git checkout deploy");
+    try {
+        execSync("git merge master");
+    } catch (err) {
+        console.log("merge failed, please resolve.");
+        return;
+    }
     // minify the files in index.html
     let indexHTMLdata = String(fs.readFileSync("index.html"));
     indexHTMLdata = indexHTMLdata.split(/\r?\n/g);
@@ -28,12 +34,20 @@ let { execSync } = require("child_process");
             }
         }
     }
-    minify({
-        compressor: gcc,
-        input: files,
-        output: 'bar.js',
-        callback: function (err, min) { }
+    await new Promise((res) => {
+        minify({
+            compressor: gcc,
+            input: files,
+            output: 'deploy.js',
+            callback: res
+        });
     });
+
+    execSync("rename index.html index-temp.html");
+    execSync("copy index_deploy.html index.html");
+    execSync('git commit -m "auto-deploy"');
+    execSync('git push');
+    execSync('git checkout master');
 })
 // switch to index build html
 // copy the index from the cache into index html
