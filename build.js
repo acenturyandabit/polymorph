@@ -35,7 +35,7 @@ let { execSync } = require("child_process");
     }
     await new Promise((res) => {
         compressor.minify({
-            compressor: gcc,
+            compressor: 'gcc',
             input: files,
             output: 'deploy.js',
             callback: res
