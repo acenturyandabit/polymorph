@@ -49,8 +49,7 @@ let { execSync } = require("child_process");
             output: 'deploy.js',
             options: {
                 createSourceMap: true,
-                compilationLevel: 'WHITESPACE_ONLY',
-                languageIn: 'ECMASCRIPT8'
+                compilationLevel: 'WHITESPACE_ONLY'
             }
         });
     } catch (e) {
