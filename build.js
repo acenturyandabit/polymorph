@@ -1,6 +1,8 @@
 let fs = require("fs");
-const minify = require('@node-minify/core');
-const gcc = require('@node-minify/google-closure-compiler');
+const nodeminify = require('node-minify');
+minify=nodeminify.core;
+gcc=nodeminify["google-closure-compiler"];
+//const gcc = require('node-minify/google-closure-compiler');
 let { execSync } = require("child_process");
 
 
@@ -48,7 +50,7 @@ let { execSync } = require("child_process");
     execSync('git commit -m "auto-deploy"');
     execSync('git push');
     execSync('git checkout master');
-})
+})()
 // switch to index build html
 // copy the index from the cache into index html
 // git add
