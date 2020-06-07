@@ -35,17 +35,19 @@ let { execSync } = require("child_process");
     }
     console.log("minifying....");
     await compressor.minify({
-        compressor: 'sqwish',
+        compressor: 'uglifyjs',
         input: files,
         output: 'deploy.js',
     });
     console.log("done minifying.");
+    /*
     execSync("rename index.html index-temp.html");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
     execSync('git commit -m "auto-deploy"');
     execSync('git push');
     execSync('git checkout master');
+    */
 })()
 // switch to index build html
 // copy the index from the cache into index html
