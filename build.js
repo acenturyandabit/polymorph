@@ -1,14 +1,13 @@
 let fs = require("fs");
-const compressor = require('node-minify');
 let { execSync } = require("child_process");
 
 
 (async () => {
     execSync("git add .");
     execSync('git commit -m "auto pre-push commit" ');
-    execSync("git checkout deploy");
+    execSync("git checkout master");
     try {
-        execSync("git merge master");
+        execSync("git merge develop");
     } catch (err) {
         console.log("merge failed, please resolve.");
         return;
@@ -64,7 +63,7 @@ let { execSync } = require("child_process");
     execSync('git add .');
     execSync('git commit -m "auto-deploy"');
     execSync('git push');
-    execSync('git checkout master');
+    execSync('git checkout develop');
 })()
 // switch to index build html
 // copy the index from the cache into index html
