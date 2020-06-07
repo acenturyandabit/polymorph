@@ -36,7 +36,7 @@ let { execSync } = require("child_process");
     //concatenator
     fs.writeFileSync("cat.js", fs.readFileSync(files[0]));
     for (let i = 1; i < files.length; i++) {
-        fs.appendFileSync("cat.js", "\n\n");
+        fs.appendFileSync("cat.js", ";\n\n");  // #safe
         fs.appendFileSync("cat.js", fs.readFileSync(files[i]));
     }
 
