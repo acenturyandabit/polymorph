@@ -42,7 +42,7 @@ let { execSync } = require("child_process");
 
 
     console.log("minifying....");
-    try {
+    /*try {
         await compressor.minify({
             compressor: 'gcc',
             input: process.cwd() + "/cat.js",
@@ -54,7 +54,7 @@ let { execSync } = require("child_process");
     } catch (e) {
         console.log("Errors detected: " + e);
         return;
-    }
+    }*/
 
     console.log("done minifying.");
     /*
