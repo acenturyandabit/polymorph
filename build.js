@@ -48,7 +48,6 @@ let { execSync } = require("child_process");
             input: process.cwd() + "/cat.js",
             output: 'deploy.js',
             options: {
-                createSourceMap: true,
                 compilationLevel: 'WHITESPACE_ONLY'
             }
         });
