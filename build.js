@@ -29,19 +29,17 @@ let { execSync } = require("child_process");
                 begin = false;
             } else if (result = /    <script src="(.+?)"><\/script>/.exec(line)) {
                 //console.log(result[1]);
-                files.push(process.cwd()+"/"+result[1]);
+                files.push(process.cwd() + "/" + result[1]);
             }
         }
     }
-    await new Promise((res) => {
-        compressor.minify({
-            compressor: 'gcc',
-            input: files,
-            output: 'deploy.js',
-            callback: res
-        });
+    console.log("minifying....");
+    await compressor.minify({
+        compressor: 'uglify.js',
+        input: files,
+        output: 'deploy.js',
     });
-
+    console.log("done minifying.");
     execSync("rename index.html index-temp.html");
     execSync("copy index_deploy.html index.html");
     execSync('git commit -m "auto-deploy"');
