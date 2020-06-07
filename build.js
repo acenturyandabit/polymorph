@@ -29,7 +29,7 @@ let { execSync } = require("child_process");
                 begin = false;
             } else if (result = /    <script src="(.+?)"><\/script>/.exec(line)) {
                 //console.log(result[1]);
-                files.push(result[1]);
+                files.push(process.cwd()+"/"+result[1]);
             }
         }
     }
