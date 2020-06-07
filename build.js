@@ -1,8 +1,5 @@
 let fs = require("fs");
-const nodeminify = require('node-minify');
-minify=nodeminify.core;
-gcc=nodeminify["google-closure-compiler"];
-//const gcc = require('node-minify/google-closure-compiler');
+const compressor = require('node-minify');
 let { execSync } = require("child_process");
 
 
@@ -37,7 +34,7 @@ let { execSync } = require("child_process");
         }
     }
     await new Promise((res) => {
-        minify({
+        compressor.minify({
             compressor: gcc,
             input: files,
             output: 'deploy.js',
