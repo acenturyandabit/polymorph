@@ -434,7 +434,7 @@ polymorph_core.registerOperator("inspector", {
                 }
             }
         }),
-        dataEntry: new polymorph_core._option({
+        globalEnabled: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,

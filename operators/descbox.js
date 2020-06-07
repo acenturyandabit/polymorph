@@ -238,7 +238,7 @@ polymorph_core.registerOperator("descbox", {
             property: "property",
             label: "Property of item to display:"
         }),
-        property: new polymorph_core._option({
+        auxProperty: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
