@@ -34,19 +34,30 @@ let { execSync } = require("child_process");
         }
     }
     //concatenator
-    fs.writeFileSync("cat.js",fs.readFileSync(files[0]));
-    for (let i=1;i<files.length;i++){
-        fs.appendFileSync("cat.js","\n\n");
-        fs.appendFileSync("cat.js",fs.readFileSync(files[i]));
+    fs.writeFileSync("cat.js", fs.readFileSync(files[0]));
+    for (let i = 1; i < files.length; i++) {
+        fs.appendFileSync("cat.js", "\n\n");
+        fs.appendFileSync("cat.js", fs.readFileSync(files[i]));
     }
 
 
     console.log("minifying....");
-    await compressor.minify({
-        compressor: 'gcc',
-        input: process.cwd()+"/cat.js",
-        output: 'deploy.js',
-    });
+    try {
+        await compressor.minify({
+            compressor: 'gcc',
+            input: process.cwd() + "/cat.js",
+            output: 'deploy.js',
+            options: {
+                createSourceMap: true,
+                compilationLevel: 'WHITESPACE_ONLY',
+                languageIn: 'ECMASCRIPT6'
+            }
+        });
+    } catch (e) {
+        console.log("Errors detected: " + e);
+        return;
+    }
+
     console.log("done minifying.");
     /*
     execSync("rename index.html index-temp.html");

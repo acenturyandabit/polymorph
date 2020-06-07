@@ -6054,7 +6054,7 @@ polymorph_core.registerOperator("descbox", {
             property: "property",
             label: "Property of item to display:"
         }),
-        property: new polymorph_core._option({
+        auxProperty: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
@@ -7556,7 +7556,7 @@ polymorph_core.registerOperator("inspector", {
                 }
             }
         }),
-        dataEntry: new polymorph_core._option({
+        globalEnabled: new polymorph_core._option({
             div: this.optionsDiv,
             type: "bool",
             object: this.settings,
