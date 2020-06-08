@@ -672,21 +672,21 @@ function _itemcluster_extend_contextmenu() {
         .querySelector(".collcon")
         .addEventListener("click", e => {
             let thisit = polymorph_core.items[this.contextedElement.dataset.id];
-            let toCollect = Object.keys(thisit.to);
+            let toCollect = Object.keys(thisit.to || {});
+            toCollect.push.apply(toCollect, Object.keys(this.fromcache[this.contextedElement.dataset.id] || {}));
             toCollect.forEach((v, i) => {
                 polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].x = thisit.itemcluster.viewData[this.settings.currentViewName].x + 250 * Math.cos(0.2 + 2 * Math.PI * i / toCollect.length) / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
                 polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].y = thisit.itemcluster.viewData[this.settings.currentViewName].y + 250 * Math.sin(0.2 + 2 * Math.PI * i / toCollect.length);
                 this.container.fire("updateItem", { id: v, sender: this });
                 this.arrangeItem(v);
             })
-            this.redrawAllLines();
         });
     this.itemContextMenu
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
-            innerText = innerText.replace(/([\.\?\n]+)/g,"$1*$*");
-            innerText = innerText.replace(/\n/g,"");
+            innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
+            innerText = innerText.replace(/\n/g, "");
             innerText = innerText.split(/\*\$\*/g);
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet

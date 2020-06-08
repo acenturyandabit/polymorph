@@ -1,5 +1,4 @@
 (function () {
-    let viewsets;
     polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
         let me = this;
         me.container = container;
@@ -13,6 +12,12 @@
     div.views>div:hover{
         background:white;
     }
+    *{
+        color:white;
+    }
+    button>*{
+        color:black;
+    }
     `;
         container.div.appendChild(this.style);
 
@@ -23,24 +28,31 @@
         this.rootdiv.innerHTML = `
     <div class="views">
     </div>
-    <h1 style="color:white">Operators</h1>
-    <p style="color:white">Choose an container for this space!</p>
-    <div class="operators">
-    <div class="buttons"></div>
-    <div class="descriptions" style="height:5em;"></div>
+    <h1 style="color:white">New Operator</h1>
+    <p style="color:white">Choose an operator for this space! <a href="ethos.html" target="_blank">What's going on?</a></p>
+    <div class="operators" style="display:flex; flex-direction:column">
     </div>`;
-        this.buttondiv = this.rootdiv.querySelector("div.operators>div.buttons");
-        this.descInnerDiv = this.rootdiv.querySelector("div.descriptions");
-        this.viewInnerDiv = this.rootdiv.querySelector("div.views");
-        this.reloadContents = function () {
+        this.reloadContents = () => {
             for (let i in polymorph_core.operators) {
                 if (polymorph_core.operators[i].options.hidden) continue;
-                if (me.buttondiv.querySelector(`[data-under-operator-name="${i}"]`)) return;
-                let b = document.createElement("button");
-                let displayText = i;
-                if (polymorph_core.operators[i].options.displayName) displayText = polymorph_core.operators[i].options.displayName;
-                b.innerHTML = displayText;
-                b.dataset.underOperatorName = i;
+                if (this.rootdiv.querySelector(`[data-under-operator-name="${i}"]`)) return;
+                //create the title block under operators if it needs creating
+                let sectionContainer = this.rootdiv.querySelector(`[data-section="${polymorph_core.operators[i].options.section || "other"}"]`);
+                if (!sectionContainer) {
+                    sectionContainer = htmlwrap(`<div data-section="${polymorph_core.operators[i].options.section || "other"}">
+                        <h2>${polymorph_core.operators[i].options.section || "Other"}</h2>
+                        <div style="display:flex; flex-direction: row; flex-direction: row; flex-wrap:wrap; align-content: flex-start;">
+                        </div>
+                    </div>`);
+                    this.rootdiv.querySelector(".operators").appendChild(sectionContainer);
+                }
+                sectionContainer = sectionContainer.children[1];
+
+                let b = htmlwrap(`<button data-under-operator-name="${i}" style="flex: 0 0 15em; display:flex; flex-direction:column">
+                <img src="${polymorph_core.operators[i].options.imageurl || ""}" style="flex: 0 0 14em; max-width:14em" ></img>
+                <h3>${polymorph_core.operators[i].options.displayName || i}</h3>
+                <span>${polymorph_core.operators[i].options.description || ""}</span>
+                </button>`);
                 b.addEventListener("click", () => {
                     //get out of the way
                     while (container.div.children.length) container.div.children[0].remove();
@@ -56,25 +68,7 @@
                         sender: this
                     });
                 })
-                me.buttondiv.appendChild(b);
-                //generate the description
-                let descDiv = document.createElement("div");
-                if (polymorph_core.operators[i].options.description) {
-                    descDiv.innerHTML = `<p>` + polymorph_core.operators[i].options.description + `</p>`;
-                } else {
-                    descDiv.innerHTML = `<p>No description provided :/</p>`;
-                }
-                descDiv.style.display = "none";
-                me.descInnerDiv.appendChild(descDiv);
-                b.addEventListener("mouseover", () => {
-                    for (let i = 0; i < me.descInnerDiv.children.length; i++) {
-                        me.descInnerDiv.children[i].style.display = "none";
-                    }
-                    descDiv.style.display = "block";
-                })
-                b.addEventListener("mouseleave", () => {
-                    descDiv.style.display = "none";
-                });
+                sectionContainer.appendChild(b);
             }
         }
         this.reloadContents();

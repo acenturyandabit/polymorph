@@ -198,6 +198,11 @@ polymorph_core.on("UIstart", () => {
     polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
         polymorph_core.resetTutorial();
     })
+    polymorph_core.topbar.add("Feedback").addEventListener("click",()=>{
+        let emaila=htmlwrap(`<a href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
+        document.body.appendChild(emaila);
+        emaila.click();
+    });
     window.addEventListener("resize", () => {
         polymorph_core.baseRect.refresh();
     })

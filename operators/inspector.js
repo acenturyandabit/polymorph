@@ -1,7 +1,9 @@
 //todo: putter mode for inspector
 polymorph_core.registerOperator("inspector", {
     displayName: "Inspector",
-    description: "Inspect all properties of a given element."
+    description: "Inspect all properties of a given element.",
+    section:"Advanced",
+    imageurl:"assets/operators/inspector.png"
 }, function (container) {
 
     let upc = new capacitor(300, 40, (id) => {

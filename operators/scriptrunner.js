@@ -1,6 +1,8 @@
 polymorph_core.registerOperator("scriptrunner", {
-    displayName: "Scriptrunner",
-    description: "Runs scripts."
+    displayName: "Script Runner",
+    description: "Runs scripts.",
+    section:"Advanced",
+    imageurl:"assets/operators/scriptrunner.png"
 }, function (container) {
     let defaultSettings = {
         autorun: false,
