@@ -6,7 +6,8 @@
 
 polymorph_core.registerOperator("lynerlist", {
     displayName: "Lynerlist",
-    description: "An advanced item listing tool."
+    description: "An advanced item listing tool.",
+    hidden:true
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {

@@ -1,7 +1,8 @@
 //todo: putter mode for inspector
 polymorph_core.registerOperator("inspectolist", {
     displayName: "Inspectolist",
-    description: "Combination between inspector and list. Gives detailed information about specific items."
+    description: "Combination between inspector and list. Gives detailed information about specific items.",
+    hidden:true
 }, function (container) {
     let defaultSettings = {
         dumpProp: "description",

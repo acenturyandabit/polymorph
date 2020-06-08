@@ -1,6 +1,8 @@
 polymorph_core.registerOperator("itemcluster2", {
-    displayName: "Itemcluster 2",
-    description: "A brainstorming board. Add items, arrange them, and connect them with lines."
+    displayName: "Mind map",
+    description: "A brainstorming / mind mapping board. Add items, arrange them, and connect them with lines.",
+    section:"Standard",
+    imageurl:"assets/operators/itemcluster.png"
 }, function (container) {
     polymorph_core.addEventAPI(this);
 
@@ -158,22 +160,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
 
     ////////////////////////////////////////Handle polymorph_core item updates//////////////////
-    //lazily double up updates so that we can fix the lines
-    // but only update items that are visible; and only update if we are visible
-    let doubleUpdateCapacitor = new capacitor(200, 1000, () => {
-        for (let i in this.itemPointerCache) {
-            this.arrangeItem(i);// henceforth zoomfactor will only be a renderer thing. i hope this works
-        }
-        /*for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                this.arrangeItem(i);
-            }
-        }//rm if works*/
-    })
 
-    this.redrawAllLines = () => {
-        doubleUpdateCapacitor.submit();
-    }
     this.itemRelevant = (id) => {
         // I will be shown at some point by this container
         let isFiltered = (polymorph_core.items[id][this.settings.filter] != undefined);
@@ -199,7 +186,6 @@ polymorph_core.registerOperator("itemcluster2", {
                     if (polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName]) {
                         if (this.arrangeItem) {
                             this.arrangeItem(id);
-                            doubleUpdateCapacitor.submit();//redraw lines
                         }
                     } else {
                         if (!(this.settings.filter) || polymorph_core.items[id][this.settings.filter]) this.addToTray(id);
@@ -755,7 +741,6 @@ polymorph_core.registerOperator("itemcluster2", {
             for (let i in this.itemPointerCache) {
                 this.arrangeItem(i);// henceforth zoomfactor will only be a renderer thing. i hope this works
             }
-            doubleUpdateCapacitor.submit();
 
             //also change the view box so that the mouse position remains the same
             let dxs = this.mapPageToSvgCoords(e.pageX, e.pageY);

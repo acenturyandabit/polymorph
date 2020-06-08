@@ -1,5 +1,8 @@
 polymorph_core.registerOperator("descbox", {
-    description: "A simple text entry field.",
+    description: "Space for free text entry to a single item; or display detail on a selected item.",
+    displayName:"Textbox",
+    imageurl:"assets/operators/descbox.png",
+    section:"Standard",
     single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.

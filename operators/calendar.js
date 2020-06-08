@@ -1,7 +1,8 @@
 (() => {
     polymorph_core.registerOperator("calendar", {
         displayName: "Calendar",
-        description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)"
+        description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)",
+        section: "Display"
     },
         function (container) {
             let defaultSettings = {

@@ -246,7 +246,7 @@ polymorph_core.rect = function (rectID) {
         this.tabbar.insertBefore(currentTabSpan, this.tabbar.children[index]);
 
         let currentInnerDiv = this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`);
-        if (currentInnerDiv) currentInnerDiv.remove(); 
+        if (currentInnerDiv) currentInnerDiv.remove();
         currentInnerDiv = this.createInnerDiv(containerid);
         currentInnerDiv.appendChild(container.outerDiv);
         this.innerDivContainer.insertBefore(currentInnerDiv, this.innerDivContainer.children[index]);
@@ -666,36 +666,36 @@ polymorph_core.rect = function (rectID) {
     //Make draggable borders.
     this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
 
-    this.rectsTied=[];
+    this.rectsTied = [];
     this.tieRect = (rectID) => {
         this.innerDivContainer.remove();
         this.tabbar.remove();
         this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
         polymorph_core.rects[rectID].refresh();
         this.rectsTied.push(rectID);
-        if (this.rectsTied.length>2){
+        if (this.rectsTied.length > 2) {
             console.log("multiple rect ties BAD; arbitration in progress");
             //first group rects
-            let sideA={};
-            let sideB={};
-            for (let r of this.rectsTied){
+            let sideA = {};
+            let sideB = {};
+            for (let r of this.rectsTied) {
                 console.log(r);
                 console.log(polymorph_core.items[r]._rd);
             }
-            
+
             // case 1: two rects conflicting
             // case 2: one pair and one lone rect conflicting
             // case 3: two pairs of rects conflicting
         }
     }
 
-    this.containerVisible=(id)=>{
-        if (this.parent) return this.settings.s==id && (this.parent == polymorph_core || this.parent.visible());
+    this.containerVisible = (id) => {
+        if (this.parent) return this.settings.s == id && (this.parent == polymorph_core || this.parent.visible());
         else return false;
     }
 
-    this.visible=()=>{
-        if (this.parent==polymorph_core)return true;
+    this.visible = () => {
+        if (this.parent == polymorph_core) return true;
         else return (this.parent.visible());
     }
 
@@ -733,7 +733,11 @@ polymorph_core.rect = function (rectID) {
                 // a split has been called. Initialise the split!
                 this.outerDiv.style.border = "none";
                 //remove all my children
+                //except the tutorial div
+                let tmp;
+                if (this.outerDiv.querySelector(".tutorial")) tmp = this.outerDiv.querySelector(".tutorial");
                 while (this.outerDiv.children.length) this.outerDiv.children[0].remove();
+                if (tmp) this.outerDiv.appendChild(tmp);
 
                 //Create new rects
                 let _XorY = (this.split > 1) * 1;
@@ -886,7 +890,12 @@ polymorph_core.rect = function (rectID) {
 Object.defineProperty(polymorph_core, "baseRect", {
     get: () => {
         try {
-            return polymorph_core.rects[polymorph_core.items._meta.currentView];
+            if (polymorph_core.rects[polymorph_core.items._meta.currentView]) {
+                return polymorph_core.rects[polymorph_core.items._meta.currentView];
+            } else {
+                polymorph_core.items._meta.currentView = Object.keys(polymorph_core.rects)[0];//if the base rect is deleted
+                return polymorph_core.rects[polymorph_core.items._meta.currentView];
+            }
         } catch (e) {
             return undefined;
         }

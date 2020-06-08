@@ -1,6 +1,7 @@
 polymorph_core.registerOperator("terminal", {
     displayName: "Terminal",
-    description: "A command-line way of interacting with polymorph. Designed to facilitate integrations with other clients!"
+    description: "A command-line way of interacting with polymorph. Designed to facilitate integrations with other clients!",
+    section: "Advanced"
 }, function (container) {
     let defaultSettings = {
         opmode: "console",
