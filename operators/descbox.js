@@ -1,14 +1,14 @@
 polymorph_core.registerOperator("descbox", {
     description: "Space for free text entry to a single item; or display detail on a selected item.",
-    displayName:"Textbox",
-    imageurl:"assets/operators/descbox.png",
-    section:"Standard",
+    displayName: "Textbox",
+    imageurl: "assets/operators/descbox.png",
+    section: "Standard",
     single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
-        operationMode: "focus",
+        operationMode: "static",
         staticItem: "",
         auxProperty: "title",
         showTags: false
@@ -70,9 +70,13 @@ polymorph_core.registerOperator("descbox", {
     this.updateMeta = (id) => {
         if (id) {
             if (this.settings.auxProperty == "id") {
+                this.currentIDNode.style.display = "block";
                 this.currentIDNode.innerText = id;
-            } else {
+            } else if (this.settings.auxProperty) {
+                this.currentIDNode.style.display = "block";
                 this.currentIDNode.innerText = polymorph_core.items[id][this.settings.auxProperty];
+            } else {
+                this.currentIDNode.style.display = "none";
             }
             if (this.settings.showTags) {
                 parseTags(id);

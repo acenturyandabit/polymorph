@@ -157,7 +157,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     polymorph_core.on("*", (args, e) => {
-        if (e=="documentCreated")return;
+        if (e == "documentCreated") return;
         if (this.settings) {
             //occasionally when containers are deleted this will throw errors. so dont();
             e.forEach(e => {
@@ -323,5 +323,10 @@ polymorph_core.container = function container(containerID) {
     }
     //#endregion
 
+    this.remove = () => {
+        if (this.operator.remove) this.operator.remove();
+        delete polymorph_core.items[containerID]._od;
+        delete polymorph_core.containers[containerID];//seppuku
+    }
 
 };

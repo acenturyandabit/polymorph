@@ -88,11 +88,11 @@
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
             //Show the loading operator
-            polymorph_core.templates.blankNewDoc._meta.id=polymorph_core.currentDocID;
+            polymorph_core.templates.blankNewDoc._meta.id = polymorph_core.currentDocID;
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
-            history.pushState({}, "",window.location.href+"?doc="+polymorph_core.currentDocID);
-            
+            history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
+
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
         } else {
@@ -166,7 +166,7 @@
         //if none then create new
         if (!data) {
             data = polymorph_core.templates.blankNewDoc;
-            data._meta.id=polymorph_core.currentDocID;
+            data._meta.id = polymorph_core.currentDocID;
             polymorph_core.fire("documentCreated", { id: polymorph_core.currentDocID, data: data });
             //do anything else e.g. phone autosave
         }
@@ -241,10 +241,10 @@
 
     polymorph_core.registerSaveSource = function (id, f, ops) {
         polymorph_core.saveSources[id] = f;
-        polymorph_core.saveSourceOptions[id]=ops || {};
+        polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
         //THIS IS A CROSSOVER WITH loadsavedialog.js. Please formalise
-        if (ops.createable)polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${ops.prettyName || id}</option>`));
+        if (ops.createable) polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${ops.prettyName || id}</option>`));
 
     }
 
@@ -255,7 +255,7 @@
         //reset and present a view
         polymorph_core.rects[polymorph_core.items._meta.currentView].refresh();
     };
-    
+
 
     polymorph_core.integrateData = function (data, source) { // source: string
         //sanity check, decompress etc the data
@@ -304,6 +304,7 @@
         polymorph_core.switchView(polymorph_core.items._meta.currentView);
         polymorph_core.datautils.linkSanitize();
         polymorph_core.updateSettings(true);
+
     }
 
 })();
@@ -316,7 +317,7 @@ polymorph_core.saveSourceTemplate = function saveSourceTemplate(save_source_reco
 //your run of the mill templates
 polymorph_core.templates = {
     brainstorm: JSON.parse(`{"displayName":"New Workspace","currentView":"default","id":"itemcluster","views":{"default":{"o":[{"name":"Itemcluster 2","opdata":{"type":"itemcluster2","uuid":"i33lyy","tabbarName":"Itemcluster 2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"currentViewName":"7hj0","viewpath":["7hj0"]}}}],"s":0,"x":0,"f":1,"p":0}},"items":{"7hj0":{"itemcluster":{"viewName":"New Itemcluster"}}}}`),
-    blankNewDoc:{
+    blankNewDoc: {
         "_meta": {
             "displayName": "New Polymorph Document",
             "id": "blank",
@@ -331,7 +332,7 @@ polymorph_core.templates = {
         "default_operator": {
             "_od": {
                 "t": "welcome", "data": {}, "inputRemaps": {}, "outputRemaps": {},
-                "tabbarName": "Home", 
+                "tabbarName": "Home",
                 "p": "default_container"
             },
             "_lu_": 0
