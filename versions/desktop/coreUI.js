@@ -195,11 +195,17 @@ polymorph_core.on("UIstart", () => {
     polymorph_core.topbar.add("File/New").addEventListener("click", () => {
         window.open(window.location.pathname + "?o", "_blank");
     })
+    polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+        alert("Warning: this operation may reduce filesize but is irreversible. We recommend saving to a file before you run this operation.");
+        if (confirm("PRESS OK TO PROCEED")) {
+            polymorph_core.runGarbageCollector();
+        }
+    })
     polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
         polymorph_core.resetTutorial();
     })
-    polymorph_core.topbar.add("Feedback").addEventListener("click",()=>{
-        let emaila=htmlwrap(`<a href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
+    polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
+        let emaila = htmlwrap(`<a href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
         document.body.appendChild(emaila);
         emaila.click();
     });

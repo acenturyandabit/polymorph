@@ -1,8 +1,8 @@
 polymorph_core.registerOperator("itemcluster2", {
     displayName: "Mind map",
     description: "A brainstorming / mind mapping board. Add items, arrange them, and connect them with lines.",
-    section:"Standard",
-    imageurl:"assets/operators/itemcluster.png"
+    section: "Standard",
+    imageurl: "assets/operators/itemcluster.png"
 }, function (container) {
     polymorph_core.addEventAPI(this);
 
@@ -722,10 +722,10 @@ polymorph_core.registerOperator("itemcluster2", {
 
 
     this.itemSpace.addEventListener("wheel", (e) => {
-        if (e.target.matches(".floatingItem") ||
+        /*if (e.target.matches(".floatingItem") ||
             e.target.matches(".floatingItem *") || this.tray.contains(e.target)) {
             return;
-        }
+        }*/
         if (this.gridScroll) {
             this.handleGridScroll(e);
         } else if (e.shiftKey) {
@@ -892,7 +892,7 @@ polymorph_core.registerOperator("itemcluster2", {
     });
 
     this.itemSpace.addEventListener("dblclick", (e) => {
-        if (e.target.matches("svg *") && (!e.target.matches("g[data-id] *"))) {
+        if ((e.target.matches("svg *") || e.target.matches("svg")) && (!e.target.matches("g[data-id] *"))) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
             this.createItem(
                 coords.x / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor,
@@ -1046,6 +1046,14 @@ polymorph_core.registerOperator("itemcluster2", {
         }
     })
 
+    let resizeCapacitor = new capacitor(500, 100, (id, pp) => {
+
+        container.fire("updateItem", {
+            id: id,
+            sender: this
+        });
+    })
+
     this.rootdiv.addEventListener("input", (e) => {
         for (let i = 0; i < e.path.length; i++) {
             if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
@@ -1053,14 +1061,11 @@ polymorph_core.registerOperator("itemcluster2", {
                 let id = e.path[i].dataset.id;
                 if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
                 else polymorph_core.items[id][this.settings.focusExtendProp] = e.target.innerText;
-                container.fire("updateItem", {
-                    id: id,
-                    sender: this
-                });
                 let pp = e.target.parentElement;
                 pp.style.width = (Math.sqrt(pp.innerText.length) + 1) * 23;
                 pp.parentElement.setAttribute("width", pp.scrollWidth);
                 pp.parentElement.setAttribute("height", pp.scrollHeight);
+                resizeCapacitor.submit(id, pp);
                 break;
             }
         }

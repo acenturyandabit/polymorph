@@ -2,7 +2,7 @@ polymorph_core.registerOperator("itemList", {
     section: "Standard",
     description: "Arrange your items in a list.",
     displayName: "List",
-    imageurl:"assets/operators/list.png"
+    imageurl: "assets/operators/list.png"
 }
     , function (container) {
         //initialisation
@@ -14,7 +14,8 @@ polymorph_core.registerOperator("itemList", {
             filter: polymorph_core.guid(),
             enableEntry: true,
             implicitOrder: true,
-            linkProperty: "to"
+            linkProperty: "to",
+            propOrder: []
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
         this.rootdiv.remove(); //we dont want this
@@ -23,6 +24,7 @@ polymorph_core.registerOperator("itemList", {
             this.settings.filter = this.settings.filterProp;
             delete this.settings.filterProp;
         }
+        if (Object.keys(this.settings.properties).length != this.settings.propOrder.length) this.settings.propOrder = Object.keys(this.settings.properties);
         this.taskListBar = document.createElement("div");
         this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
         //top / insert 
@@ -125,26 +127,28 @@ polymorph_core.registerOperator("itemList", {
                 currentItemSpan.children[1].innerText = "X";
                 this.taskList.appendChild(currentItemSpan);
             }
-            for (i in this.settings.properties) {
-                switch (this.settings.properties[i]) {
+            for (let i = 0; i < this.settings.propOrder.length; i++) {
+                let p = this.settings.propOrder[i];
+                switch (this.settings.properties[p]) {
                     case "text":
+                        currentItemSpan.children[0].children[i + 1].children[0].value = (it[p] != undefined) ? it[p] : "";
                     case "number":
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = (it[i] != undefined) ? it[i] : "";
+                        currentItemSpan.children[0].children[i + 1].children[1].value = (it[p] != undefined) ? it[p] : "";
                         break;
                     case "object":
-                        currentItemSpan.querySelector("[data-role='" + i + "']").value = (it[i] != undefined) ? JSON.stringify(it[i]) : "";
+                        currentItemSpan.querySelector("[data-role='" + p + "']").value = (it[p] != undefined) ? JSON.stringify(it[p]) : "";
                         break;
                     case "date":
-                        if (!currentItemSpan.querySelector("[data-role='" + i + "']").matches(":focus")) {
-                            if (it[i] && it[i].datestring) {
+                        if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
+                            if (it[p] && it[p].datestring) {
 
-                                currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
                             } else {
-                                if (it[i] && typeof it[i] == "string") {
-                                    it[i] = {
-                                        datestring: it[i]
+                                if (it[p] && typeof it[p] == "string") {
+                                    it[p] = {
+                                        datestring: it[p]
                                     };
-                                    currentItemSpan.querySelector("[data-role='" + i + "']").value = it[i].prettyDateString || it[i].datestring;
+                                    currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
                                     // May want to reparse the date aswell.
                                     if (this.datereparse) this.datereparse(id);
                                 }
@@ -198,7 +202,7 @@ polymorph_core.registerOperator("itemList", {
             let it = {};
             //clone the template and parse it
             //get data and register item
-            for (i in this.settings.properties) {
+            for (let i of this.settings.propOrder) {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
@@ -370,8 +374,9 @@ polymorph_core.registerOperator("itemList", {
 
         this.updateSettings = () => {
             //Look at the settings and apply any relevant changes
-            let htmlstring = `<span class="draghandle">&#10247;</span>`
-            for (i in this.settings.properties) {
+            this.settings.propOrder = Object.keys(this.settings.properties);
+            let htmlstring = `<span class="draghandle">&#10247;</span>`;
+            for (i of this.settings.propOrder) {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "date":
@@ -379,7 +384,7 @@ polymorph_core.registerOperator("itemList", {
                         htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'><span></span></span>`;
                         break;
                     case "number":
-                        htmlstring += "<span>" + i + ":</span><input data-role='" + i + "' type='number'>";
+                        htmlstring += "<span><span>" + i + ":</span><input data-role='" + i + "' type='number'></span>";
                         break;
                 }
             }

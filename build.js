@@ -4,7 +4,11 @@ let { execSync } = require("child_process");
 
 (async () => {
     execSync("git add .");
-    execSync('git commit -m "auto pre-push commit" ');
+    try{
+        execSync('git commit -m "auto pre-push commit" ');
+    }catch(err){
+        console.log("no changes to commit, hope this looks right");
+    }
     execSync("git checkout master");
     try {
         execSync("git merge develop");

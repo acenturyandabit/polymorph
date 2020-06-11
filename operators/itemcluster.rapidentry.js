@@ -47,13 +47,18 @@ function _itemcluster_rapid_entry() {
             REcache[i] = polymorph_core.items[i][this.settings.textProp];
         }
     }
-    //update the REcache in... keydown? yikes
+    //update the REcache in... keydown? yikes... strapping a capacitor to it stat
+
+    let recacheCapacitor = new capacitor(500, 100, (id, tt) => {
+        REcache[id] = tt; // there's one more case which is external updates but we'll get to it .....
+    });
+
     this.rootdiv.addEventListener("input", (e) => {
         for (let i = 0; i < e.path.length; i++) {
             if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
-                REcache[id] = e.target.innerText; // there's one more case which is external updates but we'll get to it .....
+                recacheCapacitor.submit(id,e.target.innerText);
             }
         }
     })

@@ -86,9 +86,10 @@ function _polymorph_core() {
                         if (settings.afterInput) settings.afterInput(e);
                     })
                     break;
+                case "textarea":
                 case "text":
                 case "number":
-                    appendedElement = document.createElement("input");
+                    appendedElement = document.createElement(settings.type == "textarea" ? "textarea" : "input");
                     appendedElement.style.display = "block";
                     appendedElement.addEventListener("input", (e) => {
                         let actualObject = iff(settings.object);
@@ -175,6 +176,7 @@ function _polymorph_core() {
                             else appendedElement.checked = false;
                             break;
                         case "text":
+                        case "textarea":
                         case "number":
                             if (actualObject[settings["property"]]) appendedElement.value = actualObject[settings["property"]] || "";
                             else appendedElement.value = "";
@@ -350,6 +352,28 @@ function _polymorph_core() {
 
     //A shared space for operators to access
     this.shared = {};
+
+
+
+    //garbage collection
+    this.tryGarbageCollect = (id) => {
+        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return;//never delete rects and operators? this wont end well
+        if (id == "_meta") return;//dont delete the metaitem
+        let toDelete = true;
+        for (let i in this.containers) {
+            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+                toDelete = false;
+            }
+        }
+        if (toDelete) {
+            delete polymorph_core.items[id];
+        }
+    }
+    this.runGarbageCollector = () => {
+        for (let i in polymorph_core.items) {
+            polymorph_core.tryGarbageCollect(i);
+        }
+    }
 }
 
 var polymorph_core = new _polymorph_core();

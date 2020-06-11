@@ -556,6 +556,7 @@ function _itemcluster_extend_contextmenu() {
     this.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="scramble">Scramble</li>
         <li class="collcon">Collect connected items</li>
         <li class="cpybtn">Copy (between views)</li>
         <li class="subview">Open Subview</li>
@@ -567,7 +568,7 @@ function _itemcluster_extend_contextmenu() {
             <li><input class="color" placeholder="Color"></li>
         </ul>
         </li>
-        <li class="orientation">Reorient subitems</li>
+        <!--<li class="orientation">Reorient subitems</li>-->
           `,
         this.rootdiv,
         ".floatingItem",
@@ -669,11 +670,33 @@ function _itemcluster_extend_contextmenu() {
         });
 
     this.itemContextMenu
+        .querySelector(".scramble")
+        .addEventListener("click", e => {
+            let cids = [this.contextedElement.dataset.id];
+            let applyToAll = false;
+            this.movingDivs.forEach((v) => {
+                if (v.el.node.dataset.id == cids[0]) {
+                    //apply to all moving divs.
+                    applyToAll = true;
+                }
+            });
+            if (applyToAll) {
+                cids = this.movingDivs.map((v) => { return v.el.node.dataset.id });
+            }
+            cids.forEach((cid) => {
+                polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName].x = Math.random() * 500 / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor + polymorph_core.items[cids[0]].itemcluster.viewData[this.settings.currentViewName].x
+                polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName].y = Math.random() * 500 + polymorph_core.items[cids[0]].itemcluster.viewData[this.settings.currentViewName].y
+            })
+            this.itemContextMenu.style.display = "none";
+        });
+
+    this.itemContextMenu
         .querySelector(".collcon")
         .addEventListener("click", e => {
             let thisit = polymorph_core.items[this.contextedElement.dataset.id];
             let toCollect = Object.keys(thisit.to || {});
             toCollect.push.apply(toCollect, Object.keys(this.fromcache[this.contextedElement.dataset.id] || {}));
+            toCollect = toCollect.filter(i => polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]);
             toCollect.forEach((v, i) => {
                 polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].x = thisit.itemcluster.viewData[this.settings.currentViewName].x + 250 * Math.cos(0.2 + 2 * Math.PI * i / toCollect.length) / polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor;
                 polymorph_core.items[v].itemcluster.viewData[this.settings.currentViewName].y = thisit.itemcluster.viewData[this.settings.currentViewName].y + 250 * Math.sin(0.2 + 2 * Math.PI * i / toCollect.length);
@@ -754,7 +777,7 @@ function _itemcluster_extend_contextmenu() {
             polymorph_core.shared.itemclusterCopyElement = els;
             this.itemContextMenu.style.display = "none";
         });
-    this.itemContextMenu
+    /*this.itemContextMenu
         .querySelector(".orientation")
         .addEventListener("click", e => {
             //toggle the itemcluster orientation
@@ -762,7 +785,7 @@ function _itemcluster_extend_contextmenu() {
             //reupdate
             this.arrangeItem(this.contextedElement.dataset.id);
             this.itemContextMenu.style.display = "none";
-        });
+        });*/
 
     this.itemContextMenu
         .querySelector(".subView")

@@ -22,7 +22,8 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
     <textarea placeholder="Output"></textarea>
     <br>
     <button class="sfile">Save text to file</button>
-    <button class="loitem">Load as item array</button>
+    <button class="loitem">Load as item JSON array</button>
+    <button class="lo_obj">Load as item JSON object</button>
     </span>
     `;
     function saveToFile() {
@@ -39,6 +40,14 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
         newItems.forEach(e => {
             polymorph_core.fire('updateItem', { id: e });
         });
+    });
+
+    this.dialog.querySelector(".lo_obj").addEventListener("click", () => {
+        let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
+        for (let i in newItems){
+            polymorph_core.items[i]=newItems[i];
+            polymorph_core.fire('updateItem',{id:i});
+        }
     });
 
     this.pushAll = async function (data) {

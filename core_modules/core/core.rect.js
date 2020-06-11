@@ -293,12 +293,12 @@ polymorph_core.rect = function (rectID) {
                 this.parent.outerDiv.remove();
                 mySibling.refresh();
                 let pid = this.parent.id;//deleting things messes with the parent getter
+                //delete parent rect
                 delete polymorph_core.rects[pid];
                 delete polymorph_core.items[pid]._rd;
+                //delete this rect
                 delete polymorph_core.rects[rectID];
                 delete polymorph_core.items[rectID]._rd;
-                //delete this rect
-                //delete this rect's parent
             }
         } else {
             let newContainer = { _od: { t: "opSelect", p: rectID } };
@@ -334,6 +334,7 @@ polymorph_core.rect = function (rectID) {
             currentInnerDiv.remove();
             this.switchOperator(switchToID);
             //nerf the item
+            polymorph_core.containers[containerid].remove();
             delete polymorph_core.containers[containerid];
             delete polymorph_core.items[containerid]._od;
         }
@@ -884,7 +885,16 @@ polymorph_core.rect = function (rectID) {
             //v is rect
             this.tieRect(v);
         }
-    })
+    });
+    this.remove = () => {
+        // nerf all containers
+        this.containers.forEach(i => i.remove());
+        this.containerids.forEach(i => {
+            delete polymorph_core.items[i]._od;
+        });
+        delete polymorph_core.items[rectID]._rd;
+        delete polymorph_core.rects[rectID];//seppuku
+    }
 }
 
 Object.defineProperty(polymorph_core, "baseRect", {
