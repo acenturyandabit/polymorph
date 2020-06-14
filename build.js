@@ -62,6 +62,7 @@ let { execSync } = require("child_process");
     console.log("done minifying.");
     */
     
+    execSync("del index-temp.html");
     execSync("rename index.html index-temp.html");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
