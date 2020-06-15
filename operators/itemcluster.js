@@ -353,13 +353,13 @@ polymorph_core.registerOperator("itemcluster2", {
                         if (this.arrangeItem) this.arrangeItem(i);
                         //position the item appropriately.
                     }
-                }
+                }/*
                 for (i in polymorph_core.items) {
                     if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
                         if (this.arrangeItem) this.arrangeItem(i);
                         //twice so that all lines show up. How efficient.
                     }
-                }
+                }*/
             }
 
             this.viewAdjust();
