@@ -60,9 +60,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                         // render the link
                         if (i == me.prevFocusID || id == me.prevFocusID) {
-                            me.enforceLine(id, i, "red");
+                            me.redrawLines(i, id, "red");
                         } else {
-                            me.enforceLine(id, i);
+                            me.redrawLines(i, id);
                         }
                     }
                 }
@@ -204,12 +204,11 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     };
 
     me.redrawLines = function (ci, style = "black") {
-        for (let i in me.activeLines) {
-            for (let j in me.activeLines[i]) {
-                if (i == ci || j == ci) {// this could STILL be done better
-                    me.enforceLine(i, j, style);
-                }
-            }
+        for (let j in me.activeLines[ci]) {
+            me.enforceLine(ci, j, style);
+        }
+        for (let j in me.fromcache[ci]) {
+            me.enforceLine(j, ci, style);
         }
     }
 
