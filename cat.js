@@ -2887,7 +2887,7 @@ const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 5;
 const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
-const RECT_BORDER_COLOR = "transparent";
+const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)";//"transparent";
 
 //parent is either undefined or another rect-like object
 //pseudo parents should implement following methods:
@@ -3024,13 +3024,12 @@ polymorph_core.rect = function (rectID) {
     // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
     this.outerDiv.style.cssText = `
-        position: absolute;
         box-sizing: border-box;
         height: 100%; width:100%;
         overflow: hidden;
         display:flex;
         flex-direction:column;
-        border-radius:5px;
+        flex: 0 1 auto;
         background: ${RECT_OUTER_DIV_COLOR}
     `;
 
@@ -3491,30 +3490,33 @@ polymorph_core.rect = function (rectID) {
             return;
         }
         if (this.settings.x == RECT_ORIENTATION_X) {
+            this.outerDiv.parentElement.style.flexDirection = "row";
+            this.outerDiv.style.order = this.settings.f;
             if (this.settings.f == RECT_FIRST_SIBLING) {
-                this.outerDiv.style.left = 0;
-                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * this.settings.ps;
+                //this.outerDiv.style.left = 0;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * this.settings.ps + "px";
             } else {
                 //dont use this.settings.ps, use my sibling's ps.
-                this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
-                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps);
+                //this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps) + "px";
             }
             this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight;
             this.outerDiv.style.top = 0;
         } else {
+            this.outerDiv.parentElement.style.flexDirection = "column";
+            this.outerDiv.style.order = this.settings.f;
             if (this.settings.f == RECT_FIRST_SIBLING) {
-                this.outerDiv.style.top = 0;
-                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * this.settings.ps;
+                //this.outerDiv.style.top = 0;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * this.settings.ps + "px";
             } else {
-                this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
-                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps);
+                //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
             }
             this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth;
             this.outerDiv.style.left = 0;
         }
         //also refresh any of my children
         if (this.children) {
-            this.outerDiv.style.border = "";
             //when tieing doubly-nested rects, sometimes a refresh is called on a child before it is tied, resulting in parentElement error.
             //so check parentElement before refreshing
             this.children.forEach((c) => {
@@ -3541,8 +3543,6 @@ polymorph_core.rect = function (rectID) {
         });
     }
     let rectChanged = false;
-    //Make draggable borders.
-    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
 
     this.rectsTied = [];
     this.tieRect = (rectID) => {
@@ -3553,14 +3553,46 @@ polymorph_core.rect = function (rectID) {
         this.rectsTied.push(rectID);
         if (this.rectsTied.length > 2) {
             console.log("multiple rect ties BAD; arbitration in progress");
+            //likely due to some split going wrong
             //first group rects
-            let sideA = {};
-            let sideB = {};
+            let contenders = {};
+            let side1 = [];
+            let side0 = [];
             for (let r of this.rectsTied) {
                 console.log(r);
                 console.log(polymorph_core.items[r]._rd);
+                contenders[r] = {
+                    //id:r,
+                    operatorCount: Object.values(polymorph_core.containers).filter(i => i.settings.p == r).length,
+                    nonZeroPS: polymorph_core.items[r]._rd.ps != 0
+                };
+                //cluster 
+                if (polymorph_core.items[r]._rd.f) {
+                    side1.push(r);
+                } else {
+                    side0.push(r);
+                };
+                side0.sort((a, b) => {
+                    if (contenders[b].operatorCount != contenders[a].operatorCount) {
+                        return contenders[b].operatorCount - contenders[a].operatorCount;
+                    } else return contenders[b].nonZeroPS - contenders[a].nonZeroPS;
+                })
+                side1.sort((a, b) => {
+                    if (contenders[b].operatorCount != contenders[a].operatorCount) {
+                        return contenders[b].operatorCount - contenders[a].operatorCount;
+                    } else return contenders[b].nonZeroPS - contenders[a].nonZeroPS;
+                })
+                side0.slice(1).forEach(i => {
+                    polymorph_core.rects[i].outerDiv.remove();
+                    delete polymorph_core.items[i]._rd.p;
+                    console.log("arbitration nerfed " + i);
+                });
+                side1.slice(1).forEach(i => {
+                    polymorph_core.rects[i].outerDiv.remove();
+                    delete polymorph_core.items[i]._rd.p;
+                    console.log("arbitration nerfed " + i);
+                });
             }
-
             // case 1: two rects conflicting
             // case 2: one pair and one lone rect conflicting
             // case 3: two pairs of rects conflicting
@@ -3577,6 +3609,35 @@ polymorph_core.rect = function (rectID) {
         else return (this.parent.visible());
     }
 
+    let shiftPressed = false;
+    let highlightDirn = -1;
+    let borders = ['left', 'right', 'top', 'bottom'];
+
+    this.redrawBorders = () => {
+        if (shiftPressed) {
+            if (!this.children) {
+                this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                if (highlightDirn != -1) {
+                    this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                }
+            } else {
+                this.outerDiv.style.border = "";
+            }
+        } else if (this.parent instanceof polymorph_core.rect) {
+            this.outerDiv.style.border = "";
+            if (this.settings.f) {
+                this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+            }
+            if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
+                this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+            }
+        } else {
+            this.outerDiv.style.border = "";
+        }
+
+    }
+    //Make draggable borders.
+    this.redrawBorders();
     //events
     //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
     this.mouseMoveHandler = (e) => {
@@ -3584,23 +3645,23 @@ polymorph_core.rect = function (rectID) {
             //forward events to children
             this.children[0].mouseMoveHandler(e);
             this.children[1].mouseMoveHandler(e);
-            return;
-        } else {
-            let dirn = -1;
+        }
+        if (this.parent instanceof polymorph_core.rect || (e.shiftKey && (e.ctrlKey || e.metaKey) && !this.children)) {
+            highlightDirn = -1;
             let cr = this.outerDiv.getClientRects()[0];
             if (e.clientX - cr.left >= 0 && cr.left + cr.width - e.clientX >= 0 && e.clientY - cr.top >= 0 && cr.top + cr.height - e.clientY >= 0) {
                 if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
-                    dirn = 0;
+                    highlightDirn = 0;
                 } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
-                    dirn = 1;
+                    highlightDirn = 1;
                 } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
-                    dirn = 2;
+                    highlightDirn = 2;
                 } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
-                    dirn = 3;
+                    highlightDirn = 3;
                 }
             }
 
-            if (this.split != -1 && this.split != dirn) {
+            if (this.split != -1 && this.split != highlightDirn && !this.children) {
                 if (!(e.buttons % 2)) {
                     this.split = -1;
                     e.preventDefault();
@@ -3670,28 +3731,25 @@ polymorph_core.rect = function (rectID) {
                 e.preventDefault();
                 rectChanged = true;
             }
-            let borders = ['left', 'right', 'top', 'bottom'];
             //reset all border colors
 
-            if (this.borderInvalidated) {
-                if (!this.children) {
-                    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                } else {
-                    this.outerDiv.style.border = "";
-                }
-                this.borderInvalidated = false;
-            }
-
-            if (dirn != -1) {
-                if (!this.children) {
-                    this.outerDiv.style["border-" + borders[dirn]] = RECT_BORDER_WIDTH + "px red solid";
-                    this.borderInvalidated = true;
-                }
-            }
+            this.redrawBorders();
         }
     };
     this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
+    document.addEventListener("keydown", (e) => {
+        if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
+            this.redrawBorders();
+        }
+    })
+    document.addEventListener("keyup", (e) => {
+        if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
+            this.redrawBorders();
+        }
+    })
     this.mouseUpHandler = (e) => {
         //push the new view, if anything interesting happened
         this.resizing = -1;
@@ -3710,11 +3768,7 @@ polymorph_core.rect = function (rectID) {
     this.outerDiv.addEventListener("mouseup", this.mouseUpHandler);
 
     this.outerDiv.addEventListener("mouseleave", () => {
-        if (!this.children) {
-            this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-        } else {
-            this.outerDiv.style.border = "";
-        }
+        this.redrawBorders();
         this.split = -1;
     })
     this.outerDiv.addEventListener("mousedown", (e) => {
@@ -3959,13 +4013,13 @@ polymorph_core.on("UIsetup", () => {
     }
     </style>`));
     document.body.appendChild(htmlwrap(/*html*/`
-    <div style="display:flex; flex-direction:column; height:100%">
+    <div style="display:flex; flex-direction:column; height:100vh">
         <div class="banner">
             <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
             <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
             <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
         </div>
-        <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:1 0 auto;position:relative">
+        <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:0 1 100vh; max-height: calc(100% - 2.1em); position:relative">
         </div>
     </div>
     `));
@@ -3998,7 +4052,7 @@ polymorph_core.on("UIstart", () => {
         polymorph_core.resetTutorial();
     })
     polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
-        let emaila = htmlwrap(`<a href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
+        let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
         document.body.appendChild(emaila);
         emaila.click();
     });
@@ -4816,19 +4870,23 @@ polymorph_core.registerOperator("itemList", {
                         break;
                     case "date":
                         if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
-                            if (it[p] && it[p].datestring) {
-
-                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                            } else {
-                                if (it[p] && typeof it[p] == "string") {
+                            if (it[p]){
+                                if (!it[p].datestring && typeof it[p] == "string") {
                                     it[p] = {
                                         datestring: it[p]
                                     };
-                                    currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                                    // May want to reparse the date aswell.
                                     if (this.datereparse) this.datereparse(id);
                                 }
+                                if (it[p].date && it[p].date.length && !it[p].prettyDateString) {
+                                    it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
+                                }
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
+                            }else{
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
+
                             }
+                        } else {
+                            currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].datestring;
                         }
                         break;
                 }
@@ -7927,9 +7985,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                         // render the link
                         if (i == me.prevFocusID || id == me.prevFocusID) {
-                            me.enforceLine(id, i, "red");
+                            me.enforceLine(i, id, "red");
                         } else {
-                            me.enforceLine(id, i);
+                            me.enforceLine(i, id);
                         }
                     }
                 }
@@ -7953,7 +8011,10 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!prerange && ((tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
+            if (!(polymorph_core.items[id][this.settings.textProp] || polymorph_core.items[id][this.settings.focusExtendProp])) {
+                polymorph_core.items[id][this.settings.textProp] = "_";
+            }
+            if (((polymorph_core.items[id][this.settings.textProp] && tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (polymorph_core.items[id][this.settings.focusExtendProp] && ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
                 tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
@@ -8064,6 +8125,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             polymorph_core.unlink(start, end);
             if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
             delete me.activeLines[start][end];
+            delete me.fromcache[end][start];
         } else {
             polymorph_core.link(start, end);
             me.enforceLine(start, end);
@@ -8071,12 +8133,11 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     };
 
     me.redrawLines = function (ci, style = "black") {
-        for (let i in me.activeLines) {
-            for (let j in me.activeLines[i]) {
-                if (i == ci || j == ci) {// this could STILL be done better
-                    me.enforceLine(i, j, style);
-                }
-            }
+        for (let j in me.activeLines[ci]) {
+            me.enforceLine(ci, j, style);
+        }
+        for (let j in me.fromcache[ci]) {
+            me.enforceLine(j, ci, style);
         }
     }
 
@@ -8100,6 +8161,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
+            if (!me.fromcache[end]) me.fromcache[end] = {};
+            me.fromcache[end][start] = true;
             //problem: when lines are cleared, lines do not redraw because lineperformancecache is not clear.
             if (linePerformanceCache[start]) delete linePerformanceCache[start][end];
         }
@@ -8857,6 +8920,7 @@ function _itemcluster_extend_contextmenu() {
             innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
             innerText = innerText.replace(/\n/g, "");
             innerText = innerText.split(/\*\$\*/g);
+            innerText = innerText.filter(i => i.length);
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
             /*for (let i = 0; i < innerText.length; i++) {
@@ -8871,13 +8935,12 @@ function _itemcluster_extend_contextmenu() {
             //first
             polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
             this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
-            this.arrangeItem(this.contextedElement.dataset.id);
             //create a bunch of items
             let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
             let lasty = VDT.y;
             let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
             if (!lastItem.to) lastItem.to = {};
-            innerText.forEach(i => {
+            let newIDs = innerText.map(i => {
                 let newItem = {
                     itemcluster: {
                         viewData: {
@@ -8892,8 +8955,12 @@ function _itemcluster_extend_contextmenu() {
                 lastItem.to[newID] = true;
                 lastItem = polymorph_core.items[newID];
                 this.container.fire("updateItem", { id: newID, sender: this });
-                this.arrangeItem(newID);
+                return newID;
             });
+            this.arrangeItem(this.contextedElement.dataset.id);
+            newIDs.forEach(i => {
+                this.arrangeItem(i);
+            })
             this.itemContextMenu.style.display = "none";
         });
     this.itemContextMenu
@@ -9139,6 +9206,7 @@ function _itemcluster_rapid_entry() {
         }
     })
     // nonshift enter is exit edit mode 
+    let specialOptions=["NEW","CNT","CNF","DIS"];
     let RIE = this.rapidEntryDiv.querySelector("input");
     let rIndex = 0;
     let tmpItems = [];
@@ -9189,7 +9257,7 @@ function _itemcluster_rapid_entry() {
     RIE.addEventListener("keyup", (e) => {
         if (e.key == "Enter") {
             //create a new item at a random location within viewport
-            if (e.target.value[0] == '\\' && ["NEW", "CNT", "CNF", "DIS"].includes(e.target.value.slice(1))) {
+            if (e.target.value[0] == '\\' && specialOptions.includes(e.target.value.slice(1))) {
                 opmode = e.target.value.slice(1);
                 updateCMDText();
             } else {
@@ -9246,6 +9314,20 @@ function _itemcluster_rapid_entry() {
             //also when to update the cache? container.onupdateitem? or something else, like global input listener? I'm happy with the global input listener.
             while (sugbox.children.length) sugbox.children[0].remove();
             tmpItems = [];
+            if (e.target.value=="\\HELP"){
+                tmpItems = specialOptions;
+
+                tmpItems.forEach((i, ind) => {
+                    let p = document.createElement('p');
+                    p.style.height = "1em";
+                    p.style.margin = 0;
+                    if (ind == rIndex) p.style.background = "lavender";
+                    p.innerText = i;
+                    sugbox.appendChild(p);
+                })
+                sugbox.style.height = tmpItems.length + "em";
+                sugbox.style.top = -tmpItems.length + "em";                
+            }
             if (e.target.value.length) {
                 for (let i in REcache) {
                     if (REcache[i].toLocaleLowerCase().includes(e.target.value.toLocaleLowerCase())) {
@@ -9651,13 +9733,13 @@ polymorph_core.registerOperator("itemcluster2", {
                         if (this.arrangeItem) this.arrangeItem(i);
                         //position the item appropriately.
                     }
-                }
+                }/*
                 for (i in polymorph_core.items) {
                     if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
                         if (this.arrangeItem) this.arrangeItem(i);
                         //twice so that all lines show up. How efficient.
                     }
-                }
+                }*/
             }
 
             this.viewAdjust();
