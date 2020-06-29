@@ -60,9 +60,9 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                         // render the link
                         if (i == me.prevFocusID || id == me.prevFocusID) {
-                            me.redrawLines(i, id, "red");
+                            me.enforceLine(i, id, "red");
                         } else {
-                            me.redrawLines(i, id);
+                            me.enforceLine(i, id);
                         }
                     }
                 }
@@ -86,7 +86,10 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!prerange && ((tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
+            if (!(polymorph_core.items[id][this.settings.textProp] || polymorph_core.items[id][this.settings.focusExtendProp])) {
+                polymorph_core.items[id][this.settings.textProp] = "_";
+            }
+            if (((polymorph_core.items[id][this.settings.textProp] && tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (polymorph_core.items[id][this.settings.focusExtendProp] && ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
                 tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
@@ -197,6 +200,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             polymorph_core.unlink(start, end);
             if (me.activeLines[start] && me.activeLines[start][end]) me.activeLines[start][end].remove();
             delete me.activeLines[start][end];
+            delete me.fromcache[end][start];
         } else {
             polymorph_core.link(start, end);
             me.enforceLine(start, end);
@@ -232,6 +236,8 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
+            if (!me.fromcache[end]) me.fromcache[end] = {};
+            me.fromcache[end][start] = true;
             //problem: when lines are cleared, lines do not redraw because lineperformancecache is not clear.
             if (linePerformanceCache[start]) delete linePerformanceCache[start][end];
         }

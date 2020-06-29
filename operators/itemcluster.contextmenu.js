@@ -711,6 +711,7 @@ function _itemcluster_extend_contextmenu() {
             innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
             innerText = innerText.replace(/\n/g, "");
             innerText = innerText.split(/\*\$\*/g);
+            innerText = innerText.filter(i => i.length);
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
             /*for (let i = 0; i < innerText.length; i++) {
@@ -725,13 +726,12 @@ function _itemcluster_extend_contextmenu() {
             //first
             polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
             this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
-            this.arrangeItem(this.contextedElement.dataset.id);
             //create a bunch of items
             let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
             let lasty = VDT.y;
             let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
             if (!lastItem.to) lastItem.to = {};
-            innerText.forEach(i => {
+            let newIDs = innerText.map(i => {
                 let newItem = {
                     itemcluster: {
                         viewData: {
@@ -746,8 +746,12 @@ function _itemcluster_extend_contextmenu() {
                 lastItem.to[newID] = true;
                 lastItem = polymorph_core.items[newID];
                 this.container.fire("updateItem", { id: newID, sender: this });
-                this.arrangeItem(newID);
+                return newID;
             });
+            this.arrangeItem(this.contextedElement.dataset.id);
+            newIDs.forEach(i => {
+                this.arrangeItem(i);
+            })
             this.itemContextMenu.style.display = "none";
         });
     this.itemContextMenu
