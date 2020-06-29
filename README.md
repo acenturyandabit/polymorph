@@ -1,6 +1,8 @@
 # Polymorph
 [acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/)
 
+![](https://raw.githubusercontent.com/acenturyandabit/polymorph/largeAssets/assets/polymorph.mp4)
+
 ## Problem
 I like to rehash my task management tools as things come up - if I decide that there's a better way of managing my tasks that works for ME, then I want to be able to rebuild it. Sound familiar? I bet every developer or aspiring developer has a task management system that they've built or contributed to before because it just 'isn't quite right for them'.
 
