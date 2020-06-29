@@ -3,6 +3,7 @@ let { execSync } = require("child_process");
 
 
 (async () => {
+    fs.copyFileSync("index.html","index_deploy.html");
     execSync("git add .");
     try{
         execSync('git commit -m "auto pre-push commit" ');
@@ -17,7 +18,7 @@ let { execSync } = require("child_process");
         return;
     }
     // minify the files in index.html
-    let indexHTMLdata = String(fs.readFileSync("index.html"));
+    let indexHTMLdata = String(fs.readFileSync("index_deploy.html"));
     indexHTMLdata = indexHTMLdata.split(/\r?\n/g);
     let begin = false;
     let files = [];
