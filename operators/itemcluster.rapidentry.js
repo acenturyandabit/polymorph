@@ -63,6 +63,7 @@ function _itemcluster_rapid_entry() {
         }
     })
     // nonshift enter is exit edit mode 
+    let specialOptions=["NEW","CNT","CNF","DIS"];
     let RIE = this.rapidEntryDiv.querySelector("input");
     let rIndex = 0;
     let tmpItems = [];
@@ -113,7 +114,7 @@ function _itemcluster_rapid_entry() {
     RIE.addEventListener("keyup", (e) => {
         if (e.key == "Enter") {
             //create a new item at a random location within viewport
-            if (e.target.value[0] == '\\' && ["NEW", "CNT", "CNF", "DIS"].includes(e.target.value.slice(1))) {
+            if (e.target.value[0] == '\\' && specialOptions.includes(e.target.value.slice(1))) {
                 opmode = e.target.value.slice(1);
                 updateCMDText();
             } else {
@@ -170,6 +171,20 @@ function _itemcluster_rapid_entry() {
             //also when to update the cache? container.onupdateitem? or something else, like global input listener? I'm happy with the global input listener.
             while (sugbox.children.length) sugbox.children[0].remove();
             tmpItems = [];
+            if (e.target.value=="\\HELP"){
+                tmpItems = specialOptions;
+
+                tmpItems.forEach((i, ind) => {
+                    let p = document.createElement('p');
+                    p.style.height = "1em";
+                    p.style.margin = 0;
+                    if (ind == rIndex) p.style.background = "lavender";
+                    p.innerText = i;
+                    sugbox.appendChild(p);
+                })
+                sugbox.style.height = tmpItems.length + "em";
+                sugbox.style.top = -tmpItems.length + "em";                
+            }
             if (e.target.value.length) {
                 for (let i in REcache) {
                     if (REcache[i].toLocaleLowerCase().includes(e.target.value.toLocaleLowerCase())) {

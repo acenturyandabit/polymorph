@@ -140,19 +140,23 @@ polymorph_core.registerOperator("itemList", {
                         break;
                     case "date":
                         if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
-                            if (it[p] && it[p].datestring) {
-
-                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                            } else {
-                                if (it[p] && typeof it[p] == "string") {
+                            if (it[p]){
+                                if (!it[p].datestring && typeof it[p] == "string") {
                                     it[p] = {
                                         datestring: it[p]
                                     };
-                                    currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                                    // May want to reparse the date aswell.
                                     if (this.datereparse) this.datereparse(id);
                                 }
+                                if (it[p].date && it[p].date.length && !it[p].prettyDateString) {
+                                    it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
+                                }
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
+                            }else{
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
+
                             }
+                        } else {
+                            currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].datestring;
                         }
                         break;
                 }

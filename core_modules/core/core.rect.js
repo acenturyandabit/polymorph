@@ -10,7 +10,7 @@ const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 5;
 const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
-const RECT_BORDER_COLOR = "transparent";
+const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)";//"transparent";
 
 //parent is either undefined or another rect-like object
 //pseudo parents should implement following methods:
@@ -147,13 +147,12 @@ polymorph_core.rect = function (rectID) {
     // Create the outerDiv: the one with the active borders.
     this.outerDiv = document.createElement("div");
     this.outerDiv.style.cssText = `
-        position: absolute;
         box-sizing: border-box;
         height: 100%; width:100%;
         overflow: hidden;
         display:flex;
         flex-direction:column;
-        border-radius:5px;
+        flex: 0 1 auto;
         background: ${RECT_OUTER_DIV_COLOR}
     `;
 
@@ -614,30 +613,33 @@ polymorph_core.rect = function (rectID) {
             return;
         }
         if (this.settings.x == RECT_ORIENTATION_X) {
+            this.outerDiv.parentElement.style.flexDirection = "row";
+            this.outerDiv.style.order = this.settings.f;
             if (this.settings.f == RECT_FIRST_SIBLING) {
-                this.outerDiv.style.left = 0;
-                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * this.settings.ps;
+                //this.outerDiv.style.left = 0;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * this.settings.ps + "px";
             } else {
                 //dont use this.settings.ps, use my sibling's ps.
-                this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
-                this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps);
+                //this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps) + "px";
             }
             this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight;
             this.outerDiv.style.top = 0;
         } else {
+            this.outerDiv.parentElement.style.flexDirection = "column";
+            this.outerDiv.style.order = this.settings.f;
             if (this.settings.f == RECT_FIRST_SIBLING) {
-                this.outerDiv.style.top = 0;
-                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * this.settings.ps;
+                //this.outerDiv.style.top = 0;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * this.settings.ps + "px";
             } else {
-                this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
-                this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps);
+                //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
+                this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
             }
             this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth;
             this.outerDiv.style.left = 0;
         }
         //also refresh any of my children
         if (this.children) {
-            this.outerDiv.style.border = "";
             //when tieing doubly-nested rects, sometimes a refresh is called on a child before it is tied, resulting in parentElement error.
             //so check parentElement before refreshing
             this.children.forEach((c) => {
@@ -664,8 +666,6 @@ polymorph_core.rect = function (rectID) {
         });
     }
     let rectChanged = false;
-    //Make draggable borders.
-    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
 
     this.rectsTied = [];
     this.tieRect = (rectID) => {
@@ -676,14 +676,46 @@ polymorph_core.rect = function (rectID) {
         this.rectsTied.push(rectID);
         if (this.rectsTied.length > 2) {
             console.log("multiple rect ties BAD; arbitration in progress");
+            //likely due to some split going wrong
             //first group rects
-            let sideA = {};
-            let sideB = {};
+            let contenders = {};
+            let side1 = [];
+            let side0 = [];
             for (let r of this.rectsTied) {
                 console.log(r);
                 console.log(polymorph_core.items[r]._rd);
+                contenders[r] = {
+                    //id:r,
+                    operatorCount: Object.values(polymorph_core.containers).filter(i => i.settings.p == r).length,
+                    nonZeroPS: polymorph_core.items[r]._rd.ps != 0
+                };
+                //cluster 
+                if (polymorph_core.items[r]._rd.f) {
+                    side1.push(r);
+                } else {
+                    side0.push(r);
+                };
+                side0.sort((a, b) => {
+                    if (contenders[b].operatorCount != contenders[a].operatorCount) {
+                        return contenders[b].operatorCount - contenders[a].operatorCount;
+                    } else return contenders[b].nonZeroPS - contenders[a].nonZeroPS;
+                })
+                side1.sort((a, b) => {
+                    if (contenders[b].operatorCount != contenders[a].operatorCount) {
+                        return contenders[b].operatorCount - contenders[a].operatorCount;
+                    } else return contenders[b].nonZeroPS - contenders[a].nonZeroPS;
+                })
+                side0.slice(1).forEach(i => {
+                    polymorph_core.rects[i].outerDiv.remove();
+                    delete polymorph_core.items[i]._rd.p;
+                    console.log("arbitration nerfed " + i);
+                });
+                side1.slice(1).forEach(i => {
+                    polymorph_core.rects[i].outerDiv.remove();
+                    delete polymorph_core.items[i]._rd.p;
+                    console.log("arbitration nerfed " + i);
+                });
             }
-
             // case 1: two rects conflicting
             // case 2: one pair and one lone rect conflicting
             // case 3: two pairs of rects conflicting
@@ -700,6 +732,35 @@ polymorph_core.rect = function (rectID) {
         else return (this.parent.visible());
     }
 
+    let shiftPressed = false;
+    let highlightDirn = -1;
+    let borders = ['left', 'right', 'top', 'bottom'];
+
+    this.redrawBorders = () => {
+        if (shiftPressed) {
+            if (!this.children) {
+                this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                if (highlightDirn != -1) {
+                    this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                }
+            } else {
+                this.outerDiv.style.border = "";
+            }
+        } else if (this.parent instanceof polymorph_core.rect) {
+            this.outerDiv.style.border = "";
+            if (this.settings.f) {
+                this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+            }
+            if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
+                this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+            }
+        } else {
+            this.outerDiv.style.border = "";
+        }
+
+    }
+    //Make draggable borders.
+    this.redrawBorders();
     //events
     //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
     this.mouseMoveHandler = (e) => {
@@ -707,23 +768,23 @@ polymorph_core.rect = function (rectID) {
             //forward events to children
             this.children[0].mouseMoveHandler(e);
             this.children[1].mouseMoveHandler(e);
-            return;
-        } else {
-            let dirn = -1;
+        }
+        if (this.parent instanceof polymorph_core.rect || (e.shiftKey && (e.ctrlKey || e.metaKey) && !this.children)) {
+            highlightDirn = -1;
             let cr = this.outerDiv.getClientRects()[0];
             if (e.clientX - cr.left >= 0 && cr.left + cr.width - e.clientX >= 0 && e.clientY - cr.top >= 0 && cr.top + cr.height - e.clientY >= 0) {
                 if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
-                    dirn = 0;
+                    highlightDirn = 0;
                 } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
-                    dirn = 1;
+                    highlightDirn = 1;
                 } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
-                    dirn = 2;
+                    highlightDirn = 2;
                 } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
-                    dirn = 3;
+                    highlightDirn = 3;
                 }
             }
 
-            if (this.split != -1 && this.split != dirn) {
+            if (this.split != -1 && this.split != highlightDirn && !this.children) {
                 if (!(e.buttons % 2)) {
                     this.split = -1;
                     e.preventDefault();
@@ -793,28 +854,25 @@ polymorph_core.rect = function (rectID) {
                 e.preventDefault();
                 rectChanged = true;
             }
-            let borders = ['left', 'right', 'top', 'bottom'];
             //reset all border colors
 
-            if (this.borderInvalidated) {
-                if (!this.children) {
-                    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                } else {
-                    this.outerDiv.style.border = "";
-                }
-                this.borderInvalidated = false;
-            }
-
-            if (dirn != -1) {
-                if (!this.children) {
-                    this.outerDiv.style["border-" + borders[dirn]] = RECT_BORDER_WIDTH + "px red solid";
-                    this.borderInvalidated = true;
-                }
-            }
+            this.redrawBorders();
         }
     };
     this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
+    document.addEventListener("keydown", (e) => {
+        if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
+            this.redrawBorders();
+        }
+    })
+    document.addEventListener("keyup", (e) => {
+        if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
+            this.redrawBorders();
+        }
+    })
     this.mouseUpHandler = (e) => {
         //push the new view, if anything interesting happened
         this.resizing = -1;
@@ -833,11 +891,7 @@ polymorph_core.rect = function (rectID) {
     this.outerDiv.addEventListener("mouseup", this.mouseUpHandler);
 
     this.outerDiv.addEventListener("mouseleave", () => {
-        if (!this.children) {
-            this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-        } else {
-            this.outerDiv.style.border = "";
-        }
+        this.redrawBorders();
         this.split = -1;
     })
     this.outerDiv.addEventListener("mousedown", (e) => {
