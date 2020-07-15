@@ -1197,6 +1197,13 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "textProp",
             label: "Text property to display..."
+        }),
+        focusExtendProp: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "focusExtendProp",
+            label: "Extened property to display..."
         })
     }
     this.showDialog = () => {

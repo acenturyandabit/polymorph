@@ -11,6 +11,7 @@ function __itemlist_searchsort() {
     let searchCapacitor = new capacitor(1000, 300, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        if (this.settings.entrySearch) searchboxes = Array.from(this.template.querySelectorAll("input"));
         let amSearching = false;
         for (let i = 0; i < searchboxes.length; i++) {
             if (searchboxes[i].value != "") {
@@ -66,6 +67,8 @@ function __itemlist_searchsort() {
         searchCapacitor.submit();
     })
 
+    this.template.addEventListener("keyup", searchCapacitor.submit);
+
 
     ///sorting
     this.indexOf = (id) => {
@@ -77,7 +80,7 @@ function __itemlist_searchsort() {
     }
 
     this._sortItems = () => {
-        this.isSorting=true; // alert focusout so that it doesnt display prettydate
+        this.isSorting = true; // alert focusout so that it doesnt display prettydate
         if (!this.container.visible()) return;
         if (this.settings.implicitOrder) {
             this.settings.sortby = this.settings.filterProp;
@@ -153,7 +156,7 @@ function __itemlist_searchsort() {
                 }
             }
         }
-        this.isSorting=false;
+        this.isSorting = false;
     }
 
     this.sortcap = new capacitor(500, 1000, this._sortItems);

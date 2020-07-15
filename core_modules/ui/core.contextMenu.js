@@ -9,8 +9,7 @@ function _contextMenuManager(root) {
         re.appendChild(thisCTXM);
 
         function intellishow(e) {
-            let mbr = thisCTXM.getBoundingClientRect();
-            let pbr = thisCTXM.parentElement.getBoundingClientRect();
+            let pbr = thisCTXM.parentElement.getClientRects()[0];
             let _left = e.pageX - pbr.x;
             let _top = e.pageY - pbr.y;
             //adjust for out of the page scenarios.
@@ -143,7 +142,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         //only really used for edit; so getItemProp only.
         let props = propStr.split(".");
         let itm = polymorph_core.items[container._tempCtxSettings.id];
-        if (propStr.startsWith("item")){
+        if (propStr.startsWith("item")) {
             props.shift();
         }
         for (let i = 0; i < props.length; i++) {

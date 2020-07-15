@@ -412,6 +412,7 @@ polymorph_core.rect = function (rectID) {
     let tabmenu;
     //Delegated context menu click on tabs
     let c = new _contextMenuManager(this.outerDiv);
+    this.outerDiv.style.position="relative";
     let contextedOperatorIndex = undefined;
     let tabfilter = (e) => {
         let t = e.target;

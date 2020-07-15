@@ -15,6 +15,7 @@ polymorph_core.registerOperator("itemList", {
             enableEntry: true,
             implicitOrder: true,
             linkProperty: "to",
+            entrySearch: false,
             propOrder: []
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -140,7 +141,7 @@ polymorph_core.registerOperator("itemList", {
                         break;
                     case "date":
                         if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
-                            if (it[p]){
+                            if (it[p]) {
                                 if (!it[p].datestring && typeof it[p] == "string") {
                                     it[p] = {
                                         datestring: it[p]
@@ -151,7 +152,7 @@ polymorph_core.registerOperator("itemList", {
                                     it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
                                 }
                                 currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                            }else{
+                            } else {
                                 currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
 
                             }
@@ -358,21 +359,34 @@ polymorph_core.registerOperator("itemList", {
             }
         }
 
+        let resizingRole = "";
+        let resizingEl = undefined;
         //resizing
-        container.div.addEventListener("mousemove", (e) => {
-            if (e.buttons) {
-                for (let i = 0; i < e.path.length; i++) {
-                    if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                        let els = container.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
-                        for (let j = 0; j < els.length; j++)els[j].style.width = e.path[i].clientWidth;
-                        this.settings.propertyWidths[e.path[i].dataset.containsRole] = e.path[i].clientWidth;
-                        break;
-                    } else if (e.path[i] == this.taskList) {
-                        break;
-                    }
-                }
+        container.div.addEventListener("mousedown", (e) => {
+            for (let i = 0; i < e.path.length; i++) {
+                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
+                    resizingRole = e.path[i].dataset.containsRole;
+                    resizingEl = e.path[i];
+                } else if (e.path[i] == this.taskList) break;
             }
         })
+        container.div.addEventListener("mousemove", (e) => {
+            if (e.buttons && resizingRole && resizingEl) {
+                let els = container.div.querySelectorAll(`[data-contains-role=${resizingRole}]`);
+                let desiredW = resizingEl.clientWidth;
+                for (let j = 0; j < els.length; j++)els[j].style.width = desiredW;
+                this.settings.propertyWidths[e.path[i].dataset.containsRole] = desiredW;
+            }
+        })
+
+        function clearOut(){
+            resizingRole=undefined;
+            resizingEl=undefined;
+        }
+
+        container.div.addEventListener("mouseup",clearOut);
+        container.div.addEventListener("mouseleave",clearOut);
+
 
         __itemlist_searchsort.apply(this);
 
@@ -632,6 +646,13 @@ polymorph_core.registerOperator("itemList", {
                 object: this.settings,
                 property: "linkProperty",
                 label: "Property for links (leave blank to ignore links)"
+            }),
+            entrySearch: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "entrySearch",
+                label: "Use Entry as Search"
             })
         }
         let d = this.dialogDiv;
@@ -766,12 +787,15 @@ polymorph_core.registerOperator("itemList", {
 
         container.div.addEventListener("mousemove", (e) => {
             //if alt, fire UDD
+            /*
+            //this is a bit fiddly and i dont like it
             if (e.altKey && dragDropID) {
                 //fire UDD
                 polymorph_core.initiateDragDrop(dragDropID, { x: e.clientX, y: e.clientY, sender: container.id });
                 //prevent spamming
                 dragDropID = undefined;
             }
+            */
             if (this.worryRow) {
                 this.worryRow.style.left = e.clientX - this.relrect.x;
                 this.worryRow.style.top = e.clientY - this.relrect.y;
