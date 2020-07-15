@@ -375,7 +375,7 @@ polymorph_core.registerOperator("itemList", {
                 let els = container.div.querySelectorAll(`[data-contains-role=${resizingRole}]`);
                 let desiredW = resizingEl.clientWidth;
                 for (let j = 0; j < els.length; j++)els[j].style.width = desiredW;
-                this.settings.propertyWidths[e.path[i].dataset.containsRole] = desiredW;
+                this.settings.propertyWidths[resizingRole] = desiredW;
             }
         })
 
