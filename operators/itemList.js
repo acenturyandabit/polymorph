@@ -88,19 +88,8 @@ polymorph_core.registerOperator("itemList", {
             margin: 0;
         }
         
-        /* add a visible handle */
-        .resizable-input > span {
-            display: inline-block;
-            vertical-align: bottom;
-            margin-left: -16px;
-            width: 16px;
-            height: 16px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAJUlEQVR4AcXJRwEAIBAAIPuXxgiOW3xZYzi1Q3Nqh+bUDk1yD9sQaUG/4ehuEAAAAABJRU5ErkJggg==");
-            cursor: ew-resize;
-        }
         </style>`
         ));
-        //Resize credits to u/MoonLite on stackoverflow
 
         container.div.appendChild(this.taskListBar);
 
@@ -133,6 +122,7 @@ polymorph_core.registerOperator("itemList", {
                 switch (this.settings.properties[p]) {
                     case "text":
                         currentItemSpan.children[0].children[i + 1].children[0].value = (it[p] != undefined) ? it[p] : "";
+                        break;
                     case "number":
                         currentItemSpan.children[0].children[i + 1].children[1].value = (it[p] != undefined) ? it[p] : "";
                         break;
@@ -298,10 +288,11 @@ polymorph_core.registerOperator("itemList", {
 
         container.on("updateItem", (d) => {
             let id = d.id;
-            let s = d.sender;
+            if (!this.itemRelevant(id)) return;
+            if (d.sender == this) return;//dont rerender self
             this.settings.currentID = id;
             //sortcap may not have been declared yet
-            if (s != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
+            if (d.sender != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
             return this.renderItem(id);
         });
 
@@ -379,13 +370,13 @@ polymorph_core.registerOperator("itemList", {
             }
         })
 
-        function clearOut(){
-            resizingRole=undefined;
-            resizingEl=undefined;
+        function clearOut() {
+            resizingRole = undefined;
+            resizingEl = undefined;
         }
 
-        container.div.addEventListener("mouseup",clearOut);
-        container.div.addEventListener("mouseleave",clearOut);
+        container.div.addEventListener("mouseup", clearOut);
+        container.div.addEventListener("mouseleave", clearOut);
 
 
         __itemlist_searchsort.apply(this);
@@ -399,7 +390,7 @@ polymorph_core.registerOperator("itemList", {
                     case "text":
                     case "date":
                     case "object":
-                        htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'><span></span></span>`;
+                        htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'></span>`;
                         break;
                     case "number":
                         htmlstring += "<span><span>" + i + ":</span><input data-role='" + i + "' type='number'></span>";
