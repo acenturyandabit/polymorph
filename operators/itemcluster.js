@@ -1124,6 +1124,12 @@ polymorph_core.registerOperator("itemcluster2", {
         if (this.svg && this.viewGrid) {
             this.viewGrid();
         }
+
+
+        //reupdate every item
+        for (let i in this.itemPointerCache){
+            this.arrangeItem(i);
+        }
     }
     this.refresh = () => {
         if (this.svg) this.svg.size(this.rootdiv.clientWidth, this.rootdiv.clientHeight);

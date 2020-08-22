@@ -86,12 +86,22 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!(polymorph_core.items[id][this.settings.textProp] || polymorph_core.items[id][this.settings.focusExtendProp])) {
+            if (!(polymorph_core.items[id][this.settings.textProp])) {
                 polymorph_core.items[id][this.settings.textProp] = "_";
             }
-            if (((polymorph_core.items[id][this.settings.textProp] && tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (polymorph_core.items[id][this.settings.focusExtendProp] && ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
-                tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
-                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
+            if (!polymorph_core.items[id][this.settings.focusExtendProp]){
+                polymorph_core.items[id][this.settings.focusExtendProp] = "_";
+            }
+            let widthInvalidated=false;
+            if (tta.innerText != polymorph_core.items[id][this.settings.textProp]) {
+                tta.innerText = polymorph_core.items[id][this.settings.textProp];
+                widthInvalidated=true;
+            }
+            if (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]) {
+                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp];
+                widthInvalidated=true;
+            }
+            if (widthInvalidated){
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {

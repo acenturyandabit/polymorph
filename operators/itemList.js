@@ -223,6 +223,7 @@ polymorph_core.registerOperator("itemList", {
             }
             //ensure the filter property exists
             if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
+            //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
             let id = polymorph_core.insertItem(it);
 
             if (this.shiftDown && this.settings.linkProperty) {
@@ -288,7 +289,10 @@ polymorph_core.registerOperator("itemList", {
 
         container.on("updateItem", (d) => {
             let id = d.id;
-            if (!this.itemRelevant(id)) return;
+            if (!this.itemRelevant(id)) {
+                if (container.div.querySelector(`[data-id='${id}']`)) container.div.querySelector(`[data-id='${id}']`).remove();
+                return;
+            }
             if (d.sender == this) return;//dont rerender self
             this.settings.currentID = id;
             //sortcap may not have been declared yet
@@ -629,7 +633,11 @@ polymorph_core.registerOperator("itemList", {
                 type: "bool",
                 object: this.settings,
                 property: "implicitOrder",
-                label: "Implicit ordering"
+                label: "Implicit ordering (Enables drag and drop, disables existing ordering)",
+                afterInput: () => {
+                    this.settings.sortby = undefined;
+                    Array.from(this.proplist.querySelectorAll("input[type='radio']")).forEach(i => i.checked = false);
+                }
             }),
             linkProperty: new polymorph_core._option({
                 div: this.dialogDiv,
@@ -687,6 +695,7 @@ polymorph_core.registerOperator("itemList", {
                 <option value="number">Number</option>
             </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole=` + prop + `>X</button>`
                 pspan.querySelector("select").value = this.settings.properties[prop];
+                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
                 this.proplist.appendChild(pspan);
             }
         }
@@ -700,13 +709,20 @@ polymorph_core.registerOperator("itemList", {
             }
         })
 
+        let checkImplicitOrdering = () => {
+            if (this.settings.implicitOrder) {
+                Array.from(this.taskList.querySelectorAll("[data-id]")).map((i, ii) => i[this.settings.filter] = ii);
+            }
+        }
+
         this.dialogUpdateSettings = () => {
             // pull settings and update when your dialog is closed.
             this.updateSettings();
             this.sortItems();
+            checkImplicitOrdering();
             container.fire("updateItem", { id: this.container.id });
         }
-
+        checkImplicitOrdering();
         //adding new buttons
         d.querySelector(".adbt").addEventListener("click",
             () => {
@@ -776,6 +792,7 @@ polymorph_core.registerOperator("itemList", {
             }
         })
 
+        let lastBlued;
         container.div.addEventListener("mousemove", (e) => {
             //if alt, fire UDD
             /*
@@ -788,13 +805,33 @@ polymorph_core.registerOperator("itemList", {
             }
             */
             if (this.worryRow) {
+                if (lastBlued) lastBlued.style.borderTop = "";
+                lastBlued = undefined;
+                for (let i = 0; i < e.path.length; i++) {
+                    try {
+                        if (e.path[i].matches("[data-id]") && e.path[i] != this.worryRow) {
+                            lastBlued = e.path[i];
+                            lastBlued.style.borderTop = "3px solid blue";
+                        }
+                    } catch (e) {
+                        break;
+                    }
+                }
                 this.worryRow.style.left = e.clientX - this.relrect.x;
                 this.worryRow.style.top = e.clientY - this.relrect.y;
-
             }
         })
         let ddmouseExitHandler = (e) => {
             if (this.worryRow) {
+                //rearrange stuff
+                if (lastBlued) {
+                    lastBlued.style.borderTop = "";
+                    if (lastBlued.previousElementSibling) polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = (polymorph_core.items[lastBlued.previousElementSibling.dataset.id][this.settings.filter] + polymorph_core.items[lastBlued.dataset.id][this.settings.filter]) / 2;
+                    else polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = polymorph_core.items[lastBlued.dataset.id][this.settings.filter] - 1;
+                    lastBlued.parentElement.insertBefore(this.worryRow, lastBlued);
+                    lastBlued = undefined;
+                }
+                //check if implict ordering
                 this.worryRow.style.position = "static";
                 Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "unset");
                 delete this.worryRow;

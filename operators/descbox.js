@@ -189,12 +189,12 @@ polymorph_core.registerOperator("descbox", {
     this.textarea.addEventListener("input", this.somethingwaschanged);
     this.textarea.addEventListener("keyup", this.somethingwaschanged);
     document.addEventListener('keydown', (e) => {
-        if (this.textarea.matches(":focus-within")) {
+        if (this.textarea == this.rootdiv.getRootNode().activeElement) {
             var keycode1 = (e.keyCode ? e.keyCode : e.which);
             if (keycode1 == 0 || keycode1 == 9) {
                 e.preventDefault();
                 e.stopPropagation();
-                document.execCommand('insertText', false /*no UI*/, "    ");
+                document.execCommand('insertText', false, "    ");
             }
         }
     })

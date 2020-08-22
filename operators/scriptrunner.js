@@ -50,11 +50,14 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
+    let selfLooping=false;
     container.on("*", (d, e) => {
-        if (!d.sender || d.sender != "GARBAGE_COLLECTOR") {
+        if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping) {
+            selfLooping=true;
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
+            selfLooping=false;// not sure if this is helping or hindering but we'll see
         }
         return false;
     });
@@ -143,7 +146,7 @@ polymorph_core.registerOperator("scriptrunner", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS IN GENERAL!`;
+    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS YOU DONT UNDERSTAND!`;
     let ops = [
         new polymorph_core._option({
             div: this.dialogDiv,
