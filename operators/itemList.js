@@ -201,7 +201,7 @@ polymorph_core.registerOperator("itemList", {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
-                        it[i] = this.template.querySelector("[data-role='" + i + "']").value;
+                        if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
                         break;
                     case "object":
                         try {
@@ -211,11 +211,17 @@ polymorph_core.registerOperator("itemList", {
                         }
                         break;
                     case "date":
-                        if (!it[i]) it[i] = {};
-                        if (typeof it[i] == "string") it[i] = {
-                            datestring: it[i]
-                        };
-                        it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
+                        if (this.template.querySelector("[data-role='" + i + "']").value) {
+                            if (!it[i]) it[i] = {};
+                            if (typeof it[i] == "string") it[i] = {
+                                datestring: it[i]
+                            };
+                            it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
+                        } else if (i == this.settings.filter) {
+                            it[i] = {
+                                datestring: "now" // is this useful to have as a default? sure
+                            };
+                        }
                         break;
                 }
                 //clear the template
@@ -303,7 +309,7 @@ polymorph_core.registerOperator("itemList", {
         //#endregion
 
         //auto
-        setInterval(() => {
+        this.intervalsToClear.push(setInterval(() => {
             if (!this.container.visible()) return; //if not shown then dont worryy
             //its every 10s, we can afford for it to be detailed
 
@@ -320,7 +326,7 @@ polymorph_core.registerOperator("itemList", {
                 }
             }
             this.sortItems();
-        }, 10000);
+        }, 10000));
 
         //Item deletion
         //Handle item deletion
@@ -367,7 +373,7 @@ polymorph_core.registerOperator("itemList", {
         })
         container.div.addEventListener("mousemove", (e) => {
             if (e.buttons && resizingRole && resizingEl) {
-                let els = container.div.querySelectorAll(`[data-contains-role=${resizingRole}]`);
+                let els = container.div.querySelectorAll(`[data-contains-role='${resizingRole}']`);
                 let desiredW = resizingEl.clientWidth;
                 for (let j = 0; j < els.length; j++)els[j].style.width = desiredW;
                 this.settings.propertyWidths[resizingRole] = desiredW;
@@ -405,7 +411,7 @@ polymorph_core.registerOperator("itemList", {
             this.setSearchTemplate(htmlstring);
             //resize stuff
             for (let i in this.settings.propertyWidths) {
-                if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+                if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role='${i}']`).style.width = this.settings.propertyWidths[i];
                 else delete this.settings.propertyWidths[i];
             }
             //Recreate everything
@@ -484,6 +490,7 @@ polymorph_core.registerOperator("itemList", {
         this.taskList.addEventListener("keyup", (e) => {
             if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
                 this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
+                this.renderItem(e.target.parentElement.parentElement.parentElement.dataset.id);
             }
         })
 
@@ -586,7 +593,7 @@ polymorph_core.registerOperator("itemList", {
             "toFixedDate": (e, ctr) => {
                 let id = e.id;
                 let contextedProp = e.role;
-                polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();;
+                polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
                 this.datereparse(id);
             }
         }
@@ -693,7 +700,7 @@ polymorph_core.registerOperator("itemList", {
                 <option value="date">Date</option>
                 <option value="object">Object</option>
                 <option value="number">Number</option>
-            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole=` + prop + `>X</button>`
+            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
                 pspan.querySelector("select").value = this.settings.properties[prop];
                 pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
                 this.proplist.appendChild(pspan);

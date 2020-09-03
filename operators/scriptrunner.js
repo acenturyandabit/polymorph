@@ -1,8 +1,8 @@
 polymorph_core.registerOperator("scriptrunner", {
     displayName: "Script Runner",
     description: "Runs scripts.",
-    section:"Advanced",
-    imageurl:"assets/operators/scriptrunner.png"
+    section: "Advanced",
+    imageurl: "assets/operators/scriptrunner.png"
 }, function (container) {
     let defaultSettings = {
         autorun: false,
@@ -50,14 +50,15 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
-    let selfLooping=false;
+    let selfLooping = false;
     container.on("*", (d, e) => {
+        if (!d) return; // documentCreated &c
         if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping) {
-            selfLooping=true;
+            selfLooping = true;
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
-            selfLooping=false;// not sure if this is helping or hindering but we'll see
+            selfLooping = false;// not sure if this is helping or hindering but we'll see
         }
         return false;
     });

@@ -10,10 +10,9 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
     this.settings = {};
     Object.assign(this.settings, defaultSettings);
     this.rootdiv = document.createElement("div");
-    this.rootdiv.style.height="100%";
-    this.rootdiv.style.overflow="auto";
+    this.rootdiv.style.height = "100%";
+    this.rootdiv.style.overflow = "auto";
     container.div.appendChild(this.rootdiv);
-
     this.createItem = (id) => {
         let itm = {};
         if (!id) {
@@ -41,5 +40,10 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
                 return false;
             }
         }
+    }
+
+    this.intervalsToClear = [];
+    this.remove = () => {
+        if (this.intervalsToClear) this.intervalsToClear.forEach(i => clearInterval(i));
     }
 }

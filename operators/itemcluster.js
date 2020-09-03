@@ -416,8 +416,8 @@ polymorph_core.registerOperator("itemcluster2", {
         this.switchView();
     };
 
-    container.on("focusItem", (e) => {
-        if (e.sender) return;
+    container.on("metaFocusItem", (e) => {
+        if (e.sender == this) return;
         if (this.settings.operationMode == "focus") {
             if (e.sender.container.uuid == this.settings.focusOperatorID) {
                 this.switchView(e.id, true);
@@ -1127,7 +1127,7 @@ polymorph_core.registerOperator("itemcluster2", {
 
 
         //reupdate every item
-        for (let i in this.itemPointerCache){
+        for (let i in this.itemPointerCache) {
             this.arrangeItem(i);
         }
     }
