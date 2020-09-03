@@ -825,6 +825,60 @@ polymorph_core.on("titleButtonsReady", () => {
 */;
 
 (() => {
+
+    //navigator.serviceWorker.controller.postMessage("not even ready yet");
+
+
+    /*let checkForURLConflict=()=>{}
+    navigator.serviceWorker.register('core_modules/core/core.workersync.js', {scope: './'}).then(function(registration) {
+        if (registration.active){
+            console.log("yay im active");
+            //navigator.serviceWorker.controller.postMessage("hello world!");
+        }
+    });*/
+    let instance_uuid=polymorph_core.guid();
+    const broadcast = new BroadcastChannel('channel1');
+    let is_challenger=false;
+    let alt_alive_warning=document.createElement("div");
+    alt_alive_warning.innerHTML=`
+        <div style="padding:10vw">
+            <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
+        </div>
+    `;
+    alt_alive_warning.style.cssText=`
+    display:none;
+    place-items: center center;
+    position:absolute;
+    height:100%;
+    width:100%;
+    z-index:2;
+    background: rgba(0,0,0,0.5);
+    color:white;
+    text-align:center;
+    `;
+    document.body.appendChild(alt_alive_warning);
+    broadcast.onmessage = (event) => {
+        if (event.data.url == window.location.href && event.data.uuid!=instance_uuid) {
+            if (is_challenger){
+                alt_alive_warning.style.display="grid";
+                // seppuku
+            }else{
+                broadcast.postMessage({
+                    url:window.location.href,
+                    uuid: instance_uuid
+                })        
+            }
+        }
+    };
+    function checkForURLConflict() {
+        broadcast.postMessage({
+            url:window.location.href,
+            uuid: instance_uuid
+        })
+        is_challenger=true;
+        setTimeout(()=>is_challenger=false,500);
+    }
+    checkForURLConflict();
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
@@ -918,6 +972,7 @@ polymorph_core.on("titleButtonsReady", () => {
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
+            checkForURLConflict();
 
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
@@ -966,6 +1021,7 @@ polymorph_core.on("titleButtonsReady", () => {
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                throw (e);
                             }
 
                         })();
@@ -1810,6 +1866,7 @@ polymorph_core.on("titleButtonsReady", () => {
                         polymorph_core.integrateData(d, i.type);
                     } catch (e) {
                         alert("Something went wrong with the save source: " + e);
+                        throw (e);
                         //todo: restore document
                     }
                 }
@@ -1821,6 +1878,7 @@ polymorph_core.on("titleButtonsReady", () => {
                     polymorph_core.integrateData(d, i.type);
                 } catch (e) {
                     alert("Something went wrong with the save source: " + e);
+                    throw (e);
                     //todo: restore document
                 }
             });
@@ -2354,7 +2412,7 @@ polymorph_core.container = function container(containerID) {
 
     //Attach myself to a rect
     //do this early so that subframe-eseque operators in phone version have something to hook onto
-    if (this.settings.p && polymorph_core.items[this.settings.p]._rd) {
+    if (this.settings.p && polymorph_core.items[this.settings.p] && polymorph_core.items[this.settings.p]._rd) {
         //there is or will be a rect for it.
         if (polymorph_core.rects[this.settings.p]) {
             polymorph_core.rects[this.settings.p].tieContainer(containerID);
@@ -2362,6 +2420,9 @@ polymorph_core.container = function container(containerID) {
             if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
+    } else {
+        console.log("Could not find rect for container " + containerID);
+        return;
     }
 
 
@@ -2409,8 +2470,7 @@ function _contextMenuManager(root) {
         re.appendChild(thisCTXM);
 
         function intellishow(e) {
-            let mbr = thisCTXM.getBoundingClientRect();
-            let pbr = thisCTXM.parentElement.getBoundingClientRect();
+            let pbr = thisCTXM.parentElement.getClientRects()[0];
             let _left = e.pageX - pbr.x;
             let _top = e.pageY - pbr.y;
             //adjust for out of the page scenarios.
@@ -2503,7 +2563,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     }
     */
     //This should be configurable in future.
-    let commandStrings = polymorph_core.currentDoc.globalContextMenuOptions || [];
+    let commandStrings = polymorph_core.currentDoc.globalContextMenuOptions.map(i => i) || [];
     //add operator recommends
     commandStrings.push.apply(commandStrings, options);
     //add users' stuff
@@ -2543,7 +2603,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         //only really used for edit; so getItemProp only.
         let props = propStr.split(".");
         let itm = polymorph_core.items[container._tempCtxSettings.id];
-        if (propStr.startsWith("item")){
+        if (propStr.startsWith("item")) {
             props.shift();
         }
         for (let i = 0; i < props.length; i++) {
@@ -2573,21 +2633,26 @@ polymorph_core.showContextMenu = (container, settings, options) => {
             display:none;
             background:white;
         }
+        div._ictxbox_:hover{
+            background:pink;
+            user-select:none;
+        }
         div:hover>div._sctxbox_{
             display:block;
         }
         </style>
         </div>`);
-        commandStrings.map((v, i) => {
+        commandStrings.map((v, ii) => {
             let cctx = ctxMenu;
             let parts = v.split("::");
+            let _cctx;
             for (let i = 0; i < parts.length; i++) {
                 if (parts[i].indexOf(".") == -1) {
                     _cctx = cctx.querySelector(`[data-name="${parts[i]}"]`);
                     if (_cctx) {
                         cctx = _cctx.children[1];
                     } else {
-                        _cctx = htmlwrap(`<div class="_ctxbox_" data-name="${parts[i]}"><span>${parts[i]}</span><div class="_sctxbox_"></div></div>`);
+                        _cctx = htmlwrap(`<div class="_ctxbox_ _ictxbox_" data-name="${parts[i]}"><span>${parts[i]}</span><div class="_sctxbox_"></div></div>`);
                         cctx.appendChild(_cctx);
                         cctx = _cctx.children[1];
                     }
@@ -2597,12 +2662,14 @@ polymorph_core.showContextMenu = (container, settings, options) => {
                         //remove the text inside first
                         cctx = cctx.parentElement;
                         cctx.children[0].remove();
-                        cctx.insertBefore(htmlwrap(`<input style="display:block;" data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`), cctx.children[0])
+                        _cctx = htmlwrap(`<input style="display:block;" data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`)
+                        cctx.insertBefore(_cctx, cctx.children[0]);
+
                     }
                     break;
                 }
             }
-            cctx.dataset.index = i;
+            _cctx.dataset.index = ii; // assign its function
         })
         ctxMenu.addEventListener("click", (e) => {
             if (e.target.parentElement.dataset.index) {
@@ -2785,10 +2852,9 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
     this.settings = {};
     Object.assign(this.settings, defaultSettings);
     this.rootdiv = document.createElement("div");
-    this.rootdiv.style.height="100%";
-    this.rootdiv.style.overflow="auto";
+    this.rootdiv.style.height = "100%";
+    this.rootdiv.style.overflow = "auto";
     container.div.appendChild(this.rootdiv);
-
     this.createItem = (id) => {
         let itm = {};
         if (!id) {
@@ -2816,6 +2882,11 @@ polymorph_core.operatorTemplate = function (container, defaultSettings) {
                 return false;
             }
         }
+    }
+
+    this.intervalsToClear = [];
+    this.remove = () => {
+        if (this.intervalsToClear) this.intervalsToClear.forEach(i => clearInterval(i));
     }
 }
 ;
@@ -2875,9 +2946,199 @@ document.addEventListener("mouseup", (e) => {
 
 //edge case: drop onto not a container;
 
+function isPhone() {
+    var mobiles = [
+        "Android",
+        "iPhone",
+        "Linux armv8l",
+        "Linux armv7l",
+        "Linux aarch64"
+    ];
+    if (mobiles.includes(navigator.platform) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        return true;
+    }
+    return false;
+}
+if (isPhone()){
+    polymorph_core.newRect = function (parent) {
+        let ID = polymorph_core.insertItem({
+            _rd: {
+                p: parent,
+                f: RECT_FIRST_SIBLING,
+                x: RECT_ORIENTATION_X,
+                ps: 1
+            }
+        });
+        polymorph_core.rects[ID] = new polymorph_core.rect(ID);
+        return ID;
+    }
+    
+    polymorph_core.rect = function (rectID) {
+        this.id = rectID;//might be helpful
+        polymorph_core.rects[rectID] = this;
+        Object.defineProperty(this, "settings", {
+            get: () => {
+                return polymorph_core.items[rectID]._rd;
+            }
+        })
+    
+    
+        Object.defineProperty(this, "childrenIDs", {
+            get: () => {
+                if (!this._childrenIDs) {
+                    this._childrenIDs = [];
+                }
+                //if i dont have two good children, return none
+                if (this._childrenIDs.length == 2 &&
+                    polymorph_core.items[this._childrenIDs[0]] && polymorph_core.items[this._childrenIDs[0]]._rd &&
+                    polymorph_core.items[this._childrenIDs[1]] && polymorph_core.items[this._childrenIDs[1]]._rd) {
+                    return this._childrenIDs;
+                } else {
+                    this._childrenIDs = [];
+                    for (let i in polymorph_core.items) {
+                        if (polymorph_core.items[i]._rd && polymorph_core.items[i]._rd.p == rectID) {
+                            this._childrenIDs.push(i);
+                        }
+                    }
+                    if (this._childrenIDs.length == 2) return this._childrenIDs;
+                }
+                return undefined;
+            }
+        })
+    
+        Object.defineProperty(this, "children", {
+            get: () => {
+                if (this.childrenIDs) {
+                    if (polymorph_core.rects[this.childrenIDs[0]] && polymorph_core.rects[this.childrenIDs[1]])
+                        return [polymorph_core.rects[this.childrenIDs[0]], polymorph_core.rects[this.childrenIDs[1]]];
+                }
+                return undefined;
+            }
+        })
+    
+        Object.defineProperty(this, "containerids", {
+            get: () => {
+                this._containerids = [];
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i]._od && polymorph_core.items[i]._od.p == rectID) {
+                        this._containerids.push(i);
+                    }
+                }
+                return this._containerids;
+            }
+        })
+    
+        Object.defineProperty(this, "containers", {
+            get: () => {
+                if (this.containerids) {
+                    return this.containerids.map((v) => polymorph_core.containers[v]);
+                }
+                return undefined;
+            }
+        })
+    
+        Object.defineProperty(this, "parent", {
+            get: () => {
+                if (this.settings.p) return polymorph_core.rects[this.settings.p];
+                else return polymorph_core;
+            }
+        })
+        this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
+        //when resetting document it expects an outerdiv. remove this instead.
+        this.outerDiv=this.listContainer;
+        this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
+        this.tieRect = function (id) {
+            polymorph_core.rects[id].listContainer = this.listContainer;
+        }
+    
+        this.switchOperator = (id) => {
+            polymorph_core.toggleMenu(false);
+            Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
+            document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
+            polymorph_core.currentOperator = id;
+        }
+    
+        this.tieContainer = (id) => {
+            if (this.listContainer.querySelector(`[data-containerid='${id}']`)) {
+                this.listContainer.querySelector(`[data-containerid='${id}']`).innerText = polymorph_core.containers[id].settings.tabbarName;
+            } else {
+                let ts = document.createElement('div');
+                ts.innerText = polymorph_core.containers[id].settings.tabbarName;
+                this.listContainer.insertBefore(ts, this.listContainer.children[0]);
+                ts.dataset.containerid = id;
+                ts.addEventListener("click", (e) => {
+                    this.switchOperator(id);
+                    e.stopPropagation();//so that the lower level divs dont get triggered
+                })
+                polymorph_core.containers[id].outerDiv.dataset.container = id;
+                polymorph_core.containers[id].outerDiv.style.display = "none";
+                document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
+                this.switchOperator(id);
+            }
+        }
+    
+        //connect to my parent
+        if (this.settings.p && polymorph_core.items[this.settings.p]) {
+            //there is or will be a rect / subframe for it.
+            if (polymorph_core.rects[this.settings.p]) {
+                polymorph_core.rects[this.settings.p].tieRect(rectID);
+            } else {
+                if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+                polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+            }
+        }
+        if (polymorph_core.items._meta.currentView == rectID) {
+            //attach myself to the rectlist
+            document.querySelector("#rectList").appendChild(this.listContainer);
+        }
+    
+        //Signal all children waiting for this that they can connect to this now.
+        if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
+            if (polymorph_core.items[v]._od) {
+                //v is container
+                this.tieContainer(v);
+            } else {
+                //v is rect
+                this.tieRect(v);
+            }
+        })
+    
+        this.refresh = () => {
+            //pick an arbitrary operator and focus it.. for now.
+            let oneToFocus = Object.keys(polymorph_core.containers)[0];
+            if (oneToFocus) {
+                //if refresh called before container load, this happens :(
+                polymorph_core.containers[oneToFocus].outerDiv.style.display = "block";
+                polymorph_core.currentOperator = oneToFocus;
+            }
+        };
+    
+    
+        //operator creation
+        this.newContainerBtn.addEventListener("click", (e) => {
+            let newContainer = { _od: { t: "opSelect", p: rectID } };
+            let newContainerID = polymorph_core.insertItem(newContainer);
+            polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+            //containers tie themselves.
+            //this.tieContainer(newContainerID);
+            this.switchOperator(newContainerID);
+        })
+    
+        this.toSaveData = () => { };
+    };
+    
+    polymorph_core.switchView = (id) => {
+        polymorph_core.currentDoc.currentView=id;
+        document.querySelector("#rectList").children[0].remove();
+        document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
+        return;
+    }
+    polymorph_core.rects={};
+};
+
 // the UI is composed of RECTS. 
 // a RECT can have another RECT or an OPERATOR in it.
-
+if (!isPhone()){
 
 /// PASS OPERATORS INSTEAD OF CONTENT DIVS
 
@@ -3093,7 +3354,7 @@ polymorph_core.rect = function (rectID) {
     }
 
 
-    this.innerDivContainer = htmlwrap(`<div style="flex:1 1 auto; overflow-y:auto; width:100%; "></div>`);
+    this.innerDivContainer = htmlwrap(`<div style="flex:1 1 auto; overflow-y:auto; width:100%; height: 100%; "></div>`);
     this.outerDiv.appendChild(this.innerDivContainer);
 
     //Function for adding an operator to this rect. Operator must already exist.
@@ -3166,6 +3427,10 @@ polymorph_core.rect = function (rectID) {
                 this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                 Object.assign(mySibling.settings, this.parent.settings);
                 mySibling.settings.p = this.parent.settings.p;//If parent is undefined.
+                if (polymorph_core.items._meta.currentView == this.parent.id) {
+                    // fix root level rect deletion
+                    polymorph_core.items._meta.currentView = mySibling.id;
+                }
                 this.parent.outerDiv.remove();
                 mySibling.refresh();
                 let pid = this.parent.id;//deleting things messes with the parent getter
@@ -3289,6 +3554,7 @@ polymorph_core.rect = function (rectID) {
     let tabmenu;
     //Delegated context menu click on tabs
     let c = new _contextMenuManager(this.outerDiv);
+    this.outerDiv.style.position = "relative"; // needs to be here for context menus to work
     let contextedOperatorIndex = undefined;
     let tabfilter = (e) => {
         let t = e.target;
@@ -3500,7 +3766,7 @@ polymorph_core.rect = function (rectID) {
                 //this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
                 this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps) + "px";
             }
-            this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight;
+            this.outerDiv.style.height = "100%"; //this.outerDiv.parentElement.offsetHeight;
             this.outerDiv.style.top = 0;
         } else {
             this.outerDiv.parentElement.style.flexDirection = "column";
@@ -3512,8 +3778,8 @@ polymorph_core.rect = function (rectID) {
                 //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
                 this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
             }
-            this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth;
-            this.outerDiv.style.left = 0;
+            this.outerDiv.style.width = "100%";//this.outerDiv.parentElement.offsetWidth;
+            //this.outerDiv.style.left = 0;
         }
         //also refresh any of my children
         if (this.children) {
@@ -3617,6 +3883,13 @@ polymorph_core.rect = function (rectID) {
         if (shiftPressed) {
             if (!this.children) {
                 this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                if (this.parent instanceof polymorph_core.rect) {
+                    /*if (this.settings.x) {
+                        this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
+                    } else {
+                        this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
+                    }*/
+                }
                 if (highlightDirn != -1) {
                     this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
                 }
@@ -3630,6 +3903,14 @@ polymorph_core.rect = function (rectID) {
             }
             if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
                 this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+            }
+            if (this.outerDiv.parentElement) {
+                // on load parentElement doesnt exist
+                /*if (this.settings.x) {
+                    this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                } else {
+                    this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                }*/
             }
         } else {
             this.outerDiv.style.border = "";
@@ -3843,239 +4124,424 @@ Object.defineProperty(polymorph_core, "baseRect", {
     }
 })
 
-polymorph_core.rects = {};;
+polymorph_core.rects = {};
 
-function _topbar(parent, options) {
-    this.node = document.createElement("ul");
-    this.node.classList.add("topbar");
-    //check if we need to inject style
-    if (!document.querySelector("style.topbar")) {
-        let s = document.createElement("style");
-        s.classList.add("topbar");
-        s.innerHTML = `
-        /*General styling*/
-        ul.topbar, ul.topbar ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            background: black;
-            overflow: auto;
-            font-size: 1em;
-            z-index: 1000;
-        }
-        
-        ul.topbar li>a {
-            user-select: none;
-            cursor: pointer;
-            display: inline-block;
-            z-index: 1000;
-        }
+};
 
-        ul.topbar li{
-            background:black;
-        }
+/*
+Data storage reference
+polymorph_core.currentDoc={
+    views:{rect:rectData},
+    items:[],
+    displayName: "whatever"
+}
 
-        ul.topbar li:hover{
-            background-color: lightskyblue;
-            z-index: 1000;
-        }
+polymorph_core.userData={
+    uniqueStyle=some style
+}
 
-        /*Top level specific styling*/
-        ul.topbar>li>a{
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            padding: 0.5em 16px;
-            z-index: 1000;
+*/
+if (isPhone()){
+    polymorph_core.on("UIsetup", () => {
+        document.body.appendChild(htmlwrap(`
+        <style>
+            #oplists button.remove{
+                float: right;
+                margin-right: 20%;
+                font-style: normal;
+                font-weight: bold;
+                color: darkred;
+            }
+        </style>`));
+        document.body.appendChild(htmlwrap(`<div id="topbar" style="flex: 0 0 2em">
+            <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
+            <span class="docName" contentEditable>Polymorph</span>
+            <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
+        </div>`));
+    
+        //oplists
+        document.body.appendChild(htmlwrap(/*html*/`
+        <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
+        <style>
+        [data-containerid]{
+            padding: 10px 10px;
+            border: 1px black solid;   
         }
-        
-        ul.topbar>li{
-            float:left;
-            background:black;
-            z-index: 1000;
-        }
-
-        ul.topbar>li>ul {
-            font-size: 1em;
-            z-index: 1000;
-        }
-        /*sublist specific styling*/
-        ul.topbar ul {
-            display: none;
-            color:black;
-            text-align:left;
-            position: absolute;
-            background-color: #f9f9f9;
-            z-index: 1;
-            list-style: none;
-            z-index: 1000;
-        }
-        
-        ul.topbar>li:hover>ul {
-            display: block;
-            z-index: 1000;
-        }
-
-        ul.topbar ul>li>a{
-            display:block;
-            color:white;
-            padding: 0.5em;
-            z-index: 1000;
-        }
-        `;
-        this.node.appendChild(s);
-    }
-    if (parent) parent.appendChild(this.node);
-
-    let addToList = (el, base, pathName) => {
-        let a = document.createElement("a");
-        let li = document.createElement("li");
-        li.dataset.topbarname = pathName;
-        a.appendChild(el);
-        li.appendChild(a);
-        base.appendChild(li);
-        return li;
-    }
-    this.add = this.appendChild = (string, domEl) => {
-        // string is domel; string is one string, string is path, string is path and domel is domel
-        if (typeof (string) != "string") {
-            domEl = string;
-            string = "";
-        }
-        let bits = string.split("/");
-        if (!domEl) {
-            domEl = document.createElement("a");
-            domEl.innerText = bits[bits.length - 1];
-        }
-        let base = this.node;
-        while (bits.length > 1) {
-            let nextBit = bits.shift();
-            if (nextBit) {
-                let newBase = base.querySelector(`[data-topbarname="${nextBit}"]>ul`);
-                if (!newBase) {
-                    let newBaseLi = base.querySelector(`[data-topbarname="${nextBit}"]`);
-                    if (!newBaseLi) {
-                        let tempA = document.createElement("a");
-                        tempA.innerText = nextBit;
-                        newBaseLi = addToList(tempA, base, nextBit);
-                    }
-                    base = document.createElement("ul");
-                    newBaseLi.appendChild(base);
-                } else {
-                    base = newBase;
-                }
+        </style>
+            <div style="position: absolute;top:0;bottom:0; left:-100%; background:rgba(0,0,0,0.5); width:100%; z-index:100;">
+                <div id="menulist" style="position: absolute;top:0;bottom:0; background:blueviolet; width:70%">    
+                    <p><button class="saveSources">save</button>
+                        <button class="viewdialog">view</button>
+                        <button class="open">open</button></p>
+                    <div id="rectList" style="position: absolute;
+                    top: 3em;
+                    bottom: 0;
+                    overflow: auto;
+                    width: 100%;">
+                    </div>
+                </div>
+            </div>
+            <div id="body" style="position: absolute;top:0;bottom:0; width: 100%; background: url('assets/nightsky.jpg'); background-size: cover; background-position: center center;">
+            </div>
+        </div>`));
+        document.body.appendChild(htmlwrap(`<div class="wall"
+            style="z-index: 100;position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: none">
+            <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
+                <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
+        </div>`));
+    
+        document.body.style.display = "flex";
+        document.body.style.flexDirection = "column";
+        polymorph_core.toggleMenu = function (visible) {
+            if (visible == undefined) {
+                visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
+            }
+            if (visible) {
+                document.body.querySelector("#menulist").parentElement.style.left = "0px";
+            } else {
+                document.body.querySelector("#menulist").parentElement.style.left = "-100%";
             }
         }
-        //check if the domelement already exists; it might
-        if (!base.querySelector(`[data-topbarname="${bits[0]}"]`)) {
-            return addToList(domEl, base, bits[0]);
+        document.body.querySelector("#menu").addEventListener("click", () => {
+            polymorph_core.toggleMenu(true);
+        });
+        document.body.querySelector("#menu").addEventListener("click", () => {
+            polymorph_core.toggleMenu(true);
+        });
+        document.body.querySelector("#menulist").parentElement.addEventListener("click", (e) => {
+            if (e.currentTarget == e.target) {
+                polymorph_core.toggleMenu(false);//hide on direct taps
+            }
+        });
+    
+        document.querySelector(".viewdialog").addEventListener("click", () => {
+            let v=prompt("Switch to another view:");
+            if (v)polymorph_core.switchView(v);
+        });
+    
+        document.querySelector(".savesources").addEventListener("click", () => {
+            polymorph_core.showSavePreferencesDialog();
+        });
+    
+        document.querySelector(".open").addEventListener("click", () => {
+            polymorph_core.filescreen.showSplash();
+            polymorph_core.toggleMenu(false);//hide on direct taps
+    
+        });
+        document.querySelector("#opop").addEventListener("click", () => {
+            //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
+            if (polymorph_core.containers[polymorph_core.currentOperator].operator.dialogDiv) {
+                polymorph_core.settingsOperator = polymorph_core.containers[polymorph_core.currentOperator].operator;
+                polymorph_core.settingsOperator.showDialog();
+                polymorph_core.settingsDiv = document.createElement("div");
+                polymorph_core.settingsDiv.innerHTML = `<h1>Settings</h1>
+                <h3> General settings </h3>
+                <input class="tabDisplayName" placeholder="Tab display name:"/>
+                <h3>Operator settings</h3>`;
+                polymorph_core.settingsOperator.dialogDiv.style.maxWidth = "50vw";
+                polymorph_core.settingsDiv.appendChild(polymorph_core.settingsOperator.dialogDiv);
+                polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.settings.tabbarName;
+                //add remapping by the operator
+                polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
+                polymorph_core.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
+    
+                polymorph_core.dialog.prompt(polymorph_core.settingsDiv, (d) => {
+                    polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
+                    document.querySelector("#oplists").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
+                    if (polymorph_core.settingsOperator.dialogUpdateSettings) polymorph_core.settingsOperator.dialogUpdateSettings();
+                    polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
+                    polymorph_core.fire("updateItem", { id: rectID });
+                })
+                polymorph_core.dialog.register(polymorph_core.currentOperator);
+            }
+        });
+    });
+    documentReady(() => {
+        polymorph_core.on("documentCreated", (id) => {
+            if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
+            polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
+        })
+    
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //Operator conveinence functions
+        //Add showOperator
+    
+        polymorph_core.showOperator = function (op) {
+            if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
+            document.body.querySelector("#body").appendChild(op.topdiv);
+            if (op.operator && op.operator.refresh) op.operator.refresh();
+            polymorph_core.currentOperator = op;
+            polymorph_core.fire("operatorChanged");
+        }
+    
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //UI handling
+    
+    
+        /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
+            // create a new workspace, then load it
+            window.location.href += "?doc=" + polymorph_core.guid(7) + "&src=lf";
+        })*/
+    
+    
+        polymorph_core.resetView = function () {
+            if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
+            polymorph_core.baseRect = new _rect(polymorph_core,
+                undefined, {});
+            polymorph_core.baseRect.refresh();
+        }
+    
+        polymorph_core.on("operatorChanged", function (d) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+                polymorph_core.autosaveCapacitor.submit();
+            }
+        });
+    });
+    
+    polymorph_core.topbar = {
+        add: () => {
+            return document.createElement("div");
         }
     }
 }
 
-polymorph_core.on("UIsetup", () => {
-    document.body.appendChild(htmlwrap(/*html*/`
-    <style>
-    #popup-notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 10px 20px;
-        font-size: 18px;
-        line-height: 1;
-        background: #000;
-        color: white;
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-    }
-    #popup-notification.success {
-        background: green;
-    }
-    #popup-notification.alert {
-        background: red;
-    }
+;
 
-    .showAndFadeOut {
-        transition: opacity visibility 3s;
-        animation: showAndFadeOut 3s;
-    }
+if (!isPhone()){
 
-    @keyframes showAndFadeOut {
-        0% {opacity: 1; visibility: visible;}
-        80% {opacity: 1; visibility: visible;}
-        100% {opacity: 0; visibility: hidden;}
-    }
-
-    @keyframes precessBackground {
-        0% {background-position-x: 0%}
-        100% {background-position-x: 100%}
-    }
-    </style>`));
-    document.body.appendChild(htmlwrap(/*html*/`
-    <div style="display:flex; flex-direction:column; height:100vh">
-        <div class="banner">
-            <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
-            <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
-            <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
-        </div>
-        <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:0 1 100vh; max-height: calc(100% - 2.1em); position:relative">
-        </div>
-    </div>
-    `));
-    document.body.appendChild(htmlwrap(`
-    <div class="wall"
-        style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
-        <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
-            <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
-        </div>
-    </div>`));
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //Top bar
-    polymorph_core.topbar = new _topbar(document.querySelector(".banner"));
-})
-
-polymorph_core.on("UIstart", () => {
-    polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
-        window.open(window.location.pathname + "?o", "_blank");
-    })
-    polymorph_core.topbar.add("File/New").addEventListener("click", () => {
-        window.open(window.location.pathname + "?o", "_blank");
-    })
-    polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-        alert("Warning: this operation may reduce filesize but is irreversible. We recommend saving to a file before you run this operation.");
-        if (confirm("PRESS OK TO PROCEED")) {
-            polymorph_core.runGarbageCollector();
+    function _topbar(parent, options) {
+        this.node = document.createElement("ul");
+        this.node.classList.add("topbar");
+        //check if we need to inject style
+        if (!document.querySelector("style.topbar")) {
+            let s = document.createElement("style");
+            s.classList.add("topbar");
+            s.innerHTML = `
+            /*General styling*/
+            ul.topbar, ul.topbar ul {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+                background: black;
+                overflow: auto;
+                font-size: 1em;
+                z-index: 1000;
+            }
+            
+            ul.topbar li>a {
+                user-select: none;
+                cursor: pointer;
+                display: inline-block;
+                z-index: 1000;
+            }
+    
+            ul.topbar li{
+                background:black;
+            }
+    
+            ul.topbar li:hover{
+                background-color: lightskyblue;
+                z-index: 1000;
+            }
+    
+            /*Top level specific styling*/
+            ul.topbar>li>a{
+                color: white;
+                text-align: center;
+                text-decoration: none;
+                padding: 0.5em 16px;
+                z-index: 1000;
+            }
+            
+            ul.topbar>li{
+                float:left;
+                background:black;
+                z-index: 1000;
+            }
+    
+            ul.topbar>li>ul {
+                font-size: 1em;
+                z-index: 1000;
+            }
+            /*sublist specific styling*/
+            ul.topbar ul {
+                display: none;
+                color:black;
+                text-align:left;
+                position: absolute;
+                background-color: #f9f9f9;
+                z-index: 1;
+                list-style: none;
+                z-index: 1000;
+            }
+            
+            ul.topbar>li:hover>ul {
+                display: block;
+                z-index: 1000;
+            }
+    
+            ul.topbar ul>li>a{
+                display:block;
+                color:white;
+                padding: 0.5em;
+                z-index: 1000;
+            }
+            `;
+            this.node.appendChild(s);
         }
-    })
-    polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
-        polymorph_core.resetTutorial();
-    })
-    polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
-        let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
-        document.body.appendChild(emaila);
-        emaila.click();
-    });
-    window.addEventListener("resize", () => {
-        polymorph_core.baseRect.refresh();
-    })
-});
-
-polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {
-
-    if (!document.getElementById("popup-notification")) {
-        const popupNotification = document.createElement("div");
-        popupNotification.setAttribute("id", "popup-notification");
-        document.body.appendChild(popupNotification);
+        if (parent) parent.appendChild(this.node);
+    
+        let addToList = (el, base, pathName) => {
+            let a = document.createElement("a");
+            let li = document.createElement("li");
+            li.dataset.topbarname = pathName;
+            a.appendChild(el);
+            li.appendChild(a);
+            base.appendChild(li);
+            return li;
+        }
+        this.add = this.appendChild = (string, domEl) => {
+            // string is domel; string is one string, string is path, string is path and domel is domel
+            if (typeof (string) != "string") {
+                domEl = string;
+                string = "";
+            }
+            let bits = string.split("/");
+            if (!domEl) {
+                domEl = document.createElement("a");
+                domEl.innerText = bits[bits.length - 1];
+            }
+            let base = this.node;
+            while (bits.length > 1) {
+                let nextBit = bits.shift();
+                if (nextBit) {
+                    let newBase = base.querySelector(`[data-topbarname="${nextBit}"]>ul`);
+                    if (!newBase) {
+                        let newBaseLi = base.querySelector(`[data-topbarname="${nextBit}"]`);
+                        if (!newBaseLi) {
+                            let tempA = document.createElement("a");
+                            tempA.innerText = nextBit;
+                            newBaseLi = addToList(tempA, base, nextBit);
+                        }
+                        base = document.createElement("ul");
+                        newBaseLi.appendChild(base);
+                    } else {
+                        base = newBase;
+                    }
+                }
+            }
+            //check if the domelement already exists; it might
+            if (!base.querySelector(`[data-topbarname="${bits[0]}"]`)) {
+                return addToList(domEl, base, bits[0]);
+            }
+        }
     }
-
-    const popupNotificationBox = document.getElementById("popup-notification");
-    popupNotificationBox.innerHTML = notificationMessage;
-    popupNotificationBox.classList.add(notificationType);
-    popupNotificationBox.classList.add('showAndFadeOut');
-    const hideNotificationBox = setTimeout(() => {
-        popupNotificationBox.classList = '';
-    }, 2800)
+    
+    polymorph_core.on("UIsetup", () => {
+        document.body.appendChild(htmlwrap(/*html*/`
+        <style>
+        #popup-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            line-height: 1;
+            background: #000;
+            color: white;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #popup-notification.success {
+            background: green;
+        }
+        #popup-notification.alert {
+            background: red;
+        }
+    
+        .showAndFadeOut {
+            transition: opacity visibility 3s;
+            animation: showAndFadeOut 3s;
+        }
+    
+        @keyframes showAndFadeOut {
+            0% {opacity: 1; visibility: visible;}
+            80% {opacity: 1; visibility: visible;}
+            100% {opacity: 0; visibility: hidden;}
+        }
+    
+        @keyframes precessBackground {
+            0% {background-position-x: 0%}
+            100% {background-position-x: 100%}
+        }
+        </style>`));
+        document.body.appendChild(htmlwrap(/*html*/`
+        <div style="display:flex; flex-direction:column; height:100vh">
+            <div class="banner" style="z-index:100">
+                <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
+                <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
+                <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
+            </div>
+            <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:0 1 100vh; max-height: calc(100% - 2.1em); position:relative">
+            </div>
+        </div>
+        `));
+        document.body.appendChild(htmlwrap(`
+        <div class="wall"
+            style="position:absolute; width:100%; height:100%; top:0; left: 0; background: rgba(0,0,0,0.5); display: block">
+            <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
+                <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
+            </div>
+        </div>`));
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //Top bar
+        polymorph_core.topbar = new _topbar(document.querySelector(".banner"));
+    })
+    
+    polymorph_core.on("UIstart", () => {
+        polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
+            window.open(window.location.pathname + "?o", "_blank");
+        })
+        polymorph_core.topbar.add("File/New").addEventListener("click", () => {
+            window.open(window.location.pathname + "?o", "_blank");
+        })
+        polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+            alert("Warning: this operation may reduce filesize but is irreversible. We recommend saving to a file before you run this operation.");
+            if (confirm("PRESS OK TO PROCEED")) {
+                polymorph_core.runGarbageCollector();
+            }
+        })
+        polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
+            polymorph_core.resetTutorial();
+        })
+        polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
+            let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
+            document.body.appendChild(emaila);
+            emaila.click();
+        });
+        window.addEventListener("resize", () => {
+            polymorph_core.baseRect.refresh();
+        })
+    });
+    
+    polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {
+    
+        if (!document.getElementById("popup-notification")) {
+            const popupNotification = document.createElement("div");
+            popupNotification.setAttribute("id", "popup-notification");
+            document.body.appendChild(popupNotification);
+        }
+    
+        const popupNotificationBox = document.getElementById("popup-notification");
+        popupNotificationBox.innerHTML = notificationMessage;
+        popupNotificationBox.classList.add(notificationType);
+        popupNotificationBox.classList.add('showAndFadeOut');
+        const hideNotificationBox = setTimeout(() => {
+            popupNotificationBox.classList = '';
+        }, 2800)
+    }
+    
 }
 ;
 
@@ -4568,6 +5034,9 @@ function __itemlist_searchsort() {
     let searchCapacitor = new capacitor(1000, 300, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        if (this.settings.entrySearch) {
+            searchboxes = Array.from(this.template.querySelectorAll("input"));
+        }
         let amSearching = false;
         for (let i = 0; i < searchboxes.length; i++) {
             if (searchboxes[i].value != "") {
@@ -4623,6 +5092,8 @@ function __itemlist_searchsort() {
         searchCapacitor.submit();
     })
 
+    this.template.addEventListener("keyup", searchCapacitor.submit);
+
 
     ///sorting
     this.indexOf = (id) => {
@@ -4634,26 +5105,29 @@ function __itemlist_searchsort() {
     }
 
     this._sortItems = () => {
-        this.isSorting=true; // alert focusout so that it doesnt display prettydate
+        this.isSorting = true; // alert focusout so that it doesnt display prettydate
+        let sortingProp = this.settings.sortby;
+        let sortType=this.settings.properties[sortingProp];
         if (!this.container.visible()) return;
         if (this.settings.implicitOrder) {
-            this.settings.sortby = this.settings.filterProp;
+            sortingProp = this.settings.filter;
+            sortType="number";
         }
-        if (this.settings.sortby) {
+        if (sortingProp) {
             //collect all items
             let itms = this.taskList.querySelectorAll(`[data-id]`);
             let its = [];
             for (let i = 0; i < itms.length; i++) {
                 cpp = {
                     id: itms[i].dataset.id,
-                    dt: polymorph_core.items[itms[i].dataset.id][this.settings.sortby]
+                    dt: polymorph_core.items[itms[i].dataset.id][sortingProp]
                 };
                 its.push(cpp);
             }
             //sort everything based on the filtered property.
-            switch (this.settings.properties[this.settings.sortby]) {
+            switch (sortType) {
                 case "date":
-                    let dateprop = this.settings.sortby;
+                    let dateprop = sortingProp;
                     for (let i = 0; i < its.length; i++) {
                         //we are going to upgrade all dates that don't match protocol)
                         if (its[i].dt && its[i].dt.date) {
@@ -4710,7 +5184,7 @@ function __itemlist_searchsort() {
                 }
             }
         }
-        this.isSorting=false;
+        this.isSorting = false;
     }
 
     this.sortcap = new capacitor(500, 1000, this._sortItems);
@@ -4720,9 +5194,18 @@ function __itemlist_searchsort() {
     }
 
     this.setSearchTemplate = (htmlstring) => {
+        if (this.settings.entrySearch) {
+            this.searchtemplate.style.display = "none";
+        } else {
+            this.searchtemplate.style.display = "block";
+        }
         this._searchtemplate.innerHTML = htmlstring;
         for (let i in this.settings.propertyWidths) {
-            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            if (this._searchtemplate.querySelector(`[data-contains-role=${i}]`)) {
+                this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            } else {
+                delete this.settings.propertyWidths[i];
+            }
         }
     }
 
@@ -4745,6 +5228,7 @@ polymorph_core.registerOperator("itemList", {
             enableEntry: true,
             implicitOrder: true,
             linkProperty: "to",
+            entrySearch: false,
             propOrder: []
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -4817,19 +5301,8 @@ polymorph_core.registerOperator("itemList", {
             margin: 0;
         }
         
-        /* add a visible handle */
-        .resizable-input > span {
-            display: inline-block;
-            vertical-align: bottom;
-            margin-left: -16px;
-            width: 16px;
-            height: 16px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAJUlEQVR4AcXJRwEAIBAAIPuXxgiOW3xZYzi1Q3Nqh+bUDk1yD9sQaUG/4ehuEAAAAABJRU5ErkJggg==");
-            cursor: ew-resize;
-        }
         </style>`
         ));
-        //Resize credits to u/MoonLite on stackoverflow
 
         container.div.appendChild(this.taskListBar);
 
@@ -4862,6 +5335,7 @@ polymorph_core.registerOperator("itemList", {
                 switch (this.settings.properties[p]) {
                     case "text":
                         currentItemSpan.children[0].children[i + 1].children[0].value = (it[p] != undefined) ? it[p] : "";
+                        break;
                     case "number":
                         currentItemSpan.children[0].children[i + 1].children[1].value = (it[p] != undefined) ? it[p] : "";
                         break;
@@ -4870,7 +5344,7 @@ polymorph_core.registerOperator("itemList", {
                         break;
                     case "date":
                         if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
-                            if (it[p]){
+                            if (it[p]) {
                                 if (!it[p].datestring && typeof it[p] == "string") {
                                     it[p] = {
                                         datestring: it[p]
@@ -4881,7 +5355,7 @@ polymorph_core.registerOperator("itemList", {
                                     it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
                                 }
                                 currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                            }else{
+                            } else {
                                 currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
 
                             }
@@ -4940,7 +5414,7 @@ polymorph_core.registerOperator("itemList", {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
-                        it[i] = this.template.querySelector("[data-role='" + i + "']").value;
+                        if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
                         break;
                     case "object":
                         try {
@@ -4950,11 +5424,17 @@ polymorph_core.registerOperator("itemList", {
                         }
                         break;
                     case "date":
-                        if (!it[i]) it[i] = {};
-                        if (typeof it[i] == "string") it[i] = {
-                            datestring: it[i]
-                        };
-                        it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
+                        if (this.template.querySelector("[data-role='" + i + "']").value) {
+                            if (!it[i]) it[i] = {};
+                            if (typeof it[i] == "string") it[i] = {
+                                datestring: it[i]
+                            };
+                            it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
+                        } else if (i == this.settings.filter) {
+                            it[i] = {
+                                datestring: "now" // is this useful to have as a default? sure
+                            };
+                        }
                         break;
                 }
                 //clear the template
@@ -4962,6 +5442,7 @@ polymorph_core.registerOperator("itemList", {
             }
             //ensure the filter property exists
             if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
+            //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
             let id = polymorph_core.insertItem(it);
 
             if (this.shiftDown && this.settings.linkProperty) {
@@ -5027,17 +5508,21 @@ polymorph_core.registerOperator("itemList", {
 
         container.on("updateItem", (d) => {
             let id = d.id;
-            let s = d.sender;
+            if (!this.itemRelevant(id)) {
+                if (container.div.querySelector(`[data-id='${id}']`)) container.div.querySelector(`[data-id='${id}']`).remove();
+                return;
+            }
+            if (d.sender == this) return;//dont rerender self
             this.settings.currentID = id;
             //sortcap may not have been declared yet
-            if (s != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
+            if (d.sender != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
             return this.renderItem(id);
         });
 
         //#endregion
 
         //auto
-        setInterval(() => {
+        this.intervalsToClear.push(setInterval(() => {
             if (!this.container.visible()) return; //if not shown then dont worryy
             //its every 10s, we can afford for it to be detailed
 
@@ -5054,7 +5539,7 @@ polymorph_core.registerOperator("itemList", {
                 }
             }
             this.sortItems();
-        }, 10000);
+        }, 10000));
 
         //Item deletion
         //Handle item deletion
@@ -5088,21 +5573,34 @@ polymorph_core.registerOperator("itemList", {
             }
         }
 
+        let resizingRole = "";
+        let resizingEl = undefined;
         //resizing
-        container.div.addEventListener("mousemove", (e) => {
-            if (e.buttons) {
-                for (let i = 0; i < e.path.length; i++) {
-                    if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                        let els = container.div.querySelectorAll(`[data-contains-role=${e.path[i].dataset.containsRole}]`);
-                        for (let j = 0; j < els.length; j++)els[j].style.width = e.path[i].clientWidth;
-                        this.settings.propertyWidths[e.path[i].dataset.containsRole] = e.path[i].clientWidth;
-                        break;
-                    } else if (e.path[i] == this.taskList) {
-                        break;
-                    }
-                }
+        container.div.addEventListener("mousedown", (e) => {
+            for (let i = 0; i < e.path.length; i++) {
+                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
+                    resizingRole = e.path[i].dataset.containsRole;
+                    resizingEl = e.path[i];
+                } else if (e.path[i] == this.taskList) break;
             }
         })
+        container.div.addEventListener("mousemove", (e) => {
+            if (e.buttons && resizingRole && resizingEl) {
+                let els = container.div.querySelectorAll(`[data-contains-role='${resizingRole}']`);
+                let desiredW = resizingEl.clientWidth;
+                for (let j = 0; j < els.length; j++)els[j].style.width = desiredW;
+                this.settings.propertyWidths[resizingRole] = desiredW;
+            }
+        })
+
+        function clearOut() {
+            resizingRole = undefined;
+            resizingEl = undefined;
+        }
+
+        container.div.addEventListener("mouseup", clearOut);
+        container.div.addEventListener("mouseleave", clearOut);
+
 
         __itemlist_searchsort.apply(this);
 
@@ -5115,7 +5613,7 @@ polymorph_core.registerOperator("itemList", {
                     case "text":
                     case "date":
                     case "object":
-                        htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'><span></span></span>`;
+                        htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'></span>`;
                         break;
                     case "number":
                         htmlstring += "<span><span>" + i + ":</span><input data-role='" + i + "' type='number'></span>";
@@ -5126,7 +5624,7 @@ polymorph_core.registerOperator("itemList", {
             this.setSearchTemplate(htmlstring);
             //resize stuff
             for (let i in this.settings.propertyWidths) {
-                if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+                if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role='${i}']`).style.width = this.settings.propertyWidths[i];
                 else delete this.settings.propertyWidths[i];
             }
             //Recreate everything
@@ -5205,6 +5703,7 @@ polymorph_core.registerOperator("itemList", {
         this.taskList.addEventListener("keyup", (e) => {
             if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
                 this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
+                this.renderItem(e.target.parentElement.parentElement.parentElement.dataset.id);
             }
         })
 
@@ -5307,7 +5806,7 @@ polymorph_core.registerOperator("itemList", {
             "toFixedDate": (e, ctr) => {
                 let id = e.id;
                 let contextedProp = e.role;
-                polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();;
+                polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
                 this.datereparse(id);
             }
         }
@@ -5354,7 +5853,11 @@ polymorph_core.registerOperator("itemList", {
                 type: "bool",
                 object: this.settings,
                 property: "implicitOrder",
-                label: "Implicit ordering"
+                label: "Implicit ordering (Enables drag and drop, disables existing ordering)",
+                afterInput: () => {
+                    this.settings.sortby = undefined;
+                    Array.from(this.proplist.querySelectorAll("input[type='radio']")).forEach(i => i.checked = false);
+                }
             }),
             linkProperty: new polymorph_core._option({
                 div: this.dialogDiv,
@@ -5362,6 +5865,13 @@ polymorph_core.registerOperator("itemList", {
                 object: this.settings,
                 property: "linkProperty",
                 label: "Property for links (leave blank to ignore links)"
+            }),
+            entrySearch: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "entrySearch",
+                label: "Use Entry as Search"
             })
         }
         let d = this.dialogDiv;
@@ -5403,8 +5913,9 @@ polymorph_core.registerOperator("itemList", {
                 <option value="date">Date</option>
                 <option value="object">Object</option>
                 <option value="number">Number</option>
-            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole=` + prop + `>X</button>`
+            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
                 pspan.querySelector("select").value = this.settings.properties[prop];
+                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
                 this.proplist.appendChild(pspan);
             }
         }
@@ -5418,13 +5929,20 @@ polymorph_core.registerOperator("itemList", {
             }
         })
 
+        let checkImplicitOrdering = () => {
+            if (this.settings.implicitOrder) {
+                Array.from(this.taskList.querySelectorAll("[data-id]")).map((i, ii) => i[this.settings.filter] = ii);
+            }
+        }
+
         this.dialogUpdateSettings = () => {
             // pull settings and update when your dialog is closed.
             this.updateSettings();
             this.sortItems();
+            checkImplicitOrdering();
             container.fire("updateItem", { id: this.container.id });
         }
-
+        checkImplicitOrdering();
         //adding new buttons
         d.querySelector(".adbt").addEventListener("click",
             () => {
@@ -5494,22 +6012,46 @@ polymorph_core.registerOperator("itemList", {
             }
         })
 
+        let lastBlued;
         container.div.addEventListener("mousemove", (e) => {
             //if alt, fire UDD
+            /*
+            //this is a bit fiddly and i dont like it
             if (e.altKey && dragDropID) {
                 //fire UDD
                 polymorph_core.initiateDragDrop(dragDropID, { x: e.clientX, y: e.clientY, sender: container.id });
                 //prevent spamming
                 dragDropID = undefined;
             }
+            */
             if (this.worryRow) {
+                if (lastBlued) lastBlued.style.borderTop = "";
+                lastBlued = undefined;
+                for (let i = 0; i < e.path.length; i++) {
+                    try {
+                        if (e.path[i].matches("[data-id]") && e.path[i] != this.worryRow) {
+                            lastBlued = e.path[i];
+                            lastBlued.style.borderTop = "3px solid blue";
+                        }
+                    } catch (e) {
+                        break;
+                    }
+                }
                 this.worryRow.style.left = e.clientX - this.relrect.x;
                 this.worryRow.style.top = e.clientY - this.relrect.y;
-
             }
         })
         let ddmouseExitHandler = (e) => {
             if (this.worryRow) {
+                //rearrange stuff
+                if (lastBlued) {
+                    lastBlued.style.borderTop = "";
+                    if (lastBlued.previousElementSibling) polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = (polymorph_core.items[lastBlued.previousElementSibling.dataset.id][this.settings.filter] + polymorph_core.items[lastBlued.dataset.id][this.settings.filter]) / 2;
+                    else polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = polymorph_core.items[lastBlued.dataset.id][this.settings.filter] - 1;
+                    lastBlued.parentElement.insertBefore(this.worryRow, lastBlued);
+                    lastBlued = undefined;
+                }
+                //check if implict ordering
                 this.worryRow.style.position = "static";
                 Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "unset");
                 delete this.worryRow;
@@ -5529,8 +6071,6 @@ polymorph_core.registerOperator("descbox", {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
-        operationMode: "static",
-        staticItem: "",
         auxProperty: "title",
         showTags: false
     };
@@ -5614,35 +6154,31 @@ polymorph_core.registerOperator("descbox", {
         this.updateMeta(id);
 
         //if focused, ignore
-        if (this.settings.operationMode != "putter") {
-            if (id == this.settings.currentID && id && polymorph_core.items[id]) {
-                if (this.textarea.matches(":focus")) {
-                    setTimeout(() => this.updateItem(id), 500);
-                } else {
-                    if (this.changed) {
-                        //someone else just called this so i'll have to save my modifications discreetly.
-                        polymorph_core.items[id][this.settings.property] = this.textarea.value;
-                    } else {
-                        if (polymorph_core.items[id] && polymorph_core.items[id][this.settings.property]) this.textarea.value = polymorph_core.items[id][this.settings.property];
-                        else this.textarea.value = "";
-                    }
-                    this.textarea.disabled = false;
-                    if (polymorph_core.items[id].style) {
-                        this.textarea.style.background = polymorph_core.items[id].style.background;
-                        this.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(this.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
-                    } else {
-                        this.textarea.style.background = "";
-                        this.textarea.style.color = "";
-                    }
-                }
+        if (id == this.settings.currentID && id && polymorph_core.items[id]) {
+            if (this.textarea.matches(":focus")) {
+                setTimeout(() => this.updateItem(id), 500);
             } else {
-                if (!this.settings.currentID) {
-                    this.textarea.disabled = true;
-                    this.textarea.value = "Select an item to view its description.";
+                if (this.changed) {
+                    //someone else just called this so i'll have to save my modifications discreetly.
+                    polymorph_core.items[id][this.settings.property] = this.textarea.value;
+                } else {
+                    if (polymorph_core.items[id] && polymorph_core.items[id][this.settings.property]) this.textarea.value = polymorph_core.items[id][this.settings.property];
+                    else this.textarea.value = "";
+                }
+                this.textarea.disabled = false;
+                if (polymorph_core.items[id].style) {
+                    this.textarea.style.background = polymorph_core.items[id].style.background;
+                    this.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(this.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
+                } else {
+                    this.textarea.style.background = "";
+                    this.textarea.style.color = "";
                 }
             }
         } else {
-            this.textarea.disabled = false;
+            if (!this.settings.currentID) {
+                this.textarea.disabled = true;
+                this.textarea.value = "Select an item to view its description.";
+            }
         }
     }
 
@@ -5661,23 +6197,26 @@ polymorph_core.registerOperator("descbox", {
     this.updateItem(this.settings.currentID);
 
     this.updateSettings = () => {
-        if (this.settings.operationMode == 'static') {
-            if (!this.settings.staticItem) this.settings.staticItem = polymorph_core.insertItem({});
-            let staticItem = this.settings.staticItem;
-            this.settings.currentID = this.settings.staticItem;
-            if (!polymorph_core.items[staticItem]) {
-                let it = {};
-                it[this.settings.property] = "";
-                polymorph_core.items[staticItem] = it;
-                container.fire("updateItem", {
-                    sender: this,
-                    id: staticItem
-                });
-            }
-        } else if (this.settings.operationMode == 'putter') {
-            if (this.settings.focusOperatorID) this.focusOperatorID = this.settings.focusOperatorID;
-            this.textarea.value = "";
-            this.textarea.disabled = false;
+        if (!this.settings.currentID) {
+            this.settings.currentID = polymorph_core.insertItem({});
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
+        }
+        if (!polymorph_core.items[this.settings.currentID]) {
+            polymorph_core.items[this.settings.currentID] = {};
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
+        }
+        if (!polymorph_core.items[this.settings.currentID][this.settings.property]) {
+            polymorph_core.items[this.settings.currentID][this.settings.property] = "";
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
         }
         this.textarea.placeholder = this.settings.placeholder || "";
         this.updateItem(this.settings.currentID);
@@ -5705,9 +6244,7 @@ polymorph_core.registerOperator("descbox", {
     this.somethingwaschanged = (e) => {
         //Check ctrl-S so that we dont save then
         if (e.key == "Control" || e.key == "Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s")) return;
-        if (this.settings.operationMode != "putter") {
-            upc.submit(this.settings.currentID, this.textarea.value);
-        }
+        upc.submit(this.settings.currentID, this.textarea.value);
     }
 
     this.textarea.addEventListener("blur", () => { upc.forceSend() });
@@ -5715,49 +6252,25 @@ polymorph_core.registerOperator("descbox", {
     this.textarea.addEventListener("input", this.somethingwaschanged);
     this.textarea.addEventListener("keyup", this.somethingwaschanged);
     document.addEventListener('keydown', (e) => {
-        if (this.textarea.matches(":focus-within")) {
+        if (this.textarea == this.rootdiv.getRootNode().activeElement) {
             var keycode1 = (e.keyCode ? e.keyCode : e.which);
             if (keycode1 == 0 || keycode1 == 9) {
                 e.preventDefault();
                 e.stopPropagation();
-                document.execCommand('insertText', false /*no UI*/, "    ");
+                document.execCommand('insertText', false, "    ");
             }
         }
     })
-    this.createItem = (id, data) => {
-        polymorph_core.items[id][this.settings.property] = data;
-    }
-
-    this.textarea.addEventListener("keydown", (e) => {
-        if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            this.createItem(undefined, this.textarea.value);
-            this.textarea.value = "";
-            e.preventDefault();
-        }
-    });
-
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     let options = {
-        operationMode: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "select",
-            object: this.settings,
-            property: "operationMode",
-            source: {
-                static: "Display static item",
-                focus: "Display focused item",
-                putter: "Use as data entry"
-            },
-            label: "Select operation mode:"
-        }),
-        staticItem: new polymorph_core._option({
+        currentItem: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
-            property: "staticItem",
-            label: "Static item to display:"
+            property: "currentItem",
+            label: "Item to display:"
         }),
         property: new polymorph_core._option({
             div: this.dialogDiv,
@@ -5773,13 +6286,13 @@ polymorph_core.registerOperator("descbox", {
             property: "auxProperty",
             label: "Auxillary property to display:"
         }),
-        showWordCount: new polymorph_core._option({
+        /*showWordCount: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "showWordCount",
             label: "Show wordcount?"
-        }),
+        }),*/
         showTags: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
@@ -5812,14 +6325,11 @@ polymorph_core.registerOperator("descbox", {
             this.updateItem(id);
             container.fire("updateItem", { id: this.container.id });
         }
-        if (this.settings.operationMode == "focus") {
-            switchTo(id);
-        }
+        switchTo(id);
     });
 
-    //static items get deleted without this mod
     this.itemRelevant = (id) => {
-        if (this.settings.operationMode == "static" && id == this.settings.staticItem) return true;
+        if (id == this.settings.currentID) return true;
     }
 
     container.on("createItem", (d) => {
@@ -6410,7 +6920,7 @@ polymorph_core.registerOperator("terminal", {
             type: "bool",
             object: this.settings,
             property: "wsthru",
-            label: "Use as dedicated websocket interface"
+            label: "Pass typed messages to websocket"
         })
     ];
     this.dialogDiv.addEventListener("click", () => {
@@ -7423,87 +7933,175 @@ polymorph_core.registerOperator("inspectolist", {
     this.dialogUpdateSettings();
 });;
 
-polymorph_core.registerOperator("subframe", {
-    displayName: "Subframe",
-    description: "Place a new frame, with its own tabs, in this current frame.",
-    section: "Layout"
-}, function (container) {
-    polymorph_core.operatorTemplate.call(this, container, {});
-    this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
-    this.outerDiv = document.createElement("div");
-    //Add div HTML here
-    this.outerDiv.innerHTML = ``;
-    this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
-    container.div.appendChild(this.outerDiv);
-
-    //////////////////Handle polymorph_core item updates//////////////////
-
-    this.refresh = function () {
-        polymorph_core.rects[this.rectID].refresh();
-    }
-
-    //////////////////Handling local changes to push to polymorph_core//////////////////
-    Object.defineProperty(this, "rect", {
-        get: () => {
-            return polymorph_core.rects[this.rectID];
+//check if phone
+if (isPhone()) {
+    polymorph_core.registerOperator("subframe", {
+        displayName: "Subframe",
+        description: "Place a new frame, with its own tabs, in this current frame.",
+        section: "Layout"
+    }, function (container) {
+        polymorph_core.operatorTemplate.call(this, container, {});
+        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.outerDiv = document.createElement("div");
+        //Add div HTML here
+        this.outerDiv.innerHTML = ``;
+        this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
+        container.div.appendChild(this.outerDiv);
+    
+        //////////////////Handle polymorph_core item updates//////////////////
+    
+        this.refresh = function () {
+            polymorph_core.rects[this.rectID].refresh();
         }
-    })
-
-    this.tieRect = function (rectID) {
-        this.rectID = rectID;
-        this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
-        polymorph_core.rects[rectID].refresh();
-    }
-
-    //Check if i have any rects waiting for pickup
-    if (polymorph_core.rectLoadCallbacks[container.id]) {
-        this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
-        delete polymorph_core.rectLoadCallbacks[container.id];
-    } else if (!this.settings.operatorClonedFrom) {
-        let rectID = polymorph_core.newRect(container.id);
-        this.tieRect(rectID);
-    }
-
-    if (this.settings.operatorClonedFrom) {
-        for (let ri in polymorph_core.rects) {
-            if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
-                //make a clone of it
-                let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[ri]));
-                copyRect._rd.p = container.id;
-                let newRectID = polymorph_core.insertItem(copyRect);
-                polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
-                this.tieRect(newRectID);
-                //also make a clone of all its operators
-                for (let i in polymorph_core.containers) {
-                    if (polymorph_core.containers[i].settings.p == ri) {
-                        //clone it
-                        let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
-                        copyOp._od.p = newRectID;
-                        copyOp._od.data.operatorClonedFrom = i;
-                        let newContainerID = polymorph_core.insertItem(copyOp);
-                        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+    
+        //////////////////Handling local changes to push to polymorph_core//////////////////
+        Object.defineProperty(this, "rect", {
+            get: () => {
+                return polymorph_core.rects[this.rectID];
+            }
+        })
+    
+        this.tieRect = function (rectID) {
+            this.rectID = rectID;
+            this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+            polymorph_core.rects[rectID].refresh();
+        }
+    
+        //Check if i have any rects waiting for pickup
+        if (polymorph_core.rectLoadCallbacks[container.id]) {
+            this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
+            delete polymorph_core.rectLoadCallbacks[container.id];
+        } else if (!this.settings.operatorClonedFrom) {
+            let rectID = polymorph_core.newRect(container.id);
+            this.tieRect(rectID);
+        }
+    
+        if (this.settings.operatorClonedFrom) {
+            for (let ri in polymorph_core.rects) {
+                if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
+                    //make a clone of it
+                    let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[ri]));
+                    copyRect._rd.p = container.id;
+                    let newRectID = polymorph_core.insertItem(copyRect);
+                    polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
+                    this.tieRect(newRectID);
+                    //also make a clone of all its operators
+                    for (let i in polymorph_core.containers) {
+                        if (polymorph_core.containers[i].settings.p == ri) {
+                            //clone it
+                            let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                            copyOp._od.p = newRectID;
+                            copyOp._od.data.operatorClonedFrom = i;
+                            let newContainerID = polymorph_core.insertItem(copyOp);
+                            polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+                        }
                     }
                 }
             }
+            polymorph_core.items[this.settings.operatorClonedFrom]
+            delete this.settings.operatorClonedFrom;
         }
-        polymorph_core.items[this.settings.operatorClonedFrom]
-        delete this.settings.operatorClonedFrom;
-    }
+    
+        //Handle the settings dialog click!
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = `Nothing to show yet :3`;
+        this.showDialog = function () {
+            // update your dialog elements with your settings
+        }
+        this.dialogUpdateSettings = function () {
+            // pull settings and update when your dialog is closed.
+        }
+    
+        this.remove = () => {
+            polymorph_core.rects[this.rectID].remove();
+        }
+    });
+} else {
+    polymorph_core.registerOperator("subframe", {
+        displayName: "Subframe",
+        description: "Place a new frame, with its own tabs, in this current frame.",
+        section: "Layout"
+    }, function (container) {
+        polymorph_core.operatorTemplate.call(this, container, {});
+        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.outerDiv = document.createElement("div");
+        //Add div HTML here
+        this.outerDiv.innerHTML = ``;
+        this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
+        container.div.appendChild(this.outerDiv);
 
-    //Handle the settings dialog click!
-    this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = `Nothing to show yet :3`;
-    this.showDialog = function () {
-        // update your dialog elements with your settings
-    }
-    this.dialogUpdateSettings = function () {
-        // pull settings and update when your dialog is closed.
-    }
+        //////////////////Handle polymorph_core item updates//////////////////
 
-    this.remove = () => {
-        polymorph_core.rects[this.rectID].remove();
-    }
-});;
+        this.refresh = function () {
+            polymorph_core.rects[this.rectID].refresh();
+        }
+
+        //////////////////Handling local changes to push to polymorph_core//////////////////
+        Object.defineProperty(this, "rect", {
+            get: () => {
+                return polymorph_core.rects[this.rectID];
+            }
+        })
+
+        this.tieRect = function (rectID) {
+            this.rectID = rectID;
+            this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+            polymorph_core.rects[rectID].refresh();
+        }
+
+        //Check if i have any rects waiting for pickup
+        if (polymorph_core.rectLoadCallbacks[container.id]) {
+            this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
+            delete polymorph_core.rectLoadCallbacks[container.id];
+        } else if (!this.settings.operatorClonedFrom) {
+            let rectID = polymorph_core.newRect(container.id);
+            this.tieRect(rectID);
+        }
+
+        if (this.settings.operatorClonedFrom) {
+            for (let ri in polymorph_core.rects) {
+                if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
+                    //make a clone of it
+                    let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[ri]));
+                    copyRect._rd.p = container.id;
+                    let newRectID = polymorph_core.insertItem(copyRect);
+                    polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
+                    this.tieRect(newRectID);
+                    //also make a clone of all its operators
+                    for (let i in polymorph_core.containers) {
+                        if (polymorph_core.containers[i].settings.p == ri) {
+                            //clone it
+                            let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                            copyOp._od.p = newRectID;
+                            copyOp._od.data.operatorClonedFrom = i;
+                            let newContainerID = polymorph_core.insertItem(copyOp);
+                            polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+                        }
+                    }
+                }
+            }
+            polymorph_core.items[this.settings.operatorClonedFrom]
+            delete this.settings.operatorClonedFrom;
+        }
+
+        //Handle the settings dialog click!
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = `Nothing to show yet :3`;
+        this.showDialog = function () {
+            // update your dialog elements with your settings
+        }
+        this.dialogUpdateSettings = function () {
+            // pull settings and update when your dialog is closed.
+        }
+
+        this.remove = () => {
+            polymorph_core.rects[this.rectID].remove();
+        }
+    });
+}
+
+
+;
 
 polymorph_core.registerOperator("deltaLogger", {
     displayName: "Delta Logger",
@@ -7635,7 +8233,7 @@ function quickNotify(txt, ask, denyFn) {
             let defaultSettings = {
                 dateproperties: ["datestring"],
                 titleproperty: 'title',
-                defaultView: "agendaWeek"
+                defaultView: "agendaWeek",
             };
             polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -7658,10 +8256,26 @@ function quickNotify(txt, ask, denyFn) {
                         let tzd = new Date();
                         try {
                             for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
-                                if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
-                                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
+                                let currentDP=this.settings.dateproperties[dp];
+                                let isNumerical=false;
+                                if (this.settings.dateproperties[dp][0]=='*'){
+                                    isNumerical=true;
+                                    currentDP=this.settings.dateproperties[dp].slice(1);
+                                }
+                                if (polymorph_core.items[i][currentDP]){
+                                    let result;
+                                    if (isNumerical){
+                                        result = [{date:Number(polymorph_core.items[i][currentDP])}];
+                                        if (!result) continue;
+                                    }else{
+                                        if (polymorph_core.items[i][currentDP].date){
+                                            result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP].date, start, end);
+                                        }else{
+                                            continue;
+                                        }
+                                    }
                                     for (let j = 0; j < result.length; j++) {
-                                        if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
+                                        if (polymorph_core.items[i][currentDP].datestring != "auto now") {
                                             //prevent auto now spam
                                             this.notifstack.push({
                                                 txt: polymorph_core.items[i][this.settings.titleproperty],
@@ -7833,7 +8447,7 @@ function quickNotify(txt, ask, denyFn) {
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
-                    label: "Enter the title property:"
+                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
@@ -8011,12 +8625,22 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!(polymorph_core.items[id][this.settings.textProp] || polymorph_core.items[id][this.settings.focusExtendProp])) {
+            if (!(polymorph_core.items[id][this.settings.textProp])) {
                 polymorph_core.items[id][this.settings.textProp] = "_";
             }
-            if (((polymorph_core.items[id][this.settings.textProp] && tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (polymorph_core.items[id][this.settings.focusExtendProp] && ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
-                tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
-                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
+            if (!polymorph_core.items[id][this.settings.focusExtendProp]){
+                polymorph_core.items[id][this.settings.focusExtendProp] = "_";
+            }
+            let widthInvalidated=false;
+            if (tta.innerText != polymorph_core.items[id][this.settings.textProp]) {
+                tta.innerText = polymorph_core.items[id][this.settings.textProp];
+                widthInvalidated=true;
+            }
+            if (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]) {
+                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp];
+                widthInvalidated=true;
+            }
+            if (widthInvalidated){
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {
@@ -8765,6 +9389,7 @@ function _itemcluster_extend_contextmenu() {
     this.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="hierarchybtn">Hierarchy by punctuation</li>
         <li class="scramble">Scramble</li>
         <li class="collcon">Collect connected items</li>
         <li class="cpybtn">Copy (between views)</li>
@@ -8913,14 +9538,21 @@ function _itemcluster_extend_contextmenu() {
                 this.arrangeItem(v);
             })
         });
+
+    function segment(innerText) {
+        innerText = innerText.replace(/(\d+?)\./g, "*$* $1\\.");
+        innerText = innerText.replace(/(((?<!\\)\.|\?|\n)+)/g, "$1*$*");
+        innerText = innerText.replace(/\n/g, "");
+        innerText = innerText.split(/\*\$\*/g);
+        innerText = innerText.filter(i => i.length);
+        return innerText;
+    }
     this.itemContextMenu
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
-            innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
-            innerText = innerText.replace(/\n/g, "");
-            innerText = innerText.split(/\*\$\*/g);
-            innerText = innerText.filter(i => i.length);
+            innerText = segment(innerText);
+
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
             /*for (let i = 0; i < innerText.length; i++) {
@@ -8957,6 +9589,53 @@ function _itemcluster_extend_contextmenu() {
                 this.container.fire("updateItem", { id: newID, sender: this });
                 return newID;
             });
+            this.arrangeItem(this.contextedElement.dataset.id);
+            newIDs.forEach(i => {
+                this.arrangeItem(i);
+            })
+            this.itemContextMenu.style.display = "none";
+        });
+
+
+    this.itemContextMenu
+        .querySelector(".hierarchybtn")
+        .addEventListener("click", e => {
+            let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
+            innerText = segment(innerText)
+            //filter out newlinefullstops; todo filter out numbered lists?
+            //quick adjustement since lookbehinds are not a thing yet
+            /*for (let i = 0; i < innerText.length; i++) {
+                if (innerText[i][0] == '.' || innerText[i][0] == '?') {
+                    if (i > 0) {
+                        innerText[i - 1] += innerText[i][0];
+                    }
+                }
+            }
+            for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
+            */
+            //first
+            polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
+            //create a bunch of items
+            let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
+            let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
+            if (!lastItem.to) lastItem.to = {};
+            let newIDs = innerText.map((i, ii) => {
+                let newItem = {
+                    itemcluster: {
+                        viewData: {
+                        }
+                    },
+                    to: {}
+                };
+                newItem[this.settings.textProp] = i;
+                newItem[this.settings.filter] = true;
+                newItem.itemcluster.viewData[this.settings.currentViewName] = { x: VDT.x + Math.cos(ii / innerText.length * Math.PI * 2) * 200, y: VDT.y + Math.sin(ii / innerText.length * Math.PI * 2) * 200 };
+                newID = polymorph_core.insertItem(newItem);
+                polymorph_core.items[this.contextedElement.dataset.id].to[newID] = true;
+                this.container.fire("updateItem", { id: newID, sender: this });
+                return newID;
+            });
+            this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
             this.arrangeItem(this.contextedElement.dataset.id);
             newIDs.forEach(i => {
                 this.arrangeItem(i);
@@ -9796,8 +10475,8 @@ polymorph_core.registerOperator("itemcluster2", {
         this.switchView();
     };
 
-    container.on("focusItem", (e) => {
-        if (e.sender) return;
+    container.on("metaFocusItem", (e) => {
+        if (e.sender == this) return;
         if (this.settings.operationMode == "focus") {
             if (e.sender.container.uuid == this.settings.focusOperatorID) {
                 this.switchView(e.id, true);
@@ -10504,6 +11183,12 @@ polymorph_core.registerOperator("itemcluster2", {
         if (this.svg && this.viewGrid) {
             this.viewGrid();
         }
+
+
+        //reupdate every item
+        for (let i in this.itemPointerCache) {
+            this.arrangeItem(i);
+        }
     }
     this.refresh = () => {
         if (this.svg) this.svg.size(this.rootdiv.clientWidth, this.rootdiv.clientHeight);
@@ -10577,6 +11262,13 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "textProp",
             label: "Text property to display..."
+        }),
+        focusExtendProp: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "focusExtendProp",
+            label: "Extened property to display..."
         })
     }
     this.showDialog = () => {
@@ -11267,8 +11959,8 @@ polymorph_core.registerOperator("lynerlist", {
 polymorph_core.registerOperator("scriptrunner", {
     displayName: "Script Runner",
     description: "Runs scripts.",
-    section:"Advanced",
-    imageurl:"assets/operators/scriptrunner.png"
+    section: "Advanced",
+    imageurl: "assets/operators/scriptrunner.png"
 }, function (container) {
     let defaultSettings = {
         autorun: false,
@@ -11316,11 +12008,15 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
+    let selfLooping = false;
     container.on("*", (d, e) => {
-        if (!d.sender || d.sender != "GARBAGE_COLLECTOR") {
+        if (!d) return; // documentCreated &c
+        if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping) {
+            selfLooping = true;
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
+            selfLooping = false;// not sure if this is helping or hindering but we'll see
         }
         return false;
     });
@@ -11409,7 +12105,7 @@ polymorph_core.registerOperator("scriptrunner", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS IN GENERAL!`;
+    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS YOU DONT UNDERSTAND!`;
     let ops = [
         new polymorph_core._option({
             div: this.dialogDiv,
