@@ -517,7 +517,7 @@ polymorph_core.registerOperator("terminal", {
             type: "bool",
             object: this.settings,
             property: "wsthru",
-            label: "Use as dedicated websocket interface"
+            label: "Pass typed messages to websocket"
         })
     ];
     this.dialogDiv.addEventListener("click", () => {

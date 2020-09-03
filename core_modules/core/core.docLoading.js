@@ -1,4 +1,58 @@
 (() => {
+
+    //navigator.serviceWorker.controller.postMessage("not even ready yet");
+
+
+    /*let checkForURLConflict=()=>{}
+    navigator.serviceWorker.register('core_modules/core/core.workersync.js', {scope: './'}).then(function(registration) {
+        if (registration.active){
+            console.log("yay im active");
+            //navigator.serviceWorker.controller.postMessage("hello world!");
+        }
+    });*/
+    let instance_uuid=polymorph_core.guid();
+    const broadcast = new BroadcastChannel('channel1');
+    let is_challenger=false;
+    let alt_alive_warning=document.createElement("div");
+    alt_alive_warning.innerHTML=`
+        <div style="padding:10vw">
+            <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
+        </div>
+    `;
+    alt_alive_warning.style.cssText=`
+    display:none;
+    place-items: center center;
+    position:absolute;
+    height:100%;
+    width:100%;
+    z-index:2;
+    background: rgba(0,0,0,0.5);
+    color:white;
+    text-align:center;
+    `;
+    document.body.appendChild(alt_alive_warning);
+    broadcast.onmessage = (event) => {
+        if (event.data.url == window.location.href && event.data.uuid!=instance_uuid) {
+            if (is_challenger){
+                alt_alive_warning.style.display="grid";
+                // seppuku
+            }else{
+                broadcast.postMessage({
+                    url:window.location.href,
+                    uuid: instance_uuid
+                })        
+            }
+        }
+    };
+    function checkForURLConflict() {
+        broadcast.postMessage({
+            url:window.location.href,
+            uuid: instance_uuid
+        })
+        is_challenger=true;
+        setTimeout(()=>is_challenger=false,500);
+    }
+    checkForURLConflict();
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
@@ -92,6 +146,7 @@
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
+            checkForURLConflict();
 
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
@@ -140,6 +195,7 @@
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                throw (e);
                             }
 
                         })();

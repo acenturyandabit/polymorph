@@ -556,6 +556,7 @@ function _itemcluster_extend_contextmenu() {
     this.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="hierarchybtn">Hierarchy by punctuation</li>
         <li class="scramble">Scramble</li>
         <li class="collcon">Collect connected items</li>
         <li class="cpybtn">Copy (between views)</li>
@@ -704,14 +705,21 @@ function _itemcluster_extend_contextmenu() {
                 this.arrangeItem(v);
             })
         });
+
+    function segment(innerText) {
+        innerText = innerText.replace(/(\d+?)\./g, "*$* $1\\.");
+        innerText = innerText.replace(/(((?<!\\)\.|\?|\n)+)/g, "$1*$*");
+        innerText = innerText.replace(/\n/g, "");
+        innerText = innerText.split(/\*\$\*/g);
+        innerText = innerText.filter(i => i.length);
+        return innerText;
+    }
     this.itemContextMenu
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
-            innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
-            innerText = innerText.replace(/\n/g, "");
-            innerText = innerText.split(/\*\$\*/g);
-            innerText = innerText.filter(i => i.length);
+            innerText = segment(innerText);
+
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
             /*for (let i = 0; i < innerText.length; i++) {
@@ -748,6 +756,53 @@ function _itemcluster_extend_contextmenu() {
                 this.container.fire("updateItem", { id: newID, sender: this });
                 return newID;
             });
+            this.arrangeItem(this.contextedElement.dataset.id);
+            newIDs.forEach(i => {
+                this.arrangeItem(i);
+            })
+            this.itemContextMenu.style.display = "none";
+        });
+
+
+    this.itemContextMenu
+        .querySelector(".hierarchybtn")
+        .addEventListener("click", e => {
+            let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
+            innerText = segment(innerText)
+            //filter out newlinefullstops; todo filter out numbered lists?
+            //quick adjustement since lookbehinds are not a thing yet
+            /*for (let i = 0; i < innerText.length; i++) {
+                if (innerText[i][0] == '.' || innerText[i][0] == '?') {
+                    if (i > 0) {
+                        innerText[i - 1] += innerText[i][0];
+                    }
+                }
+            }
+            for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
+            */
+            //first
+            polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
+            //create a bunch of items
+            let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
+            let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
+            if (!lastItem.to) lastItem.to = {};
+            let newIDs = innerText.map((i, ii) => {
+                let newItem = {
+                    itemcluster: {
+                        viewData: {
+                        }
+                    },
+                    to: {}
+                };
+                newItem[this.settings.textProp] = i;
+                newItem[this.settings.filter] = true;
+                newItem.itemcluster.viewData[this.settings.currentViewName] = { x: VDT.x + Math.cos(ii / innerText.length * Math.PI * 2) * 200, y: VDT.y + Math.sin(ii / innerText.length * Math.PI * 2) * 200 };
+                newID = polymorph_core.insertItem(newItem);
+                polymorph_core.items[this.contextedElement.dataset.id].to[newID] = true;
+                this.container.fire("updateItem", { id: newID, sender: this });
+                return newID;
+            });
+            this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
             this.arrangeItem(this.contextedElement.dataset.id);
             newIDs.forEach(i => {
                 this.arrangeItem(i);

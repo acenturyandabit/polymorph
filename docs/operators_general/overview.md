@@ -4,6 +4,19 @@ Operators are interchangeable UI components that display items, and which are co
 ## Life cycle
 When an operator is added by including its .js file, it will be added to `polymorph_core.operators={}`, using `polymorph_core.registerOperator()`.
 
+## Properties
+Properties are declared as:
+```javascript
+polymorph_core.registerOperator("name", {
+    description: "a description",
+    displayName: "display name",
+    imageurl: "An image url" || "assets/operators/descbox.png",
+    section: "The section it belongs to" || "Standard",
+    single_store: true, // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
+    targetForward: bool, // i have no idea what this is anymore, it's never used
+    noShadow: bool // if true, don't use shadow dom. might make this default?
+}, function constructor()
+```
 ## Storage considerations
 Operators are stored as regular items, except they contain a property `item._od`.
 ## Functions to implement

@@ -11,6 +11,9 @@ function __itemlist_searchsort() {
     let searchCapacitor = new capacitor(1000, 300, () => {
         //filter the items
         let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+        if (this.settings.entrySearch) {
+            searchboxes = Array.from(this.template.querySelectorAll("input"));
+        }
         let amSearching = false;
         for (let i = 0; i < searchboxes.length; i++) {
             if (searchboxes[i].value != "") {
@@ -66,6 +69,8 @@ function __itemlist_searchsort() {
         searchCapacitor.submit();
     })
 
+    this.template.addEventListener("keyup", searchCapacitor.submit);
+
 
     ///sorting
     this.indexOf = (id) => {
@@ -77,26 +82,29 @@ function __itemlist_searchsort() {
     }
 
     this._sortItems = () => {
-        this.isSorting=true; // alert focusout so that it doesnt display prettydate
+        this.isSorting = true; // alert focusout so that it doesnt display prettydate
+        let sortingProp = this.settings.sortby;
+        let sortType=this.settings.properties[sortingProp];
         if (!this.container.visible()) return;
         if (this.settings.implicitOrder) {
-            this.settings.sortby = this.settings.filterProp;
+            sortingProp = this.settings.filter;
+            sortType="number";
         }
-        if (this.settings.sortby) {
+        if (sortingProp) {
             //collect all items
             let itms = this.taskList.querySelectorAll(`[data-id]`);
             let its = [];
             for (let i = 0; i < itms.length; i++) {
                 cpp = {
                     id: itms[i].dataset.id,
-                    dt: polymorph_core.items[itms[i].dataset.id][this.settings.sortby]
+                    dt: polymorph_core.items[itms[i].dataset.id][sortingProp]
                 };
                 its.push(cpp);
             }
             //sort everything based on the filtered property.
-            switch (this.settings.properties[this.settings.sortby]) {
+            switch (sortType) {
                 case "date":
-                    let dateprop = this.settings.sortby;
+                    let dateprop = sortingProp;
                     for (let i = 0; i < its.length; i++) {
                         //we are going to upgrade all dates that don't match protocol)
                         if (its[i].dt && its[i].dt.date) {
@@ -153,7 +161,7 @@ function __itemlist_searchsort() {
                 }
             }
         }
-        this.isSorting=false;
+        this.isSorting = false;
     }
 
     this.sortcap = new capacitor(500, 1000, this._sortItems);
@@ -163,9 +171,18 @@ function __itemlist_searchsort() {
     }
 
     this.setSearchTemplate = (htmlstring) => {
+        if (this.settings.entrySearch) {
+            this.searchtemplate.style.display = "none";
+        } else {
+            this.searchtemplate.style.display = "block";
+        }
         this._searchtemplate.innerHTML = htmlstring;
         for (let i in this.settings.propertyWidths) {
-            this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            if (this._searchtemplate.querySelector(`[data-contains-role=${i}]`)) {
+                this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            } else {
+                delete this.settings.propertyWidths[i];
+            }
         }
     }
 

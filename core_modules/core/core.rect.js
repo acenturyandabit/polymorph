@@ -1,6 +1,6 @@
 // the UI is composed of RECTS. 
 // a RECT can have another RECT or an OPERATOR in it.
-
+if (!isPhone()){
 
 /// PASS OPERATORS INSTEAD OF CONTENT DIVS
 
@@ -216,7 +216,7 @@ polymorph_core.rect = function (rectID) {
     }
 
 
-    this.innerDivContainer = htmlwrap(`<div style="flex:1 1 auto; overflow-y:auto; width:100%; "></div>`);
+    this.innerDivContainer = htmlwrap(`<div style="flex:1 1 auto; overflow-y:auto; width:100%; height: 100%; "></div>`);
     this.outerDiv.appendChild(this.innerDivContainer);
 
     //Function for adding an operator to this rect. Operator must already exist.
@@ -289,6 +289,10 @@ polymorph_core.rect = function (rectID) {
                 this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                 Object.assign(mySibling.settings, this.parent.settings);
                 mySibling.settings.p = this.parent.settings.p;//If parent is undefined.
+                if (polymorph_core.items._meta.currentView == this.parent.id) {
+                    // fix root level rect deletion
+                    polymorph_core.items._meta.currentView = mySibling.id;
+                }
                 this.parent.outerDiv.remove();
                 mySibling.refresh();
                 let pid = this.parent.id;//deleting things messes with the parent getter
@@ -412,6 +416,7 @@ polymorph_core.rect = function (rectID) {
     let tabmenu;
     //Delegated context menu click on tabs
     let c = new _contextMenuManager(this.outerDiv);
+    this.outerDiv.style.position = "relative"; // needs to be here for context menus to work
     let contextedOperatorIndex = undefined;
     let tabfilter = (e) => {
         let t = e.target;
@@ -623,7 +628,7 @@ polymorph_core.rect = function (rectID) {
                 //this.outerDiv.style.left = this.outerDiv.parentElement.offsetWidth * this.otherSiblingSettings.ps;
                 this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetWidth * (1 - this.otherSiblingSettings.ps) + "px";
             }
-            this.outerDiv.style.height = this.outerDiv.parentElement.offsetHeight;
+            this.outerDiv.style.height = "100%"; //this.outerDiv.parentElement.offsetHeight;
             this.outerDiv.style.top = 0;
         } else {
             this.outerDiv.parentElement.style.flexDirection = "column";
@@ -635,8 +640,8 @@ polymorph_core.rect = function (rectID) {
                 //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
                 this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
             }
-            this.outerDiv.style.width = this.outerDiv.parentElement.offsetWidth;
-            this.outerDiv.style.left = 0;
+            this.outerDiv.style.width = "100%";//this.outerDiv.parentElement.offsetWidth;
+            //this.outerDiv.style.left = 0;
         }
         //also refresh any of my children
         if (this.children) {
@@ -740,6 +745,13 @@ polymorph_core.rect = function (rectID) {
         if (shiftPressed) {
             if (!this.children) {
                 this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                if (this.parent instanceof polymorph_core.rect) {
+                    /*if (this.settings.x) {
+                        this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
+                    } else {
+                        this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
+                    }*/
+                }
                 if (highlightDirn != -1) {
                     this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
                 }
@@ -753,6 +765,14 @@ polymorph_core.rect = function (rectID) {
             }
             if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
                 this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+            }
+            if (this.outerDiv.parentElement) {
+                // on load parentElement doesnt exist
+                /*if (this.settings.x) {
+                    this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                } else {
+                    this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                }*/
             }
         } else {
             this.outerDiv.style.border = "";
@@ -967,3 +987,5 @@ Object.defineProperty(polymorph_core, "baseRect", {
 })
 
 polymorph_core.rects = {};
+
+}

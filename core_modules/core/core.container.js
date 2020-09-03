@@ -287,7 +287,7 @@ polymorph_core.container = function container(containerID) {
 
     //Attach myself to a rect
     //do this early so that subframe-eseque operators in phone version have something to hook onto
-    if (this.settings.p && polymorph_core.items[this.settings.p]._rd) {
+    if (this.settings.p && polymorph_core.items[this.settings.p] && polymorph_core.items[this.settings.p]._rd) {
         //there is or will be a rect for it.
         if (polymorph_core.rects[this.settings.p]) {
             polymorph_core.rects[this.settings.p].tieContainer(containerID);
@@ -295,6 +295,9 @@ polymorph_core.container = function container(containerID) {
             if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
         }
+    } else {
+        console.log("Could not find rect for container " + containerID);
+        return;
     }
 
 

@@ -8,7 +8,7 @@
             let defaultSettings = {
                 dateproperties: ["datestring"],
                 titleproperty: 'title',
-                defaultView: "agendaWeek"
+                defaultView: "agendaWeek",
             };
             polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -31,10 +31,26 @@
                         let tzd = new Date();
                         try {
                             for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
-                                if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
-                                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
+                                let currentDP=this.settings.dateproperties[dp];
+                                let isNumerical=false;
+                                if (this.settings.dateproperties[dp][0]=='*'){
+                                    isNumerical=true;
+                                    currentDP=this.settings.dateproperties[dp].slice(1);
+                                }
+                                if (polymorph_core.items[i][currentDP]){
+                                    let result;
+                                    if (isNumerical){
+                                        result = [{date:Number(polymorph_core.items[i][currentDP])}];
+                                        if (!result) continue;
+                                    }else{
+                                        if (polymorph_core.items[i][currentDP].date){
+                                            result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP].date, start, end);
+                                        }else{
+                                            continue;
+                                        }
+                                    }
                                     for (let j = 0; j < result.length; j++) {
-                                        if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
+                                        if (polymorph_core.items[i][currentDP].datestring != "auto now") {
                                             //prevent auto now spam
                                             this.notifstack.push({
                                                 txt: polymorph_core.items[i][this.settings.titleproperty],
@@ -206,7 +222,7 @@
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
-                    label: "Enter the title property:"
+                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,

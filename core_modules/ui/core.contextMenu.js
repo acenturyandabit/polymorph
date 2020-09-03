@@ -9,8 +9,7 @@ function _contextMenuManager(root) {
         re.appendChild(thisCTXM);
 
         function intellishow(e) {
-            let mbr = thisCTXM.getBoundingClientRect();
-            let pbr = thisCTXM.parentElement.getBoundingClientRect();
+            let pbr = thisCTXM.parentElement.getClientRects()[0];
             let _left = e.pageX - pbr.x;
             let _top = e.pageY - pbr.y;
             //adjust for out of the page scenarios.
@@ -103,7 +102,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     }
     */
     //This should be configurable in future.
-    let commandStrings = polymorph_core.currentDoc.globalContextMenuOptions || [];
+    let commandStrings = polymorph_core.currentDoc.globalContextMenuOptions.map(i => i) || [];
     //add operator recommends
     commandStrings.push.apply(commandStrings, options);
     //add users' stuff
@@ -143,7 +142,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         //only really used for edit; so getItemProp only.
         let props = propStr.split(".");
         let itm = polymorph_core.items[container._tempCtxSettings.id];
-        if (propStr.startsWith("item")){
+        if (propStr.startsWith("item")) {
             props.shift();
         }
         for (let i = 0; i < props.length; i++) {
@@ -173,21 +172,26 @@ polymorph_core.showContextMenu = (container, settings, options) => {
             display:none;
             background:white;
         }
+        div._ictxbox_:hover{
+            background:pink;
+            user-select:none;
+        }
         div:hover>div._sctxbox_{
             display:block;
         }
         </style>
         </div>`);
-        commandStrings.map((v, i) => {
+        commandStrings.map((v, ii) => {
             let cctx = ctxMenu;
             let parts = v.split("::");
+            let _cctx;
             for (let i = 0; i < parts.length; i++) {
                 if (parts[i].indexOf(".") == -1) {
                     _cctx = cctx.querySelector(`[data-name="${parts[i]}"]`);
                     if (_cctx) {
                         cctx = _cctx.children[1];
                     } else {
-                        _cctx = htmlwrap(`<div class="_ctxbox_" data-name="${parts[i]}"><span>${parts[i]}</span><div class="_sctxbox_"></div></div>`);
+                        _cctx = htmlwrap(`<div class="_ctxbox_ _ictxbox_" data-name="${parts[i]}"><span>${parts[i]}</span><div class="_sctxbox_"></div></div>`);
                         cctx.appendChild(_cctx);
                         cctx = _cctx.children[1];
                     }
@@ -197,12 +201,14 @@ polymorph_core.showContextMenu = (container, settings, options) => {
                         //remove the text inside first
                         cctx = cctx.parentElement;
                         cctx.children[0].remove();
-                        cctx.insertBefore(htmlwrap(`<input style="display:block;" data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`), cctx.children[0])
+                        _cctx = htmlwrap(`<input style="display:block;" data-property="${/item.edit\((.+)\)/.exec(parts[i])[1]}" placeholder="${parts[i - 1]}"></input>`)
+                        cctx.insertBefore(_cctx, cctx.children[0]);
+
                     }
                     break;
                 }
             }
-            cctx.dataset.index = i;
+            _cctx.dataset.index = ii; // assign its function
         })
         ctxMenu.addEventListener("click", (e) => {
             if (e.target.parentElement.dataset.index) {

@@ -416,8 +416,8 @@ polymorph_core.registerOperator("itemcluster2", {
         this.switchView();
     };
 
-    container.on("focusItem", (e) => {
-        if (e.sender) return;
+    container.on("metaFocusItem", (e) => {
+        if (e.sender == this) return;
         if (this.settings.operationMode == "focus") {
             if (e.sender.container.uuid == this.settings.focusOperatorID) {
                 this.switchView(e.id, true);
@@ -1124,6 +1124,12 @@ polymorph_core.registerOperator("itemcluster2", {
         if (this.svg && this.viewGrid) {
             this.viewGrid();
         }
+
+
+        //reupdate every item
+        for (let i in this.itemPointerCache) {
+            this.arrangeItem(i);
+        }
     }
     this.refresh = () => {
         if (this.svg) this.svg.size(this.rootdiv.clientWidth, this.rootdiv.clientHeight);
@@ -1197,6 +1203,13 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "textProp",
             label: "Text property to display..."
+        }),
+        focusExtendProp: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "focusExtendProp",
+            label: "Extened property to display..."
         })
     }
     this.showDialog = () => {

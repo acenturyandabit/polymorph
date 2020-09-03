@@ -17,6 +17,22 @@
                     <td>(5/8/19|+1w 9:00am>+3h|13)</td><td>Starting from 5/12/19 not inclusive, every 1 week over 13 weeks, the event runs from 9:00am to 12:00pm.</td>
                     <td>(5/8/19|+1w 9:00am>7:00pm|13)</td><td>Starting from 5/12/19 not inclusive, every 1 week over 13 weeks, the event runs from 9:00am to 12:00pm.</td>
                 </tr>
+
+lmfao
+to convert from a datestring to a static date in js:
+polymorph_core.items[id][property].datestring = new Date(polymorph_core.items[id][property].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][property].date[0].endDate).toLocaleString()
+
+to force a date reparse:
+prop.date = dateParser.richExtractTime(prop.datestring);
+
+
+
+
+
+
+
+
+
             </table>
         </p>
         <h1>Itemcluster tips</h1>
