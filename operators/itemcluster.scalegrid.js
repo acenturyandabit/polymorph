@@ -80,6 +80,10 @@ function _itemcluster_extend_scalegrid(me) {
                 case 5:
                     dg = 2;
                     break;
+                default:
+                    // nan if g =0
+                    dg = 0;
+                    break;
             }
         }
 
@@ -99,15 +103,24 @@ function _itemcluster_extend_scalegrid(me) {
             me.tempTR = undefined;
         }
     }
+    me.tempTR = undefined;
+    me.tempGridPattern = undefined;
+    me.gcache = [0, ""];
     me.viewGrid = () => {
         let g = polymorph_core.items[me.settings.currentViewName].itemcluster.grid;
-        //also draw on the grid - and hide it later
-        me.hideGrid();
         let vb = me.svg.viewbox();
-        me.tempGridPattern = me.svg.pattern(g, g, function (add) {
-            add.line(0, 0, 0, g).stroke({ color: '#f06', width: 2 / vb.zoom });
-            add.line(0, 0, g, 0).stroke({ color: '#f06', width: 2 / vb.zoom });
-        });
-        me.tempTR = me.svg.rect(vb.width, vb.height).move(vb.x, vb.y).fill(me.tempGridPattern).back();
+        if (me.gcache[0] != g || JSON.stringify(me.gcache[1]) != JSON.stringify(vb)) {
+            setTimeout(() => {
+                //also draw on the grid - and hide it later
+                me.hideGrid();
+                me.tempGridPattern = me.svg.pattern(g, g, function (add) {
+                    add.line(0, 0, 0, g).stroke({ color: '#f06', width: 2 / vb.zoom });
+                    add.line(0, 0, g, 0).stroke({ color: '#f06', width: 2 / vb.zoom });
+                });
+                me.tempTR = me.svg.rect(0, 0).back();
+                me.tempTR.size(vb.width, vb.height).move(vb.x, vb.y).fill(me.tempGridPattern);
+            });
+            me.gcache = [g, vb];
+        }
     }
 }

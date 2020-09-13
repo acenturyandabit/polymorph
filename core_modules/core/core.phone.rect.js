@@ -11,7 +11,7 @@ function isPhone() {
     }
     return false;
 }
-if (isPhone()){
+if (isPhone()) {
     polymorph_core.newRect = function (parent) {
         let ID = polymorph_core.insertItem({
             _rd: {
@@ -24,7 +24,7 @@ if (isPhone()){
         polymorph_core.rects[ID] = new polymorph_core.rect(ID);
         return ID;
     }
-    
+
     polymorph_core.rect = function (rectID) {
         this.id = rectID;//might be helpful
         polymorph_core.rects[rectID] = this;
@@ -33,8 +33,8 @@ if (isPhone()){
                 return polymorph_core.items[rectID]._rd;
             }
         })
-    
-    
+
+
         Object.defineProperty(this, "childrenIDs", {
             get: () => {
                 if (!this._childrenIDs) {
@@ -57,7 +57,7 @@ if (isPhone()){
                 return undefined;
             }
         })
-    
+
         Object.defineProperty(this, "children", {
             get: () => {
                 if (this.childrenIDs) {
@@ -67,7 +67,7 @@ if (isPhone()){
                 return undefined;
             }
         })
-    
+
         Object.defineProperty(this, "containerids", {
             get: () => {
                 this._containerids = [];
@@ -79,7 +79,7 @@ if (isPhone()){
                 return this._containerids;
             }
         })
-    
+
         Object.defineProperty(this, "containers", {
             get: () => {
                 if (this.containerids) {
@@ -88,7 +88,7 @@ if (isPhone()){
                 return undefined;
             }
         })
-    
+
         Object.defineProperty(this, "parent", {
             get: () => {
                 if (this.settings.p) return polymorph_core.rects[this.settings.p];
@@ -97,19 +97,20 @@ if (isPhone()){
         })
         this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
         //when resetting document it expects an outerdiv. remove this instead.
-        this.outerDiv=this.listContainer;
+        this.outerDiv = this.listContainer;
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
         this.tieRect = function (id) {
             polymorph_core.rects[id].listContainer = this.listContainer;
         }
-    
+        this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
+
         this.switchOperator = (id) => {
             polymorph_core.toggleMenu(false);
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
             polymorph_core.currentOperator = id;
         }
-    
+
         this.tieContainer = (id) => {
             if (this.listContainer.querySelector(`[data-containerid='${id}']`)) {
                 this.listContainer.querySelector(`[data-containerid='${id}']`).innerText = polymorph_core.containers[id].settings.tabbarName;
@@ -128,7 +129,7 @@ if (isPhone()){
                 this.switchOperator(id);
             }
         }
-    
+
         //connect to my parent
         if (this.settings.p && polymorph_core.items[this.settings.p]) {
             //there is or will be a rect / subframe for it.
@@ -143,7 +144,7 @@ if (isPhone()){
             //attach myself to the rectlist
             document.querySelector("#rectList").appendChild(this.listContainer);
         }
-    
+
         //Signal all children waiting for this that they can connect to this now.
         if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
             if (polymorph_core.items[v]._od) {
@@ -154,7 +155,7 @@ if (isPhone()){
                 this.tieRect(v);
             }
         })
-    
+
         this.refresh = () => {
             //pick an arbitrary operator and focus it.. for now.
             let oneToFocus = Object.keys(polymorph_core.containers)[0];
@@ -164,8 +165,8 @@ if (isPhone()){
                 polymorph_core.currentOperator = oneToFocus;
             }
         };
-    
-    
+
+
         //operator creation
         this.newContainerBtn.addEventListener("click", (e) => {
             let newContainer = { _od: { t: "opSelect", p: rectID } };
@@ -175,15 +176,15 @@ if (isPhone()){
             //this.tieContainer(newContainerID);
             this.switchOperator(newContainerID);
         })
-    
+
         this.toSaveData = () => { };
     };
-    
+
     polymorph_core.switchView = (id) => {
-        polymorph_core.currentDoc.currentView=id;
+        polymorph_core.currentDoc.currentView = id;
         document.querySelector("#rectList").children[0].remove();
         document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
         return;
     }
-    polymorph_core.rects={};
+    polymorph_core.rects = {};
 }

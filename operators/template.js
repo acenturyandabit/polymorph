@@ -35,11 +35,28 @@ polymorph_core.registerOperator("template", {
     }
 
     //Handle the settings dialog click!
+    //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = ``;
-    this.showDialog = function () {
-        // update your dialog elements with your settings
+
+    let options = {
+        filter: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "filter",
+            label: "Filter for items to be shown"
+        })
+        //add more options here if you want -- options are managed automatically
     }
+    this.showDialog = () => {
+        //Update the settings dialog
+
+        for (i in options) {
+            options[i].load();
+        }
+    }
+
     this.dialogUpdateSettings = function () {
         // This is called when your dialog is closed. Use it to update your container!
     }
