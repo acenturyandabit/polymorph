@@ -20,6 +20,9 @@ polymorph_core.registerOperator("welcome", {
         a{
             color:lightblue;
         }
+        em{
+            padding: 5px;
+        }
     </style>
     <div style="display: flex; flex-direction: row; padding: 30px;">
         <div style="display: flex; flex-direction:column; flex: 1 1 50%">
