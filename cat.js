@@ -4227,9 +4227,7 @@ if (isPhone()) {
         });
 
         document.querySelector(".open").addEventListener("click", () => {
-            polymorph_core.filescreen.showSplash();
-            polymorph_core.toggleMenu(false);//hide on direct taps
-
+            window.location.href = window.location.pathname + "?o", "_blank";
         });
         document.querySelector("#opop").addEventListener("click", () => {
             //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
@@ -11565,6 +11563,9 @@ polymorph_core.registerOperator("welcome", {
     <style>
         a{
             color:lightblue;
+        }
+        em{
+            padding: 5px;
         }
     </style>
     <div style="display: flex; flex-direction: row; padding: 30px;">
