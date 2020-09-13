@@ -11,7 +11,7 @@ polymorph_core.userData={
 }
 
 */
-if (isPhone()){
+if (isPhone()) {
     polymorph_core.on("UIsetup", () => {
         document.body.appendChild(htmlwrap(`
         <style>
@@ -28,7 +28,7 @@ if (isPhone()){
             <span class="docName" contentEditable>Polymorph</span>
             <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
         </div>`));
-    
+
         //oplists
         document.body.appendChild(htmlwrap(/*html*/`
         <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
@@ -59,8 +59,9 @@ if (isPhone()){
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
-    
+
         document.body.style.display = "flex";
+        document.body.style.height = "100%";
         document.body.style.flexDirection = "column";
         polymorph_core.toggleMenu = function (visible) {
             if (visible == undefined) {
@@ -83,20 +84,20 @@ if (isPhone()){
                 polymorph_core.toggleMenu(false);//hide on direct taps
             }
         });
-    
+
         document.querySelector(".viewdialog").addEventListener("click", () => {
-            let v=prompt("Switch to another view:");
-            if (v)polymorph_core.switchView(v);
+            let v = prompt("Switch to another view:");
+            if (v) polymorph_core.switchView(v);
         });
-    
+
         document.querySelector(".savesources").addEventListener("click", () => {
             polymorph_core.showSavePreferencesDialog();
         });
-    
+
         document.querySelector(".open").addEventListener("click", () => {
             polymorph_core.filescreen.showSplash();
             polymorph_core.toggleMenu(false);//hide on direct taps
-    
+
         });
         document.querySelector("#opop").addEventListener("click", () => {
             //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
@@ -114,7 +115,7 @@ if (isPhone()){
                 //add remapping by the operator
                 polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
                 polymorph_core.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
-    
+
                 polymorph_core.dialog.prompt(polymorph_core.settingsDiv, (d) => {
                     polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
                     document.querySelector("#oplists").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
@@ -126,48 +127,46 @@ if (isPhone()){
             }
         });
     });
-    documentReady(() => {
-        polymorph_core.on("documentCreated", (id) => {
-            if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
-            polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
-        })
-    
-        ///////////////////////////////////////////////////////////////////////////////////////
-        //Operator conveinence functions
-        //Add showOperator
-    
-        polymorph_core.showOperator = function (op) {
-            if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
-            document.body.querySelector("#body").appendChild(op.topdiv);
-            if (op.operator && op.operator.refresh) op.operator.refresh();
-            polymorph_core.currentOperator = op;
-            polymorph_core.fire("operatorChanged");
+    polymorph_core.on("documentCreated", (id) => {
+        if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
+        polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
+    })
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //Operator conveinence functions
+    //Add showOperator
+
+    polymorph_core.showOperator = function (op) {
+        if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
+        document.body.querySelector("#body").appendChild(op.topdiv);
+        if (op.operator && op.operator.refresh) op.operator.refresh();
+        polymorph_core.currentOperator = op;
+        polymorph_core.fire("operatorChanged");
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //UI handling
+
+
+    /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
+        // create a new workspace, then load it
+        window.location.href += "?doc=" + polymorph_core.guid(7) + "&src=lf";
+    })*/
+
+
+    polymorph_core.resetView = function () {
+        if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
+        polymorph_core.baseRect = new _rect(polymorph_core,
+            undefined, {});
+        polymorph_core.baseRect.refresh();
+    }
+
+    polymorph_core.on("operatorChanged", function (d) {
+        if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+            polymorph_core.autosaveCapacitor.submit();
         }
-    
-        ///////////////////////////////////////////////////////////////////////////////////////
-        //UI handling
-    
-    
-        /*this.filescreen.baseDiv.querySelector("button.gstd").addEventListener("click", () => {
-            // create a new workspace, then load it
-            window.location.href += "?doc=" + polymorph_core.guid(7) + "&src=lf";
-        })*/
-    
-    
-        polymorph_core.resetView = function () {
-            if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
-            polymorph_core.baseRect = new _rect(polymorph_core,
-                undefined, {});
-            polymorph_core.baseRect.refresh();
-        }
-    
-        polymorph_core.on("operatorChanged", function (d) {
-            if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
-                polymorph_core.autosaveCapacitor.submit();
-            }
-        });
     });
-    
+
     polymorph_core.topbar = {
         add: () => {
             return document.createElement("div");

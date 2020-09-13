@@ -5,12 +5,12 @@ function _itemcluster_rapid_entry() {
         type: "bool",
         object: this.settings,
         property: "rapidEntryOn",
-        label: "Rapid entry mode",
+        label: "Search and command box",
     });
     this.rapidEntryDiv = document.createElement("div");
     this.rapidEntryDiv.innerHTML = `
     <div class="suggestionsbox" style="position:absolute; top: -10px; width:100%; height: 0px; background: white"></div>
-    <p style="background:white; margin:0"><span class="cmd">CMD</span>: <input type="text" style="width:calc(100% - 4em)"></input></p>
+    <p style="background:white; margin:0; width:100%; display:flex;"><span class="cmd">Search</span>: <input type="text" style="flex: 0 1 100%"></input></p>
     `;
     let cmdspan = this.rapidEntryDiv.querySelector("span.cmd");
     let sugbox = this.rapidEntryDiv.querySelector(".suggestionsbox");
@@ -32,9 +32,9 @@ function _itemcluster_rapid_entry() {
         }
     })
 
-    if (!this.settings.rapidEntryOn) {
-        this.settings.rapidEntryOn = false;//just to be super safe
+    if (this.settings.rapidEntryOn == false) { // not undefined
     } else {
+        this.settings.rapidEntryOn = true;// on by default
         // if rapidentry on, show the rapidentry interface
         this.rapidEntryDiv.style.display = "block";
     }
@@ -58,12 +58,12 @@ function _itemcluster_rapid_entry() {
             if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
-                recacheCapacitor.submit(id,e.target.innerText);
+                recacheCapacitor.submit(id, e.target.innerText);
             }
         }
     })
     // nonshift enter is exit edit mode 
-    let specialOptions=["NEW","CNT","CNF","DIS"];
+    let specialOptions = ["NEW", "CNT", "CNF", "DIS"];
     let RIE = this.rapidEntryDiv.querySelector("input");
     let rIndex = 0;
     let tmpItems = [];
@@ -71,7 +71,7 @@ function _itemcluster_rapid_entry() {
     let updateCMDText = () => {
         switch (opmode) {
             case 'NEW':
-                cmdspan.innerText = "CMD";
+                cmdspan.innerText = "Search";
                 break;
             case 'CNT':
                 cmdspan.innerText = "CNT";
@@ -171,7 +171,7 @@ function _itemcluster_rapid_entry() {
             //also when to update the cache? container.onupdateitem? or something else, like global input listener? I'm happy with the global input listener.
             while (sugbox.children.length) sugbox.children[0].remove();
             tmpItems = [];
-            if (e.target.value=="\\HELP"){
+            if (e.target.value == "\\HELP") {
                 tmpItems = specialOptions;
 
                 tmpItems.forEach((i, ind) => {
@@ -183,7 +183,7 @@ function _itemcluster_rapid_entry() {
                     sugbox.appendChild(p);
                 })
                 sugbox.style.height = tmpItems.length + "em";
-                sugbox.style.top = -tmpItems.length + "em";                
+                sugbox.style.top = -tmpItems.length + "em";
             }
             if (e.target.value.length) {
                 for (let i in REcache) {

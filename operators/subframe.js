@@ -1,5 +1,6 @@
 //check if phone
 if (isPhone()) {
+    //// PHONE VERSION HERE
     polymorph_core.registerOperator("subframe", {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
@@ -10,28 +11,28 @@ if (isPhone()) {
         this.outerDiv = document.createElement("div");
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
-        this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
-        container.div.appendChild(this.outerDiv);
-    
+        this.outerDiv.style.cssText = `width:100%; position:relative`;
+        container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
+
         //////////////////Handle polymorph_core item updates//////////////////
-    
+
         this.refresh = function () {
             polymorph_core.rects[this.rectID].refresh();
         }
-    
+
         //////////////////Handling local changes to push to polymorph_core//////////////////
         Object.defineProperty(this, "rect", {
             get: () => {
                 return polymorph_core.rects[this.rectID];
             }
         })
-    
+
         this.tieRect = function (rectID) {
             this.rectID = rectID;
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
             polymorph_core.rects[rectID].refresh();
         }
-    
+
         //Check if i have any rects waiting for pickup
         if (polymorph_core.rectLoadCallbacks[container.id]) {
             this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
@@ -40,7 +41,7 @@ if (isPhone()) {
             let rectID = polymorph_core.newRect(container.id);
             this.tieRect(rectID);
         }
-    
+
         if (this.settings.operatorClonedFrom) {
             for (let ri in polymorph_core.rects) {
                 if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
@@ -66,7 +67,7 @@ if (isPhone()) {
             polymorph_core.items[this.settings.operatorClonedFrom]
             delete this.settings.operatorClonedFrom;
         }
-    
+
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = `Nothing to show yet :3`;
@@ -76,7 +77,7 @@ if (isPhone()) {
         this.dialogUpdateSettings = function () {
             // pull settings and update when your dialog is closed.
         }
-    
+
         this.remove = () => {
             polymorph_core.rects[this.rectID].remove();
         }

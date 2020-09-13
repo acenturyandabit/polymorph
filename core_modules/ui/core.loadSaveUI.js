@@ -7,6 +7,7 @@
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
+        polymorph_core.unsaved = false;
     };
 
     document.body.addEventListener("keydown", e => {
