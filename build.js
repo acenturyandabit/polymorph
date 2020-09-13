@@ -67,7 +67,11 @@ let { execSync } = require("child_process");
     execSync("rename index.html index-temp.html");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
-    execSync('git commit -m "auto-deploy"');
+    try{
+        execSync('git commit -m "auto-deploy"');
+    }catch (e){
+        console.log("no changes were made to index");
+    }
     execSync('git push');
     execSync('git checkout develop');
 })()
