@@ -60,6 +60,22 @@ if (isPhone()) {
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
 
+        let tc = new capacitor(1000, 10, () => {
+            polymorph_core.fire("updateDoc");
+        });
+
+        polymorph_core.on("UIstart", () => {
+            polymorph_core.documentTitleElement = document.querySelector(".docName");
+            polymorph_core.documentTitleElement.addEventListener("keyup", () => {
+                polymorph_core.items._meta.displayName = polymorph_core.documentTitleElement.innerText;
+                tc.submit();
+                document.querySelector("title").innerHTML =
+                    polymorph_core.items._meta.displayName + " - Polymorph";
+                polymorph_core.userSave();
+            });
+        })
+
+
         document.body.style.display = "flex";
         document.body.style.height = "100%";
         document.body.style.flexDirection = "column";

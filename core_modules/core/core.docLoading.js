@@ -10,16 +10,16 @@
             //navigator.serviceWorker.controller.postMessage("hello world!");
         }
     });*/
-    let instance_uuid=polymorph_core.guid();
+    let instance_uuid = polymorph_core.guid();
     const broadcast = new BroadcastChannel('channel1');
-    let is_challenger=false;
-    let alt_alive_warning=document.createElement("div");
-    alt_alive_warning.innerHTML=`
+    let is_challenger = false;
+    let alt_alive_warning = document.createElement("div");
+    alt_alive_warning.innerHTML = `
         <div style="padding:10vw">
             <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
         </div>
     `;
-    alt_alive_warning.style.cssText=`
+    alt_alive_warning.style.cssText = `
     display:none;
     place-items: center center;
     position:absolute;
@@ -32,25 +32,25 @@
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url == window.location.href && event.data.uuid!=instance_uuid) {
-            if (is_challenger){
-                alt_alive_warning.style.display="grid";
+        if (event.data.url == window.location.href && event.data.uuid != instance_uuid) {
+            if (is_challenger) {
+                alt_alive_warning.style.display = "grid";
                 // seppuku
-            }else{
+            } else {
                 broadcast.postMessage({
-                    url:window.location.href,
+                    url: window.location.href,
                     uuid: instance_uuid
-                })        
+                })
             }
         }
     };
     function checkForURLConflict() {
         broadcast.postMessage({
-            url:window.location.href,
+            url: window.location.href,
             uuid: instance_uuid
         })
-        is_challenger=true;
-        setTimeout(()=>is_challenger=false,500);
+        is_challenger = true;
+        setTimeout(() => is_challenger = false, 500);
     }
     checkForURLConflict();
     Object.defineProperty(polymorph_core, "saveSourceData", {
@@ -139,6 +139,7 @@
                     }
                 }
             );
+            if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
             //Show the loading operator
