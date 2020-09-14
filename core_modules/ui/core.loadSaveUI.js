@@ -8,13 +8,15 @@
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
         polymorph_core.unsaved = false;
+        let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
+        recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
+        localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
     document.body.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
-            polymorph_core.unsaved = false;
             //also do the server save
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
             try {
@@ -22,9 +24,6 @@
                 polymorph_core.showNotification('Saved', 'success');
             } catch (e) {
             }
-            let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
-            recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
-            localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
         }
     });
 
