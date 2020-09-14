@@ -836,16 +836,16 @@ polymorph_core.on("titleButtonsReady", () => {
             //navigator.serviceWorker.controller.postMessage("hello world!");
         }
     });*/
-    let instance_uuid=polymorph_core.guid();
+    let instance_uuid = polymorph_core.guid();
     const broadcast = new BroadcastChannel('channel1');
-    let is_challenger=false;
-    let alt_alive_warning=document.createElement("div");
-    alt_alive_warning.innerHTML=`
+    let is_challenger = false;
+    let alt_alive_warning = document.createElement("div");
+    alt_alive_warning.innerHTML = `
         <div style="padding:10vw">
             <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
         </div>
     `;
-    alt_alive_warning.style.cssText=`
+    alt_alive_warning.style.cssText = `
     display:none;
     place-items: center center;
     position:absolute;
@@ -858,25 +858,25 @@ polymorph_core.on("titleButtonsReady", () => {
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url == window.location.href && event.data.uuid!=instance_uuid) {
-            if (is_challenger){
-                alt_alive_warning.style.display="grid";
+        if (event.data.url == window.location.href && event.data.uuid != instance_uuid) {
+            if (is_challenger) {
+                alt_alive_warning.style.display = "grid";
                 // seppuku
-            }else{
+            } else {
                 broadcast.postMessage({
-                    url:window.location.href,
+                    url: window.location.href,
                     uuid: instance_uuid
-                })        
+                })
             }
         }
     };
     function checkForURLConflict() {
         broadcast.postMessage({
-            url:window.location.href,
+            url: window.location.href,
             uuid: instance_uuid
         })
-        is_challenger=true;
-        setTimeout(()=>is_challenger=false,500);
+        is_challenger = true;
+        setTimeout(() => is_challenger = false, 500);
     }
     checkForURLConflict();
     Object.defineProperty(polymorph_core, "saveSourceData", {
@@ -965,6 +965,7 @@ polymorph_core.on("titleButtonsReady", () => {
                     }
                 }
             );
+            if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
             //Show the loading operator
@@ -1746,13 +1747,15 @@ polymorph_core.on("titleButtonsReady", () => {
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
         polymorph_core.unsaved = false;
+        let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
+        recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
+        localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
     document.body.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
-            polymorph_core.unsaved = false;
             //also do the server save
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
             try {
@@ -1760,9 +1763,6 @@ polymorph_core.on("titleButtonsReady", () => {
                 polymorph_core.showNotification('Saved', 'success');
             } catch (e) {
             }
-            let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
-            recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
-            localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
         }
     });
 
@@ -4191,6 +4191,22 @@ if (isPhone()) {
             <div style="height:100%; display:flex; justify-content: center; flex-direction: column">
                 <h1 style="color:white; text-align:center">Hold on, we're loading your data...</h1>
         </div>`));
+
+        let tc = new capacitor(1000, 10, () => {
+            polymorph_core.fire("updateDoc");
+        });
+
+        polymorph_core.on("UIstart", () => {
+            polymorph_core.documentTitleElement = document.querySelector(".docName");
+            polymorph_core.documentTitleElement.addEventListener("keyup", () => {
+                polymorph_core.items._meta.displayName = polymorph_core.documentTitleElement.innerText;
+                tc.submit();
+                document.querySelector("title").innerHTML =
+                    polymorph_core.items._meta.displayName + " - Polymorph";
+                polymorph_core.userSave();
+            });
+        })
+
 
         document.body.style.display = "flex";
         document.body.style.height = "100%";
