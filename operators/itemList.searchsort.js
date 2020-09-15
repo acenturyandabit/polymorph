@@ -178,8 +178,8 @@ function __itemlist_searchsort() {
         }
         this._searchtemplate.innerHTML = htmlstring;
         for (let i in this.settings.propertyWidths) {
-            if (this._searchtemplate.querySelector(`[data-contains-role=${i}]`)) {
-                this._searchtemplate.querySelector(`[data-contains-role=${i}]`).style.width = this.settings.propertyWidths[i];
+            if (this._searchtemplate.querySelector(`[data-contains-role="${i}"]`)) {
+                this._searchtemplate.querySelector(`[data-contains-role="${i}"]`).style.width = this.settings.propertyWidths[i];
             } else {
                 delete this.settings.propertyWidths[i];
             }
