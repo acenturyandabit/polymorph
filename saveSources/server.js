@@ -87,7 +87,8 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
             type: "text",
             object: this.settings.data,
             property: "throttle",
-            label: "Throttle (leave blank for no throttling)"
+            label: "Throttle (number of changes before sending)",
+            placeholder:0
         })
     ]
     this.showDialog = function () {

@@ -20,6 +20,10 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
         this.dialog.querySelector(".svid").value = save_source_data.data.id;
     }
 
+    this.dialog.querySelector(".svid").addEventListener("input", (e) => {
+        save_source_data.data.id = e.target.value;
+    })
+
     polymorph_core.addToSaveDialog(this);
 
     this.hook = async () => {

@@ -1,8 +1,7 @@
 polymorph_core.registerSaveSource("template", function (save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data); //future-safety measure. sets this.settings to save_source_data.
     //initialise here
-    this.prettyName = "NAME_TO_DISPLAY_IN_DIALOG";
-    this.createable = true; // false if the user should not be able to create this data source.
+    // Set pretty name and creatability at end of file.
 
 
     //for the actual display:
@@ -46,7 +45,7 @@ polymorph_core.registerSaveSource("template", function (save_source_data) { // a
 
     polymorph_core.on("userSave", (d) => {
         if (this.toSave) {
-            this.pushAll(polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['template'], d);
+            this.pushAll(d);
             return true; //return true if we save
         } else {
             return false;
@@ -56,4 +55,7 @@ polymorph_core.registerSaveSource("template", function (save_source_data) { // a
     window.addEventListener("beforeunload", () => {
 
     })
+}, {
+    prettyName: "Save to server",
+    createable: true
 })
