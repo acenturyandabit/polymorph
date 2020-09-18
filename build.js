@@ -11,7 +11,7 @@ let { execSync } = require("child_process");
     fs.copyFileSync("index.html","index_deploy.html");
     execSync("git add .");
     try{
-        execSync(`git commit -m ${process.argv[2]}`);
+        execSync(`git commit -m "${process.argv[2]}"`);
     }catch(err){
         console.log("no changes to commit, hope this looks right");
     }
@@ -73,7 +73,7 @@ let { execSync } = require("child_process");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
     try{
-        execSync(`git commit -m ${process.argv[2]}`);
+        execSync(`git commit -m "${process.argv[2]}"`);
     }catch (e){
         console.log("no changes were made to index");
     }
