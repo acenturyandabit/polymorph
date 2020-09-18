@@ -12786,6 +12786,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
     }
     this.pullAll = async () => {
         let localCopy = await localforage.getItem(`_polymorph_gitlite_${this.settings.data.id}`);
+        if (!localCopy) localCopy = {};
         return new Promise((res) => {
             let ws = new WebSocket(this.settings.data.saveTo);
             ws.addEventListener("open", () => {
@@ -12809,7 +12810,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                         } else {
                             let wasSent = false;
                             for (let i = 0; i < response._lu_.length; i++) {
-                                if (localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
+                                if (localCopy[response._lu_[i].id] && localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
                                     // accept this
                                     ws.send(JSON.stringify({
                                         op: "accept",
