@@ -124,7 +124,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                                 //oh well
                                 ws.send(JSON.stringify({
                                     op: "accept",
-                                    _lu_: response._lu_[response._lu_.length]._lu_
+                                    _lu_: response._lu_[response._lu_.length-1]._lu_
                                 }));
                             }
                         }
