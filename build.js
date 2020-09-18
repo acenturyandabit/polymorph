@@ -3,10 +3,15 @@ let { execSync } = require("child_process");
 
 
 (async () => {
+    if (process.argv.length<3){
+        console.log("PLEASE PROVIDE A COMMIT MESSAGE");
+        return;
+    }
+    // is the first argument after build, ideally
     fs.copyFileSync("index.html","index_deploy.html");
     execSync("git add .");
     try{
-        execSync('git commit -m "auto pre-push commit" ');
+        execSync(`git commit -m "${process.argv[2]}"`);
     }catch(err){
         console.log("no changes to commit, hope this looks right");
     }
@@ -68,7 +73,7 @@ let { execSync } = require("child_process");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
     try{
-        execSync('git commit -m "auto-deploy"');
+        execSync(`git commit -m "${process.argv[2]}"`);
     }catch (e){
         console.log("no changes were made to index");
     }
