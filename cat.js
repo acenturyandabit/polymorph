@@ -12737,10 +12737,10 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
 
     this.pushAll = async (data) => {
         //map objects to last update time
-        let lus = Object.entries(data).map((i) => ({ _lu_: i[1]._lu_, id: i[0] }));
+        let timekeys = Object.entries(data).map((i) => ({ _lu_: i[1]._lu_, id: i[0] })).sort((a, b) => b._lu_ - a._lu_);
         let pow2 = 0;
-        lus = lus.sort((a, b) => a._lu_ - b._lu_).filter((i, ii) => {
-            if (!(ii % (2 ** pow2)) || ii == lus.length - 1) {
+        lus = timekeys.filter((i, ii) => {
+            if (!(ii % (2 ** pow2)) || ii == timekeys.length - 1) {
                 pow2++;
                 return true;
             }
@@ -12760,16 +12760,19 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             switch (response.op) {
                 case "accept":
                     // send over the data
-                    let dataToSend = lus.filter(i => i._lu_ >= response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
+                    let dataToSend = timekeys.filter(i => i._lu_ >= response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
                     ws.send(JSON.stringify({
                         op: "transfer",
                         data: dataToSend
                     }));
-                    ws.close();
                     break;
                 case "reject":
                     ws.close();
                     alert("Save to nominated sync source failed :(");
+                    break;
+                case "thanks":
+                    //ack message
+                    ws.close();
                     break;
             }
         })
@@ -12825,7 +12828,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                                 //oh well
                                 ws.send(JSON.stringify({
                                     op: "accept",
-                                    _lu_: response._lu_[response._lu_.length-1]._lu_
+                                    _lu_: response._lu_[response._lu_.length - 1]._lu_
                                 }));
                             }
                         }
@@ -12839,6 +12842,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                         res(localCopy); //or nothing, if undefined
                         break;
                     case "reject":
+                        alert("Remote did not have the requested document!");
                         break;
                 }
             })
