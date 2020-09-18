@@ -270,7 +270,7 @@
         //make sure all items have an _lu_s property.
         for (let i in data) {
             if (!data[i]._lu_) {
-                data[i]._lu_ = Date.now();
+                data[i]._lu_ = 0; // so as to not overwrite other stuff if initially it was null
             }
         }
 

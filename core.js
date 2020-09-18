@@ -155,6 +155,7 @@ function _polymorph_core() {
                     break;
             }
             appendedElement.style.float = "right";
+            if (settings.placeholder)appendedElement.placeholder=settings.placeholder;
             if (settings.label && settings.type != "button") {
                 let lb = document.createElement("label");
                 lb.innerHTML = settings.label;
