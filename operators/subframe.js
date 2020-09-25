@@ -12,11 +12,10 @@ if (isPhone()) {
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
         this.outerDiv.style.cssText = `width:100%; position:relative`;
-        container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
-
         //////////////////Handle polymorph_core item updates//////////////////
 
         this.refresh = function () {
+            container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
             polymorph_core.rects[this.rectID].refresh();
         }
 

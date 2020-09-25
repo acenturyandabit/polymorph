@@ -7,7 +7,8 @@ polymorph_core.registerOperator("scriptrunner", {
     let defaultSettings = {
         autorun: false,
         reallyAutorun: false,
-        forceCareAbout: ""
+        forceCareAbout: "",
+        processDuringLoad: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -53,7 +54,7 @@ polymorph_core.registerOperator("scriptrunner", {
     let selfLooping = false;
     container.on("*", (d, e) => {
         if (!d) return; // documentCreated &c
-        if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping) {
+        if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping && (!d.loadProcess || this.settings.processDuringLoad)) {
             selfLooping = true;
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
@@ -161,6 +162,13 @@ polymorph_core.registerOperator("scriptrunner", {
             object: this.settings,
             property: "reallyAutorun",
             label: "Confirm autorun on start"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "processDuringLoad",
+            label: "Process events during loading (reduces load performance)"
         }),
         new polymorph_core._option({
             div: this.dialogDiv,

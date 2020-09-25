@@ -94,20 +94,16 @@ if (!isPhone()) {
 
             container.div.appendChild(this.taskListBar);
 
-            Object.defineProperty(this, "renderedItems", {
-                get: () => {
-                    let items = Array.from(this.taskList.querySelectorAll("span[data-id]"));
-                    return items.map((i) => i.dataset.id);
-                }
-            })
+            this.renderedItems = {};
 
             this.renderItem = (id) => {
                 let it = polymorph_core.items[id];
-                let currentItemSpan = this.taskList.querySelector("span[data-id='" + id + "']")
+                let currentItemSpan = this.renderedItems[id];
                 //First check if we should show the item
                 if (!this.itemRelevant(id)) {
                     //if existent, remove
                     if (currentItemSpan) currentItemSpan.remove();
+                    delete this.renderedItems[id];
                     return false;
                 }
                 //Then check if the item already exists; if so then update it
@@ -117,6 +113,7 @@ if (!isPhone()) {
                     currentItemSpan.dataset.id = id;
                     currentItemSpan.children[1].innerText = "X";
                     this.taskList.appendChild(currentItemSpan);
+                    this.renderedItems[id] = currentItemSpan;
                 }
                 for (let i = 0; i < this.settings.propOrder.length; i++) {
                     let p = this.settings.propOrder[i];
@@ -164,7 +161,7 @@ if (!isPhone()) {
                 //then check if i have a direct and unique parent that is in the current set.
                 let uniqueParent = undefined;
                 if (this.settings.linkProperty) {
-                    let ri = this.renderedItems;
+                    let ri = Object.keys(this.renderedItems);
                     for (let _i = 0; _i < ri.length; _i++) {
                         let i = ri[_i];
                         if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
@@ -179,7 +176,7 @@ if (!isPhone()) {
                 }
                 if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
                     try {
-                        this.taskList.querySelector(`span[data-id='${uniqueParent}']>div.subItemBox`).appendChild(currentItemSpan);
+                        Array.from(this.renderedItems[uniqueParent].children).filter(i => i.classList.contains("subItemBox"))[0].appendChild(currentItemSpan);
                     } catch (error) {
                         if (error instanceof DOMException) {
                             //just an infinite loop, all chill
@@ -277,7 +274,7 @@ if (!isPhone()) {
             container.div.addEventListener("keydown", (e) => {
                 if (e.key == "Enter" && (e.getModifierState("Control") || e.getModifierState("Meta")) && e.target.dataset.role) {
                     let id = this.createItem();
-                    container.div.querySelector(`[data-id='${id}'] [data-role='${e.target.dataset.role}']`).focus();
+                    this.renderedItems[id].querySelector(`[data-role='${e.target.dataset.role}']`).focus();
                 }
             })
 
@@ -297,7 +294,10 @@ if (!isPhone()) {
             container.on("updateItem", (d) => {
                 let id = d.id;
                 if (!this.itemRelevant(id)) {
-                    if (container.div.querySelector(`[data-id='${id}']`)) container.div.querySelector(`[data-id='${id}']`).remove();
+                    if (this.renderedItems[id]) {
+                        this.renderedItems[id].remove();
+                        delete this.renderedItems[id];
+                    }
                     return;
                 }
                 if (d.sender == this) return;//dont rerender self
@@ -492,14 +492,15 @@ if (!isPhone()) {
                 if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
                     this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
                     this.renderItem(e.target.parentElement.parentElement.parentElement.dataset.id);
+                    container.fire("dateUpdate")
                 }
             })
 
             this.focusItem = (id) => {
                 //Highlight in purple
-                let _target = this.taskList.querySelector("[data-id='" + id + "']");
+                let _target = this.renderedItems[id];
                 if (_target) {
-                    let spans = this.taskList.querySelectorAll(`span[data-id]`);
+                    let spans = Object.values(this.renderedItems);
                     for (let i = 0; i < spans.length; i++) {
                         spans[i].classList.remove("ffocus");
                     }
@@ -546,7 +547,7 @@ if (!isPhone()) {
                         }
                         // get a list of Items
                         let its = [];
-                        this.taskList.querySelectorAll("[data-id]").forEach(e => {
+                        Object.values(this.renderedItems).forEach(e => {
                             let itm = {
                                 id: e.dataset.id
                             };
@@ -719,7 +720,7 @@ if (!isPhone()) {
 
             let checkImplicitOrdering = () => {
                 if (this.settings.implicitOrder) {
-                    Array.from(this.taskList.querySelectorAll("[data-id]")).map((i, ii) => i[this.settings.filter] = ii);
+                    Object.values(this.renderedItems).map((i, ii) => i[this.settings.filter] = ii);
                 }
             }
 

@@ -13,7 +13,24 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     let linePerformanceCache = {};// in start+end, cache [[x,y],[x,y]]
     me.fromcache = {};
 
+    let whileNotVisibleCache = [];
+    let visChecker = 0;
+
     me.arrangeItem = function (id) {
+        if (!me.container.visible()) {
+            whileNotVisibleCache.push(id);
+            if (!visChecker) visChecker = setInterval(() => {
+                if (me.container.visible()) {
+                    for (let i of whileNotVisibleCache) {
+                        me.arrangeItem(i);
+                    }
+                    whileNotVisibleCache = [];
+                    clearInterval(visChecker);
+                    visChecker = 0;
+                }
+            }, 500);
+            return;
+        }
         let sel = me.rootdiv.getRootNode().getSelection();
         let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
@@ -89,19 +106,19 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             if (!(polymorph_core.items[id][this.settings.textProp])) {
                 polymorph_core.items[id][this.settings.textProp] = "_";
             }
-            if (!polymorph_core.items[id][this.settings.focusExtendProp]){
+            if (!polymorph_core.items[id][this.settings.focusExtendProp]) {
                 polymorph_core.items[id][this.settings.focusExtendProp] = "_";
             }
-            let widthInvalidated=false;
+            let widthInvalidated = false;
             if (tta.innerText != polymorph_core.items[id][this.settings.textProp]) {
                 tta.innerText = polymorph_core.items[id][this.settings.textProp];
-                widthInvalidated=true;
+                widthInvalidated = true;
             }
             if (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]) {
                 ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp];
-                widthInvalidated=true;
+                widthInvalidated = true;
             }
-            if (widthInvalidated){
+            if (widthInvalidated) {
                 dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {

@@ -164,6 +164,8 @@ if (isPhone()) {
                 polymorph_core.containers[oneToFocus].outerDiv.style.display = "block";
                 polymorph_core.currentOperator = oneToFocus;
             }
+            if (this.children)this.children.forEach(i => i.refresh());
+            if (this.containers)this.containers.forEach(i => i.refresh());
         };
 
 
@@ -184,6 +186,7 @@ if (isPhone()) {
         polymorph_core.currentDoc.currentView = id;
         document.querySelector("#rectList").children[0].remove();
         document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
+        polymorph_core.rects[id].refresh();
         return;
     }
     polymorph_core.rects = {};

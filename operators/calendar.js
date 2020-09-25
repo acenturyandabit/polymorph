@@ -31,21 +31,21 @@
                         let tzd = new Date();
                         try {
                             for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
-                                let currentDP=this.settings.dateproperties[dp];
-                                let isNumerical=false;
-                                if (this.settings.dateproperties[dp][0]=='*'){
-                                    isNumerical=true;
-                                    currentDP=this.settings.dateproperties[dp].slice(1);
+                                let currentDP = this.settings.dateproperties[dp];
+                                let isNumerical = false;
+                                if (this.settings.dateproperties[dp][0] == '*') {
+                                    isNumerical = true;
+                                    currentDP = this.settings.dateproperties[dp].slice(1);
                                 }
-                                if (polymorph_core.items[i][currentDP]){
+                                if (polymorph_core.items[i][currentDP]) {
                                     let result;
-                                    if (isNumerical){
-                                        result = [{date:Number(polymorph_core.items[i][currentDP])}];
+                                    if (isNumerical) {
+                                        result = [{ date: Number(polymorph_core.items[i][currentDP]) }];
                                         if (!result) continue;
-                                    }else{
-                                        if (polymorph_core.items[i][currentDP].date){
+                                    } else {
+                                        if (polymorph_core.items[i][currentDP].date) {
                                             result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP].date, start, end);
-                                        }else{
+                                        } else {
                                             continue;
                                         }
                                     }
@@ -261,9 +261,10 @@
             this.dialogUpdateSettings = function () {
                 this.processSettings();
             }
-
+            let calRefreshTimer = 0;
             this.refresh = () => {
-                setTimeout(() => {
+                clearTimeout(calRefreshTimer);
+                calRefreshTimer = setTimeout(() => {
                     try {
                         $(this.rootdiv).fullCalendar('render');
                         $(this.rootdiv).fullCalendar('refetchEvents');
