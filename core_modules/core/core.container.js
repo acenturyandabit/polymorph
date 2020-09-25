@@ -98,18 +98,6 @@ polymorph_core.container = function container(containerID) {
     });
     //#endregion
 
-    this.waitOperatorReady = (type, data) => {
-        let h1 = document.createElement("h1");
-        h1.innerHTML = "Loading operator...";
-        this.innerdiv.appendChild(h1);
-        this.shader.style.display = "none";
-        if (!polymorph_core.operatorLoadCallbacks[type]) polymorph_core.operatorLoadCallbacks[type] = [];
-        polymorph_core.operatorLoadCallbacks[type].push({
-            op: this,
-            data: data
-        });
-    };
-
     //bulkhead for item selection.
     this.bulkhead = document.createElement("div");
     this.bulkhead.style.cssText = `display: none; background: rgba(0,0,0,0.5); width: 100%; height: 100%; position: absolute; zIndex: 100`
@@ -128,6 +116,7 @@ polymorph_core.container = function container(containerID) {
     }
 
     this.refresh = function () {
+        if (!this.operator) this.loadOperator();
         if (this.operator && this.operator.refresh) this.operator.refresh();
     }
 
@@ -285,6 +274,48 @@ polymorph_core.container = function container(containerID) {
         return this.settings;// doesn't hurt, helps with subframing too
     };
 
+    this.waitOperatorReady = (type, data) => {
+        if (this.innerdiv.children.length == 0) {
+            let h1 = document.createElement("h1");
+            h1.innerHTML = "Loading operator...";
+            this.innerdiv.appendChild(h1);
+        }
+        this.shader.style.display = "none";
+        if (!polymorph_core.operatorLoadCallbacks[type]) polymorph_core.operatorLoadCallbacks[type] = [];
+        polymorph_core.operatorLoadCallbacks[type].push({
+            op: this,
+            data: data
+        });
+    };
+
+    this.loadOperator = () => {
+        if (this.operator) return;
+        //parse options and decide what to do re: a div
+        if (polymorph_core.operators[this.settings.t]) {
+            let options = polymorph_core.operators[this.settings.t].options;
+            //clear the shadow and the div
+            if (options.noShadow) {
+                this.div = this.innerdiv;
+            } else {
+                this.div = this.shadow;
+            }
+            if (options.outerScroll) {
+                this.outerDiv.style.overflowY = "auto";
+            } else {
+                this.outerDiv.style.overflowY = "hidden";
+            }
+            try {
+                this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
+                this.operator.container = this;
+            } catch (e) {
+                console.log(e);
+            }
+        } else {
+            // the operator doesnt exist yet
+            this.waitOperatorReady(this.settings.t, this.settings._data);
+        }
+    }
+
     //Attach myself to a rect
     //do this early so that subframe-eseque operators in phone version have something to hook onto
     if (this.settings.p && polymorph_core.items[this.settings.p] && polymorph_core.items[this.settings.p]._rd) {
@@ -294,36 +325,13 @@ polymorph_core.container = function container(containerID) {
         } else {
             if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
             polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+            // also don't yet load the operator?
         }
     } else {
         console.log("Could not find rect for container " + containerID);
         return;
     }
 
-
-    //parse options and decide what to do re: a div
-    if (polymorph_core.operators[this.settings.t]) {
-        let options = polymorph_core.operators[this.settings.t].options;
-        //clear the shadow and the div
-        if (options.noShadow) {
-            this.div = this.innerdiv;
-        } else {
-            this.div = this.shadow;
-        }
-        if (options.outerScroll) {
-            this.outerDiv.style.overflowY = "auto";
-        } else {
-            this.outerDiv.style.overflowY = "hidden";
-        }
-        try {
-            this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
-            this.operator.container = this;
-        } catch (e) {
-            console.log(e);
-        }
-    } else {
-        this.waitOperatorReady(this.settings.t, this.settings._data);
-    }
     //#endregion
 
     this.remove = () => {
