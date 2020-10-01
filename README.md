@@ -17,7 +17,7 @@ Let me know what you use and I'll emulate it, and put in that thing that you've 
 ### I want to get started building an organisation app and google led me here.
 I'd love for you to join the project! I know coding your own from scratch is fun but if nothing else, give Polymorph a run for its money. You can access it here, on github: [acenturyandabit.github.io/polymorph/](https://acenturyandabit.github.io/polymorph/)
 
-### I want to help on a new project to get my foot in the door to the software industry.
+### I want to help with a new project to get my foot in the door to the software industry.
 The issues page is waiting for you! Most of the tasks are optimisation tasks - trails from features i've implemented but haven't quite cleaned up yet. If you want to make a new feature or anything else, you can get in touch via email or just go for it! It's open source, it's your project now :)
 
 ### Wow, I think an interface designed on the basis that you should fill your screen with functional components is great!
