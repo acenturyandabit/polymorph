@@ -24,6 +24,6 @@ The issues page is waiting for you! Most of the tasks are optimisation tasks - t
 I know right? How come noone else has thought of this yet?
 
 ## Documentation
-I uh, should get to that. There are a trove of examples in /operators/, including `template.js` and `referenc.js`, but they may not be up to date. To really see how I get around polymorph as a developer, check out itemlist.js. If you have any recommendations, send me an email :3
+I uh, should get to that. There is a trove of examples in /operators/, including `template.js` and `referenc.js`, but they may not be up to date. To really see how I get around polymorph as a developer, check out itemlist.js. If you have any recommendations, send me an email :3
 
 Happy creating!
