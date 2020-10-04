@@ -859,7 +859,7 @@ polymorph_core.on("titleButtonsReady", () => {
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url == window.location.href && event.data.uuid != instance_uuid) {
+        if (event.data.url.replace("#","") == window.location.href.replace("#","") && event.data.uuid != instance_uuid) {
             if (is_challenger) {
                 alt_alive_warning.style.display = "grid";
                 // seppuku
@@ -3409,7 +3409,8 @@ if (!isPhone()) {
 
 
             // because during initial load, this needs to be called to actually show anything.
-            if (containerid == this.settings.s) this.switchOperator(this.settings.s);
+            // refresh does this on initial load, if we do it here then container wont be connected to dom on load causing issues
+            //if (containerid == this.settings.s) this.switchOperator(this.settings.s);
         }
 
         //Callback for tab clicks to switch between operators.
@@ -4644,6 +4645,7 @@ if (!isPhone()){
                     if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = polymorph_core.operators[b.dataset.underOperatorName].options.displayName || b.dataset.underOperatorName;
                     //force the parent rect to update my name
                     polymorph_core.rects[container.settings.p].tieContainer(container.id);
+                    polymorph_core.rects[container.settings.p].refresh(); // kick it so the container actually loads its operator
                     container.fire("updateItem", {
                         id: this.container.id,
                         sender: this
@@ -5087,7 +5089,7 @@ function __itemlist_searchsort() {
 
         }
 
-        let items = this.renderedItems;
+        let items = Object.keys(this.renderedItems);
         let toShowItems = [];
         items.forEach((v) => {
             let it = polymorph_core.items[v];
@@ -11641,7 +11643,8 @@ polymorph_core.registerOperator("welcome", {
         <div style="display: flex; flex-direction:column; flex: 1 1 50%">
             <div>
                 <h2>Start</h2>
-                <a class="newDocButton" href="#">New document</a>
+                <a class="newDocButton" href="#">New document</a> <br><br>
+                <a class="newDocIDButton" href="#">New document with specified id...</a>
                 <br>
                 <h3>Recent documents:</h3>
                 <div class="recentDocuments">
@@ -11666,12 +11669,14 @@ polymorph_core.registerOperator("welcome", {
                     <li><a>A reconfigurable UI</a></li>
                     <li><a>A collaboration tool</a></li>-->
                 </ul>
+                <!--
                 <h2>Examples</h2>
                 <span>Want to see what polymorph is capable of? Check out some examples:</span>
                 <ul class="templateList">
                     <li><a href="permalink/techtree">A technology tree of the human race</a></li>
                     <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
                 </ul>
+                -->
             </div>
             <div>
                 <h2>Customise</h2>
@@ -11697,6 +11702,11 @@ polymorph_core.registerOperator("welcome", {
             polymorph_core.integrateData(RTP, "TEMPLATER");
             polymorph_core.switchView("default_container");
         }
+    })
+
+    this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
+        let newID = window.prompt("Enter the new document ID below.");
+        window.location.href=window.location.origin + window.location.pathname+"?doc="+newID;
     })
 
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
@@ -12446,6 +12456,155 @@ polymorph_core.registerOperator("scriptrunner", {
 
 });;
 
+polymorph_core.registerOperator("timer", {
+    displayName: "Timer",
+    description: "A timer.",
+    section: "Utilities"
+}, function (container) {
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
+        mode: "standalone",
+        focusedItem: undefined,
+        started: false,
+        startLock: true,
+        timerTotalProp: "timer",
+        timeString: "10:00"
+    };
+
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
+    //Add content-independent HTML here.
+    this.rootdiv.innerHTML = `
+        <p><input></p>
+        <p id="remaining_time">00:00</p>
+        <button>Start</button>
+        <style>
+        p#remaining_time{
+            color:white;
+        }
+        </style>
+    `;
+    this.rootdiv.children[2].addEventListener("click", () => {
+        this.settings.started = !this.settings.started;
+        if (this.settings.started) {
+            this.rootdiv.children[2].innerHTML = "Stop";
+            let timeString = this.rootdiv.querySelector("input").value;
+            this.startTimer(timeString);
+        }
+        else this.rootdiv.children[2].innerHTML = "Start";
+
+    })
+
+    this.rootdiv.querySelector("input").addEventListener("input", () => {
+        this.settings.timeString = this.rootdiv.querySelector("input").value;
+    });
+    this.rootdiv.querySelector("input").value = this.settings.timeString;
+
+    container.on("focusItem,updateItem", (d) => {
+        if (this.settings.mode == "focus" && !(this.settings.startLock && this.settings.started)) {
+            this.settings.focusedItem = d.id;
+            let timeString = polymorph_core.items[this.settings.focusedItem][this.settings.timerTotalProp];
+            this.rootdiv.querySelector("input").value = timeString;
+        }
+    })
+    this.startTimer = (timeString) => {
+        let ctimeLeft = intervalParser.extractTime(timeString);
+        if (ctimeLeft) {
+            this.settings.endTime = Date.now() + ctimeLeft.t;
+            this.settings.started = true;
+        }
+    }
+
+    this.notify = (txt, ask) => {
+        quickNotify(txt, ask, () => {
+            this.settings.pushnotifs = false;
+        })
+    }
+
+    let doTimer = () => {
+        let remaining_time;
+        if (this.settings.started) {
+            remaining_time = this.settings.endTime - Date.now();
+            if (remaining_time <= 0) {
+                //park at 0 so we don't end up with the time showing as :59
+                remaining_time = 0;
+                this.notify("Time's up!");
+                this.settings.started = false;
+                if (this.settings.loop) {
+                    let timeString = this.rootdiv.querySelector("input").value;
+                    this.startTimer(timeString);
+                }
+            }
+        } else {
+            remaining_time = 0;
+        }
+        let remainingTimeDate = new Date(Number(remaining_time) + (new Date(Number(remaining_time))).getTimezoneOffset() * 60 * 1000);
+        let remainingTimeS = remainingTimeDate.toTimeString().split(" ")[0];
+        if (remainingTimeS != this.rootdiv.children[1].innerText) this.rootdiv.children[1].innerText = remainingTimeS;
+        setTimeout(doTimer, 100);//this rather than setInterval because then it'll nerf itself if you delete the operator ... well actually it wont but eh
+    }
+    doTimer();
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
+    //select
+    let opts = [
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "select",
+            object: this.settings,
+            property: "mode",
+            source: ["focus", "standalone"],
+            label: "Operation mode"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "timerTotalProp",
+            label: "Focus property"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "startLock",
+            label: "Maintain focused item if timer started"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "pushnotifs",
+            label: "Show notifications?"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "loop",
+            label: "Loop timer indefinitely?"
+        })
+    ];
+
+    this.showDialog = function () {
+        // update your dialog elements with your settings
+        opts.forEach(i => i.load());
+    }
+    this.dialogUpdateSettings = function () {
+        if (this.settings.pushnotifs) {
+            this.notify("Notifications enabled!", true);
+        }
+        if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+        else this.rootdiv.children[2].innerHTML = "Start";
+    }
+    if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+    else this.rootdiv.children[2].innerHTML = "Start";
+
+});;
+
 //v0. works. full credits to Yair Levy on S/O.
 
 function saveJSON(data, filename) {
@@ -12804,11 +12963,12 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             switch (response.op) {
                 case "accept":
                     // send over the data
-                    let dataToSend = timekeys.filter(i => i._lu_ >= response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
+                    let dataToSend = timekeys.filter(i => i._lu_ > response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
                     ws.send(JSON.stringify({
                         op: "transfer",
                         data: dataToSend
                     }));
+                    console.log(`sent ${dataToSend.length} / ${timekeys.length} items`)
                     break;
                 case "reject":
                     ws.close();
