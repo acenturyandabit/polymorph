@@ -59,11 +59,12 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             switch (response.op) {
                 case "accept":
                     // send over the data
-                    let dataToSend = timekeys.filter(i => i._lu_ >= response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
+                    let dataToSend = timekeys.filter(i => i._lu_ > response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
                     ws.send(JSON.stringify({
                         op: "transfer",
                         data: dataToSend
                     }));
+                    console.log(`sent ${dataToSend.length} / ${timekeys.length} items`)
                     break;
                 case "reject":
                     ws.close();

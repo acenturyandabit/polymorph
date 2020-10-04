@@ -257,7 +257,8 @@ if (!isPhone()) {
 
 
             // because during initial load, this needs to be called to actually show anything.
-            if (containerid == this.settings.s) this.switchOperator(this.settings.s);
+            // refresh does this on initial load, if we do it here then container wont be connected to dom on load causing issues
+            //if (containerid == this.settings.s) this.switchOperator(this.settings.s);
         }
 
         //Callback for tab clicks to switch between operators.

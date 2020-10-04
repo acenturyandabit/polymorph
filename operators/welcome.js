@@ -28,7 +28,8 @@ polymorph_core.registerOperator("welcome", {
         <div style="display: flex; flex-direction:column; flex: 1 1 50%">
             <div>
                 <h2>Start</h2>
-                <a class="newDocButton" href="#">New document</a>
+                <a class="newDocButton" href="#">New document</a> <br><br>
+                <a class="newDocIDButton" href="#">New document with specified id...</a>
                 <br>
                 <h3>Recent documents:</h3>
                 <div class="recentDocuments">
@@ -53,12 +54,14 @@ polymorph_core.registerOperator("welcome", {
                     <li><a>A reconfigurable UI</a></li>
                     <li><a>A collaboration tool</a></li>-->
                 </ul>
+                <!--
                 <h2>Examples</h2>
                 <span>Want to see what polymorph is capable of? Check out some examples:</span>
                 <ul class="templateList">
                     <li><a href="permalink/techtree">A technology tree of the human race</a></li>
                     <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
                 </ul>
+                -->
             </div>
             <div>
                 <h2>Customise</h2>
@@ -84,6 +87,11 @@ polymorph_core.registerOperator("welcome", {
             polymorph_core.integrateData(RTP, "TEMPLATER");
             polymorph_core.switchView("default_container");
         }
+    })
+
+    this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
+        let newID = window.prompt("Enter the new document ID below.");
+        window.location.href=window.location.origin + window.location.pathname+"?doc="+newID;
     })
 
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
