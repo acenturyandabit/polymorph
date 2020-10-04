@@ -1,6 +1,7 @@
 polymorph_core.registerOperator("timer", {
     displayName: "Timer",
-    description: "A timer."
+    description: "A timer.",
+    section: "Utilities"
 }, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
@@ -20,13 +21,21 @@ polymorph_core.registerOperator("timer", {
         <p><input></p>
         <p id="remaining_time">00:00</p>
         <button>Start</button>
+        <style>
+        p#remaining_time{
+            color:white;
+        }
+        </style>
     `;
     this.rootdiv.children[2].addEventListener("click", () => {
         this.settings.started = !this.settings.started;
-        if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+        if (this.settings.started) {
+            this.rootdiv.children[2].innerHTML = "Stop";
+            let timeString = this.rootdiv.querySelector("input").value;
+            this.startTimer(timeString);
+        }
         else this.rootdiv.children[2].innerHTML = "Start";
-        let timeString = this.rootdiv.querySelector("input").value;
-        this.startTimer(timeString);
+
     })
 
     this.rootdiv.querySelector("input").addEventListener("input", () => {
@@ -43,7 +52,10 @@ polymorph_core.registerOperator("timer", {
     })
     this.startTimer = (timeString) => {
         let ctimeLeft = intervalParser.extractTime(timeString);
-        if (ctimeLeft) this.settings.remainingTime = ctimeLeft.t;
+        if (ctimeLeft) {
+            this.settings.endTime = Date.now() + ctimeLeft.t;
+            this.settings.started = true;
+        }
     }
 
     this.notify = (txt, ask) => {
@@ -53,14 +65,12 @@ polymorph_core.registerOperator("timer", {
     }
 
     let doTimer = () => {
+        let remaining_time;
         if (this.settings.started) {
-            if (this.settings.remainingTime > 100) {
-                this.settings.remainingTime -= 100;
-            } else if (this.settings.remainingTime > 1) {
-                this.settings.remainingTime = 1;
-            } else if (this.settings.remainingTime == 1) {
+            remaining_time = this.settings.endTime - Date.now();
+            if (remaining_time <= 0) {
                 //park at 0 so we don't end up with the time showing as :59
-                this.settings.remainingTime = 0;
+                remaining_time = 0;
                 this.notify("Time's up!");
                 this.settings.started = false;
                 if (this.settings.loop) {
@@ -68,10 +78,13 @@ polymorph_core.registerOperator("timer", {
                     this.startTimer(timeString);
                 }
             }
+        } else {
+            remaining_time = 0;
         }
-        let remainingTimeDate = new Date(Number(this.settings.remainingTime) + (new Date(Number(this.settings.remainingTime))).getTimezoneOffset() * 60 * 1000);
-        this.rootdiv.children[1].innerText = remainingTimeDate.toTimeString().split(" ")[0];
-        setTimeout(doTimer, 100);//this rather than setInterval because then it'll nerf itself if you delete the operator
+        let remainingTimeDate = new Date(Number(remaining_time) + (new Date(Number(remaining_time))).getTimezoneOffset() * 60 * 1000);
+        let remainingTimeS = remainingTimeDate.toTimeString().split(" ")[0];
+        if (remainingTimeS != this.rootdiv.children[1].innerText) this.rootdiv.children[1].innerText = remainingTimeS;
+        setTimeout(doTimer, 100);//this rather than setInterval because then it'll nerf itself if you delete the operator ... well actually it wont but eh
     }
     doTimer();
 
@@ -100,7 +113,7 @@ polymorph_core.registerOperator("timer", {
             type: "bool",
             object: this.settings,
             property: "startLock",
-            label: "Lock focus on start"
+            label: "Maintain focused item if timer started"
         }),
         new polymorph_core._option({
             div: this.dialogDiv,
@@ -129,6 +142,7 @@ polymorph_core.registerOperator("timer", {
         if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
         else this.rootdiv.children[2].innerHTML = "Start";
     }
-    this.dialogUpdateSettings();
+    if (this.settings.started) this.rootdiv.children[2].innerHTML = "Stop";
+    else this.rootdiv.children[2].innerHTML = "Start";
 
 });
