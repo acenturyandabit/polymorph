@@ -63,6 +63,7 @@
                     if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = polymorph_core.operators[b.dataset.underOperatorName].options.displayName || b.dataset.underOperatorName;
                     //force the parent rect to update my name
                     polymorph_core.rects[container.settings.p].tieContainer(container.id);
+                    polymorph_core.rects[container.settings.p].refresh(); // kick it so the container actually loads its operator
                     container.fire("updateItem", {
                         id: this.container.id,
                         sender: this
