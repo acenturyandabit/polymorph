@@ -32,7 +32,7 @@
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url == window.location.href && event.data.uuid != instance_uuid) {
+        if (event.data.url.replace("#","") == window.location.href.replace("#","") && event.data.uuid != instance_uuid) {
             if (is_challenger) {
                 alt_alive_warning.style.display = "grid";
                 // seppuku
