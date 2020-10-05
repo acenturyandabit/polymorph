@@ -20,9 +20,6 @@ I'd love for you to join the project! I know coding your own from scratch is fun
 ### I want to help on a new project to get my foot in the door to the software industry.
 The issues page is waiting for you! Most of the tasks are optimisation tasks - trails from features i've implemented but haven't quite cleaned up yet. If you want to make a new feature or anything else, you can get in touch via email or just go for it! It's open source, it's your project now :)
 
-### Wow, I think an interface designed on the basis that you should fill your screen with functional components is great!
-I know right? How come noone else has thought of this yet?
-
 ## Documentation
 I uh, should get to that. There are a trove of examples in /operators/, including `template.js` and `referenc.js`, but they may not be up to date. To really see how I get around polymorph as a developer, check out itemlist.js. If you have any recommendations, send me an email :3
 
