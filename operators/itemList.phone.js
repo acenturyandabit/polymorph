@@ -172,7 +172,9 @@ if (isPhone()) {
             clearTimeout(stillHoldingTimer);
         })
 
+        __itemlist_searchsort.apply(this);
         this.refresh = function() {
+            this.sortItems();
             // This is called when the parent container is resized.
         }
 
@@ -201,7 +203,5 @@ if (isPhone()) {
         this.dialogUpdateSettings = function() {
             // This is called when your dialog is closed. Use it to update your container!
         }
-        __itemlist_searchsort.apply(this);
-        this.sortItems();
     });
 }
