@@ -3,10 +3,6 @@ let { execSync } = require("child_process");
 
 
 (async() => {
-    if (process.argv.length < 3) {
-        console.log("PLEASE PROVIDE A COMMIT MESSAGE");
-        return;
-    }
     // is the first argument after build, ideally
     fs.copyFileSync("index.html", "index_deploy.html");
     execSync("git add .");
