@@ -182,7 +182,59 @@ if (isPhone()) {
 
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
-        this.dialogDiv.innerHTML = ``;
+        this.dialogDiv.innerHTML = `
+        <p>Columns to show</p>
+        <div class="proplist"></div>
+        <p>You can pick more from the list below, or add a new property! </p>
+        <span>Choose existing property:</span><select class="_prop">
+        </select><br>
+        <input class="adpt" placeholder="Or type a new property..."><br>
+        <button class="adbt">Add</button>
+        `;
+
+        this.proplist = this.dialogDiv.querySelector(".proplist");
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("[name='sortie']")) {
+                this.settings.implicitOrder = false;
+                options.implicitOrder.load();
+            }
+        })
+
+        this.dialogUpdateSettings = () => {
+            // pull settings and update when your dialog is closed.
+            this.sortItems();
+            container.fire("updateItem", { id: this.container.id });
+        };
+        //adding new buttons
+        this.dialogDiv.querySelector(".adbt").addEventListener("click",
+            () => {
+                if (this.dialogDiv.querySelector(".adpt").value != "") {
+                    this.settings.phoneProperties[this.dialogDiv.querySelector(".adpt").value] = 'text';
+                    this.dialogDiv.querySelector(".adpt").value = "";
+                } else {
+                    this.settings.phoneProperties[this.dialogDiv.querySelector("select._prop").value] = 'text';
+                }
+                this.showDialog();
+            }
+        )
+
+        //Handle select's in proplist
+        this.proplist.addEventListener('change', (e) => {
+            if (e.target.matches("select")) this.settings.phoneProperties[e.target.dataset.role] = e.target.value;
+        })
+        this.proplist.addEventListener('click', (e) => {
+            if (e.target.matches("[data-krole]")) {
+                delete this.settings.phoneProperties[e.target.dataset.krole];
+                this.showDialog();
+            }
+        })
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("input[type='radio']")) {
+                this.settings.sortby = e.target.dataset.ssrole;
+            }
+        })
+
+        this.opList = this.dialogDiv.querySelector("select._prop");
 
         let options = {
             filter: new polymorph_core._option({
@@ -194,9 +246,43 @@ if (isPhone()) {
             })
         }
         this.showDialog = () => {
+
+            //Get all available properties, by looping through all elements (?)
+            this.opList.innerHTML = "";
+            let props = {};
+            for (let i in polymorph_core.items) {
+                for (let j in polymorph_core.items[i]) {
+                    if (typeof polymorph_core.items[i][j] != "function") props[j] = true;
+                }
+            }
+            for (let prop in props) {
+                if (!this.settings.phoneProperties[prop]) {
+                    let opt = document.createElement("option");
+                    opt.innerText = prop;
+                    opt.value = prop;
+                    this.opList.appendChild(opt);
+                }
+            }
+
             //enable adding new items checkbox
             for (i in options) {
                 options[i].load();
+            }
+
+            // Now fill in the ones which we're currently monitoring.
+            this.proplist.innerHTML = "";
+            for (let prop in this.settings.phoneProperties) {
+                let pspan = document.createElement("p");
+                pspan.innerHTML = `<span>` + prop + `</span>
+            <select data-role=` + prop + `>
+                <option value="text">Text</option>
+                <option value="date">Date</option>
+                <option value="object">Object</option>
+                <option value="number">Number</option>
+            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
+                pspan.querySelector("select").value = this.settings.phoneProperties[prop];
+                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
+                this.proplist.appendChild(pspan);
             }
         }
 
