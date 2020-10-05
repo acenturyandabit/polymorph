@@ -136,7 +136,6 @@ if (isPhone()) {
                 polymorph_core.containers[id].outerDiv.dataset.container = id;
                 polymorph_core.containers[id].outerDiv.style.display = "none";
                 document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
-                this.switchOperator(id);
             }
         }
 
