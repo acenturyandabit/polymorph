@@ -98,11 +98,17 @@ if (isPhone()) {
         this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
         //when resetting document it expects an outerdiv. remove this instead.
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
-        this.tieRect = function(id) {
+        this.tiedToMe = [];
+        this.tieRect = function(id) { //tie a child rect.
             while (polymorph_core.rects[id].listContainer.children.length > 1) {
                 this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
             }
             polymorph_core.rects[id].listContainer = this.listContainer;
+            this.tiedToMe.push(id);
+            polymorph_core.rects[id].adjustTies();
+        }
+        this.adjustTies = () => {
+            this.tiedToMe.forEach(i => this.tieRect(i));
         }
         this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
 
