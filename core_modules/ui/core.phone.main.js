@@ -125,7 +125,7 @@ if (isPhone()) {
                 <h3>Operator settings</h3>`;
                 polymorph_core.settingsOperator.dialogDiv.style.maxWidth = "50vw";
                 polymorph_core.settingsDiv.appendChild(polymorph_core.settingsOperator.dialogDiv);
-                polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.settings.tabbarName;
+                polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.container.settings.tabbarName;
                 //add remapping by the operator
                 polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
                 polymorph_core.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
