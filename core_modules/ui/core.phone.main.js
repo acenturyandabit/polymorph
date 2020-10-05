@@ -132,10 +132,10 @@ if (isPhone()) {
 
                 polymorph_core.dialog.prompt(polymorph_core.settingsDiv, (d) => {
                     polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
-                    document.querySelector("#oplists").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
+                    document.querySelector("#rectList").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
                     if (polymorph_core.settingsOperator.dialogUpdateSettings) polymorph_core.settingsOperator.dialogUpdateSettings();
                     polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
-                    polymorph_core.fire("updateItem", { id: rectID });
+                    polymorph_core.fire("updateItem", { id: polymorph_core.currentOperator });
                 })
             }
         });
