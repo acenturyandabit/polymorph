@@ -89,20 +89,20 @@ if (isPhone()) {
                 -->
             </div>
             `;
-        let taskList = this.rootdiv.querySelector(".taskList");
+        this.taskList = this.rootdiv.querySelector(".taskList");
         let backDiv = this.rootdiv.querySelector(".backDiv");
         this.rootdiv.querySelector(".donebutton").addEventListener("click", () => {
-            taskList.style.display = "block";
+            this.taskList.style.display = "block";
             backDiv.style.display = "none";
         });
         //this is called when an item is updated (e.g. by another container)
         container.on("updateItem", (d) => {
             let id = d.id;
             if (this.itemRelevant(id)) {
-                let obj = taskList.querySelector(`[data-id='${id}']`);
+                let obj = this.taskList.querySelector(`[data-id='${id}']`);
                 if (!obj) {
                     obj = htmlwrap(`<p data-id="${id}"></p>`);
-                    taskList.appendChild(obj);
+                    this.taskList.appendChild(obj);
                 }
                 obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
                 //render the item, if we care about it.
@@ -111,7 +111,7 @@ if (isPhone()) {
         let editingID = undefined;
         let showBackDiv = (id) => {
             editingID = id;
-            taskList.style.display = "none";
+            this.taskList.style.display = "none";
             let props = Array.from(backDiv.querySelectorAll("[data-prop]")).reduce((p, i) => { p[i.dataset.prop] = { div: i }; return p }, {});
             for (let i in this.settings.phoneProperties) {
                 if (props[i]) {
@@ -139,7 +139,7 @@ if (isPhone()) {
             container.fire("updateItem", { id: editingID });
         })
 
-        taskList.querySelector(".plusButton").addEventListener("click", () => {
+        this.taskList.querySelector(".plusButton").addEventListener("click", () => {
             //pseudo create a new item
             let pseudoItem = {};
             pseudoItem[this.settings.filter] = true;
@@ -148,14 +148,14 @@ if (isPhone()) {
             container.fire("updateItem", { id: show_id });
         })
 
-        taskList.addEventListener("click", (e) => {
+        this.taskList.addEventListener("click", (e) => {
             if (e.target.dataset.id) {
                 showBackDiv(e.target.dataset.id);
             }
         })
 
         let stillHoldingTimer = 0;
-        taskList.addEventListener("touchstart", (e) => {
+        this.taskList.addEventListener("touchstart", (e) => {
             if (e.target.dataset.id) {
                 let targ = e.target;
                 stillHoldingTimer = setTimeout(() => {
@@ -168,7 +168,7 @@ if (isPhone()) {
             }
         })
 
-        taskList.addEventListener("touchend", (e) => {
+        this.taskList.addEventListener("touchend", (e) => {
             clearTimeout(stillHoldingTimer);
         })
 
