@@ -2970,7 +2970,7 @@ function isPhone() {
     return false;
 }
 if (isPhone()) {
-    polymorph_core.newRect = function (parent) {
+    polymorph_core.newRect = function(parent) {
         let ID = polymorph_core.insertItem({
             _rd: {
                 p: parent,
@@ -2983,8 +2983,8 @@ if (isPhone()) {
         return ID;
     }
 
-    polymorph_core.rect = function (rectID) {
-        this.id = rectID;//might be helpful
+    polymorph_core.rect = function(rectID) {
+        this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
         Object.defineProperty(this, "settings", {
             get: () => {
@@ -3057,8 +3057,8 @@ if (isPhone()) {
         //when resetting document it expects an outerdiv. remove this instead.
         this.outerDiv = this.listContainer;
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
-        this.tieRect = function (id) {
-            while (polymorph_core.rects[id].listContainer.length){
+        this.tieRect = function(id) {
+            while (polymorph_core.rects[id].listContainer.children.length) {
                 this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
             }
             polymorph_core.rects[id].listContainer = this.listContainer;
@@ -3082,7 +3082,7 @@ if (isPhone()) {
                 ts.dataset.containerid = id;
                 ts.addEventListener("click", (e) => {
                     this.switchOperator(id);
-                    e.stopPropagation();//so that the lower level divs dont get triggered
+                    e.stopPropagation(); //so that the lower level divs dont get triggered
                 })
                 polymorph_core.containers[id].outerDiv.dataset.container = id;
                 polymorph_core.containers[id].outerDiv.style.display = "none";
@@ -3125,8 +3125,8 @@ if (isPhone()) {
                 polymorph_core.containers[oneToFocus].outerDiv.style.display = "block";
                 polymorph_core.currentOperator = oneToFocus;
             }
-            if (this.children)this.children.forEach(i => i.refresh());
-            if (this.containers)this.containers.forEach(i => i.refresh());
+            if (this.children) this.children.forEach(i => i.refresh());
+            if (this.containers) this.containers.forEach(i => i.refresh());
         };
 
 
@@ -3140,7 +3140,7 @@ if (isPhone()) {
             this.switchOperator(newContainerID);
         })
 
-        this.toSaveData = () => { };
+        this.toSaveData = () => {};
     };
 
     polymorph_core.switchView = (id) => {
@@ -8209,16 +8209,16 @@ if (isPhone()) {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
         section: "Layout"
-    }, function (container) {
+    }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
-        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
         this.outerDiv.style.cssText = `width:100%; position:relative`;
         //////////////////Handle polymorph_core item updates//////////////////
 
-        this.refresh = function () {
+        this.refresh = function() {
             container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
             polymorph_core.rects[this.rectID].refresh();
         }
@@ -8230,9 +8230,9 @@ if (isPhone()) {
             }
         })
 
-        this.tieRect = function (rectID) {
+        this.tieRect = function(rectID) {
             this.rectID = rectID;
-            this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+            this.outerDiv.appendChild(polymorph_core.rects[rectID].listContainer);
             polymorph_core.rects[rectID].refresh();
         }
 
@@ -8274,10 +8274,10 @@ if (isPhone()) {
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = `Nothing to show yet :3`;
-        this.showDialog = function () {
+        this.showDialog = function() {
             // update your dialog elements with your settings
         }
-        this.dialogUpdateSettings = function () {
+        this.dialogUpdateSettings = function() {
             // pull settings and update when your dialog is closed.
         }
 
@@ -8290,9 +8290,9 @@ if (isPhone()) {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
         section: "Layout"
-    }, function (container) {
+    }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
-        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
@@ -8301,7 +8301,7 @@ if (isPhone()) {
 
         //////////////////Handle polymorph_core item updates//////////////////
 
-        this.refresh = function () {
+        this.refresh = function() {
             polymorph_core.rects[this.rectID].refresh();
         }
 
@@ -8312,7 +8312,7 @@ if (isPhone()) {
             }
         })
 
-        this.tieRect = function (rectID) {
+        this.tieRect = function(rectID) {
             this.rectID = rectID;
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
             polymorph_core.rects[rectID].refresh();
@@ -8356,10 +8356,10 @@ if (isPhone()) {
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = `Nothing to show yet :3`;
-        this.showDialog = function () {
+        this.showDialog = function() {
             // update your dialog elements with your settings
         }
-        this.dialogUpdateSettings = function () {
+        this.dialogUpdateSettings = function() {
             // pull settings and update when your dialog is closed.
         }
 
@@ -8367,10 +8367,7 @@ if (isPhone()) {
             polymorph_core.rects[this.rectID].remove();
         }
     });
-}
-
-
-;
+};
 
 polymorph_core.registerOperator("deltaLogger", {
     displayName: "Delta Logger",
