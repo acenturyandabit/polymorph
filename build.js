@@ -2,17 +2,17 @@ let fs = require("fs");
 let { execSync } = require("child_process");
 
 
-(async () => {
-    if (process.argv.length<3){
+(async() => {
+    if (process.argv.length < 3) {
         console.log("PLEASE PROVIDE A COMMIT MESSAGE");
         return;
     }
     // is the first argument after build, ideally
-    fs.copyFileSync("index.html","index_deploy.html");
+    fs.copyFileSync("index.html", "index_deploy.html");
     execSync("git add .");
-    try{
-        execSync(`git commit -m "${process.argv[2]}"`);
-    }catch(err){
+    try {
+        execSync(`git commit -m "build commit @ ${Date.now()}"`);
+    } catch (err) {
         console.log("no changes to commit, hope this looks right");
     }
     execSync("git checkout master");
@@ -45,7 +45,7 @@ let { execSync } = require("child_process");
     //concatenator
     fs.writeFileSync("cat.js", fs.readFileSync(files[0]));
     for (let i = 1; i < files.length; i++) {
-        fs.appendFileSync("cat.js", ";\n\n");  // #safe
+        fs.appendFileSync("cat.js", ";\n\n"); // #safe
         fs.appendFileSync("cat.js", fs.readFileSync(files[i]));
     }
 
@@ -67,14 +67,15 @@ let { execSync } = require("child_process");
 
     console.log("done minifying.");
     */
-    
+    //force copy index from develop branch before this op to prevent overwriting temp with old cat in case index hasnt changed
+    execSync("git checkout develop index.html")
     execSync("del index-temp.html");
     execSync("rename index.html index-temp.html");
     execSync("copy index_deploy.html index.html");
     execSync('git add .');
-    try{
-        execSync(`git commit -m "${process.argv[2]}"`);
-    }catch (e){
+    try {
+        execSync(`git commit -m "build commit @ ${Date.now()}"`);
+    } catch (e) {
         console.log("no changes were made to index");
     }
     execSync('git push');
