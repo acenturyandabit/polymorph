@@ -12927,6 +12927,14 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             property: "id",
             label: "ID to save document as",
             afterInput: polymorph_core.saveUserData
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type:"button",
+            label:"Clear local copy",
+            fn:()=>{
+                localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, {});
+            }
         })
     ]
     if (!this.settings.data.id) this.settings.data.id = polymorph_core.currentDocID;
