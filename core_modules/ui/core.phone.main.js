@@ -30,7 +30,7 @@ if (isPhone()) {
         </div>`));
 
         //oplists
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
         <style>
         [data-containerid]{
@@ -79,7 +79,7 @@ if (isPhone()) {
         document.body.style.display = "flex";
         document.body.style.height = "100%";
         document.body.style.flexDirection = "column";
-        polymorph_core.toggleMenu = function (visible) {
+        polymorph_core.toggleMenu = function(visible) {
             if (visible == undefined) {
                 visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
             }
@@ -97,7 +97,7 @@ if (isPhone()) {
         });
         document.body.querySelector("#menulist").parentElement.addEventListener("click", (e) => {
             if (e.currentTarget == e.target) {
-                polymorph_core.toggleMenu(false);//hide on direct taps
+                polymorph_core.toggleMenu(false); //hide on direct taps
             }
         });
 
@@ -137,20 +137,19 @@ if (isPhone()) {
                     polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
                     polymorph_core.fire("updateItem", { id: rectID });
                 })
-                polymorph_core.dialog.register(polymorph_core.currentOperator);
             }
         });
     });
     polymorph_core.on("documentCreated", (id) => {
         if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
-        polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
+        polymorph_core.userData.documents[id].autosave = true; // by default make autosave true, so user does not have to save
     })
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Operator conveinence functions
     //Add showOperator
 
-    polymorph_core.showOperator = function (op) {
+    polymorph_core.showOperator = function(op) {
         if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
         document.body.querySelector("#body").appendChild(op.topdiv);
         if (op.operator && op.operator.refresh) op.operator.refresh();
@@ -168,14 +167,14 @@ if (isPhone()) {
     })*/
 
 
-    polymorph_core.resetView = function () {
+    polymorph_core.resetView = function() {
         if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
         polymorph_core.baseRect = new _rect(polymorph_core,
             undefined, {});
         polymorph_core.baseRect.refresh();
     }
 
-    polymorph_core.on("operatorChanged", function (d) {
+    polymorph_core.on("operatorChanged", function(d) {
         if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
             polymorph_core.autosaveCapacitor.submit();
         }
@@ -187,4 +186,3 @@ if (isPhone()) {
         }
     }
 }
-

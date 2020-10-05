@@ -186,8 +186,6 @@ if (!isPhone()) {
             }
         }
 
-
-
         //Item creation
         //#region
         this.createItem = () => {
