@@ -3058,6 +3058,9 @@ if (isPhone()) {
         this.outerDiv = this.listContainer;
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
         this.tieRect = function (id) {
+            while (polymorph_core.rects[id].listContainer.length){
+                this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
+            }
             polymorph_core.rects[id].listContainer = this.listContainer;
         }
         this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
