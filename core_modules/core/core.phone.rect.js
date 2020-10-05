@@ -12,7 +12,7 @@ function isPhone() {
     return false;
 }
 if (isPhone()) {
-    polymorph_core.newRect = function (parent) {
+    polymorph_core.newRect = function(parent) {
         let ID = polymorph_core.insertItem({
             _rd: {
                 p: parent,
@@ -25,8 +25,8 @@ if (isPhone()) {
         return ID;
     }
 
-    polymorph_core.rect = function (rectID) {
-        this.id = rectID;//might be helpful
+    polymorph_core.rect = function(rectID) {
+        this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
         Object.defineProperty(this, "settings", {
             get: () => {
@@ -99,8 +99,8 @@ if (isPhone()) {
         //when resetting document it expects an outerdiv. remove this instead.
         this.outerDiv = this.listContainer;
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
-        this.tieRect = function (id) {
-            while (polymorph_core.rects[id].listContainer.length){
+        this.tieRect = function(id) {
+            while (polymorph_core.rects[id].listContainer.children.length) {
                 this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
             }
             polymorph_core.rects[id].listContainer = this.listContainer;
@@ -124,7 +124,7 @@ if (isPhone()) {
                 ts.dataset.containerid = id;
                 ts.addEventListener("click", (e) => {
                     this.switchOperator(id);
-                    e.stopPropagation();//so that the lower level divs dont get triggered
+                    e.stopPropagation(); //so that the lower level divs dont get triggered
                 })
                 polymorph_core.containers[id].outerDiv.dataset.container = id;
                 polymorph_core.containers[id].outerDiv.style.display = "none";
@@ -167,8 +167,8 @@ if (isPhone()) {
                 polymorph_core.containers[oneToFocus].outerDiv.style.display = "block";
                 polymorph_core.currentOperator = oneToFocus;
             }
-            if (this.children)this.children.forEach(i => i.refresh());
-            if (this.containers)this.containers.forEach(i => i.refresh());
+            if (this.children) this.children.forEach(i => i.refresh());
+            if (this.containers) this.containers.forEach(i => i.refresh());
         };
 
 
@@ -182,7 +182,7 @@ if (isPhone()) {
             this.switchOperator(newContainerID);
         })
 
-        this.toSaveData = () => { };
+        this.toSaveData = () => {};
     };
 
     polymorph_core.switchView = (id) => {

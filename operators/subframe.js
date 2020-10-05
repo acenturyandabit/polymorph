@@ -5,16 +5,16 @@ if (isPhone()) {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
         section: "Layout"
-    }, function (container) {
+    }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
-        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
         this.outerDiv.style.cssText = `width:100%; position:relative`;
         //////////////////Handle polymorph_core item updates//////////////////
 
-        this.refresh = function () {
+        this.refresh = function() {
             container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
             polymorph_core.rects[this.rectID].refresh();
         }
@@ -26,9 +26,9 @@ if (isPhone()) {
             }
         })
 
-        this.tieRect = function (rectID) {
+        this.tieRect = function(rectID) {
             this.rectID = rectID;
-            this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
+            this.outerDiv.appendChild(polymorph_core.rects[rectID].listContainer);
             polymorph_core.rects[rectID].refresh();
         }
 
@@ -70,10 +70,10 @@ if (isPhone()) {
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = `Nothing to show yet :3`;
-        this.showDialog = function () {
+        this.showDialog = function() {
             // update your dialog elements with your settings
         }
-        this.dialogUpdateSettings = function () {
+        this.dialogUpdateSettings = function() {
             // pull settings and update when your dialog is closed.
         }
 
@@ -86,9 +86,9 @@ if (isPhone()) {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
         section: "Layout"
-    }, function (container) {
+    }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
-        this.rootdiv.remove();//nerf the standard rootdiv because of differring naming conventions between rects and operators.
+        this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
         //Add div HTML here
         this.outerDiv.innerHTML = ``;
@@ -97,7 +97,7 @@ if (isPhone()) {
 
         //////////////////Handle polymorph_core item updates//////////////////
 
-        this.refresh = function () {
+        this.refresh = function() {
             polymorph_core.rects[this.rectID].refresh();
         }
 
@@ -108,7 +108,7 @@ if (isPhone()) {
             }
         })
 
-        this.tieRect = function (rectID) {
+        this.tieRect = function(rectID) {
             this.rectID = rectID;
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
             polymorph_core.rects[rectID].refresh();
@@ -152,10 +152,10 @@ if (isPhone()) {
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = `Nothing to show yet :3`;
-        this.showDialog = function () {
+        this.showDialog = function() {
             // update your dialog elements with your settings
         }
-        this.dialogUpdateSettings = function () {
+        this.dialogUpdateSettings = function() {
             // pull settings and update when your dialog is closed.
         }
 
@@ -164,5 +164,3 @@ if (isPhone()) {
         }
     });
 }
-
-
