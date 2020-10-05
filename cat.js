@@ -1802,7 +1802,7 @@ polymorph_core.on("titleButtonsReady", () => {
         });
         polymorph_core.autosaveCapacitor = new capacitor(200, 20, polymorph_core.userSave);
         polymorph_core.on("updateItem", function (d) {
-            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
                 polymorph_core.autosaveCapacitor.submit();
             }
         });
