@@ -117,6 +117,8 @@ if (isPhone()) {
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
             polymorph_core.currentOperator = id;
+            polymorph_core.items._meta.focusedContainer = id;
+            polymorph_core.fire("updateItem", { id: "_meta", sender: this });
         }
 
         this.tieContainer = (id) => {
@@ -165,7 +167,6 @@ if (isPhone()) {
         })
 
         this.refresh = () => {
-            //pick an arbitrary operator and focus it.. for now.
             let oneToFocus = Object.keys(polymorph_core.containers)[0];
             if (oneToFocus) {
                 //if refresh called before container load, this happens :(
@@ -195,6 +196,9 @@ if (isPhone()) {
         document.querySelector("#rectList").children[0].remove();
         document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
         polymorph_core.rects[id].refresh();
+        if (polymorph_core.items._meta.focusedContainer) {
+            polymorph_core.containers[polymorph_core.items._meta.focusedContainer].rect.switchOperator(polymorph_core.items._meta.focusedContainer);
+        }
         return;
     }
     polymorph_core.rects = {};
