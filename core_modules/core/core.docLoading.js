@@ -32,7 +32,7 @@
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url.replace("#","") == window.location.href.replace("#","") && event.data.uuid != instance_uuid) {
+        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
             if (is_challenger) {
                 alt_alive_warning.style.display = "grid";
                 // seppuku
@@ -44,6 +44,7 @@
             }
         }
     };
+
     function checkForURLConflict() {
         broadcast.postMessage({
             url: window.location.href,
@@ -94,7 +95,7 @@
         } else return false;
     }
 
-    polymorph_core.handleURL = async function () {
+    polymorph_core.handleURL = async function() {
         let params = new URLSearchParams(window.location.search);
         polymorph_core.resetDocument();
         let sourcesToAdd = [];
@@ -129,16 +130,14 @@
             polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
             //add a local save source automatically; and then the user can add more save sources if they'd like
             polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
-            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                {
-                    load: true,
-                    save: true,
-                    type: 'lf',
-                    data: {
-                        id: polymorph_core.currentDocID
-                    }
+            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                load: true,
+                save: true,
+                type: 'lf',
+                data: {
+                    id: polymorph_core.currentDocID
                 }
-            );
+            });
             if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
@@ -161,16 +160,14 @@
 
             if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length == 0) {
                 if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Would you like to add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")) {
-                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                        {
-                            load: true,
-                            save: true,
-                            type: 'lf',
-                            data: {
-                                id: polymorph_core.currentDocID
-                            }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
                         }
-                    )
+                    })
                 };
             }
             polymorph_core.saveUserData();
@@ -189,7 +186,7 @@
                     let newInstance = new polymorph_core.saveSources[i.type](i);
                     polymorph_core.saveSourceInstances.push(newInstance);
                     if (i.load) {
-                        (async () => {
+                        (async() => {
                             try {
 
                                 d = await newInstance.pullAll();
@@ -219,7 +216,7 @@
     }
 
     //This is called by polymorph_core.handleURL and the filescreen.
-    polymorph_core.sanityCheckDoc = function (data) {
+    polymorph_core.sanityCheckDoc = function(data) {
         //if none then create new
         if (!data) {
             data = polymorph_core.templates.blankNewDoc;
@@ -277,7 +274,7 @@
         return data;
     }
 
-    polymorph_core.resetDocument = function () {
+    polymorph_core.resetDocument = function() {
         polymorph_core.items = {};
         polymorph_core.containers = {};
         for (let i in polymorph_core.rects) {
@@ -296,7 +293,7 @@
     polymorph_core.saveSources = {};
     polymorph_core.saveSourceOptions = {};
 
-    polymorph_core.registerSaveSource = function (id, f, ops) {
+    polymorph_core.registerSaveSource = function(id, f, ops) {
         polymorph_core.saveSources[id] = f;
         polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
@@ -305,7 +302,7 @@
 
     }
 
-    polymorph_core.switchView = function (view) {
+    polymorph_core.switchView = function(view) {
         polymorph_core.items._meta.currentView = view;
         while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
         document.body.querySelector(".rectspace").appendChild(polymorph_core.rects[polymorph_core.items._meta.currentView].outerDiv);
@@ -314,7 +311,7 @@
     };
 
 
-    polymorph_core.integrateData = function (data, source) { // source: string
+    polymorph_core.integrateData = function(data, source) { // source: string
         //sanity check, decompress etc the data
         data = polymorph_core.sanityCheckDoc(data);
         //ensure the data id is matching; if not then @ the user
@@ -338,6 +335,7 @@
             }
         }
         if (!polymorph_core.rects) polymorph_core.rects = {};
+        polymorph_core.rectLoadCallbacks = {}; // clear this rl cache
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
             if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
@@ -382,13 +380,17 @@ polymorph_core.templates = {
             "_lu_": 0,
             "currentView": "default_container",
             "globalContextMenuOptions": ["Style::Item Background::item.edit(item.style.background)", "Style::Text color::item.edit(item.style.color)"]
-        }, "default_container": {
+        },
+        "default_container": {
             "_rd": { "x": 0, "f": 0, "ps": 1, "s": "default_operator" },
             "_lu_": 0
         },
         "default_operator": {
             "_od": {
-                "t": "welcome", "data": {}, "inputRemaps": {}, "outputRemaps": {},
+                "t": "welcome",
+                "data": {},
+                "inputRemaps": {},
+                "outputRemaps": {},
                 "tabbarName": "Home",
                 "p": "default_container"
             },
