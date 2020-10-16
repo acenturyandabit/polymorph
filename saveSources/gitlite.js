@@ -168,7 +168,12 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
                         }
                         break;
                     case "reject":
-                        alert("Remote did not have the requested document!");
+                        if (deltasOnly) {
+                            res({});
+                        } else {
+                            alert("Remote did not have the requested document!");
+                        }
+                        ws.close();
                         break;
                 }
             })
