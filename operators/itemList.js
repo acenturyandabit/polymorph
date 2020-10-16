@@ -247,11 +247,14 @@ if (!isPhone()) {
             });
             this.renderItem(id);
             this.datereparse(id);
+            this.sortItems();
+            //cheap and dirty hack to ensure that we only focus after sort has been called
+            //todo: use promises
             //also fire a focus event for the item, but don't actually focus (in case of multiple entry)
-            container.fire("focusItem", {
+            setTimeout(() => container.fire("focusItem", {
                 id: id,
                 sender: this
-            })
+            }), 600);
             return id;
         }
 

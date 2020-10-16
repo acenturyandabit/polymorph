@@ -1,7 +1,6 @@
-polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("mergelite", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data); //future-safety measure. sets this.settings to save_source_data.
     //initialise here
-    if (!this.settings.gitcount) this.settings.gitcount = 0;
 
     //for the actual display:
     this.dialog = document.createElement("div");
@@ -57,10 +56,8 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
 
         //pull first
         let toMerges = await this.pullAll(true)
-        for (let i in toMerges) {
-            localCopy[i] = toMerges[i];
-            polymorph_core.items[i] = toMerges[i];
-            polymorph_core.fire("updateItem", { id: i }); // this may trigger an autosave so make it not?
+        for (let i of toMerges) {
+
         }
 
         let ws = new WebSocket(this.settings.data.saveTo);
@@ -154,13 +151,11 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
                     case "transfer":
                         // recieve and merge the data
                         if (deltasOnly) {
-                            ws.close();
-                            res(response.data.reduce((p, i) => {
-                                if (!localCopy[i.id] || localCopy[i.id]._lu_ < i.data._lu_) p[i.id] = i.data;
+                            return response.data.reduce((p, i) => {
+                                if (!localCopy[i.id] || localcopy[i.id]._lu_ < i.data._lu_) p[i.id] = i.data;
                                 return p;
-                            }, {}))
+                            }, {})
                         } else {
-                            ws.close();
                             for (let i of response.data) {
                                 if (!localCopy[i.id] || localCopy[i.id]._lu_ < i.data._lu_) localCopy[i.id] = i.data;
                             }

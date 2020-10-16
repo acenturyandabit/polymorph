@@ -182,7 +182,7 @@ function __itemlist_searchsort() {
 
     this.sortcap = new capacitor(500, 1000, this._sortItems);
 
-    this.sortItems = () => {
+    this.sortItems = async() => {
         this.sortcap.submit();
     }
 
