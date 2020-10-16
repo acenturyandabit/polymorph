@@ -58,7 +58,6 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
         //pull first
         let toMerges = await this.pullAll(true)
         for (let i in toMerges) {
-            localCopy[i] = toMerges[i];
             polymorph_core.items[i] = toMerges[i];
             polymorph_core.fire("updateItem", { id: i }); // this may trigger an autosave so make it not?
         }

@@ -28,6 +28,13 @@ if (isPhone()) {
     polymorph_core.rect = function(rectID) {
         this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
+
+        Object.defineProperty(this, "outerDiv", {
+            get: () => {
+                return this.listContainer; // this is required for resetDocument to work
+            }
+        })
+
         Object.defineProperty(this, "settings", {
             get: () => {
                 return polymorph_core.items[rectID]._rd;
