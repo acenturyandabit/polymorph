@@ -1,6 +1,6 @@
 (() => {
 
-    polymorph_core.userSave = function () {
+    polymorph_core.userSave = function() {
         //save to all sources
         //upgrade older save systems
         let d = polymorph_core.items;
@@ -22,8 +22,7 @@
             try {
                 //try catch because mobile mode. TODO: Fix this.
                 polymorph_core.showNotification('Saved', 'success');
-            } catch (e) {
-            }
+            } catch (e) {}
         }
     });
 
@@ -61,7 +60,7 @@
             label: "Autosave all changes"
         });
         polymorph_core.autosaveCapacitor = new capacitor(200, 20, polymorph_core.userSave);
-        polymorph_core.on("updateItem", function (d) {
+        polymorph_core.on("updateItem", function(d) {
             if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
                 polymorph_core.autosaveCapacitor.submit();
             }
@@ -88,7 +87,7 @@
         //store the savedialogs so that we can toggle their save/load checkboxes down the line
         let saveDialogInstances = [];
 
-        polymorph_core.addToSaveDialog = function (save_source_instance) {
+        polymorph_core.addToSaveDialog = function(save_source_instance) {
             //called by instance on load.
             let wrapperText = `
         <div>
@@ -120,7 +119,7 @@
             hookIfExists("[data-role='dlg_save']", "click", () => {
                 save_source_instance.pushAll(polymorph_core.items);
             });
-            hookIfExists("[data-role='dlg_hardLoad']", "click", async () => {
+            hookIfExists("[data-role='dlg_hardLoad']", "click", async() => {
                 if (confirm("Overwrite existing data? You will lose any unsaved work.")) {
                     polymorph_core.resetDocument();
                     try {
@@ -134,7 +133,7 @@
                 }
             });
             //Load from the save source
-            hookIfExists("[data-role='dlg_softLoad']", "click", async () => {
+            hookIfExists("[data-role='dlg_softLoad']", "click", async() => {
                 try {
                     d = await save_source_instance.pullAll();
                     polymorph_core.integrateData(d, i.type);
@@ -181,7 +180,7 @@
     //a little nicety to warn user of unsaved items.
     polymorph_core.unsaved = false;
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.loadProcess) {//if event was not triggered by a loading action
+        if (!e || !e.loadProcess) { //if event was not triggered by a loading action
             polymorph_core.unsaved = true;
         }
     })
