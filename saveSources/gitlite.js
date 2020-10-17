@@ -75,6 +75,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
             switch (response.op) {
                 case "accept":
                     // send over the data
+                    if (response._lu_ == 0) response._lu_ = -1; // on new docs there are items with 0 _lu_ for some reason and we want to update them too
                     let dataToSend = timekeys.filter(i => i._lu_ > response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
                     ws.send(JSON.stringify({
                         op: "transfer",
