@@ -7,6 +7,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
     this.dialog = document.createElement("div");
     this.dialog.innerHTML = `
     `;
+
     let ops = [
         new polymorph_core._option({
             div: this.dialog,
@@ -30,6 +31,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
             label: "Clear local copy",
             fn: () => {
                 localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, {});
+                this.localCopy = {};
             }
         })
     ]
@@ -59,6 +61,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
         let toMerges = await this.pullAll(true)
         for (let i in toMerges) {
             polymorph_core.items[i] = toMerges[i];
+            data[i] = toMerges[i];
             polymorph_core.fire("updateItem", { id: i }); // this may trigger an autosave so make it not?
         }
 
@@ -106,8 +109,8 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
     */
     }
     this.pullAll = async(deltasOnly) => {
-        let localCopy = await localforage.getItem(`_polymorph_gitlite_${this.settings.data.id}`);
-        if (!localCopy) localCopy = {};
+        if (!this.localCopy) this.localCopy = await localforage.getItem(`_polymorph_gitlite_${this.settings.data.id}`);
+        if (!this.localCopy) this.localCopy = {};
         return new Promise((res) => {
             let ws = new WebSocket(this.settings.data.saveTo);
             ws.addEventListener("open", () => {
@@ -131,11 +134,11 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
                         } else {
                             let wasSent = false;
                             for (let i = 0; i < response._lu_.length; i++) {
-                                if (localCopy[response._lu_[i].id] && localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
+                                if (this.localCopy[response._lu_[i].id] && this.localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
                                     // accept this
                                     ws.send(JSON.stringify({
                                         op: "accept",
-                                        _lu_: localCopy[response._lu_[i].id]._lu_
+                                        _lu_: this.localCopy[response._lu_[i].id]._lu_
                                     }));
                                     wasSent = true;
                                     break;
@@ -156,16 +159,16 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
                         if (deltasOnly) {
                             ws.close();
                             res(response.data.reduce((p, i) => {
-                                if (!localCopy[i.id] || localCopy[i.id]._lu_ < i.data._lu_) p[i.id] = i.data;
+                                if (!this.localCopy[i.id] || this.localCopy[i.id]._lu_ < i.data._lu_) p[i.id] = i.data;
                                 return p;
                             }, {}))
                         } else {
                             ws.close();
                             for (let i of response.data) {
-                                if (!localCopy[i.id] || localCopy[i.id]._lu_ < i.data._lu_) localCopy[i.id] = i.data;
+                                if (!this.localCopy[i.id] || this.localCopy[i.id]._lu_ < i.data._lu_) localCopy[i.id] = i.data;
                             }
                             localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, localCopy);
-                            res(localCopy); //or nothing, if undefined
+                            res(this.localCopy); //or nothing, if undefined
                         }
                         break;
                     case "reject":
