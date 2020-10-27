@@ -2,14 +2,13 @@
     "short_name": "PM",
     "name": "Polymorph",
     "icons": [{
-            "src": "assets/icon-192.png",
-            "type": "image/png",
-            "sizes": "192x192"
-        }
-    ],
-    "start_url": "/polymorph/",
+        "src": "assets/icon-192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+    }],
+    "start_url": "/",
     "background_color": "#3367D6",
     "display": "standalone",
-    "scope": "/polymorph/",
+    "scope": "/",
     "theme_color": "#3367D6"
 }

@@ -4,7 +4,7 @@ polymorph_core.registerOperator("descbox", {
     imageurl: "assets/operators/descbox.png",
     section: "Standard",
     single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
-}, function (container) {
+}, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
@@ -34,8 +34,7 @@ polymorph_core.registerOperator("descbox", {
             })
 
         }
-        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {
-        };
+        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {};
 
         polymorph_core.items[id]["_displayTags_" + this.settings.property] = "";
 
@@ -88,12 +87,10 @@ polymorph_core.registerOperator("descbox", {
 
     //Handle item updates
     this.updateItem = (id) => {
-        this.updateMeta(id);
-
-        //if focused, ignore
+        //if focused, ignore; to prevent overwrites of data
         if (id == this.settings.currentID && id && polymorph_core.items[id]) {
             if (this.textarea.matches(":focus")) {
-                setTimeout(() => this.updateItem(id), 500);
+                if (polymorph_core.items[id][this.settings.property] != this.textarea.value) setTimeout(() => this.updateItem(id), 500);
             } else {
                 if (this.changed) {
                     //someone else just called this so i'll have to save my modifications discreetly.
@@ -163,21 +160,21 @@ polymorph_core.registerOperator("descbox", {
     this.updateItem(this.settings.currentID);
 
     let upc = new capacitor(100, 40, (id, data) => {
-        if (id && polymorph_core.items[id] && this.changed) {
-            polymorph_core.items[id][this.settings.property] = data;
-            this.updateMeta(id);
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-            this.changed = false;
-        }
-    }, {
-        presubmit: () => {
-            this.changed = true;
-        }
-    })
-    //Register changes with polymorph_core
+            if (id && polymorph_core.items[id] && this.changed) {
+                polymorph_core.items[id][this.settings.property] = data;
+                this.updateMeta(id);
+                container.fire("updateItem", {
+                    id: id,
+                    sender: this
+                });
+                this.changed = false;
+            }
+        }, {
+            presubmit: () => {
+                this.changed = true;
+            }
+        })
+        //Register changes with polymorph_core
     this.somethingwaschanged = (e) => {
         //Check ctrl-S so that we dont save then
         if (e.key == "Control" || e.key == "Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s")) return;
@@ -259,6 +256,7 @@ polymorph_core.registerOperator("descbox", {
         let switchTo = (id) => {
             upc.forceSend();
             this.settings.currentID = id;
+            this.updateMeta(id);
             this.updateItem(id);
             container.fire("updateItem", { id: this.container.id });
         }
