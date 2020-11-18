@@ -13,12 +13,12 @@
         h1 {
             margin: 0;
         }
-
+        
         body {
             font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
             margin: 0;
         }
-
+        
         input,
         button {
             border-radius: 5px;
@@ -45,11 +45,13 @@
     <script src="core_modules/core/core.operator.js"></script>
     <script src="core_modules/ui/core.dragdrop.js"></script>
 
+
     <script src="core_modules/core/core.phone.rect.js"></script>
     <script src="core_modules/core/core.rect.js"></script>
 
     <script src="core_modules/ui/core.phone.main.js"></script>
     <script src="core_modules/ui/core.main.js"></script>
+    <script src="core_modules/ui/ccleaner.js"></script>
 
     <script src="operators/opSelect.js"></script>
 
@@ -65,6 +67,8 @@
     <script src="operators/terminal.js"></script>
 
     <!--<script src="operators/collapsigant.js"></script>-->
+    <script src="operators/workflow.js"></script>
+    <script src="operators/textflow.js"></script>
     <!--<script src="operators/richbox.js"></script>-->
 
     <script src="operators/inspector.js"></script>
@@ -98,6 +102,7 @@
     <script src="saveSources/outputToText.js"></script>
     <script src="saveSources/localforage2.js"></script>
     <script src="saveSources/permalink.js"></script>
+    <script src="saveSources/lobby.js"></script>
     <script src="saveSources/server.js"></script>
     <script src="saveSources/gitlite.js"></script>
 
@@ -123,7 +128,10 @@
     <script>
         if (window.location.href.includes("acenturyandabit")) {
             window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
             gtag('js', new Date());
 
             gtag('config', 'UA-145664924-1');
