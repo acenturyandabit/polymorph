@@ -96,6 +96,17 @@ if (isPhone()) {
             backDiv.style.display = "none";
         });
         //this is called when an item is updated (e.g. by another container)
+        this.renderItem = (id) => {
+            if (this.itemRelevant(id)) {
+                let obj = this.taskList.querySelector(`[data-id='${id}']`);
+                if (!obj) {
+                    obj = htmlwrap(`<p data-id="${id}"></p>`);
+                    this.taskList.appendChild(obj);
+                }
+                obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
+                //render the item, if we care about it.
+            }
+        }
         container.on("updateItem", (d) => {
             let id = d.id;
             if (this.itemRelevant(id)) {
@@ -285,6 +296,20 @@ if (isPhone()) {
                 this.proplist.appendChild(pspan);
             }
         }
+
+        //passive load means we need this
+        this.reRenderEverything = () => {
+            this.taskList.innerHTML = "";
+            this.renderedItems = [];
+            for (let i in polymorph_core.items) {
+                this.renderItem(i, true);
+            }
+            //and again for links
+            for (let i in polymorph_core.items) {
+                this.renderItem(i);
+            }
+        }
+        this.reRenderEverything();
 
         this.dialogUpdateSettings = function() {
             // This is called when your dialog is closed. Use it to update your container!
