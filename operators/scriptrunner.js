@@ -2,8 +2,9 @@ polymorph_core.registerOperator("scriptrunner", {
     displayName: "Script Runner",
     description: "Runs scripts.",
     section: "Advanced",
-    imageurl: "assets/operators/scriptrunner.png"
-}, function (container) {
+    imageurl: "assets/operators/scriptrunner.png",
+    mustColdLoad: true
+}, function(container) {
     let defaultSettings = {
         autorun: false,
         reallyAutorun: false,
@@ -59,14 +60,15 @@ polymorph_core.registerOperator("scriptrunner", {
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
-            selfLooping = false;// not sure if this is helping or hindering but we'll see
+            selfLooping = false; // not sure if this is helping or hindering but we'll see
         }
         return false;
     });
 
     let me = this;
+
     function instance() {
-        this.log = function (data) {
+        this.log = function(data) {
             let p = document.createElement("p");
             p.style.whiteSpace = "pre-wrap";
             p.innerHTML = JSON.stringify(data, null, 4);
@@ -181,10 +183,10 @@ polymorph_core.registerOperator("scriptrunner", {
 
     this.itemRelevant = (id) => this.settings.forceCareAbout.split(",").includes(id);
 
-    this.showDialog = function () {
+    this.showDialog = function() {
         ops.forEach((op) => { op.load(); });
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // pull settings and update when your dialog is closed.
     }
 

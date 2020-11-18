@@ -1,21 +1,21 @@
 //container. Wrapper around an operator.
-polymorph_core.newContainer = function (parent, ID) {
-    if (!ID) ID = polymorph_core.insertItem({
-        _od: {
-            p: parent
+polymorph_core.newContainer = function(parent, ID) {
+        if (!ID) ID = polymorph_core.insertItem({
+            _od: {
+                p: parent
+            }
+        })
+        else {
+            polymorph_core.items[ID]._od = {
+                p: parent,
+            }
         }
-    })
-    else {
-        polymorph_core.items[ID]._od = {
-            p: parent,
-        }
+        polymorph_core.containers[ID] = new polymorph_core.container(ID);
+        return ID;
     }
-    polymorph_core.containers[ID] = new polymorph_core.container(ID);
-    return ID;
-}
-//child is this.operator.
+    //child is this.operator.
 polymorph_core.container = function container(containerID) {
-    this.id = containerID;// necessary when rect passes container down to chilren.
+    this.id = containerID; // necessary when rect passes container down to chilren.
     polymorph_core.containers[containerID] = this;
     //settings and data management
     //#region
@@ -54,8 +54,7 @@ polymorph_core.container = function container(containerID) {
     let defaultSettings = {
         t: "opSelect",
         data: {},
-        inputRemaps: {
-        },
+        inputRemaps: {},
         outputRemaps: {
             createItem: ["createItem_" + containerID],
             deleteItem: ["deleteItem_" + containerID],
@@ -101,7 +100,7 @@ polymorph_core.container = function container(containerID) {
     //bulkhead for item selection.
     this.bulkhead = document.createElement("div");
     this.bulkhead.style.cssText = `display: none; background: rgba(0,0,0,0.5); width: 100%; height: 100%; position: absolute; zIndex: 100`
-    //bulkhead styling
+        //bulkhead styling
     this.bulkhead.innerHTML = `<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white"></p></div>`
     this.outerDiv.appendChild(this.bulkhead);
     this.bulkhead.addEventListener("click", (e) => {
@@ -115,8 +114,11 @@ polymorph_core.container = function container(containerID) {
         return this.parent.containerVisible(containerID);
     }
 
-    this.refresh = function () {
-        if (!this.operator) this.loadOperator();
+    this.refresh = function(cold) {
+        if (cold && !polymorph_core.operators[this.settings.t].options.mustColdLoad) {
+            return;
+        }
+        if (!this.operator) this.loadOperator(cold);
         if (this.operator && this.operator.refresh) this.operator.refresh();
     }
 
@@ -159,7 +161,7 @@ polymorph_core.container = function container(containerID) {
     //Input event remapping
     //#region
     this.remappingDiv = document.createElement("div");
-    this.remappingDiv.innerHTML = /*html*/`
+    this.remappingDiv.innerHTML = /*html*/ `
     <h3>Input Remaps</h3>
     <p>Remap calls from the polymorph_core to internal calls, to change operator behaviour.</p>
     <p>This operator's ID: ${containerID}</p>
@@ -209,7 +211,7 @@ polymorph_core.container = function container(containerID) {
         this.remappingDiv.children[2].innerText = `This operator's ID: ${containerID}`;
         this.remappingDiv.querySelector("datalist").innerHTML = "";
         for (let i in this.events) {
-            if (i == "*") continue;//dont do all
+            if (i == "*") continue; //dont do all
             this.remappingDiv.querySelector("datalist").appendChild(htmlwrap(`<option>${i}</option>`));
         }
 
@@ -226,7 +228,7 @@ polymorph_core.container = function container(containerID) {
         }
         div = this.remappingDiv.querySelectorAll("div")[1];
         for (let i in this.settings.outputRemaps) {
-            if (this.settings.outputRemaps[i].length && typeof (this.settings.outputRemaps[i]) != "string") this.settings.outputRemaps[i].forEach((v) => {
+            if (this.settings.outputRemaps[i].length && typeof(this.settings.outputRemaps[i]) != "string") this.settings.outputRemaps[i].forEach((v) => {
                 let row = newRow(1);
                 row.children[0].value = i;
                 row.children[1].value = v;
@@ -271,7 +273,7 @@ polymorph_core.container = function container(containerID) {
     this.toSaveData = () => {
         //sometimes the operator breaks -- we dont want to disrupt the entire save process.
         if (this.operator && this.operator.toSaveData) this.operator.toSaveData();
-        return this.settings;// doesn't hurt, helps with subframing too
+        return this.settings; // doesn't hurt, helps with subframing too
     };
 
     this.waitOperatorReady = (type, data) => {
@@ -288,7 +290,7 @@ polymorph_core.container = function container(containerID) {
         });
     };
 
-    this.loadOperator = () => {
+    this.loadOperator = (cold) => {
         if (this.operator) return;
         //parse options and decide what to do re: a div
         if (polymorph_core.operators[this.settings.t]) {
@@ -304,11 +306,13 @@ polymorph_core.container = function container(containerID) {
             } else {
                 this.outerDiv.style.overflowY = "hidden";
             }
-            try {
-                this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
-                this.operator.container = this;
-            } catch (e) {
-                console.log(e);
+            if (!cold || options.mustColdLoad) {
+                try {
+                    this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
+                    this.operator.container = this;
+                } catch (e) {
+                    console.log(e);
+                }
             }
         } else {
             // the operator doesnt exist yet
@@ -337,7 +341,7 @@ polymorph_core.container = function container(containerID) {
     this.remove = () => {
         if (this.operator.remove) this.operator.remove();
         delete polymorph_core.items[containerID]._od;
-        delete polymorph_core.containers[containerID];//seppuku
+        delete polymorph_core.containers[containerID]; //seppuku
     }
 
 };

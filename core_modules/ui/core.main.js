@@ -1,4 +1,4 @@
-if (!isPhone()){
+if (!isPhone()) {
 
     function _topbar(parent, options) {
         this.node = document.createElement("ul");
@@ -81,7 +81,7 @@ if (!isPhone()){
             this.node.appendChild(s);
         }
         if (parent) parent.appendChild(this.node);
-    
+
         let addToList = (el, base, pathName) => {
             let a = document.createElement("a");
             let li = document.createElement("li");
@@ -93,7 +93,7 @@ if (!isPhone()){
         }
         this.add = this.appendChild = (string, domEl) => {
             // string is domel; string is one string, string is path, string is path and domel is domel
-            if (typeof (string) != "string") {
+            if (typeof(string) != "string") {
                 domEl = string;
                 string = "";
             }
@@ -127,9 +127,9 @@ if (!isPhone()){
             }
         }
     }
-    
+
     polymorph_core.on("UIsetup", () => {
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <style>
         #popup-notification {
             position: fixed;
@@ -167,7 +167,7 @@ if (!isPhone()){
             100% {background-position-x: 100%}
         }
         </style>`));
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <div style="display:flex; flex-direction:column; height:100vh">
             <div class="banner" style="z-index:100">
                 <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
@@ -189,19 +189,13 @@ if (!isPhone()){
         //Top bar
         polymorph_core.topbar = new _topbar(document.querySelector(".banner"));
     })
-    
+
     polymorph_core.on("UIstart", () => {
         polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
         })
         polymorph_core.topbar.add("File/New").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
-        })
-        polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-            alert("Warning: this operation may reduce filesize but is irreversible. We recommend saving to a file before you run this operation.");
-            if (confirm("PRESS OK TO PROCEED")) {
-                polymorph_core.runGarbageCollector();
-            }
         })
         polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
             polymorph_core.resetTutorial();
@@ -215,15 +209,15 @@ if (!isPhone()){
             polymorph_core.baseRect.refresh();
         })
     });
-    
-    polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {
-    
+
+    polymorph_core.showNotification = function(notificationMessage, notificationType = 'default') {
+
         if (!document.getElementById("popup-notification")) {
             const popupNotification = document.createElement("div");
             popupNotification.setAttribute("id", "popup-notification");
             document.body.appendChild(popupNotification);
         }
-    
+
         const popupNotificationBox = document.getElementById("popup-notification");
         popupNotificationBox.innerHTML = notificationMessage;
         popupNotificationBox.classList.add(notificationType);
@@ -232,5 +226,5 @@ if (!isPhone()){
             popupNotificationBox.classList = '';
         }, 2800)
     }
-    
+
 }

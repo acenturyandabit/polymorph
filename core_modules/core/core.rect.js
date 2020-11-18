@@ -10,14 +10,14 @@ if (!isPhone()) {
     const RECT_SECOND_SIBLING = 1;
     const RECT_BORDER_WIDTH = 5;
     const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
-    const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)";//"transparent";
+    const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 
     //parent is either undefined or another rect-like object
     //pseudo parents should implement following methods:
     //.polymorph_core property
     //
 
-    polymorph_core.newRect = function (parent, ID) {
+    polymorph_core.newRect = function(parent, ID) {
         if (!ID) ID = polymorph_core.insertItem({
             _rd: {
                 p: parent,
@@ -38,8 +38,8 @@ if (!isPhone()) {
         return ID;
     }
 
-    polymorph_core.rect = function (rectID) {
-        this.id = rectID;//might be helpful
+    polymorph_core.rect = function(rectID) {
+        this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
         Object.defineProperty(this, "settings", {
             get: () => {
@@ -107,8 +107,7 @@ if (!isPhone()) {
                 if (this.settings.p) {
                     if (polymorph_core.rects[this.settings.p]) return polymorph_core.rects[this.settings.p];
                     else if (polymorph_core.containers[this.settings.p]) return polymorph_core.containers[this.settings.p];
-                }
-                else return polymorph_core;
+                } else return polymorph_core;
             }
         })
 
@@ -238,7 +237,7 @@ if (!isPhone()) {
             // we know what to do when a button is clicked.
             let currentTabSpan = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
             if (currentTabSpan) {
-                currentTabSpan.remove();// clear and reapply since tiecontainer should be overwrite
+                currentTabSpan.remove(); // clear and reapply since tiecontainer should be overwrite
                 index--;
             }
             currentTabSpan = this.createTabSpan(containerid);
@@ -263,7 +262,7 @@ if (!isPhone()) {
 
         //Callback for tab clicks to switch between operators.
         this.switchOperator = (containerid) => {
-            if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`)) return false;//we cant do that
+            if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`)) return false; //we cant do that
             this.settings.s = containerid;
             for (let i = 0; i < this.innerDivContainer.children.length; i++) {
                 this.innerDivContainer.children[i].style.display = "none";
@@ -294,14 +293,14 @@ if (!isPhone()) {
                     let mySibling = this.parent.children[!myIndex + 0];
                     this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                     Object.assign(mySibling.settings, this.parent.settings);
-                    mySibling.settings.p = this.parent.settings.p;//If parent is undefined.
+                    mySibling.settings.p = this.parent.settings.p; //If parent is undefined.
                     if (polymorph_core.items._meta.currentView == this.parent.id) {
                         // fix root level rect deletion
                         polymorph_core.items._meta.currentView = mySibling.id;
                     }
                     this.parent.outerDiv.remove();
                     mySibling.refresh();
-                    let pid = this.parent.id;//deleting things messes with the parent getter
+                    let pid = this.parent.id; //deleting things messes with the parent getter
                     //delete parent rect
                     delete polymorph_core.rects[pid];
                     delete polymorph_core.items[pid]._rd;
@@ -367,7 +366,7 @@ if (!isPhone()) {
                 if (this.startPulling) {
                     //lift the item, by setting its display to position absolute
                     this.pulledDiv.style.position = "absolute";
-                    this.pulledDiv.style.display = "flex";//instead of inline flex
+                    this.pulledDiv.style.display = "flex"; //instead of inline flex
                     let rect = this.tabbar.getBoundingClientRect();
                     this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
                     this.pulledDiv.style.top = 0;
@@ -400,7 +399,7 @@ if (!isPhone()) {
                 }
                 //save the order of my containers in settings
                 this.settings.containerOrder = Array.from(this.tabbar.children).map(i => i.dataset.containerid);
-                this.settings.containerOrder.pop();//remove button with undefined id
+                this.settings.containerOrder.pop(); //remove button with undefined id
                 this.pulledDiv = undefined;
             }
         })
@@ -524,64 +523,64 @@ if (!isPhone()) {
         })
 
         tabmenu.querySelector(".cpfr").addEventListener("click", () => {
-            // at the tab, create a new subframe operator
-            polymorph_core.copiedFrameID = contextedOperatorIndex;
-            tabmenu.style.display = "none";
-        })
-        /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
-            //export as a whole doc! how generous
-            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-            tabmenu.style.display = "none";
-            polymorph_core.dialog.prompt(tta);
-            //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
-            //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
-            let collatedItems = polymorph_core.items;
-            tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
-            "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
-        })*/
-
-        tabmenu.querySelector(".psfr").addEventListener("click", () => {
-            // Ditch the old container
-            let containerid = contextedOperatorIndex;
-            this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
-            this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
-            delete polymorph_core.containers[containerid];
-            delete polymorph_core.items[containerid]._od;
-            let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
-            polymorph_core.items[newID]._od.p = rectID;
-            polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID;//facilitate subframe deep copy
-            polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
-            polymorph_core.fire("updateItem", { id: rectID, sender: this });
-            this.switchOperator(newID);
-            tabmenu.style.display = "none";
-        })
-        /*
-            tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+                // at the tab, create a new subframe operator
+                polymorph_core.copiedFrameID = contextedOperatorIndex;
+                tabmenu.style.display = "none";
+            })
+            /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
+                //export as a whole doc! how generous
                 let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
                 tabmenu.style.display = "none";
                 polymorph_core.dialog.prompt(tta);
-                tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-            })
-        
-            tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-                let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-                polymorph_core.dialog.prompt(tta);
-                tta.querySelector("button").addEventListener("click", () => {
-                    if (tta.querySelector("textarea").value) {
-                        let importObject = JSON.parse(tta.querySelector("textarea").value);
-                        this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                        polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                        //force update all items to reload the view
-                        for (let i in polymorph_core.items) {
-                            polymorph_core.fire('updateItem', { id: i });
-                        }
-                    }
-                })
+                //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
+                //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
+                let collatedItems = polymorph_core.items;
+                tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
+                "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
+            })*/
+
+        tabmenu.querySelector(".psfr").addEventListener("click", () => {
+                // Ditch the old container
+                let containerid = contextedOperatorIndex;
+                this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
+                this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+                delete polymorph_core.containers[containerid];
+                delete polymorph_core.items[containerid]._od;
+                let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
+                polymorph_core.items[newID]._od.p = rectID;
+                polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID; //facilitate subframe deep copy
+                polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
+                polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                this.switchOperator(newID);
                 tabmenu.style.display = "none";
             })
-        */
-        //And a delegated settings button handler
+            /*
+                tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+                    let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+                    tabmenu.style.display = "none";
+                    polymorph_core.dialog.prompt(tta);
+                    tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+                })
+        
+                tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+                    let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+                    polymorph_core.dialog.prompt(tta);
+                    tta.querySelector("button").addEventListener("click", () => {
+                        if (tta.querySelector("textarea").value) {
+                            let importObject = JSON.parse(tta.querySelector("textarea").value);
+                            this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                            this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                            polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                            //force update all items to reload the view
+                            for (let i in polymorph_core.items) {
+                                polymorph_core.fire('updateItem', { id: i });
+                            }
+                        }
+                    })
+                    tabmenu.style.display = "none";
+                })
+            */
+            //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
                 //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
@@ -648,7 +647,7 @@ if (!isPhone()) {
                     //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
                     this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
                 }
-                this.outerDiv.style.width = "100%";//this.outerDiv.parentElement.offsetWidth;
+                this.outerDiv.style.width = "100%"; //this.outerDiv.parentElement.offsetWidth;
                 //this.outerDiv.style.left = 0;
             }
             //also refresh any of my children
@@ -669,13 +668,10 @@ if (!isPhone()) {
                     })
                     this.tabbar.appendChild(this.plus);
                 }
-                for (let i in this.tabbar.length) {
-
-                }
             }
             if (this.containers) this.containers.forEach((c) => {
                 //containers may not exist on fromSaveData
-                if (c) c.refresh()
+                if (c) c.refresh(true)
             });
         }
         let rectChanged = false;
@@ -750,44 +746,44 @@ if (!isPhone()) {
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
-            if (shiftPressed) {
-                if (!this.children) {
-                    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                    if (this.parent instanceof polymorph_core.rect) {
-                        /*if (this.settings.x) {
-                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
-                        } else {
-                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
-                        }*/
+                if (shiftPressed) {
+                    if (!this.children) {
+                        this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                        if (this.parent instanceof polymorph_core.rect) {
+                            /*if (this.settings.x) {
+                                this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
+                            } else {
+                                this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
+                            }*/
+                        }
+                        if (highlightDirn != -1) {
+                            this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                        }
+                    } else {
+                        this.outerDiv.style.border = "";
                     }
-                    if (highlightDirn != -1) {
+                } else if (this.parent instanceof polymorph_core.rect) {
+                    this.outerDiv.style.border = "";
+                    if (this.settings.f) {
+                        this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                    }
+                    if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
                         this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                    }
+                    if (this.outerDiv.parentElement) {
+                        // on load parentElement doesnt exist
+                        /*if (this.settings.x) {
+                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                        } else {
+                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                        }*/
                     }
                 } else {
                     this.outerDiv.style.border = "";
                 }
-            } else if (this.parent instanceof polymorph_core.rect) {
-                this.outerDiv.style.border = "";
-                if (this.settings.f) {
-                    this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                }
-                if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
-                    this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
-                }
-                if (this.outerDiv.parentElement) {
-                    // on load parentElement doesnt exist
-                    /*if (this.settings.x) {
-                        this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
-                    } else {
-                        this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
-                    }*/
-                }
-            } else {
-                this.outerDiv.style.border = "";
-            }
 
-        }
-        //Make draggable borders.
+            }
+            //Make draggable borders.
         this.redrawBorders();
         //events
         //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
@@ -838,9 +834,9 @@ if (!isPhone()) {
                     ];
                     //instantiate the rects
                     newRectIDs.forEach((v) => {
-                        polymorph_core.rects[v] = new polymorph_core.rect(v);
-                    })
-                    //copy in operators
+                            polymorph_core.rects[v] = new polymorph_core.rect(v);
+                        })
+                        //copy in operators
                     this.containers.forEach((v, i) => {
                         v.settings.p = newRectIDs[!_firstOrSecond * 1];
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
@@ -848,7 +844,10 @@ if (!isPhone()) {
                     });
 
                     //force a refresh
-                    this.children.forEach((v) => { v.refresh(); v.resizing = this.split ^ 1 });
+                    this.children.forEach((v) => {
+                        v.refresh();
+                        v.resizing = this.split ^ 1
+                    });
                 }
                 //for resizing
                 if (this.resizing != -1) {
@@ -890,7 +889,7 @@ if (!isPhone()) {
         this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
         document.addEventListener("keydown", (e) => {
-            if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            if (!shiftPressed && (e.key == "Shift" || e.key == "Control" || e.key == "Meta")) {
                 shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
                 this.redrawBorders();
             }
@@ -923,25 +922,25 @@ if (!isPhone()) {
             this.split = -1;
         })
         this.outerDiv.addEventListener("mousedown", (e) => {
-            let dirn = -1;
-            let cr = this.outerDiv.getClientRects()[0];
-            if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
-                dirn = 0;
-            } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
-                dirn = 1;
-            } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
-                dirn = 2;
-            } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
-                dirn = 3;
-            }
-            if (e.shiftKey) {
-                this.split = dirn;
-            } else {
-                this.resizing = dirn;
-            }
+                let dirn = -1;
+                let cr = this.outerDiv.getClientRects()[0];
+                if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
+                    dirn = 0;
+                } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
+                    dirn = 1;
+                } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
+                    dirn = 2;
+                } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
+                    dirn = 3;
+                }
+                if (e.shiftKey) {
+                    this.split = dirn;
+                } else {
+                    this.resizing = dirn;
+                }
 
-        })
-        ///Saving
+            })
+            ///Saving
         this.toSaveData = () => {
             //just ensure your item data is accurate.
             return this.settings;
@@ -975,7 +974,7 @@ if (!isPhone()) {
                 delete polymorph_core.items[i]._od;
             });
             delete polymorph_core.items[rectID]._rd;
-            delete polymorph_core.rects[rectID];//seppuku
+            delete polymorph_core.rects[rectID]; //seppuku
         }
     }
 
@@ -985,7 +984,7 @@ if (!isPhone()) {
                 if (polymorph_core.rects[polymorph_core.items._meta.currentView]) {
                     return polymorph_core.rects[polymorph_core.items._meta.currentView];
                 } else {
-                    polymorph_core.items._meta.currentView = Object.keys(polymorph_core.rects)[0];//if the base rect is deleted
+                    polymorph_core.items._meta.currentView = Object.keys(polymorph_core.rects)[0]; //if the base rect is deleted
                     return polymorph_core.rects[polymorph_core.items._meta.currentView];
                 }
             } catch (e) {

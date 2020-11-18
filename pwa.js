@@ -86,7 +86,15 @@ var _pwaManager = (() => {
         CACHE_NAME: "version 8x",
         SEARCH_SLICE: true,
         RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
-        debug: true
+        debug: false,
+        forcePassThrough: (url) => {
+            //replace with your custom function
+
+            if (url.includes("lobby")) return true;
+
+
+            return false;
+        }
     };
 
     function dbglog(message) {
@@ -226,25 +234,24 @@ var _pwaManager = (() => {
                 case "cacheReupdate":
                     dbglog("cacheReupdate method.");
                     //better version with self cache matching
-                    if (event.request.url.startsWith(self.location.origin)) {
+                    if (event.request.url.startsWith(self.location.origin) && !serviceWorkerSettings.forcePassThrough(event.request.url)) {
                         if (event.request.method == "GET") {
                             event.respondWith(
                                 (async function() {
                                     let cachedResponse = undefined;
                                     if (cache) {
                                         cachedResponse = await cache.match(event.request);
-                                    }
+                                        if (!cachedResponse && event.request.url.indexOf("?") != -1) {
+                                            if (serviceWorkerSettings.SEARCH_SLICE) {
+                                                event.request.url = event.request.url.slice(0, event.request.url.indexOf("?"));
+                                                cachedResponse = await cache.match(event.request);
+                                            } else {
+                                                cachedResponse = await cache.match(event.request, {
+                                                    ignoreSearch: event.request.url.indexOf("?") != -1
+                                                });
+                                            }
 
-                                    if (!cachedResponse && event.request.url.indexOf("?") != -1) {
-                                        if (serviceWorkerSettings.SEARCH_SLICE) {
-                                            event.request.url = event.request.url.slice(0, event.request.url.indexOf("?"));
-                                            cachedResponse = await cache.match(event.request);
-                                        } else {
-                                            cachedResponse = await cache.match(event.request, {
-                                                ignoreSearch: event.request.url.indexOf("?") != -1
-                                            });
                                         }
-
                                     }
 
                                     // Returned the cached response if we have one, otherwise return the network response.

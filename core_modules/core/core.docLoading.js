@@ -95,6 +95,8 @@
         } else return false;
     }
 
+    let lfNotWorkingErr = false;
+
     polymorph_core.handleURL = async function() {
         let params = new URLSearchParams(window.location.search);
         polymorph_core.resetDocument();
@@ -123,7 +125,7 @@
             let loc = window.location.href
             loc = loc.replace(/\?o/, "");
             history.pushState({}, "", loc);
-            // this is antiquated behaviour and will be deprecated in future.
+            // this is somewhat useful as an emergency fallback.
         }
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
@@ -172,7 +174,32 @@
             }
             polymorph_core.saveUserData();
 
-            let successfulLoads = 0;
+            let noloadpanicask = () => {
+                if (confirm("There doesn't seem to be a valid document here. Press OK to create a new document with this name, or Cancel to be taken to a new document with a different name.")) {
+                    //create a new doc here
+                    if (lfNotWorkingErr) {
+                        alert("Polymorph has run into a critical error: LFNOTWORKING. Please report this to steeven.liu2@gmail.com.");
+                        return;
+                    }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
+                        }
+                    })
+                    polymorph_core.saveUserData();
+                    lfNotWorkingErr = true;
+                    polymorph_core.handleURL();
+                    //todo: hard panic if this has been called twice
+                } else {
+                    // just go home
+                    window.location.href = window.location.origin + window.location.pathname + "?o";
+                }
+            }
+
+            let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
                 if (!polymorph_core.saveSources[i.type]) {
@@ -180,6 +207,10 @@
                         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
                         polymorph_core.saveUserData();
                         u--;
+                        loadAttemptsRemaining--;
+                        if (loadAttemptsRemaining == 0) {
+                            noloadpanicask();
+                        }
                     };
                     continue;
                 } else {
@@ -188,14 +219,16 @@
                     if (i.load) {
                         (async() => {
                             try {
-
                                 d = await newInstance.pullAll();
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                loadAttemptsRemaining--;
+                                if (loadAttemptsRemaining == 0) {
+                                    noloadpanicask();
+                                }
                                 throw (e);
                             }
-
                         })();
                     }
                 }
