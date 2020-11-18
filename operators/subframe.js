@@ -4,7 +4,8 @@ if (isPhone()) {
     polymorph_core.registerOperator("subframe", {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
-        section: "Layout"
+        section: "Layout",
+        mustColdLoad: true
     }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
@@ -85,7 +86,8 @@ if (isPhone()) {
     polymorph_core.registerOperator("subframe", {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
-        section: "Layout"
+        section: "Layout",
+        mustColdLoad: true
     }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.

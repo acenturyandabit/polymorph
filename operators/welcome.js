@@ -34,6 +34,11 @@ polymorph_core.registerOperator("welcome", {
                 <h3>Recent documents:</h3>
                 <div class="recentDocuments">
                 </div>
+                <div class="lobbydocs" style="display:none">
+                <h3>Local lobby documents:</h3>
+                <div>
+                </div>
+                </div>
             </div>
             <div>
                 <h2>Help</h2>
@@ -121,6 +126,38 @@ polymorph_core.registerOperator("welcome", {
         recentDocDiv.innerHTML = newInnerHTML;
     }
 
+    // try and hit local lobby
+    let lobbyreq = new XMLHttpRequest();
+    lobbyreq.addEventListener("readystatechange", (e) => {
+        if (lobbyreq.readyState == 4) {
+            // we are ready
+            let result = JSON.parse(lobbyreq.responseText);
+            if (result) {
+                let resultDiv = this.rootdiv.querySelector(".lobbydocs>div");
+                resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
+                this.rootdiv.querySelector(".lobbydocs").style.display = "block";
+            }
+        }
+    })
+    this.rootdiv.querySelector(".lobbydocs>div").addEventListener("click", (e) => {
+        if (e.target.tagName == "A") {
+            let theDocID = e.target.innerText;
+            if (!polymorph_core.userData.documents[theDocID]) polymorph_core.datautils.upgradeSaveData(theDocID);
+            let shouldMakeNewSave = true;
+            for (let i of polymorph_core.userData.documents[theDocID].saveSources) {
+                if (i.type == "lobby" && i.data && i.data.id == theDocID) {
+                    shouldMakeNewSave = false;
+                }
+            }
+            if (shouldMakeNewSave) {
+                polymorph_core.userData.documents[theDocID].saveSources.push({ type: "lobby", data: { id: theDocID }, load: true, save: true });
+            }
+            polymorph_core.saveUserData();
+            window.location.href = window.location.origin + window.location.pathname + "?doc=" + theDocID;
+        }
+    })
+    lobbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/lobby");
+    lobbyreq.send();
 
     recentDocDiv.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "em") {

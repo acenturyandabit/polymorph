@@ -362,27 +362,6 @@ function _polymorph_core() {
     //A shared space for operators to access
     this.shared = {};
 
-
-
-    //garbage collection
-    this.tryGarbageCollect = (id) => {
-        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return; //never delete rects and operators? this wont end well
-        if (id == "_meta") return; //dont delete the metaitem
-        let toDelete = true;
-        for (let i in this.containers) {
-            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
-                toDelete = false;
-            }
-        }
-        if (toDelete) {
-            delete polymorph_core.items[id];
-        }
-    }
-    this.runGarbageCollector = () => {
-        for (let i in polymorph_core.items) {
-            polymorph_core.tryGarbageCollect(i);
-        }
-    }
 }
 
 var polymorph_core = new _polymorph_core();

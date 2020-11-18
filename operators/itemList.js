@@ -266,7 +266,7 @@ if (!isPhone()) {
 
         document.body.addEventListener("keydown", (e) => {
             //this is a global listener across operators, but will abstract away target; so don't use it for normal stuff.
-            if (e.getModifierState("Shift")) {
+            if (!this.shiftDown && e.getModifierState("Shift")) {
                 this.shiftDown = true;
                 this.template.children[1].innerHTML = "&#x21a9;";
             }

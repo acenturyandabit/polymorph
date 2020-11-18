@@ -1,7 +1,8 @@
 polymorph_core.registerOperator("textflow", {
     displayName: "TextFlow",
-    description: "An operator designed for streams of text."
-}, function (container) {
+    description: "An operator designed for streams of text.",
+    section: "Standard"
+}, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         itemRootProperty: "textflow_irp_" + polymorph_core.guid(5),
@@ -18,9 +19,9 @@ polymorph_core.registerOperator("textflow", {
 
     //load SoC extension
     this.parsers = {};
-    scriptassert([["textflow_socparser", "operators/textflow/socParser.js"]], () => {
+    /*scriptassert([["textflow_socparser", "operators/textflow/socParser.js"]], () => {
         __textflow_soc_parser(this);
-    });
+    });*/
 
     Object.defineProperty(this, "rootItems", {
         get: () => {
@@ -162,7 +163,7 @@ polymorph_core.registerOperator("textflow", {
 
     this.itemListDiv.addEventListener("click", (e) => {
         for (let i = 0; i < e.path.length; i++) {
-            if (e.path[i].host) return;//exist after shadow root
+            if (e.path[i].host) return; //exist after shadow root
             if (e.path[i].matches(`span[data-id]>div`)) {
                 focusOnElement(e.path[i].previousElementSibling);
                 break;
@@ -194,7 +195,7 @@ polymorph_core.registerOperator("textflow", {
             }
             if (!span.classList.contains("focused")) span.children[0].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
             let innerText = polymorph_core.items[id][this.settings.titleProperty];
-            if (!innerText) innerText = " ";//on metafocus, this property may not be set
+            if (!innerText) innerText = " "; //on metafocus, this property may not be set
             if (this.settings.renderMode == "templateString") span.children[1].innerHTML = eval(`\`${innerText}\``);
             if (span.parentElement != this.itemListDiv) {
                 if (this.rootItems.indexOf(id) - 1 >= 0) {
@@ -209,7 +210,7 @@ polymorph_core.registerOperator("textflow", {
                     }
                 } else {
                     //first item
-                    this.itemListDiv.insertBefore(span, this.itemListDiv.children[0]);//style
+                    this.itemListDiv.insertBefore(span, this.itemListDiv.children[0]); //style
                 }
             }
             if (polymorph_core.items[id].isSoCQuery && span.children[1].style.display != "block") {
@@ -250,7 +251,7 @@ polymorph_core.registerOperator("textflow", {
     }
     this.itemListDiv.children[0].classList.add("focused");
 
-    this.refresh = function () {
+    this.refresh = function() {
         // This is called when the parent container is resized.
     }
 
@@ -302,12 +303,12 @@ polymorph_core.registerOperator("textflow", {
             label: "Rendering mode"
         })
     }
-    this.showDialog = function () {
+    this.showDialog = function() {
         for (let i in options) options[i].load();
     }
     this.baseStyle = htmlwrap(`<style>`);
     this.rootdiv.appendChild(this.baseStyle);
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // This is called when your dialog is closed. Use it to update your container!
         //Add content-independent HTML here.
         switch (this.settings.renderMode) {

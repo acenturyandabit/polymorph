@@ -99,6 +99,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a s
 
         //also for now save to localforage
         localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, data);
+        this.localCopy = data;
 
         /*
         open websocket
