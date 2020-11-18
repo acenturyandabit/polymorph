@@ -3,7 +3,7 @@ function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
         fireFirst: false,
         afterLast: true,
     };
-    if (typeof (settings) == "boolean") {
+    if (typeof(settings) == "boolean") {
         options.fireFirst = settings;
     } else {
         Object.assign(options, settings);
@@ -15,13 +15,13 @@ function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
     let rqcount = 0;
     let pid = undefined;
     let prefire = false;
-    this.forceSend = function () {
+    this.forceSend = function() {
         send(lastUID, lastData);
         rqcount = 0;
         clearTimeout(pid);
         pid = undefined;
     }
-    this.checkAndUpdate = function () {
+    this.checkAndUpdate = function() {
         tcount -= checkInterval;
         if (tcount <= 0) {
             if (!prefire) {
@@ -31,7 +31,7 @@ function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
             pid = setTimeout(me.checkAndUpdate, checkInterval);
         }
     }
-    this.submit = function (UID, data) {
+    this.submit = function(UID, data) {
         if (options.presubmit) options.presubmit();
         if (lastUID != UID && lastUID) {
             me.forceSend();
@@ -66,20 +66,18 @@ function htmlwrap(html, el) {
     let d = document.createElement(el || 'div');
     d.innerHTML = html;
     if (d.children.length == 1) {
-        let dd=d.children[0];
+        let dd = d.children[0];
         dd.remove();
         return dd;
-    }
-    else return d;
+    } else return d;
 }
 
 function waitForFn(property) {
     let me = this;
-    if (!this[property]) this[property] = function (args) {
+    if (!this[property]) this[property] = function(args) {
         setTimeout(() => me[property].apply(me, arguments), 1000);
     }
-}
-;
+};
 
 // Items are just native objects now 
 function _polymorph_core() {
@@ -92,16 +90,16 @@ function _polymorph_core() {
             newGuid = "";
             for (i = 0; i < count; i++) newGuid += pool[Math.floor(Math.random() * pool.length)];
         } while (priorkeys && (priorkeys[i] ||
-            (priorkeys.length != undefined && priorkeys.includes(i))
-        ));
+                (priorkeys.length != undefined && priorkeys.includes(i))
+            ));
         return newGuid;
     }
 
     this.addEventAPI = (itm, errf = console.error) => {
         itm.events = {};
-        itm.fire = function (e, args) {
+        itm.fire = function(e, args) {
             let _e = e.split(",");
-            let _oe = e.split(",");//original elevents
+            let _oe = e.split(","); //original elevents
             _e.push("*"); // a wildcard event listener
             _e.forEach((i) => {
                 if (!itm.events[i]) return;
@@ -128,7 +126,7 @@ function _polymorph_core() {
                 if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, false, e)));
             })
         };
-        itm.on = function (e, f) {
+        itm.on = function(e, f) {
             let _e = e.split(',');
             _e.forEach((i) => {
                 if (!itm.events[i]) itm.events[i] = {};
@@ -136,7 +134,7 @@ function _polymorph_core() {
                 itm.events[i].events.push(f);
             })
         };
-        itm.cetch = function (i, f) {
+        itm.cetch = function(i, f) {
             if (!itm.events[i]) itm.events[i] = {};
             if (!itm.events[i].cetches) itm.events[i].cetches = [];
             itm.events[i].cetches.push(f);
@@ -145,7 +143,7 @@ function _polymorph_core() {
 
     this.addEventAPI(this);
 
-    this._option = (function () {
+    this._option = (function() {
         //snippet that pre-evaluates functions, so that we can quickly load dynmaics
         function iff(it) {
             if (typeof it == "function") {
@@ -163,7 +161,7 @@ function _polymorph_core() {
                     appendedElement.type = "checkbox";
                     appendedElement.addEventListener("input", (e) => {
                         let actualObject = iff(settings.object);
-                        if (typeof actualObject != "object") actualObject = {};// this doesnt always work :///
+                        if (typeof actualObject != "object") actualObject = {}; // this doesnt always work :///
                         if (settings.beforeInput) settings.beforeInput(e);
                         actualObject[settings["property"]] = appendedElement.checked;
                         if (settings.afterInput) settings.afterInput(e);
@@ -184,7 +182,7 @@ function _polymorph_core() {
                     break;
                 case "select":
                     appendedElement = document.createElement("select");
-                    appendedElement.addEventListener("click", (e) => {//apparently click is better than change or select
+                    appendedElement.addEventListener("click", (e) => { //apparently click is better than change or select
                         let actualObject = iff(settings.object);
                         if (typeof actualObject != "object") actualObject = {};
                         if (settings.beforeInput) settings.beforeInput(e);
@@ -230,6 +228,7 @@ function _polymorph_core() {
                     });
                     break;
                 case 'button':
+
                     appendedElement = document.createElement("button");
                     appendedElement.innerText = settings.label;
                     appendedElement.addEventListener("click", (e) => {
@@ -238,7 +237,7 @@ function _polymorph_core() {
                     break;
             }
             appendedElement.style.float = "right";
-            if (settings.placeholder)appendedElement.placeholder=settings.placeholder;
+            if (settings.placeholder) appendedElement.placeholder = settings.placeholder;
             if (settings.label && settings.type != "button") {
                 let lb = document.createElement("label");
                 lb.innerHTML = settings.label;
@@ -247,10 +246,16 @@ function _polymorph_core() {
                 lb.style.margin = "3px";
                 settings.div.appendChild(lb);
             } else {
-                settings.div.appendChild(appendedElement);
+                //create ghost wrapper so element doesnt become inoperable
+                let lb = document.createElement("label");
+                lb.innerHTML = "&nbsp;";
+                lb.appendChild(appendedElement);
+                lb.style.display = "block";
+                lb.style.margin = "3px";
+                settings.div.appendChild(lb);
             }
             //initially load the property value.
-            this.load = function () {
+            this.load = function() {
                 let actualObject = iff(settings.object);
                 if (!actualObject) console.log("Warning: attempt to reference an undefined object");
                 else {
@@ -289,12 +294,13 @@ function _polymorph_core() {
                             break;
                         case "array": //array of text
                             while (appendedElement.children.length) appendedElement.children[0].remove();
-                            if (actualObject[settings["property"]]) for (let i = 0; i < actualObject[settings['property']].length; i++) {
-                                let s = document.createElement("span");
-                                s.innerHTML = `<input value="${actualObject[settings['property']][i]}"><button>x</button>`;
-                                s.style.width = "100%";
-                                appendedElement.appendChild(s);
-                            }
+                            if (actualObject[settings["property"]])
+                                for (let i = 0; i < actualObject[settings['property']].length; i++) {
+                                    let s = document.createElement("span");
+                                    s.innerHTML = `<input value="${actualObject[settings['property']][i]}"><button>x</button>`;
+                                    s.style.width = "100%";
+                                    appendedElement.appendChild(s);
+                                }
                             let b = document.createElement("button");
                             b.innerHTML = "+";
                             b.style.width = "100%";
@@ -351,9 +357,9 @@ function _polymorph_core() {
     };
 
     let tc = new capacitor(1000, 10, () => {
-        polymorph_core.fire("updateDoc");
-    })
-    //title updates
+            polymorph_core.fire("updateDoc");
+        })
+        //title updates
     this.on("UIstart", () => {
         if (!this.documentTitleElement) {
             this.documentTitleElement = document.createElement("a");
@@ -424,12 +430,12 @@ function _polymorph_core() {
 
     //insert an item.
     this.insertItem = (itm) => {
-        let UID = `${this.userData.uniqueID}_${b64(Date.now())}_${this.userData.itemsCreatedCount}`;
-        this.userData.itemsCreatedCount++;
-        this.items[UID] = itm;
-        return UID;
-    }
-    //#endregion
+            let UID = `${this.userData.uniqueID}_${b64(Date.now())}_${this.userData.itemsCreatedCount}`;
+            this.userData.itemsCreatedCount++;
+            this.items[UID] = itm;
+            return UID;
+        }
+        //#endregion
 
     this.operatorLoadCallbacks = {};
     this.rectLoadCallbacks = {};
@@ -437,27 +443,6 @@ function _polymorph_core() {
     //A shared space for operators to access
     this.shared = {};
 
-
-
-    //garbage collection
-    this.tryGarbageCollect = (id) => {
-        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return;//never delete rects and operators? this wont end well
-        if (id == "_meta") return;//dont delete the metaitem
-        let toDelete = true;
-        for (let i in this.containers) {
-            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
-                toDelete = false;
-            }
-        }
-        if (toDelete) {
-            delete polymorph_core.items[id];
-        }
-    }
-    this.runGarbageCollector = () => {
-        for (let i in polymorph_core.items) {
-            polymorph_core.tryGarbageCollect(i);
-        }
-    }
 }
 
 var polymorph_core = new _polymorph_core();
@@ -467,30 +452,147 @@ var polymorph_core = new _polymorph_core();
 // http://www.w3.org/TR/AERT#color-contrast
 function matchContrast(col) {
     var colours = {
-        "aliceblue": "#f0f8ff", "antiquewhite": "#faebd7", "aqua": "#00ffff", "aquamarine": "#7fffd4", "azure": "#f0ffff",
-        "beige": "#f5f5dc", "bisque": "#ffe4c4", "black": "#000000", "blanchedalmond": "#ffebcd", "blue": "#0000ff", "blueviolet": "#8a2be2", "brown": "#a52a2a", "burlywood": "#deb887",
-        "cadetblue": "#5f9ea0", "chartreuse": "#7fff00", "chocolate": "#d2691e", "coral": "#ff7f50", "cornflowerblue": "#6495ed", "cornsilk": "#fff8dc", "crimson": "#dc143c", "cyan": "#00ffff",
-        "darkblue": "#00008b", "darkcyan": "#008b8b", "darkgoldenrod": "#b8860b", "darkgray": "#a9a9a9", "darkgreen": "#006400", "darkkhaki": "#bdb76b", "darkmagenta": "#8b008b", "darkolivegreen": "#556b2f",
-        "darkorange": "#ff8c00", "darkorchid": "#9932cc", "darkred": "#8b0000", "darksalmon": "#e9967a", "darkseagreen": "#8fbc8f", "darkslateblue": "#483d8b", "darkslategray": "#2f4f4f", "darkturquoise": "#00ced1",
-        "darkviolet": "#9400d3", "deeppink": "#ff1493", "deepskyblue": "#00bfff", "dimgray": "#696969", "dodgerblue": "#1e90ff",
-        "firebrick": "#b22222", "floralwhite": "#fffaf0", "forestgreen": "#228b22", "fuchsia": "#ff00ff",
-        "gainsboro": "#dcdcdc", "ghostwhite": "#f8f8ff", "gold": "#ffd700", "goldenrod": "#daa520", "gray": "#808080", "green": "#008000", "greenyellow": "#adff2f",
-        "honeydew": "#f0fff0", "hotpink": "#ff69b4",
-        "indianred ": "#cd5c5c", "indigo": "#4b0082", "ivory": "#fffff0", "khaki": "#f0e68c",
-        "lavender": "#e6e6fa", "lavenderblush": "#fff0f5", "lawngreen": "#7cfc00", "lemonchiffon": "#fffacd", "lightblue": "#add8e6", "lightcoral": "#f08080", "lightcyan": "#e0ffff", "lightgoldenrodyellow": "#fafad2",
-        "lightgrey": "#d3d3d3", "lightgreen": "#90ee90", "lightpink": "#ffb6c1", "lightsalmon": "#ffa07a", "lightseagreen": "#20b2aa", "lightskyblue": "#87cefa", "lightslategray": "#778899", "lightsteelblue": "#b0c4de",
-        "lightyellow": "#ffffe0", "lime": "#00ff00", "limegreen": "#32cd32", "linen": "#faf0e6",
-        "magenta": "#ff00ff", "maroon": "#800000", "mediumaquamarine": "#66cdaa", "mediumblue": "#0000cd", "mediumorchid": "#ba55d3", "mediumpurple": "#9370d8", "mediumseagreen": "#3cb371", "mediumslateblue": "#7b68ee",
-        "mediumspringgreen": "#00fa9a", "mediumturquoise": "#48d1cc", "mediumvioletred": "#c71585", "midnightblue": "#191970", "mintcream": "#f5fffa", "mistyrose": "#ffe4e1", "moccasin": "#ffe4b5",
-        "navajowhite": "#ffdead", "navy": "#000080",
-        "oldlace": "#fdf5e6", "olive": "#808000", "olivedrab": "#6b8e23", "orange": "#ffa500", "orangered": "#ff4500", "orchid": "#da70d6",
-        "palegoldenrod": "#eee8aa", "palegreen": "#98fb98", "paleturquoise": "#afeeee", "palevioletred": "#d87093", "papayawhip": "#ffefd5", "peachpuff": "#ffdab9", "peru": "#cd853f", "pink": "#ffc0cb", "plum": "#dda0dd", "powderblue": "#b0e0e6", "purple": "#800080",
-        "rebeccapurple": "#663399", "red": "#ff0000", "rosybrown": "#bc8f8f", "royalblue": "#4169e1",
-        "saddlebrown": "#8b4513", "salmon": "#fa8072", "sandybrown": "#f4a460", "seagreen": "#2e8b57", "seashell": "#fff5ee", "sienna": "#a0522d", "silver": "#c0c0c0", "skyblue": "#87ceeb", "slateblue": "#6a5acd", "slategray": "#708090", "snow": "#fffafa", "springgreen": "#00ff7f", "steelblue": "#4682b4",
-        "tan": "#d2b48c", "teal": "#008080", "thistle": "#d8bfd8", "tomato": "#ff6347", "turquoise": "#40e0d0",
+        "aliceblue": "#f0f8ff",
+        "antiquewhite": "#faebd7",
+        "aqua": "#00ffff",
+        "aquamarine": "#7fffd4",
+        "azure": "#f0ffff",
+        "beige": "#f5f5dc",
+        "bisque": "#ffe4c4",
+        "black": "#000000",
+        "blanchedalmond": "#ffebcd",
+        "blue": "#0000ff",
+        "blueviolet": "#8a2be2",
+        "brown": "#a52a2a",
+        "burlywood": "#deb887",
+        "cadetblue": "#5f9ea0",
+        "chartreuse": "#7fff00",
+        "chocolate": "#d2691e",
+        "coral": "#ff7f50",
+        "cornflowerblue": "#6495ed",
+        "cornsilk": "#fff8dc",
+        "crimson": "#dc143c",
+        "cyan": "#00ffff",
+        "darkblue": "#00008b",
+        "darkcyan": "#008b8b",
+        "darkgoldenrod": "#b8860b",
+        "darkgray": "#a9a9a9",
+        "darkgreen": "#006400",
+        "darkkhaki": "#bdb76b",
+        "darkmagenta": "#8b008b",
+        "darkolivegreen": "#556b2f",
+        "darkorange": "#ff8c00",
+        "darkorchid": "#9932cc",
+        "darkred": "#8b0000",
+        "darksalmon": "#e9967a",
+        "darkseagreen": "#8fbc8f",
+        "darkslateblue": "#483d8b",
+        "darkslategray": "#2f4f4f",
+        "darkturquoise": "#00ced1",
+        "darkviolet": "#9400d3",
+        "deeppink": "#ff1493",
+        "deepskyblue": "#00bfff",
+        "dimgray": "#696969",
+        "dodgerblue": "#1e90ff",
+        "firebrick": "#b22222",
+        "floralwhite": "#fffaf0",
+        "forestgreen": "#228b22",
+        "fuchsia": "#ff00ff",
+        "gainsboro": "#dcdcdc",
+        "ghostwhite": "#f8f8ff",
+        "gold": "#ffd700",
+        "goldenrod": "#daa520",
+        "gray": "#808080",
+        "green": "#008000",
+        "greenyellow": "#adff2f",
+        "honeydew": "#f0fff0",
+        "hotpink": "#ff69b4",
+        "indianred ": "#cd5c5c",
+        "indigo": "#4b0082",
+        "ivory": "#fffff0",
+        "khaki": "#f0e68c",
+        "lavender": "#e6e6fa",
+        "lavenderblush": "#fff0f5",
+        "lawngreen": "#7cfc00",
+        "lemonchiffon": "#fffacd",
+        "lightblue": "#add8e6",
+        "lightcoral": "#f08080",
+        "lightcyan": "#e0ffff",
+        "lightgoldenrodyellow": "#fafad2",
+        "lightgrey": "#d3d3d3",
+        "lightgreen": "#90ee90",
+        "lightpink": "#ffb6c1",
+        "lightsalmon": "#ffa07a",
+        "lightseagreen": "#20b2aa",
+        "lightskyblue": "#87cefa",
+        "lightslategray": "#778899",
+        "lightsteelblue": "#b0c4de",
+        "lightyellow": "#ffffe0",
+        "lime": "#00ff00",
+        "limegreen": "#32cd32",
+        "linen": "#faf0e6",
+        "magenta": "#ff00ff",
+        "maroon": "#800000",
+        "mediumaquamarine": "#66cdaa",
+        "mediumblue": "#0000cd",
+        "mediumorchid": "#ba55d3",
+        "mediumpurple": "#9370d8",
+        "mediumseagreen": "#3cb371",
+        "mediumslateblue": "#7b68ee",
+        "mediumspringgreen": "#00fa9a",
+        "mediumturquoise": "#48d1cc",
+        "mediumvioletred": "#c71585",
+        "midnightblue": "#191970",
+        "mintcream": "#f5fffa",
+        "mistyrose": "#ffe4e1",
+        "moccasin": "#ffe4b5",
+        "navajowhite": "#ffdead",
+        "navy": "#000080",
+        "oldlace": "#fdf5e6",
+        "olive": "#808000",
+        "olivedrab": "#6b8e23",
+        "orange": "#ffa500",
+        "orangered": "#ff4500",
+        "orchid": "#da70d6",
+        "palegoldenrod": "#eee8aa",
+        "palegreen": "#98fb98",
+        "paleturquoise": "#afeeee",
+        "palevioletred": "#d87093",
+        "papayawhip": "#ffefd5",
+        "peachpuff": "#ffdab9",
+        "peru": "#cd853f",
+        "pink": "#ffc0cb",
+        "plum": "#dda0dd",
+        "powderblue": "#b0e0e6",
+        "purple": "#800080",
+        "rebeccapurple": "#663399",
+        "red": "#ff0000",
+        "rosybrown": "#bc8f8f",
+        "royalblue": "#4169e1",
+        "saddlebrown": "#8b4513",
+        "salmon": "#fa8072",
+        "sandybrown": "#f4a460",
+        "seagreen": "#2e8b57",
+        "seashell": "#fff5ee",
+        "sienna": "#a0522d",
+        "silver": "#c0c0c0",
+        "skyblue": "#87ceeb",
+        "slateblue": "#6a5acd",
+        "slategray": "#708090",
+        "snow": "#fffafa",
+        "springgreen": "#00ff7f",
+        "steelblue": "#4682b4",
+        "tan": "#d2b48c",
+        "teal": "#008080",
+        "thistle": "#d8bfd8",
+        "tomato": "#ff6347",
+        "turquoise": "#40e0d0",
         "violet": "#ee82ee",
-        "wheat": "#f5deb3", "white": "#ffffff", "whitesmoke": "#f5f5f5",
-        "yellow": "#ffff00", "yellowgreen": "#9acd32"
+        "wheat": "#f5deb3",
+        "white": "#ffffff",
+        "whitesmoke": "#f5f5f5",
+        "yellow": "#ffff00",
+        "yellowgreen": "#9acd32"
     };
     //returns either black or white from either a #COLOR or a rgb(color) or a name.
     cols = /\#(..)(..)(..)/i.exec(col)
@@ -501,7 +603,7 @@ function matchContrast(col) {
             col = col.toLowerCase();
             if (colours[col]) {
                 return matchContrast(colours[col]);
-            } else return "black";//no idea
+            } else return "black"; //no idea
         }
     } else {
         cols = [cols[0], cols[1], cols[2], cols[3]];
@@ -859,7 +961,7 @@ polymorph_core.on("titleButtonsReady", () => {
     `;
     document.body.appendChild(alt_alive_warning);
     broadcast.onmessage = (event) => {
-        if (event.data.url.replace("#","") == window.location.href.replace("#","") && event.data.uuid != instance_uuid) {
+        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
             if (is_challenger) {
                 alt_alive_warning.style.display = "grid";
                 // seppuku
@@ -871,6 +973,7 @@ polymorph_core.on("titleButtonsReady", () => {
             }
         }
     };
+
     function checkForURLConflict() {
         broadcast.postMessage({
             url: window.location.href,
@@ -921,7 +1024,9 @@ polymorph_core.on("titleButtonsReady", () => {
         } else return false;
     }
 
-    polymorph_core.handleURL = async function () {
+    let lfNotWorkingErr = false;
+
+    polymorph_core.handleURL = async function() {
         let params = new URLSearchParams(window.location.search);
         polymorph_core.resetDocument();
         let sourcesToAdd = [];
@@ -949,23 +1054,21 @@ polymorph_core.on("titleButtonsReady", () => {
             let loc = window.location.href
             loc = loc.replace(/\?o/, "");
             history.pushState({}, "", loc);
-            // this is antiquated behaviour and will be deprecated in future.
+            // this is somewhat useful as an emergency fallback.
         }
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
             polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
             //add a local save source automatically; and then the user can add more save sources if they'd like
             polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
-            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                {
-                    load: true,
-                    save: true,
-                    type: 'lf',
-                    data: {
-                        id: polymorph_core.currentDocID
-                    }
+            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                load: true,
+                save: true,
+                type: 'lf',
+                data: {
+                    id: polymorph_core.currentDocID
                 }
-            );
+            });
             if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
@@ -988,21 +1091,44 @@ polymorph_core.on("titleButtonsReady", () => {
 
             if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length == 0) {
                 if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Would you like to add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")) {
-                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                        {
-                            load: true,
-                            save: true,
-                            type: 'lf',
-                            data: {
-                                id: polymorph_core.currentDocID
-                            }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
                         }
-                    )
+                    })
                 };
             }
             polymorph_core.saveUserData();
 
-            let successfulLoads = 0;
+            let noloadpanicask = () => {
+                if (confirm("There doesn't seem to be a valid document here. Press OK to create a new document with this name, or Cancel to be taken to a new document with a different name.")) {
+                    //create a new doc here
+                    if (lfNotWorkingErr) {
+                        alert("Polymorph has run into a critical error: LFNOTWORKING. Please report this to steeven.liu2@gmail.com.");
+                        return;
+                    }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
+                        }
+                    })
+                    polymorph_core.saveUserData();
+                    lfNotWorkingErr = true;
+                    polymorph_core.handleURL();
+                    //todo: hard panic if this has been called twice
+                } else {
+                    // just go home
+                    window.location.href = window.location.origin + window.location.pathname + "?o";
+                }
+            }
+
+            let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
                 if (!polymorph_core.saveSources[i.type]) {
@@ -1010,22 +1136,28 @@ polymorph_core.on("titleButtonsReady", () => {
                         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
                         polymorph_core.saveUserData();
                         u--;
+                        loadAttemptsRemaining--;
+                        if (loadAttemptsRemaining == 0) {
+                            noloadpanicask();
+                        }
                     };
                     continue;
                 } else {
                     let newInstance = new polymorph_core.saveSources[i.type](i);
                     polymorph_core.saveSourceInstances.push(newInstance);
                     if (i.load) {
-                        (async () => {
+                        (async() => {
                             try {
-
                                 d = await newInstance.pullAll();
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                loadAttemptsRemaining--;
+                                if (loadAttemptsRemaining == 0) {
+                                    noloadpanicask();
+                                }
                                 throw (e);
                             }
-
                         })();
                     }
                 }
@@ -1046,7 +1178,7 @@ polymorph_core.on("titleButtonsReady", () => {
     }
 
     //This is called by polymorph_core.handleURL and the filescreen.
-    polymorph_core.sanityCheckDoc = function (data) {
+    polymorph_core.sanityCheckDoc = function(data) {
         //if none then create new
         if (!data) {
             data = polymorph_core.templates.blankNewDoc;
@@ -1104,7 +1236,7 @@ polymorph_core.on("titleButtonsReady", () => {
         return data;
     }
 
-    polymorph_core.resetDocument = function () {
+    polymorph_core.resetDocument = function() {
         polymorph_core.items = {};
         polymorph_core.containers = {};
         for (let i in polymorph_core.rects) {
@@ -1123,7 +1255,7 @@ polymorph_core.on("titleButtonsReady", () => {
     polymorph_core.saveSources = {};
     polymorph_core.saveSourceOptions = {};
 
-    polymorph_core.registerSaveSource = function (id, f, ops) {
+    polymorph_core.registerSaveSource = function(id, f, ops) {
         polymorph_core.saveSources[id] = f;
         polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
@@ -1132,7 +1264,7 @@ polymorph_core.on("titleButtonsReady", () => {
 
     }
 
-    polymorph_core.switchView = function (view) {
+    polymorph_core.switchView = function(view) {
         polymorph_core.items._meta.currentView = view;
         while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
         document.body.querySelector(".rectspace").appendChild(polymorph_core.rects[polymorph_core.items._meta.currentView].outerDiv);
@@ -1141,7 +1273,7 @@ polymorph_core.on("titleButtonsReady", () => {
     };
 
 
-    polymorph_core.integrateData = function (data, source) { // source: string
+    polymorph_core.integrateData = function(data, source) { // source: string
         //sanity check, decompress etc the data
         data = polymorph_core.sanityCheckDoc(data);
         //ensure the data id is matching; if not then @ the user
@@ -1165,6 +1297,7 @@ polymorph_core.on("titleButtonsReady", () => {
             }
         }
         if (!polymorph_core.rects) polymorph_core.rects = {};
+        polymorph_core.rectLoadCallbacks = {}; // clear this rl cache
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
             if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
@@ -1209,13 +1342,17 @@ polymorph_core.templates = {
             "_lu_": 0,
             "currentView": "default_container",
             "globalContextMenuOptions": ["Style::Item Background::item.edit(item.style.background)", "Style::Text color::item.edit(item.style.color)"]
-        }, "default_container": {
+        },
+        "default_container": {
             "_rd": { "x": 0, "f": 0, "ps": 1, "s": "default_operator" },
             "_lu_": 0
         },
         "default_operator": {
             "_od": {
-                "t": "welcome", "data": {}, "inputRemaps": {}, "outputRemaps": {},
+                "t": "welcome",
+                "data": {},
+                "inputRemaps": {},
+                "outputRemaps": {},
                 "tabbarName": "Home",
                 "p": "default_container"
             },
@@ -1740,7 +1877,7 @@ polymorph_core.on("titleButtonsReady", () => {
 
 (() => {
 
-    polymorph_core.userSave = function () {
+    polymorph_core.userSave = function() {
         //save to all sources
         //upgrade older save systems
         let d = polymorph_core.items;
@@ -1748,7 +1885,7 @@ polymorph_core.on("titleButtonsReady", () => {
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
         polymorph_core.unsaved = false;
-        let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
+        let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs")) || {};
         recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
         localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
@@ -1762,8 +1899,7 @@ polymorph_core.on("titleButtonsReady", () => {
             try {
                 //try catch because mobile mode. TODO: Fix this.
                 polymorph_core.showNotification('Saved', 'success');
-            } catch (e) {
-            }
+            } catch (e) {}
         }
     });
 
@@ -1801,7 +1937,7 @@ polymorph_core.on("titleButtonsReady", () => {
             label: "Autosave all changes"
         });
         polymorph_core.autosaveCapacitor = new capacitor(200, 20, polymorph_core.userSave);
-        polymorph_core.on("updateItem", function (d) {
+        polymorph_core.on("updateItem", function(d) {
             if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
                 polymorph_core.autosaveCapacitor.submit();
             }
@@ -1828,7 +1964,7 @@ polymorph_core.on("titleButtonsReady", () => {
         //store the savedialogs so that we can toggle their save/load checkboxes down the line
         let saveDialogInstances = [];
 
-        polymorph_core.addToSaveDialog = function (save_source_instance) {
+        polymorph_core.addToSaveDialog = function(save_source_instance) {
             //called by instance on load.
             let wrapperText = `
         <div>
@@ -1860,7 +1996,7 @@ polymorph_core.on("titleButtonsReady", () => {
             hookIfExists("[data-role='dlg_save']", "click", () => {
                 save_source_instance.pushAll(polymorph_core.items);
             });
-            hookIfExists("[data-role='dlg_hardLoad']", "click", async () => {
+            hookIfExists("[data-role='dlg_hardLoad']", "click", async() => {
                 if (confirm("Overwrite existing data? You will lose any unsaved work.")) {
                     polymorph_core.resetDocument();
                     try {
@@ -1874,7 +2010,7 @@ polymorph_core.on("titleButtonsReady", () => {
                 }
             });
             //Load from the save source
-            hookIfExists("[data-role='dlg_softLoad']", "click", async () => {
+            hookIfExists("[data-role='dlg_softLoad']", "click", async() => {
                 try {
                     d = await save_source_instance.pullAll();
                     polymorph_core.integrateData(d, i.type);
@@ -1921,7 +2057,7 @@ polymorph_core.on("titleButtonsReady", () => {
     //a little nicety to warn user of unsaved items.
     polymorph_core.unsaved = false;
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.loadProcess) {//if event was not triggered by a loading action
+        if (!e || !e.loadProcess) { //if event was not triggered by a loading action
             polymorph_core.unsaved = true;
         }
     })
@@ -2126,23 +2262,23 @@ polymorph_core.datautils.upgradeSaveData = function (id) {
 };
 
 //container. Wrapper around an operator.
-polymorph_core.newContainer = function (parent, ID) {
-    if (!ID) ID = polymorph_core.insertItem({
-        _od: {
-            p: parent
+polymorph_core.newContainer = function(parent, ID) {
+        if (!ID) ID = polymorph_core.insertItem({
+            _od: {
+                p: parent
+            }
+        })
+        else {
+            polymorph_core.items[ID]._od = {
+                p: parent,
+            }
         }
-    })
-    else {
-        polymorph_core.items[ID]._od = {
-            p: parent,
-        }
+        polymorph_core.containers[ID] = new polymorph_core.container(ID);
+        return ID;
     }
-    polymorph_core.containers[ID] = new polymorph_core.container(ID);
-    return ID;
-}
-//child is this.operator.
+    //child is this.operator.
 polymorph_core.container = function container(containerID) {
-    this.id = containerID;// necessary when rect passes container down to chilren.
+    this.id = containerID; // necessary when rect passes container down to chilren.
     polymorph_core.containers[containerID] = this;
     //settings and data management
     //#region
@@ -2181,8 +2317,7 @@ polymorph_core.container = function container(containerID) {
     let defaultSettings = {
         t: "opSelect",
         data: {},
-        inputRemaps: {
-        },
+        inputRemaps: {},
         outputRemaps: {
             createItem: ["createItem_" + containerID],
             deleteItem: ["deleteItem_" + containerID],
@@ -2228,7 +2363,7 @@ polymorph_core.container = function container(containerID) {
     //bulkhead for item selection.
     this.bulkhead = document.createElement("div");
     this.bulkhead.style.cssText = `display: none; background: rgba(0,0,0,0.5); width: 100%; height: 100%; position: absolute; zIndex: 100`
-    //bulkhead styling
+        //bulkhead styling
     this.bulkhead.innerHTML = `<div style="display: flex; width:100%; height: 100%;"><p style="margin:auto; color:white"></p></div>`
     this.outerDiv.appendChild(this.bulkhead);
     this.bulkhead.addEventListener("click", (e) => {
@@ -2242,8 +2377,11 @@ polymorph_core.container = function container(containerID) {
         return this.parent.containerVisible(containerID);
     }
 
-    this.refresh = function () {
-        if (!this.operator) this.loadOperator();
+    this.refresh = function(cold) {
+        if (cold && !polymorph_core.operators[this.settings.t].options.mustColdLoad) {
+            return;
+        }
+        if (!this.operator) this.loadOperator(cold);
         if (this.operator && this.operator.refresh) this.operator.refresh();
     }
 
@@ -2286,7 +2424,7 @@ polymorph_core.container = function container(containerID) {
     //Input event remapping
     //#region
     this.remappingDiv = document.createElement("div");
-    this.remappingDiv.innerHTML = /*html*/`
+    this.remappingDiv.innerHTML = /*html*/ `
     <h3>Input Remaps</h3>
     <p>Remap calls from the polymorph_core to internal calls, to change operator behaviour.</p>
     <p>This operator's ID: ${containerID}</p>
@@ -2336,7 +2474,7 @@ polymorph_core.container = function container(containerID) {
         this.remappingDiv.children[2].innerText = `This operator's ID: ${containerID}`;
         this.remappingDiv.querySelector("datalist").innerHTML = "";
         for (let i in this.events) {
-            if (i == "*") continue;//dont do all
+            if (i == "*") continue; //dont do all
             this.remappingDiv.querySelector("datalist").appendChild(htmlwrap(`<option>${i}</option>`));
         }
 
@@ -2353,7 +2491,7 @@ polymorph_core.container = function container(containerID) {
         }
         div = this.remappingDiv.querySelectorAll("div")[1];
         for (let i in this.settings.outputRemaps) {
-            if (this.settings.outputRemaps[i].length && typeof (this.settings.outputRemaps[i]) != "string") this.settings.outputRemaps[i].forEach((v) => {
+            if (this.settings.outputRemaps[i].length && typeof(this.settings.outputRemaps[i]) != "string") this.settings.outputRemaps[i].forEach((v) => {
                 let row = newRow(1);
                 row.children[0].value = i;
                 row.children[1].value = v;
@@ -2398,7 +2536,7 @@ polymorph_core.container = function container(containerID) {
     this.toSaveData = () => {
         //sometimes the operator breaks -- we dont want to disrupt the entire save process.
         if (this.operator && this.operator.toSaveData) this.operator.toSaveData();
-        return this.settings;// doesn't hurt, helps with subframing too
+        return this.settings; // doesn't hurt, helps with subframing too
     };
 
     this.waitOperatorReady = (type, data) => {
@@ -2415,7 +2553,7 @@ polymorph_core.container = function container(containerID) {
         });
     };
 
-    this.loadOperator = () => {
+    this.loadOperator = (cold) => {
         if (this.operator) return;
         //parse options and decide what to do re: a div
         if (polymorph_core.operators[this.settings.t]) {
@@ -2431,11 +2569,13 @@ polymorph_core.container = function container(containerID) {
             } else {
                 this.outerDiv.style.overflowY = "hidden";
             }
-            try {
-                this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
-                this.operator.container = this;
-            } catch (e) {
-                console.log(e);
+            if (!cold || options.mustColdLoad) {
+                try {
+                    this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
+                    this.operator.container = this;
+                } catch (e) {
+                    console.log(e);
+                }
             }
         } else {
             // the operator doesnt exist yet
@@ -2464,7 +2604,7 @@ polymorph_core.container = function container(containerID) {
     this.remove = () => {
         if (this.operator.remove) this.operator.remove();
         delete polymorph_core.items[containerID]._od;
-        delete polymorph_core.containers[containerID];//seppuku
+        delete polymorph_core.containers[containerID]; //seppuku
     }
 
 };;
@@ -2986,6 +3126,13 @@ if (isPhone()) {
     polymorph_core.rect = function(rectID) {
         this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
+
+        Object.defineProperty(this, "outerDiv", {
+            get: () => {
+                return this.listContainer; // this is required for resetDocument to work
+            }
+        })
+
         Object.defineProperty(this, "settings", {
             get: () => {
                 return polymorph_core.items[rectID]._rd;
@@ -3055,13 +3202,18 @@ if (isPhone()) {
         })
         this.listContainer = htmlwrap(`<div><div class="newcontainer">New container...</div></div>`);
         //when resetting document it expects an outerdiv. remove this instead.
-        this.outerDiv = this.listContainer;
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
-        this.tieRect = function(id) {
-            while (polymorph_core.rects[id].listContainer.children.length) {
+        this.tiedToMe = [];
+        this.tieRect = function(id) { //tie a child rect.
+            while (polymorph_core.rects[id].listContainer.children.length > 1) {
                 this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
             }
             polymorph_core.rects[id].listContainer = this.listContainer;
+            this.tiedToMe.push(id);
+            polymorph_core.rects[id].adjustTies();
+        }
+        this.adjustTies = () => {
+            this.tiedToMe.forEach(i => this.tieRect(i));
         }
         this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
 
@@ -3070,6 +3222,8 @@ if (isPhone()) {
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
             polymorph_core.currentOperator = id;
+            polymorph_core.items._meta.focusedContainer = id;
+            polymorph_core.fire("updateItem", { id: "_meta", sender: this });
         }
 
         this.tieContainer = (id) => {
@@ -3087,7 +3241,6 @@ if (isPhone()) {
                 polymorph_core.containers[id].outerDiv.dataset.container = id;
                 polymorph_core.containers[id].outerDiv.style.display = "none";
                 document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
-                this.switchOperator(id);
             }
         }
 
@@ -3118,7 +3271,6 @@ if (isPhone()) {
         })
 
         this.refresh = () => {
-            //pick an arbitrary operator and focus it.. for now.
             let oneToFocus = Object.keys(polymorph_core.containers)[0];
             if (oneToFocus) {
                 //if refresh called before container load, this happens :(
@@ -3148,6 +3300,9 @@ if (isPhone()) {
         document.querySelector("#rectList").children[0].remove();
         document.querySelector("#rectList").appendChild(polymorph_core.rects[id].listContainer);
         polymorph_core.rects[id].refresh();
+        if (polymorph_core.items._meta.focusedContainer) {
+            polymorph_core.containers[polymorph_core.items._meta.focusedContainer].rect.switchOperator(polymorph_core.items._meta.focusedContainer);
+        }
         return;
     }
     polymorph_core.rects = {};
@@ -3165,14 +3320,14 @@ if (!isPhone()) {
     const RECT_SECOND_SIBLING = 1;
     const RECT_BORDER_WIDTH = 5;
     const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
-    const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)";//"transparent";
+    const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 
     //parent is either undefined or another rect-like object
     //pseudo parents should implement following methods:
     //.polymorph_core property
     //
 
-    polymorph_core.newRect = function (parent, ID) {
+    polymorph_core.newRect = function(parent, ID) {
         if (!ID) ID = polymorph_core.insertItem({
             _rd: {
                 p: parent,
@@ -3193,8 +3348,8 @@ if (!isPhone()) {
         return ID;
     }
 
-    polymorph_core.rect = function (rectID) {
-        this.id = rectID;//might be helpful
+    polymorph_core.rect = function(rectID) {
+        this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
         Object.defineProperty(this, "settings", {
             get: () => {
@@ -3262,8 +3417,7 @@ if (!isPhone()) {
                 if (this.settings.p) {
                     if (polymorph_core.rects[this.settings.p]) return polymorph_core.rects[this.settings.p];
                     else if (polymorph_core.containers[this.settings.p]) return polymorph_core.containers[this.settings.p];
-                }
-                else return polymorph_core;
+                } else return polymorph_core;
             }
         })
 
@@ -3393,7 +3547,7 @@ if (!isPhone()) {
             // we know what to do when a button is clicked.
             let currentTabSpan = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
             if (currentTabSpan) {
-                currentTabSpan.remove();// clear and reapply since tiecontainer should be overwrite
+                currentTabSpan.remove(); // clear and reapply since tiecontainer should be overwrite
                 index--;
             }
             currentTabSpan = this.createTabSpan(containerid);
@@ -3418,7 +3572,7 @@ if (!isPhone()) {
 
         //Callback for tab clicks to switch between operators.
         this.switchOperator = (containerid) => {
-            if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`)) return false;//we cant do that
+            if (!this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`)) return false; //we cant do that
             this.settings.s = containerid;
             for (let i = 0; i < this.innerDivContainer.children.length; i++) {
                 this.innerDivContainer.children[i].style.display = "none";
@@ -3449,14 +3603,14 @@ if (!isPhone()) {
                     let mySibling = this.parent.children[!myIndex + 0];
                     this.parent.outerDiv.parentElement.insertBefore(mySibling.outerDiv, this.parent.outerDiv);
                     Object.assign(mySibling.settings, this.parent.settings);
-                    mySibling.settings.p = this.parent.settings.p;//If parent is undefined.
+                    mySibling.settings.p = this.parent.settings.p; //If parent is undefined.
                     if (polymorph_core.items._meta.currentView == this.parent.id) {
                         // fix root level rect deletion
                         polymorph_core.items._meta.currentView = mySibling.id;
                     }
                     this.parent.outerDiv.remove();
                     mySibling.refresh();
-                    let pid = this.parent.id;//deleting things messes with the parent getter
+                    let pid = this.parent.id; //deleting things messes with the parent getter
                     //delete parent rect
                     delete polymorph_core.rects[pid];
                     delete polymorph_core.items[pid]._rd;
@@ -3522,7 +3676,7 @@ if (!isPhone()) {
                 if (this.startPulling) {
                     //lift the item, by setting its display to position absolute
                     this.pulledDiv.style.position = "absolute";
-                    this.pulledDiv.style.display = "flex";//instead of inline flex
+                    this.pulledDiv.style.display = "flex"; //instead of inline flex
                     let rect = this.tabbar.getBoundingClientRect();
                     this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
                     this.pulledDiv.style.top = 0;
@@ -3555,7 +3709,7 @@ if (!isPhone()) {
                 }
                 //save the order of my containers in settings
                 this.settings.containerOrder = Array.from(this.tabbar.children).map(i => i.dataset.containerid);
-                this.settings.containerOrder.pop();//remove button with undefined id
+                this.settings.containerOrder.pop(); //remove button with undefined id
                 this.pulledDiv = undefined;
             }
         })
@@ -3679,64 +3833,64 @@ if (!isPhone()) {
         })
 
         tabmenu.querySelector(".cpfr").addEventListener("click", () => {
-            // at the tab, create a new subframe operator
-            polymorph_core.copiedFrameID = contextedOperatorIndex;
-            tabmenu.style.display = "none";
-        })
-        /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
-            //export as a whole doc! how generous
-            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-            tabmenu.style.display = "none";
-            polymorph_core.dialog.prompt(tta);
-            //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
-            //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
-            let collatedItems = polymorph_core.items;
-            tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
-            "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
-        })*/
-
-        tabmenu.querySelector(".psfr").addEventListener("click", () => {
-            // Ditch the old container
-            let containerid = contextedOperatorIndex;
-            this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
-            this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
-            delete polymorph_core.containers[containerid];
-            delete polymorph_core.items[containerid]._od;
-            let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
-            polymorph_core.items[newID]._od.p = rectID;
-            polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID;//facilitate subframe deep copy
-            polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
-            polymorph_core.fire("updateItem", { id: rectID, sender: this });
-            this.switchOperator(newID);
-            tabmenu.style.display = "none";
-        })
-        /*
-            tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+                // at the tab, create a new subframe operator
+                polymorph_core.copiedFrameID = contextedOperatorIndex;
+                tabmenu.style.display = "none";
+            })
+            /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
+                //export as a whole doc! how generous
                 let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
                 tabmenu.style.display = "none";
                 polymorph_core.dialog.prompt(tta);
-                tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-            })
-        
-            tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-                let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-                polymorph_core.dialog.prompt(tta);
-                tta.querySelector("button").addEventListener("click", () => {
-                    if (tta.querySelector("textarea").value) {
-                        let importObject = JSON.parse(tta.querySelector("textarea").value);
-                        this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                        polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                        //force update all items to reload the view
-                        for (let i in polymorph_core.items) {
-                            polymorph_core.fire('updateItem', { id: i });
-                        }
-                    }
-                })
+                //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
+                //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
+                let collatedItems = polymorph_core.items;
+                tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
+                "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
+            })*/
+
+        tabmenu.querySelector(".psfr").addEventListener("click", () => {
+                // Ditch the old container
+                let containerid = contextedOperatorIndex;
+                this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
+                this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+                delete polymorph_core.containers[containerid];
+                delete polymorph_core.items[containerid]._od;
+                let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
+                polymorph_core.items[newID]._od.p = rectID;
+                polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID; //facilitate subframe deep copy
+                polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
+                polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                this.switchOperator(newID);
                 tabmenu.style.display = "none";
             })
-        */
-        //And a delegated settings button handler
+            /*
+                tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+                    let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+                    tabmenu.style.display = "none";
+                    polymorph_core.dialog.prompt(tta);
+                    tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+                })
+        
+                tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+                    let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+                    polymorph_core.dialog.prompt(tta);
+                    tta.querySelector("button").addEventListener("click", () => {
+                        if (tta.querySelector("textarea").value) {
+                            let importObject = JSON.parse(tta.querySelector("textarea").value);
+                            this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                            this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                            polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                            //force update all items to reload the view
+                            for (let i in polymorph_core.items) {
+                                polymorph_core.fire('updateItem', { id: i });
+                            }
+                        }
+                    })
+                    tabmenu.style.display = "none";
+                })
+            */
+            //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
                 //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
@@ -3803,7 +3957,7 @@ if (!isPhone()) {
                     //this.outerDiv.style.top = this.outerDiv.parentElement.offsetHeight * this.otherSiblingSettings.ps;
                     this.outerDiv.style.flexBasis = this.outerDiv.parentElement.offsetHeight * (1 - this.otherSiblingSettings.ps) + "px";
                 }
-                this.outerDiv.style.width = "100%";//this.outerDiv.parentElement.offsetWidth;
+                this.outerDiv.style.width = "100%"; //this.outerDiv.parentElement.offsetWidth;
                 //this.outerDiv.style.left = 0;
             }
             //also refresh any of my children
@@ -3824,13 +3978,10 @@ if (!isPhone()) {
                     })
                     this.tabbar.appendChild(this.plus);
                 }
-                for (let i in this.tabbar.length) {
-
-                }
             }
             if (this.containers) this.containers.forEach((c) => {
                 //containers may not exist on fromSaveData
-                if (c) c.refresh()
+                if (c) c.refresh(true)
             });
         }
         let rectChanged = false;
@@ -3905,44 +4056,44 @@ if (!isPhone()) {
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
-            if (shiftPressed) {
-                if (!this.children) {
-                    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                    if (this.parent instanceof polymorph_core.rect) {
-                        /*if (this.settings.x) {
-                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
-                        } else {
-                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
-                        }*/
+                if (shiftPressed) {
+                    if (!this.children) {
+                        this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                        if (this.parent instanceof polymorph_core.rect) {
+                            /*if (this.settings.x) {
+                                this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
+                            } else {
+                                this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
+                            }*/
+                        }
+                        if (highlightDirn != -1) {
+                            this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                        }
+                    } else {
+                        this.outerDiv.style.border = "";
                     }
-                    if (highlightDirn != -1) {
+                } else if (this.parent instanceof polymorph_core.rect) {
+                    this.outerDiv.style.border = "";
+                    if (this.settings.f) {
+                        this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                    }
+                    if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
                         this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                    }
+                    if (this.outerDiv.parentElement) {
+                        // on load parentElement doesnt exist
+                        /*if (this.settings.x) {
+                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                        } else {
+                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                        }*/
                     }
                 } else {
                     this.outerDiv.style.border = "";
                 }
-            } else if (this.parent instanceof polymorph_core.rect) {
-                this.outerDiv.style.border = "";
-                if (this.settings.f) {
-                    this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                }
-                if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
-                    this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
-                }
-                if (this.outerDiv.parentElement) {
-                    // on load parentElement doesnt exist
-                    /*if (this.settings.x) {
-                        this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
-                    } else {
-                        this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
-                    }*/
-                }
-            } else {
-                this.outerDiv.style.border = "";
-            }
 
-        }
-        //Make draggable borders.
+            }
+            //Make draggable borders.
         this.redrawBorders();
         //events
         //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
@@ -3993,9 +4144,9 @@ if (!isPhone()) {
                     ];
                     //instantiate the rects
                     newRectIDs.forEach((v) => {
-                        polymorph_core.rects[v] = new polymorph_core.rect(v);
-                    })
-                    //copy in operators
+                            polymorph_core.rects[v] = new polymorph_core.rect(v);
+                        })
+                        //copy in operators
                     this.containers.forEach((v, i) => {
                         v.settings.p = newRectIDs[!_firstOrSecond * 1];
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
@@ -4003,7 +4154,10 @@ if (!isPhone()) {
                     });
 
                     //force a refresh
-                    this.children.forEach((v) => { v.refresh(); v.resizing = this.split ^ 1 });
+                    this.children.forEach((v) => {
+                        v.refresh();
+                        v.resizing = this.split ^ 1
+                    });
                 }
                 //for resizing
                 if (this.resizing != -1) {
@@ -4045,7 +4199,7 @@ if (!isPhone()) {
         this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
         document.addEventListener("keydown", (e) => {
-            if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
+            if (!shiftPressed && (e.key == "Shift" || e.key == "Control" || e.key == "Meta")) {
                 shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
                 this.redrawBorders();
             }
@@ -4078,25 +4232,25 @@ if (!isPhone()) {
             this.split = -1;
         })
         this.outerDiv.addEventListener("mousedown", (e) => {
-            let dirn = -1;
-            let cr = this.outerDiv.getClientRects()[0];
-            if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
-                dirn = 0;
-            } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
-                dirn = 1;
-            } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
-                dirn = 2;
-            } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
-                dirn = 3;
-            }
-            if (e.shiftKey) {
-                this.split = dirn;
-            } else {
-                this.resizing = dirn;
-            }
+                let dirn = -1;
+                let cr = this.outerDiv.getClientRects()[0];
+                if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
+                    dirn = 0;
+                } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
+                    dirn = 1;
+                } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
+                    dirn = 2;
+                } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
+                    dirn = 3;
+                }
+                if (e.shiftKey) {
+                    this.split = dirn;
+                } else {
+                    this.resizing = dirn;
+                }
 
-        })
-        ///Saving
+            })
+            ///Saving
         this.toSaveData = () => {
             //just ensure your item data is accurate.
             return this.settings;
@@ -4130,7 +4284,7 @@ if (!isPhone()) {
                 delete polymorph_core.items[i]._od;
             });
             delete polymorph_core.items[rectID]._rd;
-            delete polymorph_core.rects[rectID];//seppuku
+            delete polymorph_core.rects[rectID]; //seppuku
         }
     }
 
@@ -4140,7 +4294,7 @@ if (!isPhone()) {
                 if (polymorph_core.rects[polymorph_core.items._meta.currentView]) {
                     return polymorph_core.rects[polymorph_core.items._meta.currentView];
                 } else {
-                    polymorph_core.items._meta.currentView = Object.keys(polymorph_core.rects)[0];//if the base rect is deleted
+                    polymorph_core.items._meta.currentView = Object.keys(polymorph_core.rects)[0]; //if the base rect is deleted
                     return polymorph_core.rects[polymorph_core.items._meta.currentView];
                 }
             } catch (e) {
@@ -4185,7 +4339,7 @@ if (isPhone()) {
         </div>`));
 
         //oplists
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <div style="width:100%; flex: 1 1 100%; position:relative; overflow: hidden">
         <style>
         [data-containerid]{
@@ -4234,7 +4388,7 @@ if (isPhone()) {
         document.body.style.display = "flex";
         document.body.style.height = "100%";
         document.body.style.flexDirection = "column";
-        polymorph_core.toggleMenu = function (visible) {
+        polymorph_core.toggleMenu = function(visible) {
             if (visible == undefined) {
                 visible = (document.body.querySelector("#menulist").parentElement.style.left != "0px"); //because we are toggling
             }
@@ -4252,7 +4406,7 @@ if (isPhone()) {
         });
         document.body.querySelector("#menulist").parentElement.addEventListener("click", (e) => {
             if (e.currentTarget == e.target) {
-                polymorph_core.toggleMenu(false);//hide on direct taps
+                polymorph_core.toggleMenu(false); //hide on direct taps
             }
         });
 
@@ -4280,32 +4434,31 @@ if (isPhone()) {
                 <h3>Operator settings</h3>`;
                 polymorph_core.settingsOperator.dialogDiv.style.maxWidth = "50vw";
                 polymorph_core.settingsDiv.appendChild(polymorph_core.settingsOperator.dialogDiv);
-                polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.settings.tabbarName;
+                polymorph_core.settingsDiv.querySelector(".tabDisplayName").value = polymorph_core.settingsOperator.container.settings.tabbarName;
                 //add remapping by the operator
                 polymorph_core.containers[polymorph_core.currentOperator].readyRemappingDiv();
                 polymorph_core.settingsDiv.appendChild(polymorph_core.containers[polymorph_core.currentOperator].remappingDiv);
 
                 polymorph_core.dialog.prompt(polymorph_core.settingsDiv, (d) => {
                     polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName = d.querySelector("input.tabDisplayName").value;
-                    document.querySelector("#oplists").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
+                    document.querySelector("#rectList").querySelector(`[data-containerid="${polymorph_core.currentOperator}"]`).innerText = polymorph_core.containers[polymorph_core.currentOperator].settings.tabbarName;
                     if (polymorph_core.settingsOperator.dialogUpdateSettings) polymorph_core.settingsOperator.dialogUpdateSettings();
                     polymorph_core.containers[polymorph_core.currentOperator].processRemappingDiv();
-                    polymorph_core.fire("updateItem", { id: rectID });
+                    polymorph_core.fire("updateItem", { id: polymorph_core.currentOperator });
                 })
-                polymorph_core.dialog.register(polymorph_core.currentOperator);
             }
         });
     });
     polymorph_core.on("documentCreated", (id) => {
         if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = { saveSources: {} };
-        polymorph_core.userData.documents[id].autosave = true;// by default make autosave true, so user does not have to save
+        polymorph_core.userData.documents[id].autosave = true; // by default make autosave true, so user does not have to save
     })
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //Operator conveinence functions
     //Add showOperator
 
-    polymorph_core.showOperator = function (op) {
+    polymorph_core.showOperator = function(op) {
         if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
         document.body.querySelector("#body").appendChild(op.topdiv);
         if (op.operator && op.operator.refresh) op.operator.refresh();
@@ -4323,14 +4476,14 @@ if (isPhone()) {
     })*/
 
 
-    polymorph_core.resetView = function () {
+    polymorph_core.resetView = function() {
         if (document.body.querySelector("#body").children.length) document.body.querySelector("#body").children[0].remove();
         polymorph_core.baseRect = new _rect(polymorph_core,
             undefined, {});
         polymorph_core.baseRect.refresh();
     }
 
-    polymorph_core.on("operatorChanged", function (d) {
+    polymorph_core.on("operatorChanged", function(d) {
         if (polymorph_core.userData.documents[polymorph_core.currentDocID] && polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
             polymorph_core.autosaveCapacitor.submit();
         }
@@ -4341,11 +4494,9 @@ if (isPhone()) {
             return document.createElement("div");
         }
     }
-}
+};
 
-;
-
-if (!isPhone()){
+if (!isPhone()) {
 
     function _topbar(parent, options) {
         this.node = document.createElement("ul");
@@ -4428,7 +4579,7 @@ if (!isPhone()){
             this.node.appendChild(s);
         }
         if (parent) parent.appendChild(this.node);
-    
+
         let addToList = (el, base, pathName) => {
             let a = document.createElement("a");
             let li = document.createElement("li");
@@ -4440,7 +4591,7 @@ if (!isPhone()){
         }
         this.add = this.appendChild = (string, domEl) => {
             // string is domel; string is one string, string is path, string is path and domel is domel
-            if (typeof (string) != "string") {
+            if (typeof(string) != "string") {
                 domEl = string;
                 string = "";
             }
@@ -4474,9 +4625,9 @@ if (!isPhone()){
             }
         }
     }
-    
+
     polymorph_core.on("UIsetup", () => {
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <style>
         #popup-notification {
             position: fixed;
@@ -4514,7 +4665,7 @@ if (!isPhone()){
             100% {background-position-x: 100%}
         }
         </style>`));
-        document.body.appendChild(htmlwrap(/*html*/`
+        document.body.appendChild(htmlwrap( /*html*/ `
         <div style="display:flex; flex-direction:column; height:100vh">
             <div class="banner" style="z-index:100">
                 <div class="installPrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Install our desktop app! It's free!</button></div>
@@ -4536,19 +4687,13 @@ if (!isPhone()){
         //Top bar
         polymorph_core.topbar = new _topbar(document.querySelector(".banner"));
     })
-    
+
     polymorph_core.on("UIstart", () => {
         polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
         })
         polymorph_core.topbar.add("File/New").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
-        })
-        polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-            alert("Warning: this operation may reduce filesize but is irreversible. We recommend saving to a file before you run this operation.");
-            if (confirm("PRESS OK TO PROCEED")) {
-                polymorph_core.runGarbageCollector();
-            }
         })
         polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
             polymorph_core.resetTutorial();
@@ -4562,15 +4707,15 @@ if (!isPhone()){
             polymorph_core.baseRect.refresh();
         })
     });
-    
-    polymorph_core.showNotification = function (notificationMessage, notificationType = 'default') {
-    
+
+    polymorph_core.showNotification = function(notificationMessage, notificationType = 'default') {
+
         if (!document.getElementById("popup-notification")) {
             const popupNotification = document.createElement("div");
             popupNotification.setAttribute("id", "popup-notification");
             document.body.appendChild(popupNotification);
         }
-    
+
         const popupNotificationBox = document.getElementById("popup-notification");
         popupNotificationBox.innerHTML = notificationMessage;
         popupNotificationBox.classList.add(notificationType);
@@ -4579,9 +4724,222 @@ if (!isPhone()){
             popupNotificationBox.classList = '';
         }, 2800)
     }
-    
-}
-;
+
+};
+
+polymorph_core.on("UIstart", () => {
+    //garbage collection
+    polymorph_core.tryGarbageCollect = (id) => {
+        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return; //never delete rects and operators? this wont end well
+        if (id == "_meta") return; //dont delete the metaitem
+        let toDelete = true;
+        for (let i in this.containers) {
+            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+                toDelete = false;
+            }
+        }
+        if (toDelete) {
+            delete polymorph_core.items[id];
+        }
+    }
+    polymorph_core.runGarbageCollector = () => {
+        for (let i in polymorph_core.items) {
+            polymorph_core.tryGarbageCollect(i);
+        }
+    }
+
+    let loadDialog = document.createElement("div");
+    loadDialog.classList.add("dialog");
+    loadDialog = dialogManager.checkDialogs(loadDialog)[0];
+    let loadInnerDialog = htmlwrap(`<div>
+    <h1>Data cleaner</h1>
+    <button class="repop">Repopulate lists</button>
+
+    <div data-cluster="orphop">
+        <h2>Orphaned operators</h2>
+        <p>Operators that can't be accessed because they've been deleted or their parents have been deleted.</p>
+        <select multiple>
+        </select>
+        <button class="remove">Remove from list</button>
+        <button class="cln1">Clean selected</button>
+        <button class="clean">Clean all on list</button>
+    </div>
+
+    <div data-cluster="orphrect">
+        <h2>Orphaned Rects</h2>
+        <p>Rects that can't be accessed because they've been deleted or their parents have been deleted.</p>
+        <select multiple>
+        </select>
+        <button class="remove">Remove from list</button>
+        <button class="cln1">Clean selected</button>
+        <button class="clean">Clean up</button>
+    </div>
+
+    <div data-cluster="orphit">
+        <h2>Orphaned Items</h2>
+        <p>Items that aren't claimed as relevant by any active operators.</p>
+        <select multiple>
+        </select>
+        <button class="remove">Remove from list</button>
+        <button class="cln1">Clean selected</button>
+        <button class="clean">Clean up</button>
+    </div>
+
+    <div data-cluster="singProp">
+        <h2>Singular Properties</h2>
+        <p>Properties that belong to less than 10 items</p>
+        <select multiple>
+        </select>
+        <button class="remove">Remove from list</button>
+        <button class="cln1">Clean selected</button>
+        <button class="clean">Delete from items</button>
+    </div>
+
+    </div>`); // TODO: split up and make it programmatic
+    loadDialog.querySelector(".innerDialog>div:first-child").appendChild(loadInnerDialog);
+    document.body.appendChild(loadDialog);
+
+    let cleaners = {
+        orphop: {
+            populate: () => {
+                let junklist = [];
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i]._od) {
+                        //chase up the parent
+                        let p = i;
+                        let toInsert = true;
+                        while (polymorph_core.items[p] && (polymorph_core.items[p]._od || polymorph_core.items[p]._rd)) {
+                            p = polymorph_core.items[p]._rd || polymorph_core.items[p]._od;
+                            p = p.p;
+                            if (p == polymorph_core.items._meta.currentView) toInsert = false;
+                        }
+                        if (toInsert) {
+                            junklist.push(i);
+                        }
+                    }
+                }
+                return junklist;
+            },
+            clean: (toClean) => {
+                delete polymorph_core.items[toClean]._od;
+                if ((Object.keys(polymorph_core.items[toClean]).length == 1 && polymorph_core.items[toClean]._lu_) || (Object.keys(polymorph_core.items[toClean]).length == 0)) {
+                    delete polymorph_core.items[toClean];
+                }
+            }
+        },
+        orphrect: {
+            populate: () => {
+                let junklist = [];
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i]._rd) {
+                        //chase up the parent
+                        let p = i;
+                        let toInsert = true;
+                        if (p == polymorph_core.items._meta.currentView) toInsert = false;
+                        while (polymorph_core.items[p] && (polymorph_core.items[p]._od || polymorph_core.items[p]._rd)) {
+                            p = polymorph_core.items[p]._rd || polymorph_core.items[p]._od;
+                            p = p.p;
+                            if (p == polymorph_core.items._meta.currentView) toInsert = false;
+
+                        }
+                        if (toInsert) {
+                            junklist.push(i);
+                        }
+                    }
+                }
+                return junklist;
+            },
+            clean: (toClean) => {
+                delete polymorph_core.items[toClean]._rd;
+                if ((Object.keys(polymorph_core.items[toClean]).length == 1 && polymorph_core.items[toClean]._lu_) || (Object.keys(polymorph_core.items[toClean]).length == 0)) {
+                    delete polymorph_core.items[toClean];
+                }
+            }
+        },
+        orphit: {
+            populate: () => {
+                let junklist = [];
+                let operators = Object.values(polymorph_core.containers);
+                operators.forEach(i => i.refresh());
+                operators = operators.map(i => i.operator).filter(i => i.itemRelevant); // hot refresh all operators so everyone can have a say.
+                for (let i in polymorph_core.items) {
+                    if (!polymorph_core.items[i]._rd && !polymorph_core.items[i]._od && i != "_meta") {
+                        let isrelevant = operators.reduce((p, op) => p || op.itemRelevant(i), false);
+                        if (!isrelevant) {
+                            junklist.push(i);
+                        }
+                    }
+                }
+                return junklist;
+            },
+            clean: (toClean) => {
+                delete polymorph_core.items[toClean];
+            }
+        },
+        singProp: {
+            populate: () => {
+                let propertycounts = {};
+                for (let i in polymorph_core.items) {
+                    if (i == "_meta" || i == "_od" || i == "_rd") continue;
+                    for (let p in polymorph_core.items[i]) {
+                        if (!propertycounts[p]) propertycounts[p] = 1;
+                        else propertycounts[p]++;
+                    }
+                }
+                return Object.entries(propertycounts).filter(i => i[1] < 5).map(i => i[0]);
+            },
+            clean: (toClean) => {
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i][toClean]) {
+                        delete polymorph_core.items[i][toClean];
+                    }
+                }
+            }
+        }
+    }
+
+    let populateOne = (i) => {
+        let list = cleaners[i].populate();
+        if (list.length) {
+            loadInnerDialog.querySelector(`[data-cluster="${i}"]>select`).innerHTML = "<option>" + list.join("</option><option>") + "</option>";
+        } else {
+            loadInnerDialog.querySelector(`[data-cluster="${i}"]>select`).innerHTML = "Nothing to see here!";
+            loadInnerDialog.querySelector(`[data-cluster="${i}"]>select`).disabled = true;
+        }
+        loadInnerDialog.querySelector(`[data-cluster="${i}"]>select`);
+    }
+    let populateAll = () => {
+        for (let i in cleaners) {
+            populateOne(i);
+        }
+    }
+
+    loadInnerDialog.addEventListener("click", (e) => {
+        if (e.target.tagName == "BUTTON") {
+            let select = e.target.parentElement.querySelector("select");
+            if (e.target.classList.contains("remove")) {
+                Array.from(select.selectedOptions).map(i => i.remove());
+            }
+            if (e.target.classList.contains("cln1")) {
+                let cleaner = cleaners[e.target.parentElement.dataset.cluster];
+                Array.from(select.selectedOptions).map(i => cleaner.clean(i.innerHTML));
+                populateOne(e.target.parentElement.dataset.cluster);
+            }
+            if (e.target.classList.contains("clean")) {
+                let cleaner = cleaners[e.target.parentElement.dataset.cluster];
+                Array.from(select.children).map(i => cleaner.clean(i.innerHTML));
+                populateOne(e.target.parentElement.dataset.cluster);
+            }
+
+        }
+    })
+
+
+    polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+        populateAll();
+        loadDialog.style.display = "block";
+    })
+});;
 
 (function () {
     polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
@@ -4705,161 +5063,161 @@ Date dt = d.extractTime(string data,Date reference);
 function _dateParser() {
     let me = this;
     this.dateParserRegexes = [{
-        name: "repetition",
-        regex: /\((\d+)*\)/ig,
-        operate: function (regres, data) {
-            if (regres[1]) {
-                data.repetition = Number(regres[1]);
-            } else data.repetition = -1;
-        }
-    },
-    {
-        name: "pmtime",
-        regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
-        operate: function (regres, data) {
-            data.d.setMinutes(0);
-            data.d.setSeconds(0);
-            data.d.setHours(Number(regres[1]));
-            if (regres[2] == 'pm') data.d.setHours(Number(regres[1]) + 12);
-        }
-    },
-    {
-        name: "time",
-        regex: /(?:(?:(\d+)\/(\d+)(?:\/(\d+))?)|(?:(\d+):(\d+)(?::(\d+))?))/g,
-        operate: function (regres, data) {
-            data.d.setMinutes(0);
-            data.d.setSeconds(0);
-            //data.noDateSpecific = true;
-            if (regres[1]) {
-                data.d.setDate(Number(regres[1]))
+            name: "repetition",
+            regex: /\((\d+)*\)/ig,
+            operate: function(regres, data) {
+                if (regres[1]) {
+                    data.repetition = Number(regres[1]);
+                } else data.repetition = -1;
+            }
+        },
+        {
+            name: "pmtime",
+            regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
+            operate: function(regres, data) {
+                data.d.setMinutes(0);
+                data.d.setSeconds(0);
+                data.d.setHours(Number(regres[1]));
+                if (regres[2] == 'pm') data.d.setHours(Number(regres[1]) + 12);
+            }
+        },
+        {
+            name: "time",
+            regex: /(?:(?:(\d+)\/(\d+)(?:\/(\d+))?)|(?:(\d+):(\d+)(?::(\d+))?))/g,
+            operate: function(regres, data) {
+                data.d.setMinutes(0);
+                data.d.setSeconds(0);
+                //data.noDateSpecific = true;
+                if (regres[1]) {
+                    data.d.setDate(Number(regres[1]))
+                    data.noDateSpecific = false;
+                }
+                if (regres[2]) data.d.setMonth(Number(regres[2]) - 1)
+                if (regres[3]) {
+                    data.yr = Number(regres[3]);
+                    if (data.yr < 100) data.yr += 2000;
+                    data.d.setFullYear(data.yr)
+                }
+                if (regres[4]) {
+                    data.hr = Number(regres[4]);
+                    if (data.hr < 6) data.hr += 12;
+                }
+                data.d.setHours(data.hr);
+                if (regres[5]) data.d.setMinutes(Number(regres[5]))
+                if (regres[6]) data.d.setSeconds(Number(regres[6]))
+            }
+        },
+        {
+            name: "ampm",
+            regex: /(am|pm)/gi,
+            operate: function(regres, data) {
+                if (regres[1] == "am") {
+                    if (data.d.getHours() > 12) {
+                        data.d.setHours(data.d.getHours() - 12);
+                    }
+                } else {
+                    if (data.d.getHours() < 12) {
+                        data.d.setHours(data.d.getHours() + 12);
+                    }
+                }
+            }
+        },
+        {
+            name: "dayofweek",
+            regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
+            operate: function(regres, data, refdate) {
+                data.nextDay = 0;
+                for (i = 0; i < regres.length; i++) {
+                    if (regres[i] != undefined) {
+                        data.nextDay = i;
+                    }
+                }
+                if (data.d.getDay() == data.nextDay % 7 && refdate.getTime() - data.d.getTime() > 0) {
+                    data.d.setDate(data.d.getDate() + 7);
+                } else {
+                    data.d.setDate(data.d.getDate() + (data.nextDay + 7 - data.d.getDay()) % 7);
+                }
+            }
+        },
+        {
+            name: "weekday",
+            regex: /weekday/ig,
+            operate: function(regres, data, refdate) {
+                data.nextDay = 0;
+                let tomorrow = data.d.getDay();
+                if (refdate.getTime() - data.d.getTime() <= 0) tomorrow++; //respect past pure days.
+                if (!(tomorrow > 0 && tomorrow < 5)) {
+                    data.d.setDate(data.d.getDate() + (8 - data.d.getDay()) % 7);
+                }
+            }
+        },
+        {
+            name: "auto",
+            regex: /auto/ig,
+            operate: function(regres, data) {
+                data.auto = true;
+            }
+        },
+        //setters
+        {
+            name: "today",
+            regex: /today/g,
+            operate: function(regres, data) {
+                today = new Date();
+                data.d.setDate(today.getDate());
+                data.d.setMonth(today.getMonth());
                 data.noDateSpecific = false;
             }
-            if (regres[2]) data.d.setMonth(Number(regres[2]) - 1)
-            if (regres[3]) {
-                data.yr = Number(regres[3]);
-                if (data.yr < 100) data.yr += 2000;
-                data.d.setFullYear(data.yr)
+        },
+        {
+            name: "now",
+            regex: /now/g,
+            operate: function(regres, data) {
+                data.d = new Date();
+                data.noDateSpecific = false;
             }
-            if (regres[4]) {
-                data.hr = Number(regres[4]);
-                if (data.hr < 6) data.hr += 12;
-            }
-            data.d.setHours(data.hr);
-            if (regres[5]) data.d.setMinutes(Number(regres[5]))
-            if (regres[6]) data.d.setSeconds(Number(regres[6]))
-        }
-    },
-    {
-        name: "ampm",
-        regex: /(am|pm)/gi,
-        operate: function (regres, data) {
-            if (regres[1] == "am") {
-                if (data.d.getHours() > 12) {
-                    data.d.setHours(data.d.getHours() - 12);
+        },
+        {
+            name: "delTime",
+            regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
+            operate: function(regres, data) {
+                data.freeamt = 1;
+                for (i = 3; i < regres.length; i++) {
+                    if (regres[i] != undefined) {
+                        factor = i;
+                    }
                 }
-            } else {
-                if (data.d.getHours() < 12) {
-                    data.d.setHours(data.d.getHours() + 12);
+                switch (factor) { /// this can be improved.
+                    case 3:
+                        data.freeamt = 1000 * 60;
+                        break;
+                    case 4:
+                        data.freeamt = 1000 * 60 * 60;
+                        break;
+                    case 5:
+                        data.freeamt = 1000 * 60 * 60 * 24;
+                        break;
+                    case 6:
+                        data.freeamt = 1000 * 60 * 60 * 24 * 7;
+                        break;
+                    case 7:
+                        data.freeamt = 1000 * 60 * 60 * 24 * 30;
+                        break;
+                    case 8:
+                        data.freeamt = 1000 * 60 * 60 * 24 * 365;
+                        break;
                 }
-            }
-        }
-    },
-    {
-        name: "dayofweek",
-        regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
-        operate: function (regres, data, refdate) {
-            data.nextDay = 0;
-            for (i = 0; i < regres.length; i++) {
-                if (regres[i] != undefined) {
-                    data.nextDay = i;
+                data.freeamt *= Number(regres[2]);
+                if (regres[1] == "-") {
+                    data.freeamt *= -1;
+                    data.noDateSpecific = false;
                 }
-            }
-            if (data.d.getDay() == data.nextDay % 7 && refdate.getTime() - data.d.getTime() > 0) {
-                data.d.setDate(data.d.getDate() + 7);
-            } else {
-                data.d.setDate(data.d.getDate() + (data.nextDay + 7 - data.d.getDay()) % 7);
+                data.d.setTime(data.d.getTime() + data.freeamt);
             }
         }
-    },
-    {
-        name: "weekday",
-        regex: /weekday/ig,
-        operate: function (regres, data, refdate) {
-            data.nextDay = 0;
-            let tomorrow = data.d.getDay();
-            if (refdate.getTime() - data.d.getTime() <= 0) tomorrow++;//respect past pure days.
-            if (!(tomorrow > 0 && tomorrow < 5)) {
-                data.d.setDate(data.d.getDate() + (8 - data.d.getDay()) % 7);
-            }
-        }
-    },
-    {
-        name: "auto",
-        regex: /auto/ig,
-        operate: function (regres, data) {
-            data.auto = true;
-        }
-    },
-    //setters
-    {
-        name: "today",
-        regex: /today/g,
-        operate: function (regres, data) {
-            today = new Date();
-            data.d.setDate(today.getDate());
-            data.d.setMonth(today.getMonth());
-            data.noDateSpecific = false;
-        }
-    },
-    {
-        name: "now",
-        regex: /now/g,
-        operate: function (regres, data) {
-            data.d = new Date();
-            data.noDateSpecific = false;
-        }
-    },
-    {
-        name: "delTime",
-        regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
-        operate: function (regres, data) {
-            data.freeamt = 1;
-            for (i = 3; i < regres.length; i++) {
-                if (regres[i] != undefined) {
-                    factor = i;
-                }
-            }
-            switch (factor) { /// this can be improved.
-                case 3:
-                    data.freeamt = 1000 * 60;
-                    break;
-                case 4:
-                    data.freeamt = 1000 * 60 * 60;
-                    break;
-                case 5:
-                    data.freeamt = 1000 * 60 * 60 * 24;
-                    break;
-                case 6:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 7;
-                    break;
-                case 7:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 30;
-                    break;
-                case 8:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 365;
-                    break;
-            }
-            data.freeamt *= Number(regres[2]);
-            if (regres[1] == "-") {
-                data.freeamt *= -1;
-                data.noDateSpecific=false;
-            }
-            data.d.setTime(data.d.getTime() + data.freeamt);
-        }
-    }
     ];
     this.reverse = false;
-    this.extractTime = function (str, refdate) {
+    this.extractTime = function(str, refdate) {
         let d;
         if (!refdate) {
             d = new Date();
@@ -4887,16 +5245,12 @@ function _dateParser() {
         //returns a Date() object, or undefined.
     }
 
-    this.richExtractTime = function (str, refdate) {
-        //returns an array of the form:
+    this.richExtractTime = function(str, refdate) {
         /*
         refdate is a Date().
-
-        {date:beginning date (integer)
-        part: substring that resulted in this date
-        endDate: end date (integer)}
+        
         */
-        let orefdate = refdate;// Honour orefdate first - this is passed externally
+        let orefdate = refdate; // Honour orefdate first - this is passed externally
         //otherwise honour the first part of the repetition.
         let dvchain = str.split("&");
         let result = []; //see below.
@@ -4960,7 +5314,7 @@ function _dateParser() {
     }
 
     //Create calendar items for fullcalendar.io and other similar things.
-    this.getCalendarTimes = function (dateArray, start, end) {
+    this.getCalendarTimes = function(dateArray, start, end) {
         // Param: dateArray: as specified above. start: date.getTime() of the starting date. end: date.getTime() of the ending date.
         //Get the date once
         let output;
@@ -4995,14 +5349,14 @@ function _dateParser() {
         return obj;
     }
 
-    this.humanReadableRelativeDate=(datenum)=>{
-        let d=new Date(datenum);
-        let now=new Date();
+    this.humanReadableRelativeDate = (datenum) => {
+        let d = new Date(datenum);
+        let now = new Date();
         //if same day, just report time
         //otherwise report day only
-        if (d.getDate()==now.getDate() && d.getFullYear()==now.getFullYear() && d.getMonth()==now.getMonth()){
+        if (d.getDate() == now.getDate() && d.getFullYear() == now.getFullYear() && d.getMonth() == now.getMonth()) {
             return d.toTimeString().split(" ")[0]
-        }else{
+        } else {
             return d.toLocaleDateString().split(" ")[0]
         }
     }
@@ -5062,77 +5416,95 @@ var dateParser = new _dateParser();;
 
 function __itemlist_searchsort() {
     //search
-    this.searchtemplate = htmlwrap(`<span style="display:block; width:100%;">
-    <span></span>
-    <button disabled>&#128269;</button>
-    </span>`);
-    this._searchtemplate = this.searchtemplate.querySelector("span");
-    this.taskListBar.insertBefore(this.searchtemplate, this.template.nextElementSibling);
+    if (!isPhone()) {
 
-    //Managing the search
-    let searchCapacitor = new capacitor(1000, 300, () => {
-        //filter the items
-        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        if (this.settings.entrySearch) {
-            searchboxes = Array.from(this.template.querySelectorAll("input"));
-        }
-        let amSearching = false;
-        for (let i = 0; i < searchboxes.length; i++) {
-            if (searchboxes[i].value != "") {
-                amSearching = true;
+        this.searchtemplate = htmlwrap(`<span style="display:block; width:100%;">
+        <span></span>
+        <button disabled>&#128269;</button>
+        </span>`);
+        this._searchtemplate = this.searchtemplate.querySelector("span");
+        this.taskListBar.insertBefore(this.searchtemplate, this.template.nextElementSibling);
+
+        //Managing the search
+        let searchCapacitor = new capacitor(1000, 300, () => {
+            //filter the items
+            let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+            if (this.settings.entrySearch) {
+                searchboxes = Array.from(this.template.querySelectorAll("input"));
             }
-        }
-        if (amSearching) {
-            this.searchtemplate.querySelector("button").innerHTML = "&#9003;";
-            this.searchtemplate.querySelector("button").disabled = false;
-        } else {
-            this.searchtemplate.querySelector("button").innerHTML = "&#128269;";
-            this.searchtemplate.querySelector("button").disabled = true;
-            //dont return yet, we have to reset everything
-
-        }
-
-        let items = Object.keys(this.renderedItems);
-        let toShowItems = [];
-        items.forEach((v) => {
-            let it = polymorph_core.items[v];
+            let amSearching = false;
+            for (let i = 0; i < searchboxes.length; i++) {
+                if (searchboxes[i].value != "") {
+                    amSearching = true;
+                }
+            }
             if (amSearching) {
-                let el = this.taskList.querySelector(`[data-id="${v}"]`);
-                el.style.display = "none";
-                for (let i = 0; i < searchboxes.length; i++) {
-                    //only search by text for now
-                    if (searchboxes[i].value) {
-                        switch (this.settings.properties[searchboxes[i].dataset.role]) {
-                            case "text":
-                                if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].toLowerCase().indexOf(searchboxes[i].value.toLowerCase()) > -1) {
-                                    toShowItems.push(el);
-                                }
-                                break;
+                this.searchtemplate.querySelector("button").innerHTML = "&#9003;";
+                this.searchtemplate.querySelector("button").disabled = false;
+            } else {
+                this.searchtemplate.querySelector("button").innerHTML = "&#128269;";
+                this.searchtemplate.querySelector("button").disabled = true;
+                //dont return yet, we have to reset everything
+
+            }
+
+            let items = Object.keys(this.renderedItems);
+            let toShowItems = [];
+            items.forEach((v) => {
+                let it = polymorph_core.items[v];
+                if (amSearching) {
+                    let el = this.taskList.querySelector(`[data-id="${v}"]`);
+                    el.style.display = "none";
+                    for (let i = 0; i < searchboxes.length; i++) {
+                        //only search by text for now
+                        if (searchboxes[i].value) {
+                            switch (this.settings.properties[searchboxes[i].dataset.role]) {
+                                case "text":
+                                    if (it[searchboxes[i].dataset.role] && it[searchboxes[i].dataset.role].toLowerCase().indexOf(searchboxes[i].value.toLowerCase()) > -1) {
+                                        toShowItems.push(el);
+                                    }
+                                    break;
+                            }
                         }
                     }
+                } else {
+                    let el = this.taskList.querySelector(`[data-id="${v}"]`);
+                    toShowItems.push(el);
                 }
+            });
+            toShowItems.forEach((v) => {
+                let e = v;
+                while (e != this.taskList) {
+                    e.style.display = "block";
+                    e = e.parentElement;
+                }
+            });
+        });
+        this.searchtemplate.addEventListener("keyup", searchCapacitor.submit);
+        this.searchtemplate.querySelector("button").addEventListener("click", () => {
+            let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
+            searchboxes.forEach(v => { v.value = ""; });
+            searchCapacitor.submit();
+        })
+
+        this.template.addEventListener("keyup", searchCapacitor.submit);
+    }
+
+    this.setSearchTemplate = (htmlstring) => {
+        if (this.settings.entrySearch) {
+            this.searchtemplate.style.display = "none";
+        } else {
+            this.searchtemplate.style.display = "block";
+        }
+        this._searchtemplate.innerHTML = htmlstring;
+        for (let i in this.settings.propertyWidths) {
+            if (this._searchtemplate.querySelector(`[data-contains-role="${i}"]`)) {
+                this._searchtemplate.querySelector(`[data-contains-role="${i}"]`).style.width = this.settings.propertyWidths[i];
             } else {
-                let el = this.taskList.querySelector(`[data-id="${v}"]`);
-                toShowItems.push(el);
+                delete this.settings.propertyWidths[i];
             }
-        });
-        toShowItems.forEach((v) => {
-            let e = v;
-            while (e != this.taskList) {
-                e.style.display = "block";
-                e = e.parentElement;
-            }
-        });
-    });
-    this.searchtemplate.addEventListener("keyup", searchCapacitor.submit);
-    this.searchtemplate.querySelector("button").addEventListener("click", () => {
-        let searchboxes = Array.from(this.searchtemplate.querySelectorAll("input"));
-        searchboxes.forEach(v => { v.value = ""; });
-        searchCapacitor.submit();
-    })
-
-    this.template.addEventListener("keyup", searchCapacitor.submit);
-
+        }
+    }
 
     ///sorting
     this.indexOf = (id) => {
@@ -5146,11 +5518,11 @@ function __itemlist_searchsort() {
     this._sortItems = () => {
         this.isSorting = true; // alert focusout so that it doesnt display prettydate
         let sortingProp = this.settings.sortby;
-        let sortType=this.settings.properties[sortingProp];
+        let sortType = this.settings.properties[sortingProp];
         if (!this.container.visible()) return;
         if (this.settings.implicitOrder) {
             sortingProp = this.settings.filter;
-            sortType="number";
+            sortType = "number";
         }
         if (sortingProp) {
             //collect all items
@@ -5182,8 +5554,7 @@ function __itemlist_searchsort() {
                                     //evaluate the repetition
                                     its[i].date = dateParser.richExtractTime(its[i].dt.datestring)[0].date;
                                 }
-                            }
-                            else its[i].date = Date.now() * 10000;
+                            } else its[i].date = Date.now() * 10000;
                         } else its[i].date = Date.now() * 10000;
                     }
                     its.sort((a, b) => {
@@ -5219,8 +5590,7 @@ function __itemlist_searchsort() {
                 fi.focus();
                 try {
                     fi.selectionStart = cp;
-                } catch (e) {
-                }
+                } catch (e) {}
             }
         }
         this.isSorting = false;
@@ -5228,24 +5598,8 @@ function __itemlist_searchsort() {
 
     this.sortcap = new capacitor(500, 1000, this._sortItems);
 
-    this.sortItems = () => {
+    this.sortItems = async() => {
         this.sortcap.submit();
-    }
-
-    this.setSearchTemplate = (htmlstring) => {
-        if (this.settings.entrySearch) {
-            this.searchtemplate.style.display = "none";
-        } else {
-            this.searchtemplate.style.display = "block";
-        }
-        this._searchtemplate.innerHTML = htmlstring;
-        for (let i in this.settings.propertyWidths) {
-            if (this._searchtemplate.querySelector(`[data-contains-role="${i}"]`)) {
-                this._searchtemplate.querySelector(`[data-contains-role="${i}"]`).style.width = this.settings.propertyWidths[i];
-            } else {
-                delete this.settings.propertyWidths[i];
-            }
-        }
     }
 
 };
@@ -5256,49 +5610,48 @@ if (!isPhone()) {
         description: "Arrange your items in a list.",
         displayName: "List",
         imageurl: "assets/operators/list.png"
-    }
-        , function (container) {
-            //initialisation
-            let defaultSettings = {
-                properties: {
-                    title: "text"
-                },
-                propertyWidths: {},
-                filter: polymorph_core.guid(),
-                enableEntry: true,
-                implicitOrder: true,
-                linkProperty: "to",
-                entrySearch: false,
-                propOrder: []
-            };
-            polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-            this.rootdiv.remove(); //we dont want this
-            //upgrade older ones
-            if (this.settings.filterProp) {
-                this.settings.filter = this.settings.filterProp;
-                delete this.settings.filterProp;
-            }
-            if (Object.keys(this.settings.properties).length != this.settings.propOrder.length) this.settings.propOrder = Object.keys(this.settings.properties);
-            this.taskListBar = document.createElement("div");
-            this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
-            //top / insert 
-            this.template = htmlwrap(`<span style="display:block; width:fit-content;">
+    }, function(container) {
+        //initialisation
+        let defaultSettings = {
+            properties: {
+                title: "text"
+            },
+            propertyWidths: {},
+            filter: polymorph_core.guid(),
+            enableEntry: true,
+            implicitOrder: true,
+            linkProperty: "to",
+            entrySearch: false,
+            propOrder: []
+        };
+        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+        this.rootdiv.remove(); //we dont want this
+        //upgrade older ones
+        if (this.settings.filterProp) {
+            this.settings.filter = this.settings.filterProp;
+            delete this.settings.filterProp;
+        }
+        if (Object.keys(this.settings.properties).length != this.settings.propOrder.length) this.settings.propOrder = Object.keys(this.settings.properties);
+        this.taskListBar = document.createElement("div");
+        this.taskListBar.style.cssText = "flex: 1 0 auto; display: flex;height:100%; flex-direction:column;";
+        //top / insert 
+        this.template = htmlwrap(`<span style="display:block; width:fit-content;">
     <span></span>
     <button>&gt;</button>
     <div class="subItemBox"></div>
     </span>`);
-            this._template = this.template.querySelector("span");
-            this.taskListBar.appendChild(this.template);
+        this._template = this.template.querySelector("span");
+        this.taskListBar.appendChild(this.template);
 
 
 
-            this.taskListBar.appendChild(document.createElement("hr"));
-            this.taskListBar.style.whiteSpace = "nowrap";
-            this.taskList = document.createElement("div");
-            this.taskList.style.cssText = "height:100%; overflow-y:auto; min-width:fit-content;";
-            this.taskListBar.appendChild(this.taskList);
-            container.div.appendChild(htmlwrap(
-                `<style>
+        this.taskListBar.appendChild(document.createElement("hr"));
+        this.taskListBar.style.whiteSpace = "nowrap";
+        this.taskList = document.createElement("div");
+        this.taskList.style.cssText = "height:100%; overflow-y:auto; min-width:fit-content;";
+        this.taskListBar.appendChild(this.taskList);
+        container.div.appendChild(htmlwrap(
+            `<style>
         input{
             background: inherit;
             color:inherit;
@@ -5342,523 +5695,525 @@ if (!isPhone()) {
         }
         
         </style>`
-            ));
+        ));
 
-            container.div.appendChild(this.taskListBar);
+        container.div.appendChild(this.taskListBar);
 
-            this.renderedItems = {};
+        this.renderedItems = {};
 
-            this.renderItem = (id) => {
-                let it = polymorph_core.items[id];
-                let currentItemSpan = this.renderedItems[id];
-                //First check if we should show the item
-                if (!this.itemRelevant(id)) {
-                    //if existent, remove
-                    if (currentItemSpan) currentItemSpan.remove();
-                    delete this.renderedItems[id];
-                    return false;
-                }
-                //Then check if the item already exists; if so then update it
-                if (!currentItemSpan) {
-                    currentItemSpan = this.template.cloneNode(true);
-                    currentItemSpan.style.display = "block";
-                    currentItemSpan.dataset.id = id;
-                    currentItemSpan.children[1].innerText = "X";
-                    this.taskList.appendChild(currentItemSpan);
-                    this.renderedItems[id] = currentItemSpan;
-                }
-                for (let i = 0; i < this.settings.propOrder.length; i++) {
-                    let p = this.settings.propOrder[i];
-                    switch (this.settings.properties[p]) {
-                        case "text":
-                            currentItemSpan.children[0].children[i + 1].children[0].value = (it[p] != undefined) ? it[p] : "";
-                            break;
-                        case "number":
-                            currentItemSpan.children[0].children[i + 1].children[1].value = (it[p] != undefined) ? it[p] : "";
-                            break;
-                        case "object":
-                            currentItemSpan.querySelector("[data-role='" + p + "']").value = (it[p] != undefined) ? JSON.stringify(it[p]) : "";
-                            break;
-                        case "date":
-                            if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
-                                if (it[p]) {
-                                    if (!it[p].datestring && typeof it[p] == "string") {
-                                        it[p] = {
-                                            datestring: it[p]
-                                        };
-                                        if (this.datereparse) this.datereparse(id);
-                                    }
-                                    if (it[p].date && it[p].date.length && !it[p].prettyDateString) {
-                                        it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
-                                    }
-                                    currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
-                                } else {
-                                    currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
-
+        this.renderItem = (id) => {
+            let it = polymorph_core.items[id];
+            let currentItemSpan = this.renderedItems[id];
+            //First check if we should show the item
+            if (!this.itemRelevant(id)) {
+                //if existent, remove
+                if (currentItemSpan) currentItemSpan.remove();
+                delete this.renderedItems[id];
+                return false;
+            }
+            //Then check if the item already exists; if so then update it
+            if (!currentItemSpan) {
+                currentItemSpan = this.template.cloneNode(true);
+                currentItemSpan.style.display = "block";
+                currentItemSpan.dataset.id = id;
+                currentItemSpan.children[1].innerText = "X";
+                this.taskList.appendChild(currentItemSpan);
+                this.renderedItems[id] = currentItemSpan;
+            }
+            for (let i = 0; i < this.settings.propOrder.length; i++) {
+                let p = this.settings.propOrder[i];
+                switch (this.settings.properties[p]) {
+                    case "text":
+                        currentItemSpan.children[0].children[i + 1].children[0].value = (it[p] != undefined) ? it[p] : "";
+                        break;
+                    case "number":
+                        currentItemSpan.children[0].children[i + 1].children[1].value = (it[p] != undefined) ? it[p] : "";
+                        break;
+                    case "object":
+                        currentItemSpan.querySelector("[data-role='" + p + "']").value = (it[p] != undefined) ? JSON.stringify(it[p]) : "";
+                        break;
+                    case "date":
+                        if (!currentItemSpan.querySelector("[data-role='" + p + "']").matches(":focus")) {
+                            if (it[p]) {
+                                if (!it[p].datestring && typeof it[p] == "string") {
+                                    it[p] = {
+                                        datestring: it[p]
+                                    };
+                                    if (this.datereparse) this.datereparse(id);
                                 }
+                                if (it[p].date && it[p].date.length && !it[p].prettyDateString) {
+                                    it[p].prettyDateString = dateParser.humanReadableRelativeDate(it[p].date[0].date);
+                                }
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].prettyDateString || it[p].datestring;
                             } else {
-                                currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].datestring;
+                                currentItemSpan.querySelector("[data-role='" + p + "']").value = "";
+
                             }
-                            break;
-                    }
-                }
-                if (it.style) {
-                    currentItemSpan.style.background = it.style.background;
-                    currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
-                } else {
-                    //enforce white, in case its parent is not white
-                    currentItemSpan.style.background = "white";
-                    currentItemSpan.style.color = "black";
-                }
-                //then check if i have a direct and unique parent that is in the current set.
-                let uniqueParent = undefined;
-                if (this.settings.linkProperty) {
-                    let ri = Object.keys(this.renderedItems);
-                    for (let _i = 0; _i < ri.length; _i++) {
-                        let i = ri[_i];
-                        if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
-                            if (uniqueParent == undefined) {
-                                uniqueParent = i;
-                            } else {
-                                uniqueParent = undefined;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
-                    try {
-                        Array.from(this.renderedItems[uniqueParent].children).filter(i => i.classList.contains("subItemBox"))[0].appendChild(currentItemSpan);
-                    } catch (error) {
-                        if (error instanceof DOMException) {
-                            //just an infinite loop, all chill
                         } else {
-                            throw error;
+                            currentItemSpan.querySelector("[data-role='" + p + "']").value = it[p].datestring;
+                        }
+                        break;
+                }
+            }
+            if (it.style) {
+                currentItemSpan.style.background = it.style.background;
+                currentItemSpan.style.color = it.style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(currentItemSpan).background) || ['#ffffff'])[0]); //stuff error handling
+            } else {
+                //enforce white, in case its parent is not white
+                currentItemSpan.style.background = "white";
+                currentItemSpan.style.color = "black";
+            }
+            //then check if i have a direct and unique parent that is in the current set.
+            let uniqueParent = undefined;
+            if (this.settings.linkProperty) {
+                let ri = Object.keys(this.renderedItems);
+                for (let _i = 0; _i < ri.length; _i++) {
+                    let i = ri[_i];
+                    if (polymorph_core.items[i][this.settings.linkProperty] && polymorph_core.items[i][this.settings.linkProperty][id] && id != i) {
+                        if (uniqueParent == undefined) {
+                            uniqueParent = i;
+                        } else {
+                            uniqueParent = undefined;
+                            break;
                         }
                     }
                 }
             }
-
-
-
-            //Item creation
-            //#region
-            this.createItem = () => {
-                let it = {};
-                //clone the template and parse it
-                //get data and register item
-                for (let i of this.settings.propOrder) {
-                    switch (this.settings.properties[i]) {
-                        case "text":
-                        case "number":
-                            if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
-                            break;
-                        case "object":
-                            try {
-                                it[i] = JSON.parse(this.template.querySelector("[data-role='" + i + "']").value);
-                            } catch (e) {
-
-                            }
-                            break;
-                        case "date":
-                            if (this.template.querySelector("[data-role='" + i + "']").value) {
-                                if (!it[i]) it[i] = {};
-                                if (typeof it[i] == "string") it[i] = {
-                                    datestring: it[i]
-                                };
-                                it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
-                            } else if (i == this.settings.filter) {
-                                it[i] = {
-                                    datestring: "now" // is this useful to have as a default? sure
-                                };
-                            }
-                            break;
+            if (uniqueParent != undefined && !(currentItemSpan.parentElement && currentItemSpan.parentElement.parentElement.dataset.id == uniqueParent)) {
+                try {
+                    Array.from(this.renderedItems[uniqueParent].children).filter(i => i.classList.contains("subItemBox"))[0].appendChild(currentItemSpan);
+                } catch (error) {
+                    if (error instanceof DOMException) {
+                        //just an infinite loop, all chill
+                    } else {
+                        throw error;
                     }
-                    //clear the template
-                    this.template.querySelector("[data-role='" + i + "']").value = "";
-                }
-                //ensure the filter property exists
-                if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
-                //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
-                let id = polymorph_core.insertItem(it);
-
-                if (this.shiftDown && this.settings.linkProperty) {
-                    let fi = this.taskList.querySelector(".ffocus");
-                    if (fi) {
-                        //we are creating a subitem
-                        let fiid = fi.dataset.id;
-                        fi = polymorph_core.items[fiid];
-                        if (!fi[this.settings.linkProperty]) fi[this.settings.linkProperty] = {};
-                        fi[this.settings.linkProperty][id] = true;
-                        container.fire("updateItem", {
-                            id: fiid,
-                            sender: this
-                        });
-                    }
-                }
-                container.fire("createItem", {
-                    id: id,
-                    sender: this
-                });
-                this.renderItem(id);
-                this.datereparse(id);
-                //also fire a focus event for the item, but don't actually focus (in case of multiple entry)
-                container.fire("focusItem", {
-                    id: id,
-                    sender: this
-                })
-                return id;
-            }
-
-            container.on("createItem", (d) => {
-                let it = polymorph_core.items[d.id];
-                if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
-                this.renderItem(d.id);
-            })
-
-            document.body.addEventListener("keydown", (e) => {
-                //this is a global listener across operators, but will abstract away target; so don't use it for normal stuff.
-                if (e.getModifierState("Shift")) {
-                    this.shiftDown = true;
-                    this.template.children[1].innerHTML = "&#x21a9;";
-                }
-            });
-            container.div.addEventListener("keydown", (e) => {
-                if (e.key == "Enter" && (e.getModifierState("Control") || e.getModifierState("Meta")) && e.target.dataset.role) {
-                    let id = this.createItem();
-                    this.renderedItems[id].querySelector(`[data-role='${e.target.dataset.role}']`).focus();
-                }
-            })
-
-            document.body.addEventListener("keyup", (e) => {
-                if (!e.getModifierState("Shift")) {
-                    this.shiftDown = false;
-                    this.template.children[1].innerHTML = "&gt;";
-                }
-            });
-            this.template.querySelector("button").addEventListener("click", this.createItem);
-            this.template.addEventListener("keydown", (e) => {
-                if (e.key == "Enter") {
-                    this.createItem();
-                }
-            });
-
-            container.on("updateItem", (d) => {
-                let id = d.id;
-                if (!this.itemRelevant(id)) {
-                    if (this.renderedItems[id]) {
-                        this.renderedItems[id].remove();
-                        delete this.renderedItems[id];
-                    }
-                    return;
-                }
-                if (d.sender == this) return;//dont rerender self
-                this.settings.currentID = id;
-                //sortcap may not have been declared yet
-                if (d.sender != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
-                return this.renderItem(id);
-            });
-
-            //#endregion
-
-            //auto
-            this.intervalsToClear.push(setInterval(() => {
-                if (!this.container.visible()) return; //if not shown then dont worryy
-                //its every 10s, we can afford for it to be detailed
-
-                //Create an auto list - formed by checking every date property of every tiem we care about
-
-                for (let i in this.settings.properties) {
-                    if (this.settings.properties[i] == 'date') {
-                        let listofitems = this.taskList.querySelectorAll("[data-role='" + i + "']");
-                        for (let i = 0; i < listofitems.length; i++) {
-                            if (listofitems[i].value.indexOf("auto") != -1) {
-                                if (this.datereparse) this.datereparse(listofitems[i].parentElement.parentElement.parentElement.dataset.id);
-                            }
-                        }
-                    }
-                }
-                this.sortItems();
-            }, 10000));
-
-            //Item deletion
-            //Handle item deletion
-            this.taskList.addEventListener("click", (e) => {
-                if (e.target.tagName.toLowerCase() == "button") {
-                    container.fire("deleteItem", {
-                        id: e.target.parentElement.dataset.id,
-                        sender: this
-                    });
-                    delete polymorph_core.items[e.target.parentElement.dataset.id][this.settings.filter];
-                    container.fire("deleteItem", {
-                        id: e.target.parentElement.dataset.id,
-                        sender: this
-                    });
-                }
-            })
-
-            container.on("deleteItem", (d) => {
-                this.deleteItem(d.id);
-                this.renderItem(d.id);
-            })
-
-            this.reRenderEverything = () => {
-                this.taskList.innerHTML = "";
-                for (let i in polymorph_core.items) {
-                    this.renderItem(i, true);
-                }
-                //and again for links
-                for (let i in polymorph_core.items) {
-                    this.renderItem(i);
                 }
             }
+        }
 
-            let resizingRole = "";
-            let resizingEl = undefined;
-            //resizing
-            container.div.addEventListener("mousedown", (e) => {
-                for (let i = 0; i < e.path.length; i++) {
-                    if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                        resizingRole = e.path[i].dataset.containsRole;
-                        resizingEl = e.path[i];
-                    } else if (e.path[i] == this.taskList) break;
-                }
-            })
-            container.div.addEventListener("mousemove", (e) => {
-                if (e.buttons && resizingRole && resizingEl) {
-                    let els = container.div.querySelectorAll(`[data-contains-role='${resizingRole}']`);
-                    let desiredW = resizingEl.clientWidth;
-                    for (let j = 0; j < els.length; j++)els[j].style.width = desiredW;
-                    this.settings.propertyWidths[resizingRole] = desiredW;
-                }
-            })
-
-            function clearOut() {
-                resizingRole = undefined;
-                resizingEl = undefined;
-            }
-
-            container.div.addEventListener("mouseup", clearOut);
-            container.div.addEventListener("mouseleave", clearOut);
-
-
-            __itemlist_searchsort.apply(this);
-
-            this.updateSettings = () => {
-                //Look at the settings and apply any relevant changes
-                this.settings.propOrder = Object.keys(this.settings.properties);
-                let htmlstring = `<span class="draghandle">&#10247;</span>`;
-                for (i of this.settings.propOrder) {
-                    switch (this.settings.properties[i]) {
-                        case "text":
-                        case "date":
-                        case "object":
-                            htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'></span>`;
-                            break;
-                        case "number":
-                            htmlstring += "<span><span>" + i + ":</span><input data-role='" + i + "' type='number'></span>";
-                            break;
-                    }
-                }
-                this._template.innerHTML = htmlstring;
-                this.setSearchTemplate(htmlstring);
-                //resize stuff
-                for (let i in this.settings.propertyWidths) {
-                    if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role='${i}']`).style.width = this.settings.propertyWidths[i];
-                    else delete this.settings.propertyWidths[i];
-                }
-                //Recreate everything
-                this.reRenderEverything();
-                //hide or show based on entry enabled
-                if (this.settings.enableEntry == false) {
-                    this.template.style.display = "none";
-                }
-                this.container.fire("updateItem", { id: this.container.id })
-            }
-
-            //First time load
-            this.updateSettings();
-            //Saving and loading
-
-            this.taskList.addEventListener("input", (e) => {
-                currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
-                switch (this.settings.properties[e.target.dataset.role]) {
+        //Item creation
+        //#region
+        this.createItem = () => {
+            let it = {};
+            //clone the template and parse it
+            //get data and register item
+            for (let i of this.settings.propOrder) {
+                switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
-                        currentItem[e.target.dataset.role] = e.target.value;
+                        if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
                         break;
                     case "object":
                         try {
-                            currentItem[e.target.dataset.role] = JSON.parse(e.target.value);
-                            e.target.style.background = "white";
-                            e.target.style.color = "black";
+                            it[i] = JSON.parse(this.template.querySelector("[data-role='" + i + "']").value);
                         } catch (e) {
-                            e.target.style.background = "red";
-                            e.target.style.color = "white";
-                            return;
+
                         }
                         break;
                     case "date":
-                        if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
-                        if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
-                            "datestring": ""
-                        };
-                        currentItem[e.target.dataset.role].datestring = e.target.value;
-                        currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+                        if (this.template.querySelector("[data-role='" + i + "']").value) {
+                            if (!it[i]) it[i] = {};
+                            if (typeof it[i] == "string") it[i] = {
+                                datestring: it[i]
+                            };
+                            it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
+                        } else if (i == this.settings.filter) {
+                            it[i] = {
+                                datestring: "now" // is this useful to have as a default? sure
+                            };
+                        }
                         break;
                 }
+                //clear the template
+                this.template.querySelector("[data-role='" + i + "']").value = "";
+            }
+            //ensure the filter property exists
+            if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
+            //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
+            let id = polymorph_core.insertItem(it);
 
-                //match all the item data and currentItem data
-                container.fire("updateItem", {
-                    id: e.target.parentElement.parentElement.parentElement.dataset.id,
-                    sender: this
-                });
-            })
+            if (this.shiftDown && this.settings.linkProperty) {
+                let fi = this.taskList.querySelector(".ffocus");
+                if (fi) {
+                    //we are creating a subitem
+                    let fiid = fi.dataset.id;
+                    fi = polymorph_core.items[fiid];
+                    if (!fi[this.settings.linkProperty]) fi[this.settings.linkProperty] = {};
+                    fi[this.settings.linkProperty][id] = true;
+                    container.fire("updateItem", {
+                        id: fiid,
+                        sender: this
+                    });
+                }
+            }
+            container.fire("createItem", {
+                id: id,
+                sender: this
+            });
+            this.renderItem(id);
+            this.datereparse(id);
+            this.sortItems();
+            //cheap and dirty hack to ensure that we only focus after sort has been called
+            //todo: use promises
+            //also fire a focus event for the item, but don't actually focus (in case of multiple entry)
+            setTimeout(() => container.fire("focusItem", {
+                id: id,
+                sender: this
+            }), 600);
+            return id;
+        }
 
-            this.taskList.addEventListener("focusout", (e) => {
-                if (!this.isSorting) {
-                    currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
-                    switch (this.settings.properties[e.target.dataset.role]) {
-                        case "date":
-                            if (currentItem[e.target.dataset.role] && currentItem[e.target.dataset.role].date) {
-                                currentItem[e.target.dataset.role].prettyDateString = dateParser.humanReadableRelativeDate(currentItem[e.target.dataset.role].date[0].date);
-                                e.target.value = currentItem[e.target.dataset.role].prettyDateString;
-                            }
-                            break;
+        container.on("createItem", (d) => {
+            let it = polymorph_core.items[d.id];
+            if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
+            this.renderItem(d.id);
+        })
+
+        document.body.addEventListener("keydown", (e) => {
+            //this is a global listener across operators, but will abstract away target; so don't use it for normal stuff.
+            if (!this.shiftDown && e.getModifierState("Shift")) {
+                this.shiftDown = true;
+                this.template.children[1].innerHTML = "&#x21a9;";
+            }
+        });
+        container.div.addEventListener("keydown", (e) => {
+            if (e.key == "Enter" && (e.getModifierState("Control") || e.getModifierState("Meta")) && e.target.dataset.role) {
+                let id = this.createItem();
+                this.renderedItems[id].querySelector(`[data-role='${e.target.dataset.role}']`).focus();
+            }
+        })
+
+        document.body.addEventListener("keyup", (e) => {
+            if (!e.getModifierState("Shift")) {
+                this.shiftDown = false;
+                this.template.children[1].innerHTML = "&gt;";
+            }
+        });
+        this.template.querySelector("button").addEventListener("click", this.createItem);
+        this.template.addEventListener("keydown", (e) => {
+            if (e.key == "Enter") {
+                this.createItem();
+            }
+        });
+
+        container.on("updateItem", (d) => {
+            let id = d.id;
+            if (!this.itemRelevant(id)) {
+                if (this.renderedItems[id]) {
+                    this.renderedItems[id].remove();
+                    delete this.renderedItems[id];
+                }
+                return;
+            }
+            if (d.sender == this) return; //dont rerender self
+            this.settings.currentID = id;
+            //sortcap may not have been declared yet
+            if (d.sender != "GARBAGE_COLLECTOR" && this.sortcap) this.sortcap.submit();
+            return this.renderItem(id);
+        });
+
+        //#endregion
+
+        //auto
+        this.intervalsToClear.push(setInterval(() => {
+            if (!this.container.visible()) return; //if not shown then dont worryy
+            //its every 10s, we can afford for it to be detailed
+
+            //Create an auto list - formed by checking every date property of every tiem we care about
+
+            for (let i in this.settings.properties) {
+                if (this.settings.properties[i] == 'date') {
+                    let listofitems = this.taskList.querySelectorAll("[data-role='" + i + "']");
+                    for (let i = 0; i < listofitems.length; i++) {
+                        if (listofitems[i].value.indexOf("auto") != -1) {
+                            if (this.datereparse) this.datereparse(listofitems[i].parentElement.parentElement.parentElement.dataset.id);
+                        }
                     }
                 }
-            })
+            }
+            this.sortItems();
+        }, 10000));
+
+        //Item deletion
+        //Handle item deletion
+        this.taskList.addEventListener("click", (e) => {
+            if (e.target.tagName.toLowerCase() == "button") {
+                container.fire("deleteItem", {
+                    id: e.target.parentElement.dataset.id,
+                    sender: this
+                });
+                delete polymorph_core.items[e.target.parentElement.dataset.id][this.settings.filter];
+                container.fire("deleteItem", {
+                    id: e.target.parentElement.dataset.id,
+                    sender: this
+                });
+            }
+        })
+
+        container.on("deleteItem", (d) => {
+            this.deleteItem(d.id);
+            this.renderItem(d.id);
+        })
+
+        this.reRenderEverything = () => {
+            this.taskList.innerHTML = "";
+            this.renderedItems = [];
+            for (let i in polymorph_core.items) {
+                this.renderItem(i, true);
+            }
+            //and again for links
+            for (let i in polymorph_core.items) {
+                this.renderItem(i);
+            }
+        }
+
+        let resizingRole = "";
+        let resizingEl = undefined;
+        //resizing
+        container.div.addEventListener("mousedown", (e) => {
+            for (let i = 0; i < e.path.length; i++) {
+                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
+                    resizingRole = e.path[i].dataset.containsRole;
+                    resizingEl = e.path[i];
+                } else if (e.path[i] == this.taskList) break;
+            }
+        })
+        container.div.addEventListener("mousemove", (e) => {
+            if (e.buttons && resizingRole && resizingEl) {
+                let els = container.div.querySelectorAll(`[data-contains-role='${resizingRole}']`);
+                let desiredW = resizingEl.clientWidth;
+                for (let j = 0; j < els.length; j++) els[j].style.width = desiredW;
+                this.settings.propertyWidths[resizingRole] = desiredW;
+            }
+        })
+
+        function clearOut() {
+            resizingRole = undefined;
+            resizingEl = undefined;
+        }
+
+        container.div.addEventListener("mouseup", clearOut);
+        container.div.addEventListener("mouseleave", clearOut);
 
 
-            this.taskList.addEventListener("focusin", (e) => {
+        __itemlist_searchsort.apply(this);
+
+        this.updateSettings = () => {
+            //Look at the settings and apply any relevant changes
+            this.settings.propOrder = Object.keys(this.settings.properties);
+            let htmlstring = `<span class="draghandle">&#10247;</span>`;
+            for (i of this.settings.propOrder) {
+                switch (this.settings.properties[i]) {
+                    case "text":
+                    case "date":
+                    case "object":
+                        htmlstring += `<span class="resizable-input" data-contains-role="${i}"><input data-role='${i}' placeholder='${i}'></span>`;
+                        break;
+                    case "number":
+                        htmlstring += "<span><span>" + i + ":</span><input data-role='" + i + "' type='number'></span>";
+                        break;
+                }
+            }
+            this._template.innerHTML = htmlstring;
+            this.setSearchTemplate(htmlstring);
+            //resize stuff
+            for (let i in this.settings.propertyWidths) {
+                if (this.settings.properties[i]) this._template.querySelector(`[data-contains-role='${i}']`).style.width = this.settings.propertyWidths[i];
+                else delete this.settings.propertyWidths[i];
+            }
+            //Recreate everything
+            this.reRenderEverything();
+            //hide or show based on entry enabled
+            if (this.settings.enableEntry == false) {
+                this.template.style.display = "none";
+            }
+            this.container.fire("updateItem", { id: this.container.id })
+        }
+
+        //First time load
+        this.updateSettings();
+        //Saving and loading
+
+        this.taskList.addEventListener("input", (e) => {
+            currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+            switch (this.settings.properties[e.target.dataset.role]) {
+                case "text":
+                case "number":
+                    currentItem[e.target.dataset.role] = e.target.value;
+                    break;
+                case "object":
+                    try {
+                        currentItem[e.target.dataset.role] = JSON.parse(e.target.value);
+                        e.target.style.background = "white";
+                        e.target.style.color = "black";
+                    } catch (e) {
+                        e.target.style.background = "red";
+                        e.target.style.color = "white";
+                        return;
+                    }
+                    break;
+                case "date":
+                    if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
+                    if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
+                        "datestring": ""
+                    };
+                    currentItem[e.target.dataset.role].datestring = e.target.value;
+                    currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+                    break;
+            }
+
+            //match all the item data and currentItem data
+            container.fire("updateItem", {
+                id: e.target.parentElement.parentElement.parentElement.dataset.id,
+                sender: this
+            });
+        })
+
+        this.taskList.addEventListener("focusout", (e) => {
+            if (!this.isSorting) {
                 currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
                 switch (this.settings.properties[e.target.dataset.role]) {
                     case "date":
-                        if (currentItem[e.target.dataset.role]) {
-                            e.target.value = currentItem[e.target.dataset.role].datestring;
+                        if (currentItem[e.target.dataset.role] && currentItem[e.target.dataset.role].date) {
+                            currentItem[e.target.dataset.role].prettyDateString = dateParser.humanReadableRelativeDate(currentItem[e.target.dataset.role].date[0].date);
+                            e.target.value = currentItem[e.target.dataset.role].prettyDateString;
                         }
                         break;
                 }
-            })
-            this.taskList.addEventListener("keyup", (e) => {
-                if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
-                    this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
-                    this.renderItem(e.target.parentElement.parentElement.parentElement.dataset.id);
-                    container.fire("dateUpdate")
-                }
-            })
+            }
+        })
 
-            this.focusItem = (id) => {
-                //Highlight in purple
-                let _target = this.renderedItems[id];
-                if (_target) {
-                    let spans = Object.values(this.renderedItems);
-                    for (let i = 0; i < spans.length; i++) {
-                        spans[i].classList.remove("ffocus");
+
+        this.taskList.addEventListener("focusin", (e) => {
+            currentItem = polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id];
+            switch (this.settings.properties[e.target.dataset.role]) {
+                case "date":
+                    if (currentItem[e.target.dataset.role]) {
+                        e.target.value = currentItem[e.target.dataset.role].datestring;
                     }
-                    _target.classList.add("ffocus");
-                    let bcr = _target.parentElement.getBoundingClientRect();
-                    let tcr = _target.getBoundingClientRect();
-                    if (tcr.y < bcr.y || tcr.y + tcr.height > bcr.y + bcr.height) _target.scrollIntoView({
-                        behavior: "smooth"
-                    });
+                    break;
+            }
+        })
+        this.taskList.addEventListener("keyup", (e) => {
+            if (e.target.tagName.toLowerCase() == "input" && this.settings.properties[e.target.dataset.role] == 'date' && e.key == "Enter") {
+                this.datereparse(e.target.parentElement.parentElement.parentElement.dataset.id);
+                this.renderItem(e.target.parentElement.parentElement.parentElement.dataset.id);
+                container.fire("dateUpdate")
+            }
+        })
+
+        this.focusItem = (id) => {
+            //Highlight in purple
+            let _target = this.renderedItems[id];
+            if (_target) {
+                let spans = Object.values(this.renderedItems);
+                for (let i = 0; i < spans.length; i++) {
+                    spans[i].classList.remove("ffocus");
+                }
+                _target.classList.add("ffocus");
+                let bcr = _target.parentElement.getBoundingClientRect();
+                let tcr = _target.getBoundingClientRect();
+                if (tcr.y < bcr.y || tcr.y + tcr.height > bcr.y + bcr.height) _target.scrollIntoView({
+                    behavior: "smooth"
+                });
+            }
+        }
+
+        this.taskList.addEventListener("focusin", (e) => {
+            if (e.target.matches("input")) {
+                container.fire("focusItem", {
+                    id: e.target.parentElement.parentElement.parentElement.dataset.id,
+                    sender: this
+                });
+                this.focusItem(e.target.parentElement.parentElement.parentElement.dataset.id);
+            }
+        })
+        container.on("focusItem", (data) => {
+            if (this.settings.operationMode == "focus") {
+                if (data.sender.container.container.uuid == this.settings.focusOperatorID) {
+                    this.settings.filter = data.id;
                 }
             }
-
-            this.taskList.addEventListener("focusin", (e) => {
-                if (e.target.matches("input")) {
-                    container.fire("focusItem", {
-                        id: e.target.parentElement.parentElement.parentElement.dataset.id,
-                        sender: this
-                    });
-                    this.focusItem(e.target.parentElement.parentElement.parentElement.dataset.id);
-                }
-            })
-            container.on("focusItem", (data) => {
-                if (this.settings.operationMode == "focus") {
-                    if (data.sender.container.container.uuid == this.settings.focusOperatorID) {
-                        this.settings.filter = data.id;
-                    }
-                }
-                this.focusItem(data.id);
-            });
+            this.focusItem(data.id);
+        });
 
 
-            this.datereparse = (it) => {
-                let dateprop = "";
-                for (let i in this.settings.properties) {
-                    if (this.settings.properties[i] == 'date') {
-                        dateprop = i;
-                        //specifically reparse the date on it;
-                        if (it) {
-                            if (polymorph_core.items[it][dateprop]) {
-                                polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
-                                if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
-                                //ds=this.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
-                            }
+        this.datereparse = (it) => {
+            let dateprop = "";
+            for (let i in this.settings.properties) {
+                if (this.settings.properties[i] == 'date') {
+                    dateprop = i;
+                    //specifically reparse the date on it;
+                    if (it) {
+                        if (polymorph_core.items[it][dateprop]) {
+                            polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
+                            if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
+                            //ds=this.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
                         }
-                        // get a list of Items
-                        let its = [];
-                        Object.values(this.renderedItems).forEach(e => {
-                            let itm = {
-                                id: e.dataset.id
-                            };
-                            if (!polymorph_core.items[itm.id]) {
-                                //nerf the e that spawned this, then break
-                                //idek how this happens :(
-                                e.remove();
-                                return;
-                            }
-                            //we are going to upgrade all dates that don't match protocol)
-                            if (polymorph_core.items[itm.id][dateprop] && polymorph_core.items[itm.id][dateprop].date) {
-                                if (typeof polymorph_core.items[itm.id][dateprop].date == "number") {
-                                    polymorph_core.items[itm.id][dateprop].date = [{
-                                        date: polymorph_core.items[itm.id][dateprop].date
-                                    }];
-                                }
-                                if (polymorph_core.items[itm.id][dateprop].date[0]) itm.date = polymorph_core.items[itm.id][dateprop].date[0].date;
-                                else itm.date = Date.now() * 10000;
-                            } else itm.date = Date.now() * 10000;
-                            its.push(itm);
-                        });
                     }
-                }
-                //sort everything
-                this.sortItems();
-                container.fire("dateUpdate");
-            }
-            this.datereparse();
-
-            this.container.registerContextMenu(this.taskList, (el) => {
-                let id = el;
-                while (!id.dataset.id && id != this.taskList) {
-                    id = id.parentElement;
-                }
-                if (id.dataset.id) {
-                    let obj = { id: id.dataset.id };
-                    if (el.dataset.role) obj.role = el.dataset.role;
-                    let ls = [];
-                    if (this.settings.properties[el.dataset.role] == "date") ls.push("Convert to fixed date::operator.toFixedDate")
-                    return { e: obj, ls: ls };
-                }
-            });
-
-            this.ctxCommands = {
-                "toFixedDate": (e, ctr) => {
-                    let id = e.id;
-                    let contextedProp = e.role;
-                    polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
-                    this.datereparse(id);
+                    // get a list of Items
+                    let its = [];
+                    Object.values(this.renderedItems).forEach(e => {
+                        let itm = {
+                            id: e.dataset.id
+                        };
+                        if (!polymorph_core.items[itm.id]) {
+                            //nerf the e that spawned this, then break
+                            //idek how this happens :(
+                            e.remove();
+                            return;
+                        }
+                        //we are going to upgrade all dates that don't match protocol)
+                        if (polymorph_core.items[itm.id][dateprop] && polymorph_core.items[itm.id][dateprop].date) {
+                            if (typeof polymorph_core.items[itm.id][dateprop].date == "number") {
+                                polymorph_core.items[itm.id][dateprop].date = [{
+                                    date: polymorph_core.items[itm.id][dateprop].date
+                                }];
+                            }
+                            if (polymorph_core.items[itm.id][dateprop].date[0]) itm.date = polymorph_core.items[itm.id][dateprop].date[0].date;
+                            else itm.date = Date.now() * 10000;
+                        } else itm.date = Date.now() * 10000;
+                        its.push(itm);
+                    });
                 }
             }
+            //sort everything
+            this.sortItems();
+            container.fire("dateUpdate");
+        }
+        this.datereparse();
+
+        this.container.registerContextMenu(this.taskList, (el) => {
+            let id = el;
+            while (!id.dataset.id && id != this.taskList) {
+                id = id.parentElement;
+            }
+            if (id.dataset.id) {
+                let obj = { id: id.dataset.id };
+                if (el.dataset.role) obj.role = el.dataset.role;
+                let ls = [];
+                if (this.settings.properties[el.dataset.role] == "date") ls.push("Convert to fixed date::operator.toFixedDate")
+                return { e: obj, ls: ls };
+            }
+        });
+
+        this.ctxCommands = {
+            "toFixedDate": (e, ctr) => {
+                let id = e.id;
+                let contextedProp = e.role;
+                polymorph_core.items[id][contextedProp].datestring = new Date(polymorph_core.items[id][contextedProp].date[0].date).toLocaleString() + ">" + new Date(polymorph_core.items[id][contextedProp].date[0].endDate).toLocaleString();
+                this.datereparse(id);
+            }
+        }
 
 
 
-            //settings dialog
-            //#region
-            //Handle the settings dialog click!
-            this.dialogDiv = document.createElement("div");
-            this.dialogDiv.innerHTML = `
+        //settings dialog
+        //#region
+        //Handle the settings dialog click!
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = `
     <p>Columns to show</p>
     <div class="proplist"></div>
     <p>You can pick more from the list below, or add a new property! </p>
@@ -5881,229 +6236,229 @@ if (!isPhone()) {
     <input data-role="focusOperatorID" placeholder="container UID (use the button)">
     <button class="targeter">Select container</button>
     `;
-            let options = {
-                entryok: new polymorph_core._option({
-                    div: this.dialogDiv,
-                    type: "bool",
-                    object: this.settings,
-                    property: "enableEntry",
-                    label: "Enable adding new items"
-                }),
-                implicitOrder: new polymorph_core._option({
-                    div: this.dialogDiv,
-                    type: "bool",
-                    object: this.settings,
-                    property: "implicitOrder",
-                    label: "Implicit ordering (Enables drag and drop, disables existing ordering)",
-                    afterInput: () => {
-                        this.settings.sortby = undefined;
-                        Array.from(this.proplist.querySelectorAll("input[type='radio']")).forEach(i => i.checked = false);
-                    }
-                }),
-                linkProperty: new polymorph_core._option({
-                    div: this.dialogDiv,
-                    type: "text",
-                    object: this.settings,
-                    property: "linkProperty",
-                    label: "Property for links (leave blank to ignore links)"
-                }),
-                entrySearch: new polymorph_core._option({
-                    div: this.dialogDiv,
-                    type: "bool",
-                    object: this.settings,
-                    property: "entrySearch",
-                    label: "Use Entry as Search"
-                })
+        let options = {
+            entryok: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "enableEntry",
+                label: "Enable adding new items"
+            }),
+            implicitOrder: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "implicitOrder",
+                label: "Implicit ordering (Enables drag and drop, disables existing ordering)",
+                afterInput: () => {
+                    this.settings.sortby = undefined;
+                    Array.from(this.proplist.querySelectorAll("input[type='radio']")).forEach(i => i.checked = false);
+                }
+            }),
+            linkProperty: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "linkProperty",
+                label: "Property for links (leave blank to ignore links)"
+            }),
+            entrySearch: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "bool",
+                object: this.settings,
+                property: "entrySearch",
+                label: "Use Entry as Search"
+            })
+        }
+        let d = this.dialogDiv;
+        this.showDialog = () => {
+            // update your dialog elements with your settings
+            //Fill in dialog information
+            //set all property settings.
+            for (i in this.settings) {
+                let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
+                if (it) it.value = this.settings[i];
             }
-            let d = this.dialogDiv;
-            this.showDialog = () => {
-                // update your dialog elements with your settings
-                //Fill in dialog information
-                //set all property settings.
-                for (i in this.settings) {
-                    let it = this.dialogDiv.querySelector("[data-role='" + i + "']");
-                    if (it) it.value = this.settings[i];
+            //Get all available properties, by looping through all elements (?)
+            this.opList.innerHTML = "";
+            let props = {};
+            for (let i in polymorph_core.items) {
+                for (let j in polymorph_core.items[i]) {
+                    if (typeof polymorph_core.items[i][j] != "function") props[j] = true;
                 }
-                //Get all available properties, by looping through all elements (?)
-                this.opList.innerHTML = "";
-                let props = {};
-                for (let i in polymorph_core.items) {
-                    for (let j in polymorph_core.items[i]) {
-                        if (typeof polymorph_core.items[i][j] != "function") props[j] = true;
-                    }
+            }
+            for (let prop in props) {
+                if (!this.settings.properties[prop]) {
+                    let opt = document.createElement("option");
+                    opt.innerText = prop;
+                    opt.value = prop;
+                    this.opList.appendChild(opt);
                 }
-                for (let prop in props) {
-                    if (!this.settings.properties[prop]) {
-                        let opt = document.createElement("option");
-                        opt.innerText = prop;
-                        opt.value = prop;
-                        this.opList.appendChild(opt);
-                    }
-                }
-                //enable adding new items checkbox
-                for (i in options) {
-                    options[i].load();
-                }
-                // Now fill in the ones which we're currently monitoring.
-                this.proplist.innerHTML = "";
-                for (let prop in this.settings.properties) {
-                    let pspan = document.createElement("p");
-                    pspan.innerHTML = `<span>` + prop + `</span>
+            }
+            //enable adding new items checkbox
+            for (i in options) {
+                options[i].load();
+            }
+            // Now fill in the ones which we're currently monitoring.
+            this.proplist.innerHTML = "";
+            for (let prop in this.settings.properties) {
+                let pspan = document.createElement("p");
+                pspan.innerHTML = `<span>` + prop + `</span>
             <select data-role=` + prop + `>
                 <option value="text">Text</option>
                 <option value="date">Date</option>
                 <option value="object">Object</option>
                 <option value="number">Number</option>
             </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
-                    pspan.querySelector("select").value = this.settings.properties[prop];
-                    pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
-                    this.proplist.appendChild(pspan);
-                }
+                pspan.querySelector("select").value = this.settings.properties[prop];
+                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
+                this.proplist.appendChild(pspan);
             }
+        }
 
-            //when clicking a sort radio button, turn off implict ordering
-            this.proplist = this.dialogDiv.querySelector(".proplist");
-            this.proplist.addEventListener("input", (e) => {
-                if (e.target.matches("[name='sortie']")) {
-                    this.settings.implicitOrder = false;
-                    options.implicitOrder.load();
-                }
-            })
-
-            let checkImplicitOrdering = () => {
-                if (this.settings.implicitOrder) {
-                    Object.values(this.renderedItems).map((i, ii) => i[this.settings.filter] = ii);
-                }
+        //when clicking a sort radio button, turn off implict ordering
+        this.proplist = this.dialogDiv.querySelector(".proplist");
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("[name='sortie']")) {
+                this.settings.implicitOrder = false;
+                options.implicitOrder.load();
             }
+        })
 
-            this.dialogUpdateSettings = () => {
-                // pull settings and update when your dialog is closed.
-                this.updateSettings();
-                this.sortItems();
-                checkImplicitOrdering();
-                container.fire("updateItem", { id: this.container.id });
+        let checkImplicitOrdering = () => {
+            if (this.settings.implicitOrder) {
+                Object.values(this.renderedItems).map((i, ii) => i[this.settings.filter] = ii);
             }
+        }
+
+        this.dialogUpdateSettings = () => {
+            // pull settings and update when your dialog is closed.
+            this.updateSettings();
+            this.sortItems();
             checkImplicitOrdering();
-            //adding new buttons
-            d.querySelector(".adbt").addEventListener("click",
-                () => {
-                    if (d.querySelector(".adpt").value != "") {
-                        this.settings.properties[d.querySelector(".adpt").value] = 'text';
-                        d.querySelector(".adpt").value = "";
-                    } else {
-                        this.settings.properties[d.querySelector("select._prop").value] = 'text';
-                    }
-                    this.showDialog();
+            container.fire("updateItem", { id: this.container.id });
+        }
+        checkImplicitOrdering();
+        //adding new buttons
+        d.querySelector(".adbt").addEventListener("click",
+            () => {
+                if (d.querySelector(".adpt").value != "") {
+                    this.settings.properties[d.querySelector(".adpt").value] = 'text';
+                    d.querySelector(".adpt").value = "";
+                } else {
+                    this.settings.properties[d.querySelector("select._prop").value] = 'text';
                 }
-            )
+                this.showDialog();
+            }
+        )
 
-            //the filter property.
-            d.querySelector("input[data-role='filter']").addEventListener("input", (e) => {
-                this.settings.filter = e.target.value;
-            })
+        //the filter property.
+        d.querySelector("input[data-role='filter']").addEventListener("input", (e) => {
+            this.settings.filter = e.target.value;
+        })
 
-            //Handle select's in proplist
-            this.proplist.addEventListener('change', (e) => {
-                if (e.target.matches("select")) this.settings.properties[e.target.dataset.role] = e.target.value;
-            })
-            this.proplist.addEventListener('click', (e) => {
-                if (e.target.matches("[data-krole]")) {
-                    delete this.settings.properties[e.target.dataset.krole];
-                    this.showDialog();
+        //Handle select's in proplist
+        this.proplist.addEventListener('change', (e) => {
+            if (e.target.matches("select")) this.settings.properties[e.target.dataset.role] = e.target.value;
+        })
+        this.proplist.addEventListener('click', (e) => {
+            if (e.target.matches("[data-krole]")) {
+                delete this.settings.properties[e.target.dataset.krole];
+                this.showDialog();
+            }
+        })
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("input[type='radio']")) {
+                this.settings.sortby = e.target.dataset.ssrole;
+            }
+        })
+
+        this.opList = this.dialogDiv.querySelector("select._prop");
+        //retrieve stuff
+        //sort by date checkbox
+        //Style tags button
+        //#endregion
+
+        // alt click and drag for drag and drop
+        let dragDropID = undefined;
+        container.div.addEventListener("mousedown", (e) => {
+            //figure out which element this is
+            dragDropID = undefined;
+            for (let i = 0; i < e.path.length; i++) {
+                if (!e.path[i].dataset) break; //shadow root
+                if (e.path[i].dataset.id) {
+                    dragDropID = e.path[i].dataset.id;
+                    break;
                 }
-            })
-            this.proplist.addEventListener("input", (e) => {
-                if (e.target.matches("input[type='radio']")) {
-                    this.settings.sortby = e.target.dataset.ssrole;
-                }
-            })
+            }
+        })
 
-            this.opList = this.dialogDiv.querySelector("select._prop");
-            //retrieve stuff
-            //sort by date checkbox
-            //Style tags button
-            //#endregion
+        // normal click and drag on element to drag and drop
+        container.div.addEventListener("mousedown", (e) => {
+            //figure out which element this is
+            if (e.target.matches(".dragHandle")) {
+                let liRow = e.target.parentElement.parentElement;
+                this.relrect = e.target.getRootNode().host.getBoundingClientRect();
+                liRow.style.position = "absolute";
+                liRow.style.left = e.clientX - this.relrect.x;
+                liRow.style.top = e.clientY - this.relrect.y;
+                this.worryRow = liRow;
+                //temporarily disable user select on everything else
+                Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "none");
+            }
+        })
 
-            // alt click and drag for drag and drop
-            let dragDropID = undefined;
-            container.div.addEventListener("mousedown", (e) => {
-                //figure out which element this is
+        let lastBlued;
+        container.div.addEventListener("mousemove", (e) => {
+            //if alt, fire UDD
+            /*
+            //this is a bit fiddly and i dont like it
+            if (e.altKey && dragDropID) {
+                //fire UDD
+                polymorph_core.initiateDragDrop(dragDropID, { x: e.clientX, y: e.clientY, sender: container.id });
+                //prevent spamming
                 dragDropID = undefined;
-                for (let i = 0; i < e.path.length; i++) {
-                    if (!e.path[i].dataset) break; //shadow root
-                    if (e.path[i].dataset.id) {
-                        dragDropID = e.path[i].dataset.id;
+            }
+            */
+            if (this.worryRow) {
+                for (let i = 0; i < e.path.length - 2; i++) {
+                    try {
+                        if (e.path[i].matches("[data-id]")) {
+                            if (e.path[i] == this.worryRow) break;
+                            if (lastBlued) lastBlued.style.borderTop = "";
+                            lastBlued = e.path[i];
+                            lastBlued.style.borderTop = "3px solid blue";
+                            break;
+                        }
+                    } catch (err) {
+                        if (lastBlued) lastBlued.style.borderTop = "";
+                        lastBlued = undefined;
                         break;
                     }
                 }
-            })
-
-            // normal click and drag on element to drag and drop
-            container.div.addEventListener("mousedown", (e) => {
-                //figure out which element this is
-                if (e.target.matches(".dragHandle")) {
-                    let liRow = e.target.parentElement.parentElement;
-                    this.relrect = e.target.getRootNode().host.getBoundingClientRect();
-                    liRow.style.position = "absolute";
-                    liRow.style.left = e.clientX - this.relrect.x;
-                    liRow.style.top = e.clientY - this.relrect.y;
-                    this.worryRow = liRow;
-                    //temporarily disable user select on everything else
-                    Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "none");
-                }
-            })
-
-            let lastBlued;
-            container.div.addEventListener("mousemove", (e) => {
-                //if alt, fire UDD
-                /*
-                //this is a bit fiddly and i dont like it
-                if (e.altKey && dragDropID) {
-                    //fire UDD
-                    polymorph_core.initiateDragDrop(dragDropID, { x: e.clientX, y: e.clientY, sender: container.id });
-                    //prevent spamming
-                    dragDropID = undefined;
-                }
-                */
-                if (this.worryRow) {
-                    for (let i = 0; i < e.path.length - 2; i++) {
-                        try {
-                            if (e.path[i].matches("[data-id]")) {
-                                if (e.path[i] == this.worryRow) break;
-                                if (lastBlued) lastBlued.style.borderTop = "";
-                                lastBlued = e.path[i];
-                                lastBlued.style.borderTop = "3px solid blue";
-                                break;
-                            }
-                        } catch (err) {
-                            if (lastBlued) lastBlued.style.borderTop = "";
-                            lastBlued = undefined;
-                            break;
-                        }
-                    }
-                    this.worryRow.style.left = e.clientX - this.relrect.x;
-                    this.worryRow.style.top = e.clientY - this.relrect.y;
-                }
-            })
-            let ddmouseExitHandler = (e) => {
-                if (this.worryRow) {
-                    //rearrange stuff
-                    if (lastBlued) {
-                        lastBlued.style.borderTop = "";
-                        if (lastBlued.previousElementSibling) polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = (polymorph_core.items[lastBlued.previousElementSibling.dataset.id][this.settings.filter] + polymorph_core.items[lastBlued.dataset.id][this.settings.filter]) / 2;
-                        else polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = polymorph_core.items[lastBlued.dataset.id][this.settings.filter] - 1;
-                        lastBlued.parentElement.insertBefore(this.worryRow, lastBlued);
-                        lastBlued = undefined;
-                    }
-                    //check if implict ordering
-                    this.worryRow.style.position = "static";
-                    Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "unset");
-                    delete this.worryRow;
-                }
+                this.worryRow.style.left = e.clientX - this.relrect.x;
+                this.worryRow.style.top = e.clientY - this.relrect.y;
             }
-            container.div.addEventListener("mouseup", ddmouseExitHandler);
-            container.div.addEventListener("mouseleave", ddmouseExitHandler);
-        });
+        })
+        let ddmouseExitHandler = (e) => {
+            if (this.worryRow) {
+                //rearrange stuff
+                if (lastBlued) {
+                    lastBlued.style.borderTop = "";
+                    if (lastBlued.previousElementSibling) polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = (polymorph_core.items[lastBlued.previousElementSibling.dataset.id][this.settings.filter] + polymorph_core.items[lastBlued.dataset.id][this.settings.filter]) / 2;
+                    else polymorph_core.items[this.worryRow.dataset.id][this.settings.filter] = polymorph_core.items[lastBlued.dataset.id][this.settings.filter] - 1;
+                    lastBlued.parentElement.insertBefore(this.worryRow, lastBlued);
+                    lastBlued = undefined;
+                }
+                //check if implict ordering
+                this.worryRow.style.position = "static";
+                Array.from(e.target.getRootNode().children).forEach(i => i.style.userSelect = "unset");
+                delete this.worryRow;
+            }
+        }
+        container.div.addEventListener("mouseup", ddmouseExitHandler);
+        container.div.addEventListener("mouseleave", ddmouseExitHandler);
+    });
 };
 
 if (isPhone()) {
@@ -6112,49 +6467,48 @@ if (isPhone()) {
         description: "View a list of items.",
         displayName: "List",
         imageurl: "assets/operators/list.png"
-    }
-        , function (container) {
-            //initialisation
-            let defaultSettings = {
-                properties: {
-                    title: "text"
-                },
-                propertyWidths: {},
-                filter: polymorph_core.guid(),
-                enableEntry: true,
-                implicitOrder: true,
-                linkProperty: "to",
-                entrySearch: false,
-                propOrder: [],
-                phoneProperties: {
-                    title: "text",
-                    description: "text"
-                },
-                phonePrimeProperty: "title" // properties for phone
-            };
-            polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-            //copy default settings properties to phone
-            Object.assign(this.settings.phoneProperties, this.settings.properties);
-            // render items as blobs
+    }, function(container) {
+        //initialisation
+        let defaultSettings = {
+            properties: {
+                title: "text"
+            },
+            propertyWidths: {},
+            filter: polymorph_core.guid(),
+            enableEntry: true,
+            implicitOrder: true,
+            linkProperty: "to",
+            entrySearch: false,
+            propOrder: [],
+            phoneProperties: {
+                title: "text",
+                description: "text"
+            },
+            phonePrimeProperty: "title" // properties for phone
+        };
+        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+        //copy default settings properties to phone
+        Object.assign(this.settings.phoneProperties, this.settings.properties);
+        // render items as blobs
 
-            //Add content-independent HTML here.
-            this.rootdiv.innerHTML = `
+        //Add content-independent HTML here.
+        this.rootdiv.innerHTML = `
             <style>
                 *{
                     color:white;
                 }
 
-                .frontDiv{
-                    display: flex;
-                    flex-wrap:wrap;
+                .taskList{
+                    display: block;
+                    width: 100%;
                 }
-                .frontDiv p{
+                .taskList p{
                     margin: 10px;
                     background: purple;
                     padding: 10px;
                 }
                 
-                .frontDiv .plusButton{
+                .taskList .plusButton{
                     background: purple;
                     color:white;
                     width: 50px;
@@ -6180,7 +6534,7 @@ if (isPhone()) {
                     top:0;
                 }
             </style>
-            <div class="frontDiv">
+            <div class="taskList">
                 <div class="plusButton"> + </div>
                 <div class="itemsContainer">
                     <!--
@@ -6198,120 +6552,207 @@ if (isPhone()) {
                 -->
             </div>
             `;
-            let frontDiv = this.rootdiv.querySelector(".frontDiv");
-            let backDiv = this.rootdiv.querySelector(".backDiv");
-            this.rootdiv.querySelector(".donebutton").addEventListener("click", () => {
-                frontDiv.style.display = "flex";
-                backDiv.style.display = "none";
-            });
-            //this is called when an item is updated (e.g. by another container)
-            container.on("updateItem", (d) => {
-                let id = d.id;
-                if (this.itemRelevant(id)) {
-                    let obj = frontDiv.querySelector(`[data-id='${id}']`);
-                    if (!obj) {
-                        obj = htmlwrap(`<p data-id="${id}"></p>`);
-                        frontDiv.appendChild(obj);
-                    }
-                    obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
-                    //render the item, if we care about it.
-                }
-            });
-            let editingID=undefined;
-            let showBackDiv = (id) => {
-                editingID=id;
-                frontDiv.style.display = "none";
-                let props = Array.from(backDiv.querySelectorAll("[data-prop]")).reduce((p, i) => { p[i.dataset.prop] = { div: i }; return p }, {});
-                for (let i in this.settings.phoneProperties) {
-                    if (props[i]) {
-                        props[i].keep = true;
-                    } else {
-                        props[i] = {
-                            div: htmlwrap(`<p>${i}</p><p contenteditable></p>`),
-                            keep: true
-                        }
-                        props[i].div.dataset.prop = i;
-                        backDiv.appendChild(props[i].div);
-                    }
-                    props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
-                }
-                for (let i in props) {
-                    if (!props[i].keep) {
-                        props[i].div.remove();
-                    }
-                }
-                backDiv.style.display = "block";
-            }
-
-            backDiv.addEventListener("input", (e) => {
-                polymorph_core.items[editingID][e.target.parentElement.dataset.prop]=e.target.innerText;
-                container.fire("updateItem", { id: editingID });
-            })
-
-            frontDiv.querySelector(".plusButton").addEventListener("click", () => {
-                //pseudo create a new item
-                let pseudoItem = {};
-                pseudoItem[this.settings.filter] = true;
-                let show_id = polymorph_core.insertItem(pseudoItem);
-                showBackDiv(show_id);
-                container.fire("updateItem", { id: show_id });
-            })
-
-            frontDiv.addEventListener("click", (e) => {
-                if (e.target.dataset.id) {
-                    showBackDiv(e.target.dataset.id);
-                }
-            })
-
-            let stillHoldingTimer = 0;
-            frontDiv.addEventListener("touchstart", (e) => {
-                if (e.target.dataset.id) {
-                    let targ = e.target;
-                    stillHoldingTimer = setTimeout(() => {
-                        if (confirm(`Delete item ${targ.dataset.id}?`)) {
-                            delete polymorph_core.items[targ.dataset.id][this.settings.filter];
-                            targ.remove();
-                            container.fire("updateItem", { id: targ.dataset.id });
-                        }
-                    },1000);
-                }
-            })
-
-            frontDiv.addEventListener("touchend", (e) => {
-                clearTimeout(stillHoldingTimer);
-            })
-
-            this.refresh = function () {
-                // This is called when the parent container is resized.
-            }
-
-
-
-            //Handle the settings dialog click!
-            this.dialogDiv = document.createElement("div");
-            this.dialogDiv.innerHTML = ``;
-
-            let options = {
-                filter: new polymorph_core._option({
-                    div: this.dialogDiv,
-                    type: "text",
-                    object: this.settings,
-                    property: "filter",
-                    label: "Filter for items to be shown"
-                })
-            }
-            this.showDialog = () => {
-                //enable adding new items checkbox
-                for (i in options) {
-                    options[i].load();
-                }
-            }
-
-            this.dialogUpdateSettings = function () {
-                // This is called when your dialog is closed. Use it to update your container!
-            }
-
+        this.taskList = this.rootdiv.querySelector(".taskList");
+        let backDiv = this.rootdiv.querySelector(".backDiv");
+        this.rootdiv.querySelector(".donebutton").addEventListener("click", () => {
+            this.taskList.style.display = "block";
+            backDiv.style.display = "none";
         });
+        //this is called when an item is updated (e.g. by another container)
+        container.on("updateItem", (d) => {
+            let id = d.id;
+            if (this.itemRelevant(id)) {
+                let obj = this.taskList.querySelector(`[data-id='${id}']`);
+                if (!obj) {
+                    obj = htmlwrap(`<p data-id="${id}"></p>`);
+                    this.taskList.appendChild(obj);
+                }
+                obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
+                //render the item, if we care about it.
+            }
+        });
+        let editingID = undefined;
+        let showBackDiv = (id) => {
+            editingID = id;
+            this.taskList.style.display = "none";
+            let props = Array.from(backDiv.querySelectorAll("[data-prop]")).reduce((p, i) => { p[i.dataset.prop] = { div: i }; return p }, {});
+            for (let i in this.settings.phoneProperties) {
+                if (props[i]) {
+                    props[i].keep = true;
+                } else {
+                    props[i] = {
+                        div: htmlwrap(`<p>${i}</p><p contenteditable></p>`),
+                        keep: true
+                    }
+                    props[i].div.dataset.prop = i;
+                    backDiv.appendChild(props[i].div);
+                }
+                props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
+            }
+            for (let i in props) {
+                if (!props[i].keep) {
+                    props[i].div.remove();
+                }
+            }
+            backDiv.style.display = "block";
+        }
+
+        backDiv.addEventListener("input", (e) => {
+            polymorph_core.items[editingID][e.target.parentElement.dataset.prop] = e.target.innerText;
+            container.fire("updateItem", { id: editingID });
+        })
+
+        this.taskList.querySelector(".plusButton").addEventListener("click", () => {
+            //pseudo create a new item
+            let pseudoItem = {};
+            pseudoItem[this.settings.filter] = true;
+            let show_id = polymorph_core.insertItem(pseudoItem);
+            showBackDiv(show_id);
+            container.fire("updateItem", { id: show_id });
+        })
+
+        this.taskList.addEventListener("click", (e) => {
+            if (e.target.dataset.id) {
+                showBackDiv(e.target.dataset.id);
+            }
+        })
+
+        let stillHoldingTimer = 0;
+        this.taskList.addEventListener("touchstart", (e) => {
+            if (e.target.dataset.id) {
+                let targ = e.target;
+                stillHoldingTimer = setTimeout(() => {
+                    if (confirm(`Delete item ${targ.dataset.id}?`)) {
+                        delete polymorph_core.items[targ.dataset.id][this.settings.filter];
+                        targ.remove();
+                        container.fire("updateItem", { id: targ.dataset.id });
+                    }
+                }, 1000);
+            }
+        })
+
+        this.taskList.addEventListener("touchend", (e) => {
+            clearTimeout(stillHoldingTimer);
+        })
+
+        __itemlist_searchsort.apply(this);
+        this.refresh = function() {
+            this.sortItems();
+            // This is called when the parent container is resized.
+        }
+
+
+
+        //Handle the settings dialog click!
+        this.dialogDiv = document.createElement("div");
+        this.dialogDiv.innerHTML = `
+        <p>Columns to show</p>
+        <div class="proplist"></div>
+        <p>You can pick more from the list below, or add a new property! </p>
+        <span>Choose existing property:</span><select class="_prop">
+        </select><br>
+        <input class="adpt" placeholder="Or type a new property..."><br>
+        <button class="adbt">Add</button>
+        `;
+
+        this.proplist = this.dialogDiv.querySelector(".proplist");
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("[name='sortie']")) {
+                this.settings.implicitOrder = false;
+                options.implicitOrder.load();
+            }
+        })
+
+        this.dialogUpdateSettings = () => {
+            // pull settings and update when your dialog is closed.
+            this.sortItems();
+            container.fire("updateItem", { id: this.container.id });
+        };
+        //adding new buttons
+        this.dialogDiv.querySelector(".adbt").addEventListener("click",
+            () => {
+                if (this.dialogDiv.querySelector(".adpt").value != "") {
+                    this.settings.phoneProperties[this.dialogDiv.querySelector(".adpt").value] = 'text';
+                    this.dialogDiv.querySelector(".adpt").value = "";
+                } else {
+                    this.settings.phoneProperties[this.dialogDiv.querySelector("select._prop").value] = 'text';
+                }
+                this.showDialog();
+            }
+        )
+
+        //Handle select's in proplist
+        this.proplist.addEventListener('change', (e) => {
+            if (e.target.matches("select")) this.settings.phoneProperties[e.target.dataset.role] = e.target.value;
+        })
+        this.proplist.addEventListener('click', (e) => {
+            if (e.target.matches("[data-krole]")) {
+                delete this.settings.phoneProperties[e.target.dataset.krole];
+                this.showDialog();
+            }
+        })
+        this.proplist.addEventListener("input", (e) => {
+            if (e.target.matches("input[type='radio']")) {
+                this.settings.sortby = e.target.dataset.ssrole;
+            }
+        })
+
+        this.opList = this.dialogDiv.querySelector("select._prop");
+
+        let options = {
+            filter: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "filter",
+                label: "Filter for items to be shown"
+            })
+        }
+        this.showDialog = () => {
+
+            //Get all available properties, by looping through all elements (?)
+            this.opList.innerHTML = "";
+            let props = {};
+            for (let i in polymorph_core.items) {
+                for (let j in polymorph_core.items[i]) {
+                    if (typeof polymorph_core.items[i][j] != "function") props[j] = true;
+                }
+            }
+            for (let prop in props) {
+                if (!this.settings.phoneProperties[prop]) {
+                    let opt = document.createElement("option");
+                    opt.innerText = prop;
+                    opt.value = prop;
+                    this.opList.appendChild(opt);
+                }
+            }
+
+            //enable adding new items checkbox
+            for (i in options) {
+                options[i].load();
+            }
+
+            // Now fill in the ones which we're currently monitoring.
+            this.proplist.innerHTML = "";
+            for (let prop in this.settings.phoneProperties) {
+                let pspan = document.createElement("p");
+                pspan.innerHTML = `<span>` + prop + `</span>
+            <select data-role=` + prop + `>
+                <option value="text">Text</option>
+                <option value="date">Date</option>
+                <option value="object">Object</option>
+                <option value="number">Number</option>
+            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
+                pspan.querySelector("select").value = this.settings.phoneProperties[prop];
+                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
+                this.proplist.appendChild(pspan);
+            }
+        }
+
+        this.dialogUpdateSettings = function() {
+            // This is called when your dialog is closed. Use it to update your container!
+        }
+    });
 };
 
 polymorph_core.registerOperator("descbox", {
@@ -6320,7 +6761,7 @@ polymorph_core.registerOperator("descbox", {
     imageurl: "assets/operators/descbox.png",
     section: "Standard",
     single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
-}, function (container) {
+}, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
@@ -6350,8 +6791,7 @@ polymorph_core.registerOperator("descbox", {
             })
 
         }
-        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {
-        };
+        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {};
 
         polymorph_core.items[id]["_displayTags_" + this.settings.property] = "";
 
@@ -6404,12 +6844,10 @@ polymorph_core.registerOperator("descbox", {
 
     //Handle item updates
     this.updateItem = (id) => {
-        this.updateMeta(id);
-
-        //if focused, ignore
+        //if focused, ignore; to prevent overwrites of data
         if (id == this.settings.currentID && id && polymorph_core.items[id]) {
             if (this.textarea.matches(":focus")) {
-                setTimeout(() => this.updateItem(id), 500);
+                if (polymorph_core.items[id][this.settings.property] != this.textarea.value) setTimeout(() => this.updateItem(id), 500);
             } else {
                 if (this.changed) {
                     //someone else just called this so i'll have to save my modifications discreetly.
@@ -6479,21 +6917,21 @@ polymorph_core.registerOperator("descbox", {
     this.updateItem(this.settings.currentID);
 
     let upc = new capacitor(100, 40, (id, data) => {
-        if (id && polymorph_core.items[id] && this.changed) {
-            polymorph_core.items[id][this.settings.property] = data;
-            this.updateMeta(id);
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-            this.changed = false;
-        }
-    }, {
-        presubmit: () => {
-            this.changed = true;
-        }
-    })
-    //Register changes with polymorph_core
+            if (id && polymorph_core.items[id] && this.changed) {
+                polymorph_core.items[id][this.settings.property] = data;
+                this.updateMeta(id);
+                container.fire("updateItem", {
+                    id: id,
+                    sender: this
+                });
+                this.changed = false;
+            }
+        }, {
+            presubmit: () => {
+                this.changed = true;
+            }
+        })
+        //Register changes with polymorph_core
     this.somethingwaschanged = (e) => {
         //Check ctrl-S so that we dont save then
         if (e.key == "Control" || e.key == "Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s")) return;
@@ -6575,6 +7013,7 @@ polymorph_core.registerOperator("descbox", {
         let switchTo = (id) => {
             upc.forceSend();
             this.settings.currentID = id;
+            this.updateMeta(id);
             this.updateItem(id);
             container.fire("updateItem", { id: this.container.id });
         }
@@ -7195,6 +7634,846 @@ polymorph_core.registerOperator("terminal", {
         // pull settings and update when your dialog is closed.
     }
 
+});;
+
+// todo: on enter or defocus, create new item
+// tab to indent
+polymorph_core.registerOperator("workflow", {
+    displayName: "Workflowish",
+    description: "Nested, plaintext lists. Workflowy emulation.",
+    section: "Standard"
+}, function(container) {
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
+        titleProperty: "title",
+        richtextProperty: "description",
+        rootItems: [polymorph_core.insertItem({})],
+        filter: polymorph_core.guid()
+    };
+
+    //Can probably replace this with direct instantiation instead of a getter, if we're careful.
+    Object.defineProperty(this, "existingItems", {
+        get: () => {
+            if (this._existingItemsCache) return this._existingItemsCache;
+            else {
+                this._existingItemsCache = Array.from(this.settings.rootItems);
+                for (let i = 0; i < this._existingItemsCache.length; i++) {
+                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
+                }
+                return this._existingItemsCache;
+            }
+        }
+    })
+    this._parentOfCache = {};
+    this.parentOf = (id) => {
+        if (this._parentOfCache[id]) return this._parentOfCache[id];
+        else {
+            for (let i = 0; i < this.existingItems.length; i++) {
+                if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
+                    this._parentOfCache[id] = this.existingItems[i];
+                    return this._parentOfCache[id];
+                }
+            }
+            this._parentOfCache[id] = "";
+            return this._parentOfCache[id]; //undefined = root.
+        }
+    }
+
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+    if (!this.settings.rootItems.length) {
+        this.settings.rootItems.push(polymorph_core.insertItem({}));
+    }
+    //Add content-independent HTML here.
+    this.rootdiv.innerHTML = `
+    <style>
+    span[data-id]{
+        display:block;
+        width:100%;
+    }
+    
+    span[contenteditable]{
+        /*display: inline-block;
+        float: right;*/ 
+        width: calc(100% - 30px);
+    }
+    span[data-id]>div{
+        padding-left: 10px;
+    }
+    </style>
+    <span class="cursorspan">
+    <span class="utils">
+        <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
+    </span>
+    <span contenteditable>&nbsp;</span>
+    </span>
+    `;
+    this.rootdiv.style.color = "white";
+    this.orderedLink = (from, to, i, after) => {
+        polymorph_core.link(from, to);
+        if (!polymorph_core.items[from].toOrder) polymorph_core.items[from].toOrder = [];
+        if (polymorph_core.items[from].toOrder.indexOf(to) != -1) {
+            polymorph_core.items[from].toOrder.splice(polymorph_core.items[from].toOrder.indexOf(to), 1);
+        }
+        if (!i) polymorph_core.items[from].toOrder.push(to);
+        else if (typeof(i) == "number") {
+            polymorph_core.items[from].toOrder.splice(i, 0, to);
+        } else {
+            i = polymorph_core.items[from].toOrder.indexOf(i);
+            if (after) i++;
+            if (i != -1) polymorph_core.items[from].toOrder.splice(i, 0, to);
+            else polymorph_core.items[from].toOrder.push(to);
+        }
+    };
+
+    this.rootdiv.addEventListener("click", (e) => {
+        if (e.target.classList.contains("arrow")) {
+            //expand or contract
+            if (e.target.parentElement.parentElement.children[2].style.display == "none") {
+                e.target.parentElement.parentElement.children[2].style.display = "block";
+                e.target.innerHTML = "&#x25BC;";
+                polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = false;
+            } else {
+                e.target.parentElement.parentElement.children[2].style.display = "none";
+                e.target.innerHTML = "&#x25B6;";
+                polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = true;
+            }
+        }
+    });
+    //return true if we care about an item and dont want it garbage-cleaned :(
+    this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
+
+    this.createItem = (id) => {
+        if (!id) id = polymorph_core.insertItem({});
+        itm = polymorph_core.items[id];
+        if (!itm) itm = polymorph_core.items[id] = {};
+        itm[this.settings.filter] = true;
+        itm[this.settings.titleProperty] = "";
+        //add any data you need
+        let toDirectAdopt = true;
+        for (let i = 0; i < this.existingItems.length; i++) {
+            if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
+                toDirectAdopt = false;
+                if (!polymorph_core.items[this.existingItems[i]].toOrder) polymorph_core.items[this.existingItems[i]].toOrder = [];
+                if (polymorph_core.items[this.existingItems[i]].toOrder.indexOf(id) == -1) {
+                    polymorph_core.items[this.existingItems[i]].toOrder.push(id);
+                }
+                break;
+            }
+        }
+        if (toDirectAdopt) {
+            if (this.settings.rootItems.indexOf(id) == -1) this.settings.rootItems.push(id);
+        }
+        this._existingItemsCache.push(id);
+        return id;
+    }
+
+    let focusOnElement = function(el, index) {
+        let range = document.createRange();
+        let newP = el;
+        if (!newP.childNodes.length) {
+            newP.focus();
+            return;
+        }
+        range.setStart(newP.childNodes[0], index);
+        range.collapse(true);
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        newP.focus();
+    }
+
+    let focusOnPrev = (etarget) => {
+        let toFocusOnSpan = etarget.parentElement.previousElementSibling;
+        if (!toFocusOnSpan) {
+            toFocusOnSpan = etarget.parentElement.parentElement.parentElement;
+        } else {
+            if (toFocusOnSpan.tagName == "STYLE") return false;
+            while (toFocusOnSpan.children[2].children.length) {
+                toFocusOnSpan = toFocusOnSpan.children[2].children[toFocusOnSpan.children[2].children.length - 1];
+            }
+        }
+        focusOnElement(toFocusOnSpan.children[1]);
+    }
+    let focusOnNext = (etarget) => {
+        let toFocusOnSpan = etarget.parentElement.nextElementSibling;
+        if (etarget.nextElementSibling.children.length) {
+            toFocusOnSpan = etarget.nextElementSibling.children[0];
+        }
+        if (!toFocusOnSpan) {
+            //                     span   pspan           div?
+            let tmpParentSpan = etarget.parentElement.parentElement;
+            while (tmpParentSpan && !tmpParentSpan.parentElement.nextElementSibling) {
+                tmpParentSpan = tmpParentSpan.parentElement.parentElement;
+                if (!tmpParentSpan.parentElement) return false;
+            }
+            if (tmpParentSpan) toFocusOnSpan = tmpParentSpan.parentElement.nextElementSibling;
+        }
+        focusOnElement(toFocusOnSpan.children[1]);
+    }
+
+    let unparent = (id) => {
+        if (this.parentOf(id)) {
+            delete polymorph_core.items[this.parentOf(id)].to[id];
+            polymorph_core.items[this.parentOf(id)].toOrder.splice(polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id), 1);
+        }
+        delete this._parentOfCache[id];
+    }
+
+    this.regenerateToOrder = (root) => {
+        if (root && root.dataset.id) {
+            polymorph_core.items[root.dataset.id].toOrder = Array.from(root.children[2].children).map(i => i.dataset.id);
+        }
+        if (!root) root = this.rootdiv;
+        else root = root.children[2];
+        Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.regenerateToOrder(i));
+    };
+    // called when debugging, ideally call before save...
+
+    this.rootdiv.addEventListener("keyup", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            let id = e.target.parentElement.dataset.id;
+            if (e.key == '\\') {
+                // add curly brackets to the position
+                let selection = e.target.getRootNode().getSelection().getRangeAt(0);
+                console.log(selection);
+                result = selection.commonAncestorContainer.textContent.split("");
+                result.splice(selection.startOffset, 0, "{", "}");
+                result = result.join("");
+                let oldStart = selection.startOffset;
+                selection.commonAncestorContainer.textContent = result;
+                focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 1);
+            }
+        }
+    })
+
+    this.parse = (el) => {
+        while (el && !el.dataset.id) {
+            el = el.parentElement;
+        }
+        if (!el) return;
+        let id = el.dataset.id;
+        for (let p in polymorph_core.items[el]) {
+            if (p.startsWith("_" + this.container.id)) {
+                //remove it? v inefficient but ok
+                delete polymorph_core.items[el][p];
+            }
+        };
+        let text = el.children[1].innerText;
+        let re = /\\\{(.+?)\}/g;
+        let result = 0;
+        while (result = re.exec(text)) {
+            polymorph_core.items[id]["_" + this.container.id + "_" + result[1]] = true;
+        }
+    }
+
+    this.rootdiv.addEventListener("keydown", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            let id = e.target.parentElement.dataset.id;
+            if (e.key == "Backspace") {
+                if (e.target.innerText.length == 0) {
+                    //delete the item
+                    unparent(id);
+                    let theI = this.settings.rootItems.indexOf(id);
+                    if (theI != -1) this.settings.rootItems.splice(theI, 1);
+                    if (!focusOnPrev(e.target)) focusOnPrev(e.target);
+                    e.target.parentElement.remove();
+                    //focus on the previous item if exists, otherwise on next element
+                }
+            } else if (e.key == "Enter") {
+                let newID = this.createItem();
+                if (e.shiftKey) {
+                    this.orderedLink(e.target.parentElement.dataset.id, newID);
+                } else {
+                    //     span     span          div        span or null
+                    if (e.target.parentElement.parentElement.parentElement) {
+                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
+                    } else {
+                        this.settings.rootItems.push(newID);
+                    }
+                }
+                container.fire("createItem", { id: newID, sender: this });
+                e.preventDefault();
+
+                this.renderItem(newID);
+                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1]);
+
+            } else if (e.key == "ArrowUp") {
+                if (e.altKey) {
+                    //move item up
+                    if (e.target.parentElement.parentElement.parentElement && e.target.parentElement.previousElementSibling) {
+                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.dataset.id, e.target.parentElement.previousElementSibling.dataset.id);
+                        this.renderItem(e.target.parentElement.dataset.id);
+                        e.target.focus();
+                    } else {
+                        //could be a root item
+                        if (e.target.parentElement.previousElementSibling.tagName != "STYLE") {
+                            let previ = this.settings.rootItems.indexOf(id);
+                            this.settings.rootItems.splice(previ, 1);
+                            this.settings.rootItems.splice(previ - 1, 0, id);
+                            this.renderItem(id);
+                            e.target.focus();
+                        }
+                    }
+                } else {
+                    focusOnPrev(e.target);
+                }
+            } else if (e.key == "ArrowDown") {
+                if (e.altKey) {
+                    if (e.target.parentElement.parentElement.parentElement && e.target.parentElement.nextElementSibling) {
+                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.dataset.id, e.target.parentElement.nextElementSibling.dataset.id, true);
+                        this.renderItem(e.target.parentElement.dataset.id);
+                        e.target.focus();
+                    } else {
+                        if (e.target.parentElement.nextElementSibling) {
+                            let previ = this.settings.rootItems.indexOf(id);
+                            this.settings.rootItems.splice(previ, 1);
+                            this.settings.rootItems.splice(previ + 1, 0, id);
+                            this.renderItem(id);
+                            e.target.focus();
+                        }
+                    }
+                } else {
+                    focusOnNext(e.target);
+                }
+            } else if (e.key == "Tab") {
+                let cursorPos = e.target.getRootNode().getSelection().getRangeAt(0).startOffset;
+                if (cursorPos == 0) {
+                    e.preventDefault();
+                    if (e.shiftKey == false) {
+                        //clear the parentof cache
+                        unparent(id);
+                        let wasme = e.target;
+                        //kick the thing up four spaces
+                        if (e.target.parentElement.previousElementSibling) {
+                            this.orderedLink(e.target.parentElement.previousElementSibling.dataset.id, id);
+                            if (this.settings.rootItems.indexOf(id) != -1) this.settings.rootItems.splice(this.settings.rootItems.indexOf(id), 1);
+                            this.renderItem(id);
+                            wasme.focus();
+                        }
+                    } else {
+                        //clear the parentof cache
+                        unparent(id);
+                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
+                        delete this._parentOfCache[id];
+                        let wasme = e.target;
+                        if (e.target.parentElement.parentElement.parentElement) {
+                            if (e.target.parentElement.parentElement.parentElement.parentElement.parentElement) {
+                                let prev = e.target.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
+                                this.orderedLink(prev, id);
+                                this.renderItem(id);
+                                wasme.focus();
+                            } else {
+                                //make root
+                                this.settings.rootItems.push(id);
+                                this.renderItem(id);
+                                wasme.focus();
+                            }
+                        } else {
+                            // it is already a root node, do nothing
+
+                        }
+                    }
+                }
+
+            }
+        } else if (e.target.matches("span.cursorspan span[contenteditable]")) {
+            //create a new span right above it, and copy over the text, and create a new item
+            let newID = this.createItem();
+            this.settings.rootItems.push(newID);
+            polymorph_core.items[newID][this.settings.titleProperty] = e.target.innerText;
+            e.target.innerHTML = "&nbsp;";
+            container.fire("createItem", { id: newID, sender: this });
+            e.preventDefault();
+            this.renderItem(newID);
+            focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1]);
+        }
+    })
+
+
+    this.rootdiv.addEventListener("input", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            let id = e.target.parentElement.dataset.id;
+            polymorph_core.items[e.target.parentElement.dataset.id][this.settings.titleProperty] = e.target.innerText;
+            //parse stuff
+            this.parse(e.target);
+            container.fire("updateItem", { id: id, sender: this });
+        }
+    });
+
+    this.deleteItem = (id) => {
+        //Find its parent and nerf it - if it doesnt have a parent, take it off the rootitems.
+        container.fire("updateItem", { id: id });
+    }
+
+    //this is called when an item is updated (e.g. by another container)
+    let renderTrain = {};
+    this.renderItem = (id, recursive) => {
+        if (renderTrain[id]) return;
+        if (this.itemRelevant(id)) {
+            //render the item, if we care about it.
+            let span = this.rootdiv.querySelector(`span[data-id='${id}']`);
+            if (!span) {
+                span = htmlwrap(`
+            <span data-id="${id}">
+                <span class="utils">
+                    <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
+                </span>
+                <span contenteditable></span>
+                <div></div>
+            </span>`);
+            }
+            span.children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
+            if (polymorph_core.items[id].collapsed) {
+                span.children[2].style.display = "none";
+                span.children[0].children[0].innerHTML = "&#x25B6;";
+            }
+            let nxtid;
+            let parent;
+            if (this.parentOf(id)) {
+                if (!polymorph_core.items[this.parentOf(id)].toOrder) this.orderedLink(this.parentOf(id), id);
+                nxtid = polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1;
+                nxtid = polymorph_core.items[this.parentOf(id)].toOrder[nxtid];
+                if (!this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`)) {
+                    //this is a multi-parent item and its primary parent hasnt appeared
+                    //just ignore for the time being? we'll get another chance later
+                    return;
+                }
+                parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[2];
+            } else {
+                nxtid = this.settings.rootItems[this.settings.rootItems.indexOf(id) + 1];
+                parent = this.rootdiv;
+            }
+            if (nxtid && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`)) {
+                parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
+            } else {
+                parent.appendChild(span);
+            }
+            if (!polymorph_core.items[id].contracted) {
+                for (let i in polymorph_core.items[id].to) {
+                    this.renderItem(i, true);
+                }
+            }
+        }
+        if (!recursive) renderTrain = {};
+    }
+    container.on("updateItem", (d) => {
+        if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.
+        let id = d.id;
+        if (polymorph_core.items[d.id][this.settings.filter] && !this.itemRelevant(d.id)) {
+            this.settings.rootItems.push(d.id);
+            this._existingItemsCache.push(d.id);
+        }
+        if ((polymorph_core.items[d.id][this.settings.filter] || this.itemRelevant(d.id))) this.renderItem(id);
+        //do stuff with the item.
+    });
+
+    container.on("createItem", (d) => {
+        if (d.sender == this) return;
+        let id = d.id;
+        this.createItem(id);
+        this.renderItem(id);
+    });
+
+    this.refresh = function() {
+        // This is called when the parent container is resized.
+        // needs to be here so that when item is instantialised, items will render.
+        if (this.container.visible()) {
+            this.settings.rootItems.forEach((i) => container.fire("updateItem", { id: i }));
+        }
+    }
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
+    let options = {
+        oneTimeImport: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "filter",
+            label: "Filter property"
+        }),
+        importnow: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "button",
+            fn: () => {
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i][this.settings.filter]) {
+                        //check if they are children of any of the existing items occurs on render.
+                        this.settings.rootItems.push(i);
+                        this.renderItem(i);
+                    }
+                }
+            },
+            label: "Import now"
+        })
+    }
+    this.showDialog = function() {
+        for (let i in options) {
+            options[i].load();
+        }
+        // update your dialog elements with your settings
+    }
+    this.dialogUpdateSettings = function() {
+        // This is called when your dialog is closed. Use it to update your container!
+    }
+
+});;
+
+polymorph_core.registerOperator("textflow", {
+    displayName: "TextFlow",
+    description: "An operator designed for streams of text.",
+    section: "Standard"
+}, function(container) {
+    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
+    let defaultSettings = {
+        itemRootProperty: "textflow_irp_" + polymorph_core.guid(5),
+        titleProperty: "title",
+        richtextProperty: "description",
+        renderMode: "templateStrings",
+        filter: polymorph_core.insertItem({}),
+    };
+    let newStorageItem = {};
+    newStorageItem[defaultSettings.itemRootProperty] = [polymorph_core.insertItem({})];
+    defaultSettings.filter = polymorph_core.insertItem(newStorageItem);
+    //this.rootdiv, this.settings, this.container instantiated here.
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
+    //load SoC extension
+    this.parsers = {};
+    /*scriptassert([["textflow_socparser", "operators/textflow/socParser.js"]], () => {
+        __textflow_soc_parser(this);
+    });*/
+
+    Object.defineProperty(this, "rootItems", {
+        get: () => {
+            return polymorph_core.items[this.settings.filter][this.settings.itemRootProperty];
+        }
+    })
+    if (this.settings.rootItems) {
+        if (this.settings.rootItems.length) {
+            //its an array, so old version
+            let newStorageItem = {};
+            newStorageItem[this.settings.itemRootProperty] = this.settings.rootItems;
+            this.settings.filter = polymorph_core.insertItem(newStorageItem);
+        } else {
+            for (let i in this.settings.rootItems) {
+                let newStorageItem = {};
+                newStorageItem[this.settings.itemRootProperty] = this.settings.rootItems[i];
+                this.settings.filter = polymorph_core.insertItem(newStorageItem);
+            }
+        }
+        delete this.settings.rootItems;
+    }
+    this.rootdiv.appendChild(htmlwrap(`<div style="color:white;overflow-y:auto;height:100%"></div>`))
+    this.itemListDiv = this.rootdiv.children[0]
+
+    let focusOnElement = (el, index) => {
+        let range = document.createRange();
+        let newP = el;
+        range.setStart(newP, index);
+        range.collapse(true);
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        //on deletion, focus is lost, so check focus exists
+        if (this.itemListDiv.querySelector(".focused")) this.itemListDiv.querySelector(".focused").classList.remove("focused");
+        el.parentElement.classList.add("focused");
+        newP.focus();
+        newP.scrollIntoViewIfNeeded();
+        container.fire("focusItem", { id: el.parentElement.dataset.id, sender: this });
+    }
+
+    this.createItem = (oldID) => {
+        if (this.settings.renderMode == "SoC") {
+            //it's a stream of consciousness
+            //poll the plugin for what to do
+            try {
+                this.parsers["soc"](oldID);
+            } catch (e) {
+                console.log(e);
+            }
+        }
+
+        let newItem = {};
+        newItem[this.settings.titleProperty] = "";
+        let newID = polymorph_core.insertItem(newItem);
+        if (oldID) this.rootItems.splice(this.rootItems.indexOf(oldID) + 1, 0, newID);
+        else this.rootItems.push(newID);
+        container.fire("createItem", { id: newID, sender: this });
+        this.richRenderItem(newID);
+        focusOnElement(this.itemListDiv.querySelector(`span[data-id='${newID}'] p`));
+    }
+
+    this.itemRelevant = (id) => {
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i][this.settings.itemRootProperty] && polymorph_core.items[i][this.settings.itemRootProperty].includes) {
+                if (i == id) return true;
+                if (polymorph_core.items[i][this.settings.itemRootProperty].includes(id)) return true;
+            }
+        }
+        return false;
+    }
+
+    this.itemRelevantNow = (id) => {
+        if (this.rootItems) return (this.rootItems.indexOf(id) != -1);
+        else return false;
+    }
+
+    this.itemListDiv.addEventListener("keydown", (e) => {
+        if (e.key == "Tab") e.preventDefault();
+        if (e.key == "ArrowDown" || e.key == "ArrowUp") {
+            let ckey = e.key;
+            let ctarget = e.target;
+            let baseElement = e.target.getRootNode();
+            range = baseElement.getSelection().getRangeAt(0);
+            let preRange = range.startOffset;
+            let preEl = range.startContainer;
+            setTimeout(() => {
+                range = baseElement.getSelection().getRangeAt(0);
+                if (preRange == range.startOffset && preEl == range.startContainer) {
+                    if (ckey == "ArrowDown") {
+                        if (ctarget.parentElement.nextElementSibling) {
+                            toFocusOnSpan = ctarget.parentElement.nextElementSibling.children[0];
+                            focusOnElement(toFocusOnSpan);
+                        } else if (ctarget.innerText) {
+                            let oldID = ctarget.parentElement.dataset.id;
+                            this.createItem(oldID);
+                        }
+                    } else {
+                        if (ctarget.parentElement.previousElementSibling) {
+                            let toFocusOnSpan = ctarget.parentElement.previousElementSibling.children[0];
+                            if (toFocusOnSpan) focusOnElement(toFocusOnSpan);
+                        }
+                    }
+                }
+            }, 100);
+        } else if (e.key == "Backspace") {
+            if (e.target.innerText == "" || e.target.innerText == "\n") { //occasionally you get a single <br> and it refuses to delete
+                let toFocusOnSpan;
+                if (e.target.parentElement.previousElementSibling) {
+                    toFocusOnSpan = e.target.parentElement.previousElementSibling.children[0];
+                } else if (e.target.parentElement.nextElementSibling) {
+                    toFocusOnSpan = e.target.parentElement.nextElementSibling.children[0];
+                }
+                if (toFocusOnSpan) { // if this is the last element, don't delete it!
+                    let id = e.target.parentElement.dataset.id;
+                    let idindex = this.rootItems.indexOf(id);
+                    if (idindex > -1) {
+                        this.rootItems.splice(idindex, 1);
+                    }
+                    e.target.parentElement.remove();
+                    container.fire("deleteItem", { id: id, sender: this });
+                    focusOnElement(toFocusOnSpan);
+                }
+            }
+        } else if (e.key == "Enter") {
+            if (e.getModifierState("Shift") == true) return;
+            let baseElement = e.target.getRootNode();
+            range = baseElement.getSelection().getRangeAt(0);
+            let preRange = range.startOffset;
+            if (preRange == range.startContainer.length &&
+                Array.from(range.startContainer.parentElement.childNodes).indexOf(range.startContainer) == range.startContainer.parentElement.childNodes.length - 1
+            ) {
+                //make a new node
+                e.preventDefault();
+                let oldID = e.target.parentElement.dataset.id;
+                this.createItem(oldID);
+            }
+        }
+    });
+
+    this.itemListDiv.addEventListener("click", (e) => {
+        for (let i = 0; i < e.path.length; i++) {
+            if (e.path[i].host) return; //exist after shadow root
+            if (e.path[i].matches(`span[data-id]>div`)) {
+                focusOnElement(e.path[i].previousElementSibling);
+                break;
+            } else if (e.path[i].matches(`span[data-id]:not(.focused)>p`)) {
+                focusOnElement(e.path[i]);
+                break;
+            }
+        }
+    });
+
+    this.itemListDiv.addEventListener("input", (e) => {
+        if (e.target.matches(`span[data-id]>p`)) {
+            let id = e.target.parentElement.dataset.id;
+            polymorph_core.items[id][this.settings.titleProperty] = e.target.innerText;
+            container.fire("updateItem", { id: id, sender: this });
+        }
+    });
+
+    this.richRenderItem = (id) => {
+        if (this.itemRelevantNow(id)) {
+            //render the item, if we care about it.
+            let span = this.itemListDiv.querySelector(`span[data-id='${id}']`);
+            if (!span) {
+                span = htmlwrap(`
+            <span data-id="${id}">
+            <p class="code" contenteditable></p>
+            <div class="rendered"></div>
+            </span>`);
+            }
+            if (!span.classList.contains("focused")) span.children[0].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
+            let innerText = polymorph_core.items[id][this.settings.titleProperty];
+            if (!innerText) innerText = " "; //on metafocus, this property may not be set
+            if (this.settings.renderMode == "templateString") span.children[1].innerHTML = eval(`\`${innerText}\``);
+            if (span.parentElement != this.itemListDiv) {
+                if (this.rootItems.indexOf(id) - 1 >= 0) {
+                    let prevID = this.rootItems[this.rootItems.indexOf(id) - 1];
+                    //not first item
+                    if (this.itemListDiv.querySelector(`span[data-id="${prevID}"]`)) {
+                        this.itemListDiv.insertBefore(span, this.itemListDiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
+                    } else {
+                        //on first run, some items may not exist yet. so recurse up.
+                        this.richRenderItem(prevID);
+                        this.itemListDiv.insertBefore(span, this.itemListDiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
+                    }
+                } else {
+                    //first item
+                    this.itemListDiv.insertBefore(span, this.itemListDiv.children[0]); //style
+                }
+            }
+            if (polymorph_core.items[id].isSoCQuery && span.children[1].style.display != "block") {
+                setTimeout(() => this.parsers["soc"](id), 200);
+            }
+        }
+    }
+    container.on("updateItem", (d) => {
+        let id = d.id;
+        this.richRenderItem(id);
+        //do stuff with the item.
+    });
+
+    container.on("metaFocus", (data) => {
+        if (data.sender == this) return;
+        this.settings.filter = data.id;
+        if (!this.rootItems) polymorph_core.items[this.settings.filter][this.settings.itemRootProperty] = [polymorph_core.insertItem({})];
+        //clear out everything
+        while (this.itemListDiv.children.length > 0) {
+            this.itemListDiv.children[0].remove();
+        }
+        for (let i in polymorph_core.items) {
+            this.richRenderItem(i);
+        }
+        this.itemListDiv.children[0].classList.add("focused");
+    })
+    if (this.rootItems) {
+        if (!this.rootItems.length) {
+            this.rootItems.push(polymorph_core.insertItem({}))
+        };
+        this.rootItems.forEach((i) => container.fire("updateItem", { id: i }));
+    } else {
+        let newStorageItem = {};
+        let newTextItem = polymorph_core.insertItem({});
+        newStorageItem[this.settings.itemRootProperty] = [newTextItem];
+        this.settings.filter = polymorph_core.insertItem(newStorageItem);
+        this.richRenderItem(newTextItem);
+    }
+    this.itemListDiv.children[0].classList.add("focused");
+
+    this.refresh = function() {
+        // This is called when the parent container is resized.
+    }
+
+    //Handle the settings dialog click!
+    this.dialogDiv = document.createElement("div");
+    this.dialogDiv.innerHTML = ``;
+    let options = {
+        oneTimeImport: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "oneTimeImport",
+            label: "Filter for one time import"
+        }),
+        importNow: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "button",
+            fn: () => {
+                for (let i in polymorph_core.items) {
+                    if (polymorph_core.items[i][this.settings.oneTimeImport]) {
+                        //check if they are children of any of the existing items occurs on render.
+                        this.rootItems.push(i);
+                        this.richRenderItem(i);
+                        this.itemListDiv.children[0].classList.add("focused")
+                    }
+                }
+            },
+            label: "Import now"
+        }),
+        print: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "button",
+            fn: () => {
+                let preFocused = this.itemListDiv.querySelector(".focused");
+                if (preFocused) this.itemListDiv.querySelector(".focused").classList.remove("focused");
+                let nw = window.open("", "_blank");
+                let generatedHTML = this.itemListDiv.innerHTML;
+                nw.document.body.innerHTML = generatedHTML;
+                preFocused.classList.add("focused");
+            },
+            label: "Print this document"
+        }),
+        renderMode: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "select",
+            object: this.settings,
+            property: "renderMode",
+            source: ["templateString", "Markdown [todo]", "Textflow custom shortcuts [todo]", "SoC"],
+            label: "Rendering mode"
+        })
+    }
+    this.showDialog = function() {
+        for (let i in options) options[i].load();
+    }
+    this.baseStyle = htmlwrap(`<style>`);
+    this.rootdiv.appendChild(this.baseStyle);
+    this.dialogUpdateSettings = function() {
+        // This is called when your dialog is closed. Use it to update your container!
+        //Add content-independent HTML here.
+        switch (this.settings.renderMode) {
+            case "SoC":
+                this.baseStyle.innerHTML = `
+                span[data-id]{
+                    display:block;
+                    width:100%;
+                }
+                span[data-id]>p{
+                    display:block;
+                    font-family:monospace;
+                    margin:0;
+                }
+                span[data-id]>div.rendered{
+                    display:none;
+                }`
+                break;
+            default:
+                this.baseStyle.innerHTML = `
+                span[data-id]{
+                    display:block;
+                    width:100%;
+                }
+                p[contenteditable]{
+                    display:none;
+                    font-family:monospace;
+                }
+                span.focused p[contenteditable]{
+                    display:block;
+                }
+                `
+                break;
+
+        }
+        this.baseStyle = htmlwrap(`<style>
+  
+    </style>`);
+        this.rootdiv.appendChild(this.baseStyle);
+    }
+
+    this.dialogUpdateSettings();
 });;
 
 //todo: putter mode for inspector
@@ -8208,7 +9487,8 @@ if (isPhone()) {
     polymorph_core.registerOperator("subframe", {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
-        section: "Layout"
+        section: "Layout",
+        mustColdLoad: true
     }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
@@ -8289,7 +9569,8 @@ if (isPhone()) {
     polymorph_core.registerOperator("subframe", {
         displayName: "Subframe",
         description: "Place a new frame, with its own tabs, in this current frame.",
-        section: "Layout"
+        section: "Layout",
+        mustColdLoad: true
     }, function(container) {
         polymorph_core.operatorTemplate.call(this, container, {});
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
@@ -8804,11 +10085,9 @@ SVG.ForeignObject = SVG.invent({
 }
 });;
 
-
-
 function _itemcluster_extend_svg(me) { // very polymorph_core functions! 
     me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
-    me.mapPageToSvgCoords = function (pageX, pageY, vb) {
+    me.mapPageToSvgCoords = function(pageX, pageY, vb) {
         let rels = me.svg.node.getBoundingClientRect();
         if (!vb) vb = me.svg.viewbox();
         let ret = {};
@@ -8816,13 +10095,13 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         ret.y = (pageY - rels.y) / rels.height * vb.height + vb.y;
         return ret;
     }
-    let linePerformanceCache = {};// in start+end, cache [[x,y],[x,y]]
+    let linePerformanceCache = {}; // in start+end, cache [[x,y],[x,y]]
     me.fromcache = {};
 
     let whileNotVisibleCache = [];
     let visChecker = 0;
 
-    me.arrangeItem = function (id) {
+    me.arrangeItem = function(id) {
         if (!me.container.visible()) {
             whileNotVisibleCache.push(id);
             if (!visChecker) visChecker = setInterval(() => {
@@ -8845,12 +10124,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             //return;
             let _prerange = sel.getRangeAt(0);
             prerange = {}
-            let props = ["collapsed"
-                , "commonAncestorContainer"
-                , "endContainer"
-                , "endOffset"
-                , "startContainer"
-                , "startOffset"];
+            let props = ["collapsed", "commonAncestorContainer", "endContainer", "endOffset", "startContainer", "startOffset"];
             props.forEach(i => {
                 prerange[i] = _prerange[i];
             })
@@ -8925,7 +10199,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 widthInvalidated = true;
             }
             if (widthInvalidated) {
-                dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
+                dvd.style.width = me.getItemWidth(tta.innerText.length + ttb.innerText.length);
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {
                     setTimeout(() => {
@@ -8938,7 +10212,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 }
             }
             let fob = me.itemPointerCache[id].children()[1];
-            if (fob.width() == 0) {// when container starts invisible, fob does not show.
+            if (fob.width() == 0) { // when container starts invisible, fob does not show.
                 fob.size(dvd.scrollWidth, tta.scrollHeight);
             }
 
@@ -9003,12 +10277,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 let newRange = new Range();
                 newRange.setStart(prerange.startContainer, prerange.startOffset);
                 newRange.setEnd(prerange.startContainer, prerange.endOffset);
-                let props = ["collapsed"
-                    , "commonAncestorContainer"
-                    , "endContainer"
-                    , "endOffset"
-                    , "startContainer"
-                    , "startOffset"];
+                let props = ["collapsed", "commonAncestorContainer", "endContainer", "endOffset", "startContainer", "startOffset"];
                 props.forEach(i => {
                     newRange[i] = prerange[i];
                 })
@@ -9026,7 +10295,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         width: 3
     }).back();
     me.activeLines = {};
-    me.toggleLine = function (start, end) {
+    me.toggleLine = function(start, end) {
         //start and end is now directional. 
         //check if linked; if linked, remove link
         if (polymorph_core.isLinked(start, end) % 2) {
@@ -9040,7 +10309,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         }
     };
 
-    me.redrawLines = function (ci, style = "black") {
+    me.redrawLines = function(ci, style = "black") {
         for (let j in me.activeLines[ci]) {
             me.enforceLine(ci, j, style);
         }
@@ -9050,7 +10319,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     }
 
 
-    me.enforceLine = function (start, end, style = "black") {
+    me.enforceLine = function(start, end, style = "black") {
         let sd = me.itemPointerCache[start];
         let ed = me.itemPointerCache[end];
         if (!sd || !ed) {
@@ -9065,7 +10334,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         } else {
             if (!me.activeLines[start]) me.activeLines[start] = {};
             cp = me.svg.path().stroke({ width: 2, color: style });
-            cp.marker('mid', 9, 6, function (add) {
+            cp.marker('mid', 9, 6, function(add) {
                 add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
@@ -9080,14 +10349,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.hide();
             return;
         } else {
-            if (!(!(linePerformanceCache[start])
-                || !(linePerformanceCache[start][end])
-                || !(Math.abs(linePerformanceCache[start][end][0][0] - sd.x()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][0][1] - sd.y()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][1][0] - ed.x()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][1][1] - ed.y()) < 0.01)
-                || !(linePerformanceCache[start][end][2] == style)
-            )) return;
+            if (!(!(linePerformanceCache[start]) ||
+                    !(linePerformanceCache[start][end]) ||
+                    !(Math.abs(linePerformanceCache[start][end][0][0] - sd.x()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][0][1] - sd.y()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][1][0] - ed.x()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][1][1] - ed.y()) < 0.01) ||
+                    !(linePerformanceCache[start][end][2] == style)
+                )) return;
             let x = [sd.cx(), 0, ed.cx()];
             let y = [sd.cy(), 0, ed.cy()];
             x[1] = (x[0] + x[2]) / 2;
@@ -9096,7 +10365,10 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.stroke({ width: 2, color: style });
             cp.back();
             if (!linePerformanceCache[start]) linePerformanceCache[start] = {};
-            linePerformanceCache[start][end] = [[sd.x(), sd.y()], [ed.x(), ed.y()], style];
+            linePerformanceCache[start][end] = [
+                [sd.x(), sd.y()],
+                [ed.x(), ed.y()], style
+            ];
         }
     };
 
@@ -9112,8 +10384,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     if (me.viewGrid) {
         me.viewGrid();
     }
-}
-;
+};
 
 
 
@@ -10359,7 +11630,7 @@ polymorph_core.registerOperator("itemcluster2", {
     description: "A brainstorming / mind mapping board. Add items, arrange them, and connect them with lines.",
     section: "Standard",
     imageurl: "assets/operators/itemcluster.png"
-}, function (container) {
+}, function(container) {
     polymorph_core.addEventAPI(this);
 
     let defaultSettings = {
@@ -10373,7 +11644,7 @@ polymorph_core.registerOperator("itemcluster2", {
         createAcrossViews: true,
         showNewViewButton: false,
         textProp: "title",
-        focusExtendProp: "description"// when we focus, show this in a separate div
+        focusExtendProp: "description" // when we focus, show this in a separate div
     };
 
 
@@ -10567,7 +11838,7 @@ polymorph_core.registerOperator("itemcluster2", {
             let results = [];
             for (i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
-                    if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
+                    if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue; //apply filter to views
                     results.push(i);
                 }
                 //v = itemcluster.views[i].name;
@@ -10691,7 +11962,7 @@ polymorph_core.registerOperator("itemcluster2", {
                     }
                 }
             }
-            polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor = polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor || 1;//enforce xzoomfactor
+            polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor = polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor || 1; //enforce xzoomfactor
             //kill all lines, if geuninely switching and not using this as part of refresh
             if (previousView != id) {
                 for (let i in this.activeLines) {
@@ -10736,7 +12007,7 @@ polymorph_core.registerOperator("itemcluster2", {
         if (this.settings.filter) {
             if (!itm[this.settings.filter]) itm[this.settings.filter] = true;
         }
-        polymorph_core.items[id] = itm;//in case we are creating from scratch
+        polymorph_core.items[id] = itm; //in case we are creating from scratch
         //register a change
         container.fire("updateItem", {
             sender: this,
@@ -10785,7 +12056,11 @@ polymorph_core.registerOperator("itemcluster2", {
     //Items
     this.itemPointerCache = {};
     this.cachedStyle = {};
-
+    this.getItemWidth = (it) => {
+        //it is the innertext of the item
+        //return Math.sqrt(it.length)+1*23;
+        return 150
+    }
     _itemcluster_extend_svg(this);
 
     //More items shenanigans
@@ -10839,10 +12114,10 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.dragging = false;
     this.movingDivs = [];
-    this.alreadyMoving = -1;//for deselecting nodes
+    this.alreadyMoving = -1; //for deselecting nodes
     this.clearOutMovingDivs = () => {
         this.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
-        this.movingDivs = [];//empty them
+        this.movingDivs = []; //empty them
     }
     this.itemSpace.addEventListener("mousedown", (e) => {
         if (e.target.matches(".floatingItem") || e.target.matches(".floatingItem *")) {
@@ -10945,7 +12220,7 @@ polymorph_core.registerOperator("itemcluster2", {
                 dy: 30
             };
             this.clearOutMovingDivs();
-            this.movingDivs = [divrep];//overwrite the thing in the array
+            this.movingDivs = [divrep]; //overwrite the thing in the array
             this.lastMovingDiv = this.itemPointerCache[cid];
             // force a mousemove
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -10975,7 +12250,7 @@ polymorph_core.registerOperator("itemcluster2", {
             this.clearOutMovingDivs();
             for (let i in this.itemPointerCache) {
                 if (((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < this.rectangleDragging.sx) ||
-                    (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > this.rectangleDragging.sx)) &&
+                        (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > this.rectangleDragging.sx)) &&
                     ((this.itemPointerCache[i].cy() > coords.y && this.itemPointerCache[i].cy() < this.rectangleDragging.sy) ||
                         (this.itemPointerCache[i].cy() < coords.y && this.itemPointerCache[i].cy() > this.rectangleDragging.sy))) {
                     this.movingDivs.push({
@@ -11095,7 +12370,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             // adjust all relevant items, and rearrange
             for (let i in this.itemPointerCache) {
-                this.arrangeItem(i);// henceforth zoomfactor will only be a renderer thing. i hope this works
+                this.arrangeItem(i); // henceforth zoomfactor will only be a renderer thing. i hope this works
             }
 
             //also change the view box so that the mouse position remains the same
@@ -11184,10 +12459,10 @@ polymorph_core.registerOperator("itemcluster2", {
                         x: 0,
                         y: 0
                     };
-                    if (!e.altKey) {//push drag in.
+                    if (!e.altKey) { //push drag in.
                         delete polymorph_core.items[cid].itemcluster.viewData[this.settings.currentViewName];
                         this.arrangeItem(cid);
-                        this.movingDivs = [];//clear movingdivs so it doesnt come back
+                        this.movingDivs = []; //clear movingdivs so it doesnt come back
                     }
                     this.arrangeItem(otherID);
                     //this.switchView(elements[i].dataset.id, true, true);
@@ -11327,7 +12602,7 @@ polymorph_core.registerOperator("itemcluster2", {
         if (!it.itemcluster.viewData) it.itemcluster.viewData = {};
         for (i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
-                if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue;//apply filter to views
+                if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue; //apply filter to views
                 //dont recreate viewdata if it exists already.
                 if (!it.itemcluster.viewData[i]) it.itemcluster.viewData[i] = { x: 0, y: 0 };
                 if (this.settings.filter) {
@@ -11344,7 +12619,7 @@ polymorph_core.registerOperator("itemcluster2", {
         //hide all the lines
         for (let i in this.activeLines) {
             for (let j in this.activeLines[i]) {
-                if (i == id || j == id) {// this could STILL be done better
+                if (i == id || j == id) { // this could STILL be done better
                     this.toggleLine(i, j);
                 }
             }
@@ -11362,7 +12637,7 @@ polymorph_core.registerOperator("itemcluster2", {
         //hide all the lines
         for (let i in this.activeLines) {
             for (let j in this.activeLines[i]) {
-                if (i == id || j == id) {// this could STILL be done better
+                if (i == id || j == id) { // this could STILL be done better
                     this.toggleLine(i, j);
                 }
             }
@@ -11370,7 +12645,7 @@ polymorph_core.registerOperator("itemcluster2", {
         this.arrangeItem(id);
     })
 
-    this.tryFocus = function (id, fromContainer) {
+    this.tryFocus = function(id, fromContainer) {
         if (this.prevFocusID != id) {
             this.redrawLines(id, "red");
             if (!fromContainer) container.fire("focusItem", {
@@ -11412,13 +12687,13 @@ polymorph_core.registerOperator("itemcluster2", {
 
     this.rootdiv.addEventListener("input", (e) => {
         for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
+            if (!e.path[i].dataset) return; // not an item, probably the rapid entry bar
             if (e.path[i].dataset.id) {
                 let id = e.path[i].dataset.id;
                 if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
                 else polymorph_core.items[id][this.settings.focusExtendProp] = e.target.innerText;
                 let pp = e.target.parentElement;
-                pp.style.width = (Math.sqrt(pp.innerText.length) + 1) * 23;
+                pp.style.width = this.getItemWidth(pp.innerText.length);
                 pp.parentElement.setAttribute("width", pp.scrollWidth);
                 pp.parentElement.setAttribute("height", pp.scrollHeight);
                 resizeCapacitor.submit(id, pp);
@@ -11466,7 +12741,7 @@ polymorph_core.registerOperator("itemcluster2", {
             //also populate the tray
             for (let i in polymorph_core.items) {
                 if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                    if (!polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {//not in this view
+                    if (!polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) { //not in this view
                         if (!(this.settings.filter) || polymorph_core.items[i][this.settings.filter]) {
                             this.addToTray(i);
                         }
@@ -11504,11 +12779,11 @@ polymorph_core.registerOperator("itemcluster2", {
     }
     setTimeout(() => {
         if (this.settings.viewpath) {
-            this.settings.currentViewName = undefined;//clear preview buffer to prevent a>b>a
+            this.settings.currentViewName = undefined; //clear preview buffer to prevent a>b>a
             for (let i = 0; i < this.settings.viewpath.length; i++) {
                 this.switchView(this.settings.viewpath[i], true, true);
             }
-        } else {//for older versions
+        } else { //for older versions
             this.switchView(this.settings.currentViewName, true, true);
         }
     }); // wait until all other containers are intitalised otherwise we will check visibility in switchview before subframe parent exists which will break things.
@@ -11579,15 +12854,15 @@ polymorph_core.registerOperator("itemcluster2", {
         // update your dialog elements with your settings
     }
     this.dialogUpdateSettings = () => {
-        let its = this.dialogDiv.querySelectorAll("[data-role]");
-        for (let i = 0; i < its.length; i++) {
-            this.settings[its[i].dataset.role] = its[i].value;
+            let its = this.dialogDiv.querySelectorAll("[data-role]");
+            for (let i = 0; i < its.length; i++) {
+                this.settings[its[i].dataset.role] = its[i].value;
+            }
+            this.updateSettings();
+            container.fire("updateItem", { id: this.container.id });
+            // pull settings and update when your dialog is closed.
         }
-        this.updateSettings();
-        container.fire("updateItem", { id: this.container.id });
-        // pull settings and update when your dialog is closed.
-    }
-    //extension API
+        //extension API
     this.callables = {
         placeItem: (data) => {
             let item = data.item;
@@ -11617,11 +12892,11 @@ polymorph_core.registerOperator("welcome", {
     displayName: "Welcome",
     description: "The Welcome Operator. If you're reading this, thanks for messing around with my code, adventurer.",
     hidden: true
-}, function (container) {
-    let templates={
+}, function(container) {
+    let templates = {
         brainstorming: `{"default_operator":{"_od":{"t":"itemcluster2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"filter":"ltkar5","tray":false,"createAcrossViews":true,"showNewViewButton":false,"textProp":"title","focusExtendProp":"description","currentViewName":"1l3u"},"inputRemaps":{},"outputRemaps":{},"tabbarName":"Itemcluster 2","p":"default_container"}},"1l3u":{"itemcluster":{"viewName":"New View","cx":1030,"cy":961,"scale":1,"XZoomFactor":1,"grid":0},"ltkar5":true},"drbeqvh_N6l6l1x_0":{"title":"Double click to add new items!","itemcluster":{"viewData":{"1l3u":{"x":943,"y":556}}},"ltkar5":true,"to":{"drbeqvh_N6l6nBA_1":true,"drbeqvh_N6l6uOp_3":true}},"drbeqvh_N6l6nBA_1":{"title":"Shift-click on an item and drag to connect items.","itemcluster":{"viewData":{"1l3u":{"x":1416.6589578662847,"y":671.7387220367473}}},"ltkar5":true,"to":{"drbeqvh_N6l6xv3_4":true}},"drbeqvh_N6l6qP3_2":{"title":"Right-click on an item to remove it. ","itemcluster":{"viewData":{"1l3u":{"x":520.1611849165822,"y":981.2783833785711}}},"ltkar5":true,"to":{"drbeqvh_N6l79/f_5":true}},"drbeqvh_N6l6uOp_3":{"title":"Click and drag the background to pan around.","itemcluster":{"viewData":{"1l3u":{"x":516.7613141248236,"y":729.517884079592}}},"ltkar5":true,"to":{"drbeqvh_N6l6qP3_2":true}},"drbeqvh_N6l6xv3_4":{"title":"Click an item and drag to move it around. ","itemcluster":{"viewData":{"1l3u":{"x":1426.8761410281654,"y":981.278383432773}}},"ltkar5":true,"to":{"drbeqvh_N6l79/f_5":true}},"drbeqvh_N6l79/f_5":{"title":"To edit an item, click and type.","itemcluster":{"viewData":{"1l3u":{"x":953.0792405689535,"y":1153.2980189590594}}},"ltkar5":true,"to":{"drbeqvh_N6l7Gaq_6":true,"drbeqvh_N6l7UWI_7":true,"drbeqvh_N6l7b4h_8":true,"drbeqvh_N6l7eg+_9":true}},"drbeqvh_N6l7Gaq_6":{"title":"Right click on the background for auto-arrangement options.","itemcluster":{"viewData":{"1l3u":{"x":763.4382906893444,"y":871.9076775296288}}},"ltkar5":true},"drbeqvh_N6l7UWI_7":{"title":"Control click-and-drag to select multiple items.","itemcluster":{"viewData":{"1l3u":{"x":1060.8296831010819,"y":903.4111007452011}}},"ltkar5":true},"drbeqvh_N6l7b4h_8":{"title":"Scroll to zoom in and out.","itemcluster":{"viewData":{"1l3u":{"x":612.4554171500922,"y":1256.4920671495831}}},"ltkar5":true},"drbeqvh_N6l7eg+_9":{"title":"Press G and scroll to activate a grid to snap to. ","itemcluster":{"viewData":{"1l3u":{"x":1242.7876903306637,"y":1254.9513507410031}}},"ltkar5":true}}`,
-        tasklist:`{"_meta":{"displayName":"New Polymorph Document","id":"fmufz3","contextMenuItems":["Delete::polymorph_core.deleteItem","Background::item.edit(style.background)","Foreground::item.edit(style.color)"],"currentView":"default_container","globalContextMenuOptions":["Style::Item Background::item.edit(item.style.background)","Style::Text color::item.edit(item.style.color)"]},"default_operator":{"_od":{"t":"itemList","data":{"properties":{"title":"text","Importance":"text","date":"date"},"propertyWidths":{"title":263,"Importance":160},"filter":"ecacp4","enableEntry":true,"implicitOrder":false,"linkProperty":"to","currentID":"drbeqvh_N6lhZeN_5","sortby":"date"},"inputRemaps":{},"outputRemaps":{"focusItem":["listFocusItem"]},"tabbarName":"itemList","p":"drbeqvh_N6lhYyb_3"}},"drbeqvh_N6lhAQx_0":{"title":"Adding new items","ecacp4":1587790259898,"description":"Type the things you want to do in the first row to the left; then press Enter to add.","Importance":"Very","date":{"datestring":"+1d","date":[{"date":1587877251008,"part":"+1d","opart":"+1d","refdate":1587790851008,"endDate":1587880851008}],"prettyDateString":"26/04/2020"}},"drbeqvh_N6lhFfL_1":{"title":"Adding more columns","ecacp4":1587790281301,"description":"You can change the columns that are displayed using the cog next to 'Itemlist'.","Importance":"Moderate","date":{"datestring":"now","date":[{"date":1587790892068,"part":"now","opart":"now","refdate":1587790892068,"endDate":1587794492068}],"prettyDateString":"15:01:32"}},"drbeqvh_N6lhX4+_2":{"title":"Searching","ecacp4":1587790352702,"description":"You can also search for items using the box with the little magnifying glass.","date":{"datestring":"+2h","date":[{"date":1587798097727,"part":"+2h","opart":"+2h","refdate":1587790897727,"endDate":1587801697727}],"prettyDateString":"17:01:37"}},"drbeqvh_N6lhYyb_3":{"_rd":{"p":"default_container","x":0,"f":0,"ps":0.4276351720371382,"s":"default_operator","containerOrder":["default_operator"]}},"drbeqvh_N6lhYyb_4":{"_rd":{"p":"default_container","x":0,"f":1,"ps":0.4276351720371382,"s":"drbeqvh_N6lhZeN_5","containerOrder":["drbeqvh_N6lhZeN_5"]}},"drbeqvh_N6lhZeN_5":{"_od":{"t":"descbox","data":{"property":"description","operationMode":"focus","staticItem":"","auxProperty":"title","showTags":false,"currentID":"drbeqvh_N6li9SN_7"},"inputRemaps":{"listFocusItem":"focusItem"},"outputRemaps":{"createItem":["createItem_drbeqvh_N6lhZeN_5"],"deleteItem":["deleteItem_drbeqvh_N6lhZeN_5"],"focusItem":["focusItem_drbeqvh_N6lhZeN_5"]},"tabbarName":"descbox","p":"drbeqvh_N6ljJEG_0"}},"drbeqvh_N6lhsLS_6":{"title":"Resizing the UI","ecacp4":1587790439772,"description":"You can resize the UI by dragging on the borders of the UI.\\n\\nIf you want more lists, descriptions or otherwise, hold Shift and drag the borders "},"drbeqvh_N6li9SN_7":{"title":"Saving","Importance":"","ecacp4":1587790518039,"description":"Press CTRL-S to save."},"drbeqvh_N6ljJEG_0":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":0,"ps":0.3828207847295864,"s":"drbeqvh_N6lhZeN_5"}},"drbeqvh_N6ljJEG_1":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":1,"ps":0.3828207847295864,"s":"drbeqvh_N6ljK08_2","containerOrder":["drbeqvh_N6ljK08_2"]}},"drbeqvh_N6ljK08_2":{"_od":{"t":"calendar","data":{"dateproperties":["date"],"titleproperty":"title","defaultView":"agendaWeek"},"inputRemaps":{},"outputRemaps":{"createItem":["createItem_drbeqvh_N6ljK08_2"],"deleteItem":["deleteItem_drbeqvh_N6ljK08_2"],"focusItem":["focusItem_drbeqvh_N6ljK08_2"]},"tabbarName":"Calendar","p":"drbeqvh_N6ljJEG_1"}}}`,
-        
+        tasklist: `{"_meta":{"displayName":"New Polymorph Document","id":"fmufz3","contextMenuItems":["Delete::polymorph_core.deleteItem","Background::item.edit(style.background)","Foreground::item.edit(style.color)"],"currentView":"default_container","globalContextMenuOptions":["Style::Item Background::item.edit(item.style.background)","Style::Text color::item.edit(item.style.color)"]},"default_operator":{"_od":{"t":"itemList","data":{"properties":{"title":"text","Importance":"text","date":"date"},"propertyWidths":{"title":263,"Importance":160},"filter":"ecacp4","enableEntry":true,"implicitOrder":false,"linkProperty":"to","currentID":"drbeqvh_N6lhZeN_5","sortby":"date"},"inputRemaps":{},"outputRemaps":{"focusItem":["listFocusItem"]},"tabbarName":"itemList","p":"drbeqvh_N6lhYyb_3"}},"drbeqvh_N6lhAQx_0":{"title":"Adding new items","ecacp4":1587790259898,"description":"Type the things you want to do in the first row to the left; then press Enter to add.","Importance":"Very","date":{"datestring":"+1d","date":[{"date":1587877251008,"part":"+1d","opart":"+1d","refdate":1587790851008,"endDate":1587880851008}],"prettyDateString":"26/04/2020"}},"drbeqvh_N6lhFfL_1":{"title":"Adding more columns","ecacp4":1587790281301,"description":"You can change the columns that are displayed using the cog next to 'Itemlist'.","Importance":"Moderate","date":{"datestring":"now","date":[{"date":1587790892068,"part":"now","opart":"now","refdate":1587790892068,"endDate":1587794492068}],"prettyDateString":"15:01:32"}},"drbeqvh_N6lhX4+_2":{"title":"Searching","ecacp4":1587790352702,"description":"You can also search for items using the box with the little magnifying glass.","date":{"datestring":"+2h","date":[{"date":1587798097727,"part":"+2h","opart":"+2h","refdate":1587790897727,"endDate":1587801697727}],"prettyDateString":"17:01:37"}},"drbeqvh_N6lhYyb_3":{"_rd":{"p":"default_container","x":0,"f":0,"ps":0.4276351720371382,"s":"default_operator","containerOrder":["default_operator"]}},"drbeqvh_N6lhYyb_4":{"_rd":{"p":"default_container","x":0,"f":1,"ps":0.4276351720371382,"s":"drbeqvh_N6lhZeN_5","containerOrder":["drbeqvh_N6lhZeN_5"]}},"drbeqvh_N6lhZeN_5":{"_od":{"t":"descbox","data":{"property":"description","operationMode":"focus","staticItem":"","auxProperty":"title","showTags":false,"currentID":"drbeqvh_N6li9SN_7"},"inputRemaps":{"listFocusItem":"focusItem"},"outputRemaps":{"createItem":["createItem_drbeqvh_N6lhZeN_5"],"deleteItem":["deleteItem_drbeqvh_N6lhZeN_5"],"focusItem":["focusItem_drbeqvh_N6lhZeN_5"]},"tabbarName":"descbox","p":"drbeqvh_N6ljJEG_0"}},"drbeqvh_N6lhsLS_6":{"title":"Resizing the UI","ecacp4":1587790439772,"description":"You can resize the UI by dragging on the borders of the UI.\\n\\nIf you want more lists, descriptions or otherwise, hold Shift and drag the borders "},"drbeqvh_N6li9SN_7":{"title":"Saving","Importance":"","ecacp4":1587790518039,"description":"Press CTRL-S to save."},"drbeqvh_N6ljJEG_0":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":0,"ps":0.3828207847295864,"s":"drbeqvh_N6lhZeN_5"}},"drbeqvh_N6ljJEG_1":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":1,"ps":0.3828207847295864,"s":"drbeqvh_N6ljK08_2","containerOrder":["drbeqvh_N6ljK08_2"]}},"drbeqvh_N6ljK08_2":{"_od":{"t":"calendar","data":{"dateproperties":["date"],"titleproperty":"title","defaultView":"agendaWeek"},"inputRemaps":{},"outputRemaps":{"createItem":["createItem_drbeqvh_N6ljK08_2"],"deleteItem":["deleteItem_drbeqvh_N6ljK08_2"],"focusItem":["focusItem_drbeqvh_N6ljK08_2"]},"tabbarName":"Calendar","p":"drbeqvh_N6ljJEG_1"}}}`,
+
     };
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {};
@@ -11648,6 +12923,11 @@ polymorph_core.registerOperator("welcome", {
                 <br>
                 <h3>Recent documents:</h3>
                 <div class="recentDocuments">
+                </div>
+                <div class="lobbydocs" style="display:none">
+                <h3>Local lobby documents:</h3>
+                <div>
+                </div>
                 </div>
             </div>
             <div>
@@ -11688,13 +12968,13 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.style.color = "white";
 
     this.rootdiv.querySelector(".templateList").addEventListener("click", (e) => {
-        if (e.target.matches("[data-template]")){
+        if (e.target.matches("[data-template]")) {
             // load a template, by loading in all of the data
             let RTP = JSON.parse(templates[e.target.dataset.template]);
-            RTP._meta=polymorph_core.items._meta;
-            RTP.default_container=polymorph_core.items.default_container; // this probably hasn't changed
-            for (let i in RTP){
-                RTP[i]._lu_=Date.now();
+            RTP._meta = polymorph_core.items._meta;
+            RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
+            for (let i in RTP) {
+                RTP[i]._lu_ = Date.now();
             }
             delete polymorph_core.items.default_operator;
             delete polymorph_core.containers.default_operator;
@@ -11706,7 +12986,7 @@ polymorph_core.registerOperator("welcome", {
 
     this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
         let newID = window.prompt("Enter the new document ID below.");
-        window.location.href=window.location.origin + window.location.pathname+"?doc="+newID;
+        window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
     })
 
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
@@ -11718,6 +12998,7 @@ polymorph_core.registerOperator("welcome", {
         container.settings.tabbarName = "New Operator";
         //force the parent rect to update my name
         polymorph_core.rects[container.settings.p].tieContainer(container.id);
+        polymorph_core.rects[container.settings.p].refresh(); // kick it so the container actually loads its operator
         container.fire("updateItem", {
             id: this.container.id,
             sender: this
@@ -11735,6 +13016,38 @@ polymorph_core.registerOperator("welcome", {
         recentDocDiv.innerHTML = newInnerHTML;
     }
 
+    // try and hit local lobby
+    let lobbyreq = new XMLHttpRequest();
+    lobbyreq.addEventListener("readystatechange", (e) => {
+        if (lobbyreq.readyState == 4) {
+            // we are ready
+            let result = JSON.parse(lobbyreq.responseText);
+            if (result) {
+                let resultDiv = this.rootdiv.querySelector(".lobbydocs>div");
+                resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
+                this.rootdiv.querySelector(".lobbydocs").style.display = "block";
+            }
+        }
+    })
+    this.rootdiv.querySelector(".lobbydocs>div").addEventListener("click", (e) => {
+        if (e.target.tagName == "A") {
+            let theDocID = e.target.innerText;
+            if (!polymorph_core.userData.documents[theDocID]) polymorph_core.datautils.upgradeSaveData(theDocID);
+            let shouldMakeNewSave = true;
+            for (let i of polymorph_core.userData.documents[theDocID].saveSources) {
+                if (i.type == "lobby" && i.data && i.data.id == theDocID) {
+                    shouldMakeNewSave = false;
+                }
+            }
+            if (shouldMakeNewSave) {
+                polymorph_core.userData.documents[theDocID].saveSources.push({ type: "lobby", data: { id: theDocID }, load: true, save: true });
+            }
+            polymorph_core.saveUserData();
+            window.location.href = window.location.origin + window.location.pathname + "?doc=" + theDocID;
+        }
+    })
+    lobbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/lobby");
+    lobbyreq.send();
 
     recentDocDiv.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "em") {
@@ -11748,10 +13061,10 @@ polymorph_core.registerOperator("welcome", {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `Nothing to see here!`;
-    this.showDialog = function () {
+    this.showDialog = function() {
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // This is called when your dialog is closed. Use it to update your container!
     }
 
@@ -12268,8 +13581,9 @@ polymorph_core.registerOperator("scriptrunner", {
     displayName: "Script Runner",
     description: "Runs scripts.",
     section: "Advanced",
-    imageurl: "assets/operators/scriptrunner.png"
-}, function (container) {
+    imageurl: "assets/operators/scriptrunner.png",
+    mustColdLoad: true
+}, function(container) {
     let defaultSettings = {
         autorun: false,
         reallyAutorun: false,
@@ -12325,14 +13639,15 @@ polymorph_core.registerOperator("scriptrunner", {
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
-            selfLooping = false;// not sure if this is helping or hindering but we'll see
+            selfLooping = false; // not sure if this is helping or hindering but we'll see
         }
         return false;
     });
 
     let me = this;
+
     function instance() {
-        this.log = function (data) {
+        this.log = function(data) {
             let p = document.createElement("p");
             p.style.whiteSpace = "pre-wrap";
             p.innerHTML = JSON.stringify(data, null, 4);
@@ -12447,10 +13762,10 @@ polymorph_core.registerOperator("scriptrunner", {
 
     this.itemRelevant = (id) => this.settings.forceCareAbout.split(",").includes(id);
 
-    this.showDialog = function () {
+    this.showDialog = function() {
         ops.forEach((op) => { op.load(); });
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // pull settings and update when your dialog is closed.
     }
 
@@ -12801,6 +14116,115 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
     }
 });
 
+polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sample save source, implementing a number of functions.
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
+    //initialise here
+    this.pushAll = async function(data) {
+        //push to the source (force save)
+        let compressedData = polymorph_core.datautils.IDCompress.compress(data);
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                //alert("Save success!");
+            }
+        };
+        xmlhttp.open("POST", window.location.origin + "/lobbysave?f=" + this.settings.data.id, true);
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify(compressedData));
+    }
+
+
+
+    this.pullAll = async function() {
+        let xmlhttp = new XMLHttpRequest();
+        let p = new Promise((resolve, reject) => {
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    try {
+                        let obj = JSON.parse(this.responseText);
+                        obj = polymorph_core.datautils.decompress(obj);
+                        console.log(obj);
+                        resolve(obj);
+                    } catch (e) {
+                        reject("data invalid :(");
+                    }
+
+                } else if (this.readyState == 4) {
+                    //failure; direct load or backup!
+                    reject("server was unavailable :/");
+                    //if (fail) fail();
+                }
+            };
+            xmlhttp.onerror = function() {
+                reject("An error occured...");
+            }
+        });
+        xmlhttp.open("GET", window.location.origin + "/lobbyload?f=" + this.settings.data.id, true);
+        xmlhttp.send();
+        return p;
+    }
+
+    polymorph_core.on("userSave", (d) => {
+        if (this.settings.save) {
+            if (this.settings.data.throttle && this.settings.data.throttle != "") {
+                if (!this.settings.tmpthrottle) {
+                    this.settings.tmpthrottle = 0;
+                }
+                if (this.settings.tmpthrottle > Number(this.settings.data.throttle)) {
+                    this.settings.tmpthrottle = 0;
+                    this.pushAll(d);
+                } else {
+                    this.settings.tmpthrottle++;
+                }
+            } else {
+                this.pushAll(d);
+            }
+            return true; //return true if we save
+        } else {
+            return false;
+        }
+    })
+
+    this.dialog = document.createElement("div");
+    polymorph_core.addToSaveDialog(this);
+    let ops = [
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "id",
+            label: "The ID of this document."
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "throttle",
+            label: "Throttle (number of saves before sending)",
+            placeholder: 0
+        })
+    ]
+    this.showDialog = function() {
+        ops.forEach(i => i.load());
+    };
+    //send a quick get to the lobby to check it exists
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = () => {
+        if (xmlhttp.readyState == 4) {
+            if (xmlhttp.status != 200) {
+                //something wrong rip
+                this.dialog.innerHTML = "<h2>The lobby operator is not installed on the host system.</h2>";
+            }
+            //alert("yay there is a lobby lah");
+        }
+    };
+    xmlhttp.open("GET", window.location.origin + "/lobby", true);
+    xmlhttp.send();
+}, {
+    prettyName: "Save to local lobby",
+    createable: true
+});
+
 polymorph_core.registerSaveSource("srv", function (save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
@@ -12902,7 +14326,7 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
     createable:true
 });
 
-polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data); //future-safety measure. sets this.settings to save_source_data.
     //initialise here
     if (!this.settings.gitcount) this.settings.gitcount = 0;
@@ -12911,6 +14335,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
     this.dialog = document.createElement("div");
     this.dialog.innerHTML = `
     `;
+
     let ops = [
         new polymorph_core._option({
             div: this.dialog,
@@ -12930,23 +14355,25 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
         }),
         new polymorph_core._option({
             div: this.dialog,
-            type:"button",
-            label:"Clear local copy",
-            fn:()=>{
+            type: "button",
+            label: "Clear local copy",
+            fn: () => {
                 localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, {});
+                this.localCopy = {};
             }
         })
     ]
     if (!this.settings.data.id) this.settings.data.id = polymorph_core.currentDocID;
     ops.forEach(i => i.load());
-    this.showDialog = function () {
+    this.showDialog = function() {
         ops.forEach(i => i.load());
     }
 
     //ID will be a string if the object is loaded; otherwise a custom object that you have set in the past
     //Set custom objects by using polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources['your_savesource_name'].
 
-    this.pushAll = async (data) => {
+    this.pushAll = async(data) => {
+
         //map objects to last update time
         let timekeys = Object.entries(data).map((i) => ({ _lu_: i[1]._lu_, id: i[0] })).sort((a, b) => b._lu_ - a._lu_);
         let pow2 = 0;
@@ -12957,6 +14384,14 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             }
         });
         // send this full history to the websocket
+
+        //pull first
+        let toMerges = await this.pullAll(true)
+        for (let i in toMerges) {
+            polymorph_core.items[i] = toMerges[i];
+            data[i] = toMerges[i];
+            polymorph_core.fire("updateItem", { id: i }); // this may trigger an autosave so make it not?
+        }
 
         let ws = new WebSocket(this.settings.data.saveTo);
         ws.addEventListener("open", () => {
@@ -12971,6 +14406,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
             switch (response.op) {
                 case "accept":
                     // send over the data
+                    if (response._lu_ == 0) response._lu_ = -1; // on new docs there are items with 0 _lu_ for some reason and we want to update them too
                     let dataToSend = timekeys.filter(i => i._lu_ > response._lu_).map(i => ({ id: i.id, data: data[i.id] }));
                     ws.send(JSON.stringify({
                         op: "transfer",
@@ -12991,17 +14427,19 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
 
         //also for now save to localforage
         localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, data);
+        this.localCopy = data;
+
         /*
         open websocket
-        cry if websocket is not openable
-        send jumplist for push
-        get common OR empty OR conflict (if no common)
-        send from common
-        */
+    cry if websocket is not openable
+    send jumplist for push
+    get common OR empty OR conflict (if no common)
+    send from common
+    */
     }
-    this.pullAll = async () => {
-        let localCopy = await localforage.getItem(`_polymorph_gitlite_${this.settings.data.id}`);
-        if (!localCopy) localCopy = {};
+    this.pullAll = async(deltasOnly) => {
+        if (!this.localCopy) this.localCopy = await localforage.getItem(`_polymorph_gitlite_${this.settings.data.id}`);
+        if (!this.localCopy) this.localCopy = {};
         return new Promise((res) => {
             let ws = new WebSocket(this.settings.data.saveTo);
             ws.addEventListener("open", () => {
@@ -13025,11 +14463,11 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                         } else {
                             let wasSent = false;
                             for (let i = 0; i < response._lu_.length; i++) {
-                                if (localCopy[response._lu_[i].id] && localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
+                                if (this.localCopy[response._lu_[i].id] && this.localCopy[response._lu_[i].id]._lu_ == response._lu_[i]._lu_) {
                                     // accept this
                                     ws.send(JSON.stringify({
                                         op: "accept",
-                                        _lu_: localCopy[response._lu_[i].id]._lu_
+                                        _lu_: this.localCopy[response._lu_[i].id]._lu_
                                     }));
                                     wasSent = true;
                                     break;
@@ -13047,21 +14485,35 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
                         break;
                     case "transfer":
                         // recieve and merge the data
-                        for (let i of response.data) {
-                            if (!localCopy[i.id] || localCopy[i.id]._lu_ < i.data._lu_) localCopy[i.id] = i.data;
+                        if (deltasOnly) {
+                            ws.close();
+                            res(response.data.reduce((p, i) => {
+                                if (!this.localCopy[i.id] || this.localCopy[i.id]._lu_ < i.data._lu_) p[i.id] = i.data;
+                                return p;
+                            }, {}))
+                        } else {
+                            ws.close();
+                            for (let i of response.data) {
+                                if (!this.localCopy[i.id] || this.localCopy[i.id]._lu_ < i.data._lu_) localCopy[i.id] = i.data;
+                            }
+                            localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, localCopy);
+                            res(this.localCopy); //or nothing, if undefined
                         }
-                        localforage.setItem(`_polymorph_gitlite_${this.settings.data.id}`, localCopy);
-                        res(localCopy); //or nothing, if undefined
                         break;
                     case "reject":
-                        alert("Remote did not have the requested document!");
+                        if (deltasOnly) {
+                            res({});
+                        } else {
+                            alert("Remote did not have the requested document!");
+                        }
+                        ws.close();
                         break;
                 }
             })
         })
     }
 
-    this.hook = async function () {
+    this.hook = async function() {
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -13070,7 +14522,7 @@ polymorph_core.registerSaveSource("gitlite", function (save_source_data) { // a 
 
 
     // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async function (id) {
+    this.unhook = async function(id) {
         //unhook previous hooks.
         this.toSave = false;
     }
