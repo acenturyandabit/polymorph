@@ -352,7 +352,12 @@ polymorph_core.registerOperator("workflow", {
         }
     })
 
-
+    this.rootdiv.addEventListener("focus", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            let id = e.target.parentElement.dataset.id;
+            container.fire("focusItem", { id: id, sender: this });
+        }
+    });
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.dataset.id;
