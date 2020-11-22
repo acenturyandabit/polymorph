@@ -1,5 +1,5 @@
-(function () {
-    polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function (container) {
+(function() {
+    polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function(container) {
         let me = this;
         me.container = container;
         this.settings = {};
@@ -64,6 +64,8 @@
                     //force the parent rect to update my name
                     polymorph_core.rects[container.settings.p].tieContainer(container.id);
                     polymorph_core.rects[container.settings.p].refresh(); // kick it so the container actually loads its operator
+                    polymorph_core.rects[container.settings.p].switchOperator(container.id);
+                    // also make sure we focus on this container, because phone sometimes doesnt
                     container.fire("updateItem", {
                         id: this.container.id,
                         sender: this
@@ -83,20 +85,20 @@
         //Handle the settings dialog click!
         this.dialogDiv = document.createElement("div");
         this.dialogDiv.innerHTML = ``;
-        this.showDialog = function () {
+        this.showDialog = function() {
             // update your dialog elements with your settings
         }
 
         //////////////////Handling local changes to push to polymorph_core//////////////////
 
         //Saving and loading
-        this.toSaveData = function () {
+        this.toSaveData = function() {
             return this.settings;
         }
 
 
         //Handle a change in settings (either from load or from the settings dialog or somewhere else)
-        this.processSettings = function () {
+        this.processSettings = function() {
 
         }
 
