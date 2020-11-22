@@ -1,11 +1,11 @@
-polymorph_core.registerSaveSource("srv", function (save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("srv", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
-    this.pushAll = async function (data) {
+    this.pushAll = async function(data) {
         //push to the source (force save)
         let compressedData = polymorph_core.datautils.IDCompress.compress(data);
         let xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
+        xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 //alert("Save success!");
             }
@@ -15,10 +15,10 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
         xmlhttp.send(JSON.stringify(compressedData));
     }
 
-    this.pullAll = async function () {
+    this.pullAll = async function() {
         let xmlhttp = new XMLHttpRequest();
         let p = new Promise((resolve, reject) => {
-            xmlhttp.onreadystatechange = function () {
+            xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
                     try {
                         let obj = JSON.parse(this.responseText);
@@ -26,7 +26,8 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
                         console.log(obj);
                         resolve(obj);
                     } catch (e) {
-                        reject("data invalid :(");
+                        reject("server response invalid - see console");
+                        console.log(e);
                     }
 
                 } else if (this.readyState == 4) {
@@ -35,7 +36,7 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
                     //if (fail) fail();
                 }
             };
-            xmlhttp.onerror = function () {
+            xmlhttp.onerror = function() {
                 reject("An error occured...");
             }
         });
@@ -88,13 +89,13 @@ polymorph_core.registerSaveSource("srv", function (save_source_data) { // a samp
             object: this.settings.data,
             property: "throttle",
             label: "Throttle (number of changes before sending)",
-            placeholder:0
+            placeholder: 0
         })
     ]
-    this.showDialog = function () {
+    this.showDialog = function() {
         ops.forEach(i => i.load());
     }
-},{
-    prettyName:"Save to server",
-    createable:true
+}, {
+    prettyName: "Save to server",
+    createable: true
 })

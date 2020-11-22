@@ -9,7 +9,7 @@ polymorph_core.registerOperator("workflow", {
     let defaultSettings = {
         titleProperty: "title",
         richtextProperty: "description",
-        rootItems: [polymorph_core.insertItem({})],
+        rootItems: [],
         filter: polymorph_core.guid()
     };
 
@@ -43,9 +43,6 @@ polymorph_core.registerOperator("workflow", {
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-    if (!this.settings.rootItems.length) {
-        this.settings.rootItems.push(polymorph_core.insertItem({}));
-    }
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
     <style>
@@ -62,12 +59,17 @@ polymorph_core.registerOperator("workflow", {
     span[data-id]>div{
         padding-left: 10px;
     }
+    span.toprow{
+        display:flex;
+    }
     </style>
     <span class="cursorspan">
-    <span class="utils">
-        <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
-    </span>
-    <span contenteditable>&nbsp;</span>
+        <span class="toprow">
+            <span class="utils">
+                <span class="arrow">*</span><span class="bullet">&#8226;</span>
+            </span>
+            <span contenteditable>&nbsp;</span>
+        </span>
     </span>
     `;
     this.rootdiv.style.color = "white";
@@ -91,12 +93,12 @@ polymorph_core.registerOperator("workflow", {
     this.rootdiv.addEventListener("click", (e) => {
         if (e.target.classList.contains("arrow")) {
             //expand or contract
-            if (e.target.parentElement.parentElement.children[2].style.display == "none") {
-                e.target.parentElement.parentElement.children[2].style.display = "block";
+            if (e.target.parentElement.parentElement.children[1].style.display == "none") {
+                e.target.parentElement.parentElement.children[1].style.display = "block";
                 e.target.innerHTML = "&#x25BC;";
                 polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = false;
             } else {
-                e.target.parentElement.parentElement.children[2].style.display = "none";
+                e.target.parentElement.parentElement.children[1].style.display = "none";
                 e.target.innerHTML = "&#x25B6;";
                 polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = true;
             }
@@ -151,11 +153,11 @@ polymorph_core.registerOperator("workflow", {
             toFocusOnSpan = etarget.parentElement.parentElement.parentElement;
         } else {
             if (toFocusOnSpan.tagName == "STYLE") return false;
-            while (toFocusOnSpan.children[2].children.length) {
-                toFocusOnSpan = toFocusOnSpan.children[2].children[toFocusOnSpan.children[2].children.length - 1];
+            while (toFocusOnSpan.children[1].children.length) {
+                toFocusOnSpan = toFocusOnSpan.children[1].children[toFocusOnSpan.children[1].children.length - 1];
             }
         }
-        focusOnElement(toFocusOnSpan.children[1]);
+        focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
     let focusOnNext = (etarget) => {
         let toFocusOnSpan = etarget.parentElement.nextElementSibling;
@@ -171,7 +173,7 @@ polymorph_core.registerOperator("workflow", {
             }
             if (tmpParentSpan) toFocusOnSpan = tmpParentSpan.parentElement.nextElementSibling;
         }
-        focusOnElement(toFocusOnSpan.children[1]);
+        focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
 
     let unparent = (id) => {
@@ -184,10 +186,13 @@ polymorph_core.registerOperator("workflow", {
 
     this.regenerateToOrder = (root) => {
         if (root && root.dataset.id) {
-            polymorph_core.items[root.dataset.id].toOrder = Array.from(root.children[2].children).map(i => i.dataset.id);
+            polymorph_core.items[root.dataset.id].toOrder = Array.from(root.children[1].children).map(i => i.dataset.id);
+        } else if (!root) {
+            this.settings.rootItems = Array.from(this.rootdiv.children).map(i => i.dataset.id).filter(i => i);
         }
         if (!root) root = this.rootdiv;
-        else root = root.children[2];
+        else if (root.matches(".cursorspan")) return;
+        else root = root.children[1];
         Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.regenerateToOrder(i));
     };
     // called when debugging, ideally call before save...
@@ -221,7 +226,7 @@ polymorph_core.registerOperator("workflow", {
                 delete polymorph_core.items[el][p];
             }
         };
-        let text = el.children[1].innerText;
+        let text = el.children[0].children[1].innerText;
         let re = /\\\{(.+?)\}/g;
         let result = 0;
         while (result = re.exec(text)) {
@@ -258,7 +263,7 @@ polymorph_core.registerOperator("workflow", {
                 e.preventDefault();
 
                 this.renderItem(newID);
-                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1]);
+                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
 
             } else if (e.key == "ArrowUp") {
                 if (e.altKey) {
@@ -348,11 +353,11 @@ polymorph_core.registerOperator("workflow", {
             container.fire("createItem", { id: newID, sender: this });
             e.preventDefault();
             this.renderItem(newID);
-            focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[1]);
+            focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
         }
     })
 
-    this.rootdiv.addEventListener("focus", (e) => {
+    this.rootdiv.addEventListener("focusin", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.dataset.id;
             container.fire("focusItem", { id: id, sender: this });
@@ -370,12 +375,44 @@ polymorph_core.registerOperator("workflow", {
 
     this.deleteItem = (id) => {
         //Find its parent and nerf it - if it doesnt have a parent, take it off the rootitems.
-        container.fire("updateItem", { id: id });
+        container.fire("updateItem", { id: id, sender: this });
     }
 
     //this is called when an item is updated (e.g. by another container)
     let renderTrain = {};
+
+    let saveFocus = () => {
+        var selection = this.rootdiv.getRootNode().getSelection();
+        if (!selection.rangeCount) return undefined;
+        let oldRange = selection.getRangeAt(0);
+        let oldso = oldRange.startOffset;
+        return {
+            root: oldRange.startContainer.parentElement,
+            offset: oldso,
+        };
+    }
+
+    let restoreFocus = (focusObj) => {
+        if (!focusObj) return;
+        let root = focusObj.root;
+        let offset = focusObj.offset;
+        let range = document.createRange();
+        if (root.firstChild) {
+            if (offset > root.firstChild.length) offset = root.firstChild.length;
+            range.setStart(root.firstChild, offset);
+        } else {
+            range.setStart(root, 0);
+        }
+        var selection = this.rootdiv.getRootNode().getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    var oldFocus;
     this.renderItem = (id, recursive) => {
+        if (!recursive) {
+            oldFocus = saveFocus();
+        }
         if (renderTrain[id]) return;
         if (this.itemRelevant(id)) {
             //render the item, if we care about it.
@@ -383,16 +420,18 @@ polymorph_core.registerOperator("workflow", {
             if (!span) {
                 span = htmlwrap(`
             <span data-id="${id}">
-                <span class="utils">
-                    <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
+                <span class="toprow">
+                    <span class="utils">
+                        <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
+                    </span>
+                    <span contenteditable></span>
                 </span>
-                <span contenteditable></span>
                 <div></div>
             </span>`);
             }
-            span.children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
+            span.children[0].children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
             if (polymorph_core.items[id].collapsed) {
-                span.children[2].style.display = "none";
+                span.children[1].style.display = "none";
                 span.children[0].children[0].innerHTML = "&#x25B6;";
             }
             let nxtid;
@@ -406,13 +445,18 @@ polymorph_core.registerOperator("workflow", {
                     //just ignore for the time being? we'll get another chance later
                     return;
                 }
-                parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[2];
+                parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[1];
             } else {
                 nxtid = this.settings.rootItems[this.settings.rootItems.indexOf(id) + 1];
                 parent = this.rootdiv;
             }
             if (nxtid && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`)) {
-                parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
+                if (this.rootdiv.querySelector(`span[data-id="${nxtid}"]`) && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`).parentElement == parent) {
+                    parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
+                } else {
+                    this.regenerateToOrder();
+                    this.renderItem(id, true);
+                }
             } else {
                 parent.appendChild(span);
             }
@@ -422,7 +466,10 @@ polymorph_core.registerOperator("workflow", {
                 }
             }
         }
-        if (!recursive) renderTrain = {};
+        if (!recursive) {
+            renderTrain = {};
+            restoreFocus(oldFocus);
+        }
     }
     container.on("updateItem", (d) => {
         if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.

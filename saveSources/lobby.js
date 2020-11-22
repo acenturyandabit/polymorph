@@ -28,7 +28,8 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                         console.log(obj);
                         resolve(obj);
                     } catch (e) {
-                        reject("data invalid :(");
+                        reject("server response invalid - see console");
+                        console.log(e);
                     }
 
                 } else if (this.readyState == 4) {

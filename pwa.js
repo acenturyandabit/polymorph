@@ -91,6 +91,7 @@ var _pwaManager = (() => {
             //replace with your custom function
 
             if (url.includes("lobby")) return true;
+            if (url.includes("saveme")) return true;
 
 
             return false;

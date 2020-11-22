@@ -126,6 +126,7 @@ if (isPhone()) {
             polymorph_core.currentOperator = id;
             polymorph_core.items._meta.focusedContainer = id;
             polymorph_core.fire("updateItem", { id: "_meta", sender: this });
+            polymorph_core.containers[id].refresh();
         }
 
         this.tieContainer = (id) => {

@@ -299,7 +299,9 @@ if (isPhone()) {
 
         //passive load means we need this
         this.reRenderEverything = () => {
-            this.taskList.innerHTML = "";
+            while (this.taskList.children.length > 1) {
+                this.taskList.children[1].remove();
+            }
             this.renderedItems = [];
             for (let i in polymorph_core.items) {
                 this.renderItem(i, true);

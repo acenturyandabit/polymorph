@@ -44,7 +44,7 @@ polymorph_core.registerOperator("textflow", {
         delete this.settings.rootItems;
     }
     this.rootdiv.appendChild(htmlwrap(`<div style="color:white;overflow-y:auto;height:100%"></div>`))
-    this.itemListDiv = this.rootdiv.children[0]
+    this.itemListDiv = this.rootdiv.children[0];
 
     let focusOnElement = (el, index) => {
         let range = document.createRange();

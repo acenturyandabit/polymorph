@@ -122,6 +122,7 @@ polymorph_core.registerOperator("descbox", {
         if (sender == this) return;
         if (id == this.settings.currentID) {
             this.updateItem(id);
+            this.updateMeta(id);
             return true;
         }
     });
