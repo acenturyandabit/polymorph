@@ -166,7 +166,7 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
         if (d.loadProcess) {
             this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
         } else {
-            if (this.RTSyncQueue[0][0] == d.id) {
+            if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
                 this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
             } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
         }
