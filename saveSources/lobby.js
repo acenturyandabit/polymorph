@@ -155,8 +155,8 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                 }
             }, 1000);
         } else {
-            clearInterval(this.wsQueueDigester);
-            this.ws.close();
+            if (this.wsQueueDigester) clearInterval(this.wsQueueDigester);
+            if (this.ws && this.ws.readyState == WebSocket.OPEN) this.ws.close();
         }
     }
     this.updateRTstate();
