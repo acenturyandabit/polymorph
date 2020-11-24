@@ -383,6 +383,7 @@
                 polymorph_core.containers[i] = new polymorph_core.container(i);
             }
         }
+        polymorph_core.fire('mergeBegin'); // for save sources to recognise that we are starting a merge.
 
         for (let i in data) {
             //shouldnt hurt to fire update on other items
@@ -392,7 +393,7 @@
         polymorph_core.switchView(polymorph_core.items._meta.currentView);
         polymorph_core.datautils.linkSanitize();
         polymorph_core.updateSettings(true);
-
+        polymorph_core.fire('mergeComplete');
     }
 
 })();

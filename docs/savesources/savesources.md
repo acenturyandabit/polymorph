@@ -11,7 +11,8 @@ Look in savesources/template.
 ## Save source lifecycle
 - Save sources are initialised when a document is loaded; or when a user creates the savesource from the savesources menu.
     - The savesource calls the standard function `polymorph_core.addToSaveDialog(this)` to add itself to the save dialog. 
-
+- For realtime save sources, on initialisation, the previous connected state of the source is stored in `this.settings.RTstate`. If RTstate is true, then the user is expecting real time updates from this save source.
+    - The standard function `this.updateRTstate` will be expected to be implemented and acts as a flag to determine whether the checkbox for real time is shown to the user.
 
 ## Flag
 Since savesources are standalone, their flags can be declared as `this.flag=value` in the instantiation.

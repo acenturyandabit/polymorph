@@ -69,7 +69,6 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
     })
 
     this.dialog = document.createElement("div");
-    polymorph_core.addToSaveDialog(this);
     let ops = [
         new polymorph_core._option({
             div: this.dialog,
@@ -103,6 +102,87 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
     };
     xmlhttp.open("GET", window.location.origin + "/lobby", true);
     xmlhttp.send();
+
+    this.updateRTstate = () => {
+        if (this.settings.RTactive) {
+            this.RTSyncQueue = Object.keys(polymorph_core.items).map(i => [i, polymorph_core.items[i]._lu_]);
+            this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
+            if (!this.ws || this.ws.readyState != WebSocket.OPEN) {
+                this.ws = new WebSocket(`ws://${window.location.hostname}:18036`);
+                this.ws.addEventListener("open", () => {
+                    this.ws.send(JSON.stringify({
+                        type: "selfID",
+                        data: polymorph_core.currentDocID
+                    }))
+                })
+                this.ws.addEventListener("message", (d) => {
+                    let data = JSON.parse(d.data);
+                    switch (data.type) {
+                        case "request":
+                            // send over my copy of stuff
+                            this.ws.send(JSON.stringify({
+                                type: "transmit",
+                                data: data.data.map(i => [i, polymorph_core.items[i]])
+                            }))
+                            break;
+                        case "transmit":
+                            if (this.settings.RTactive) {
+                                for (let i of data.data) {
+                                    if (polymorph_core.items[i[0]]._lu_ < i[1]._lu_) {
+                                        polymorph_core.items[i[0]] = i[1];
+                                        polymorph_core.fire("updateItem", { sender: this, id: i[0] });
+                                    }
+                                }
+                            }
+                            // decide whether or not to merge
+                            break;
+                    }
+                })
+            }
+            this.wsQueueDigester = setInterval(() => {
+                toSends = this.RTSyncQueue.slice(0, 5);
+                if (toSends.length) {
+                    if (this.ws.readyState != WebSocket.OPEN) {
+                        console.log("ws error, reconnecting in 5...");
+                        setTimeout(this.updateRTstate, 5000);
+                    } else {
+                        this.ws.send(JSON.stringify({
+                            type: "postUpdate",
+                            data: toSends
+                        }));
+                        this.RTSyncQueue.splice(0, 5);
+                    }
+                }
+            }, 1000);
+        } else {
+            clearInterval(this.wsQueueDigester);
+            this.ws.close();
+        }
+    }
+    this.updateRTstate();
+
+    polymorph_core.on("updateItem", (d) => {
+        if (d.sender == this) return;
+        if (d.loadProcess) {
+            this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
+        } else {
+            if (this.RTSyncQueue[0][0] == d.id) {
+                this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
+            } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+        }
+    })
+
+    polymorph_core.on("mergeBegin", () => {
+        // clear out the RTSyncQueue
+        this.RTSyncQueue = [];
+    })
+
+    polymorph_core.on("mergeComplete", () => {
+        // sort the RTSyncQueue
+        this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
+    });
+    polymorph_core.addToSaveDialog(this);
+
 }, {
     prettyName: "Save to local lobby",
     createable: true

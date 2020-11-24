@@ -98,6 +98,7 @@
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_hardLoad">Load from this source</button>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_softLoad">Merge from this source</button>`;
             if (save_source_instance.pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
+            if (save_source_instance.updateRTstate) wrapperText += `<label>Subscribe to this source<input data-role="rtsync" type="checkbox"></input></label>`;
             wrapperText += `</span>
         </div>
         `;
@@ -118,6 +119,10 @@
             })
             hookIfExists("[data-role='dlg_save']", "click", () => {
                 save_source_instance.pushAll(polymorph_core.items);
+            });
+            hookIfExists("[data-role='rtsync']", "click", (e) => {
+                save_source_instance.settings.RTactive = e.target.checked;
+                save_source_instance.updateRTstate();
             });
             hookIfExists("[data-role='dlg_hardLoad']", "click", async() => {
                 if (confirm("Overwrite existing data? You will lose any unsaved work.")) {
@@ -158,11 +163,14 @@
         polymorph_core.showSavePreferencesDialog = () => {
             for (let i of saveDialogInstances) {
                 if (i.instance.showDialog) i.instance.showDialog();
-                if (i.instance.settings.save) {
-                    i.div.querySelector(`[data-role='tsync']`).checked = true;
+                if (i.div.querySelector(`[data-role='tsync']`)) {
+                    i.div.querySelector(`[data-role='tsync']`).checked = i.instance.settings.save;
                 }
-                if (i.instance.settings.load) {
-                    i.div.querySelector(`[data-role='lsync']`).checked = true;
+                if (i.div.querySelector(`[data-role='lsync']`)) {
+                    i.div.querySelector(`[data-role='lsync']`).checked = i.instance.settings.load;
+                }
+                if (i.div.querySelector(`[data-role='rtsync']`)) {
+                    i.div.querySelector(`[data-role='rtsync']`).checked = i.instance.settings.RTactive;
                 }
             }
             autosaveOp.load();
