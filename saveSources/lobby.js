@@ -128,7 +128,7 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                         case "transmit":
                             if (this.settings.RTactive) {
                                 for (let i of data.data) {
-                                    if (polymorph_core.items[i[0]]._lu_ < i[1]._lu_) {
+                                    if (!polymorph_core.items[i[0]] || polymorph_core.items[i[0]]._lu_ < i[1]._lu_) {
                                         polymorph_core.items[i[0]] = i[1];
                                         polymorph_core.fire("updateItem", { sender: this, id: i[0] });
                                     }
