@@ -113,7 +113,36 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                     this.ws.send(JSON.stringify({
                         type: "selfID",
                         data: polymorph_core.currentDocID
-                    }))
+                    }));
+                    setTimeout(() => {
+                        let timekeys = Object.entries(polymorph_core.items).map((i) => ({ _lu_: i[1]._lu_, id: i[0] })).sort((a, b) => b._lu_ - a._lu_);
+                        let pow2 = 0;
+                        let lus = timekeys.filter((i, ii) => {
+                            if (!(ii % (2 ** pow2)) || ii == timekeys.length - 1) {
+                                pow2++;
+                                return true;
+                            } else return false;
+                        });
+                        this.ws.send(JSON.stringify({
+                            type: "mergeCheck",
+                            items: lus
+                        }))
+                        this.wsQueueDigester = setInterval(() => {
+                            toSends = this.RTSyncQueue.slice(0, 5);
+                            if (toSends.length) {
+                                if (this.ws.readyState != WebSocket.OPEN) {
+                                    console.log("ws error, reconnecting in 5...");
+                                    setTimeout(this.updateRTstate, 5000);
+                                } else {
+                                    this.ws.send(JSON.stringify({
+                                        type: "postUpdate",
+                                        data: toSends
+                                    }));
+                                    this.RTSyncQueue.splice(0, 5);
+                                }
+                            }
+                        }, 1000);
+                    }, 1000);
                 })
                 this.ws.addEventListener("message", (d) => {
                     let data = JSON.parse(d.data);
@@ -139,21 +168,6 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                     }
                 })
             }
-            this.wsQueueDigester = setInterval(() => {
-                toSends = this.RTSyncQueue.slice(0, 5);
-                if (toSends.length) {
-                    if (this.ws.readyState != WebSocket.OPEN) {
-                        console.log("ws error, reconnecting in 5...");
-                        setTimeout(this.updateRTstate, 5000);
-                    } else {
-                        this.ws.send(JSON.stringify({
-                            type: "postUpdate",
-                            data: toSends
-                        }));
-                        this.RTSyncQueue.splice(0, 5);
-                    }
-                }
-            }, 1000);
         } else {
             if (this.wsQueueDigester) clearInterval(this.wsQueueDigester);
             if (this.ws && this.ws.readyState == WebSocket.OPEN) this.ws.close();
