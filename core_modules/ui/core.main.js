@@ -205,6 +205,18 @@ if (!isPhone()) {
             document.body.appendChild(emaila);
             emaila.click();
         });
+        let dbm = polymorph_core.topbar.add("File/Debug Mode");
+
+        function updateDBM() {
+            if (localStorage.getItem("__polymorph_debug_flag") == "true") {
+                dbm.children[0].children[0].innerText = "Debug Mode (now ON)";
+            }
+        }
+        updateDBM();
+        dbm.addEventListener("click", () => {
+            localStorage.setItem("__polymorph_debug_flag", !(localStorage.getItem("__polymorph_debug_flag") == "true"));
+            updateDBM();
+        });
         window.addEventListener("resize", () => {
             polymorph_core.baseRect.refresh();
         })
