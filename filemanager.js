@@ -75,10 +75,18 @@ try {
     } else {
         let s = document.createElement("script");
         s.src = "cat.js";
-        s.onload = polymorph_core.start;
         document.body.appendChild(s);
+        let start = () => {
+            try {
+                polymorph_core.start();
+            } catch (e) {
+                setTimeout(start);
+            }
+        }
+        setTimeout(start);
     }
 } catch (e) {
+    console.log(e);
     let fs = require("fs");
     //this is a compilation script
     fs.writeFileSync("cat.js", fs.readFileSync(fileList[0]));
