@@ -25,7 +25,7 @@ if (isPhone()) {
         </style>`));
         document.body.appendChild(htmlwrap(`<div id="topbar" style="flex: 0 0 2em">
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
-            <span class="docName" contentEditable>Polymorph</span>
+            <span class="docName" contentEditable>Polymorph</span><span style="display:none">&gt;<span class="operatorName"></span></span>
             <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
         </div>`));
 

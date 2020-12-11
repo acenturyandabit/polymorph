@@ -32,7 +32,8 @@ Place those scripts in the 'urlsToCache' property and you'll be ready to go.
 var _pwaManager = (() => {
     let serviceWorkerSettings = {
         urlsToCache: [
-            "manager.js",
+            "utils.js",
+            "filemanager.js",
             "core.js",
             "core_modules/ui/core.tutorial.js",
             "core_modules/core/core.docLoading.js",

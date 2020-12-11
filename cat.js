@@ -3241,6 +3241,10 @@ if (isPhone()) {
             polymorph_core.currentOperator = id;
             polymorph_core.items._meta.focusedContainer = id;
             polymorph_core.fire("updateItem", { id: "_meta", sender: this });
+
+            document.querySelector(".operatorName").parentElement.style.display = "inline";
+            document.querySelector(".operatorName").innerText = polymorph_core.items[id]._od.tabbarName;
+
             polymorph_core.containers[id].refresh();
         }
 
@@ -4352,7 +4356,7 @@ if (isPhone()) {
         </style>`));
         document.body.appendChild(htmlwrap(`<div id="topbar" style="flex: 0 0 2em">
             <button id="menu" style="font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">=</button>
-            <span class="docName" contentEditable>Polymorph</span>
+            <span class="docName" contentEditable>Polymorph</span><span style="display:none">&gt;<span class="operatorName"></span></span>
             <button id="opop" style="position: absolute; right:0; top: 0; z-index:5;font-size: 1.5em;width: 1.5em;height: 1.5em;text-align:center; overflow:hidden;">*</button>
         </div>`));
 
@@ -4725,7 +4729,9 @@ if (!isPhone()) {
 
         function updateDBM() {
             if (localStorage.getItem("__polymorph_debug_flag") == "true") {
-                dbm.innerText = "Debug Mode (now ON)";
+                dbm.children[0].children[0].innerText = "Debug Mode (now ON)";
+            } else {
+                dbm.children[0].children[0].innerText = "Debug Mode";
             }
         }
         updateDBM();
@@ -9602,16 +9608,36 @@ if (isPhone()) {
         section: "Layout",
         mustColdLoad: true
     }, function(container) {
-        polymorph_core.operatorTemplate.call(this, container, {});
+        let defaultSettings = {
+            expanded: false
+        };
+        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
-        //Add div HTML here
-        this.outerDiv.innerHTML = ``;
         this.outerDiv.style.cssText = `width:100%; position:relative`;
+
         //////////////////Handle polymorph_core item updates//////////////////
 
+        let checkExpanded = () => {
+            if (this.settings.expanded) {
+                this.outerDiv.style.display = "none";
+            } else {
+                this.outerDiv.style.display = "block";
+            }
+        }
+        checkExpanded();
         this.refresh = function() {
-            container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
+            //Replace the parent container label
+            let myRectContainerParent = container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`);
+            myRectContainerParent.innerHTML = `
+            <p>${container.settings.tabbarName} V </p>`;
+            myRectContainerParent.children[0].style.margin = 0;
+            myRectContainerParent.children[0].addEventListener("click", (e) => {
+                this.settings.expanded = !this.settings.expanded;
+                checkExpanded();
+                e.stopPropagation();
+            })
+            myRectContainerParent.appendChild(this.outerDiv);
             polymorph_core.rects[this.rectID].refresh();
         }
 
@@ -10325,7 +10351,12 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }
             let fob = me.itemPointerCache[id].children()[1];
             if (fob.width() == 0) { // when container starts invisible, fob does not show.
-                fob.size(dvd.scrollWidth, tta.scrollHeight);
+                if (tta.scrollHeight < 1) {
+                    //wait 
+                    setTimeout(() => {
+                        fob.size(dvd.scrollWidth, tta.scrollHeight);
+                    })
+                }
             }
 
             //add icons if necessary

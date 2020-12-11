@@ -1,6 +1,6 @@
 let fileList = [
     "3pt/localforage.min.js",
-    "manager.js",
+    "utils.js",
     "core.js",
     "core_modules/ui/core.tutorial.js",
     "core_modules/core/core.docLoading.js",
@@ -86,12 +86,13 @@ try {
         setTimeout(start);
     }
 } catch (e) {
-    console.log(e);
+    console.log(e); // in case it's actually a browser error.
     let fs = require("fs");
     //this is a compilation script
     fs.writeFileSync("cat.js", fs.readFileSync(fileList[0]));
     for (let i = 1; i < fileList.length; i++) {
         fs.appendFileSync("cat.js", ";\n\n"); // #safe
         fs.appendFileSync("cat.js", fs.readFileSync(fileList[i]));
+        console.log("adding file " + fileList[i] + "...");
     }
 }

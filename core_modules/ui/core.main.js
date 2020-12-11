@@ -210,6 +210,8 @@ if (!isPhone()) {
         function updateDBM() {
             if (localStorage.getItem("__polymorph_debug_flag") == "true") {
                 dbm.children[0].children[0].innerText = "Debug Mode (now ON)";
+            } else {
+                dbm.children[0].children[0].innerText = "Debug Mode";
             }
         }
         updateDBM();

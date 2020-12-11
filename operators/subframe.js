@@ -7,16 +7,36 @@ if (isPhone()) {
         section: "Layout",
         mustColdLoad: true
     }, function(container) {
-        polymorph_core.operatorTemplate.call(this, container, {});
+        let defaultSettings = {
+            expanded: false
+        };
+        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
-        //Add div HTML here
-        this.outerDiv.innerHTML = ``;
         this.outerDiv.style.cssText = `width:100%; position:relative`;
+
         //////////////////Handle polymorph_core item updates//////////////////
 
+        let checkExpanded = () => {
+            if (this.settings.expanded) {
+                this.outerDiv.style.display = "none";
+            } else {
+                this.outerDiv.style.display = "block";
+            }
+        }
+        checkExpanded();
         this.refresh = function() {
-            container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`).appendChild(this.outerDiv);
+            //Replace the parent container label
+            let myRectContainerParent = container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`);
+            myRectContainerParent.innerHTML = `
+            <p>${container.settings.tabbarName} V </p>`;
+            myRectContainerParent.children[0].style.marginTop = 0;
+            myRectContainerParent.children[0].addEventListener("click", (e) => {
+                this.settings.expanded = !this.settings.expanded;
+                checkExpanded();
+                e.stopPropagation();
+            })
+            myRectContainerParent.appendChild(this.outerDiv);
             polymorph_core.rects[this.rectID].refresh();
         }
 

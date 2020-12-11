@@ -126,7 +126,12 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }
             let fob = me.itemPointerCache[id].children()[1];
             if (fob.width() == 0) { // when container starts invisible, fob does not show.
-                fob.size(dvd.scrollWidth, tta.scrollHeight);
+                if (tta.scrollHeight < 1) {
+                    //wait 
+                    setTimeout(() => {
+                        fob.size(dvd.scrollWidth, tta.scrollHeight);
+                    })
+                }
             }
 
             //add icons if necessary

@@ -70,6 +70,10 @@ if (isPhone()) {
                     position:sticky;
                     top:0;
                 }
+
+                .propertyLabel{
+                    border-top: 1px solid white;
+                }
             </style>
             <div class="taskList">
                 <div class="plusButton"> + </div>
@@ -129,12 +133,13 @@ if (isPhone()) {
                     props[i].keep = true;
                 } else {
                     props[i] = {
-                        div: htmlwrap(`<p>${i}</p><p contenteditable></p>`),
+                        div: htmlwrap(`<p class="propertyLabel">${i}</p><p contenteditable></p>`),
                         keep: true
                     }
                     props[i].div.dataset.prop = i;
                     backDiv.appendChild(props[i].div);
                 }
+                //if () // special treatment of dates
                 props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
             }
             for (let i in props) {
@@ -146,7 +151,17 @@ if (isPhone()) {
         }
 
         backDiv.addEventListener("input", (e) => {
-            polymorph_core.items[editingID][e.target.parentElement.dataset.prop] = e.target.innerText;
+            let currentItem = polymorph_core.items[editingID];
+            if (this.settings.phoneProperties[i] == 'date') {
+                if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
+                if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
+                    "datestring": ""
+                };
+                currentItem[e.target.dataset.role].datestring = e.target.value;
+                currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+            } else {
+                currentItem[e.target.parentElement.dataset.prop] = e.target.innerText;
+            }
             container.fire("updateItem", { id: editingID });
         })
 

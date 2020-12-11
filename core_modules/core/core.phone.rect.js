@@ -126,6 +126,10 @@ if (isPhone()) {
             polymorph_core.currentOperator = id;
             polymorph_core.items._meta.focusedContainer = id;
             polymorph_core.fire("updateItem", { id: "_meta", sender: this });
+
+            document.querySelector(".operatorName").parentElement.style.display = "inline";
+            document.querySelector(".operatorName").innerText = polymorph_core.items[id]._od.tabbarName;
+
             polymorph_core.containers[id].refresh();
         }
 

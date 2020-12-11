@@ -174,25 +174,23 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                     } catch (e) {
                         //ws already closed
                     }
-                    console.log("ws error, reconnecting in 5...");
-                    setTimeout(this.updateRTstate, 5000);
+                    console.log("ws error, reconnecting...");
+                    setTimeout(this.updateRTstate);
                     clearInterval(this.wsQueueDigester);
                 })
             } else {
                 this.wsQueueDigester = setInterval(() => {
                     toSends = this.RTSyncQueue.slice(0, 5);
-                    if (toSends.length) {
-                        if (this.ws.readyState != WebSocket.OPEN) {
-                            console.log("ws error, reconnecting in 5...");
-                            setTimeout(this.updateRTstate, 5000);
-                            clearInterval(this.wsQueueDigester);
-                        } else {
-                            this.ws.send(JSON.stringify({
-                                type: "postUpdate",
-                                data: toSends
-                            }));
-                            this.RTSyncQueue.splice(0, 5);
-                        }
+                    if (this.ws.readyState != WebSocket.OPEN) {
+                        console.log("ws error, reconnecting...");
+                        setTimeout(this.updateRTstate);
+                        clearInterval(this.wsQueueDigester);
+                    } else if (toSends.length) {
+                        this.ws.send(JSON.stringify({
+                            type: "postUpdate",
+                            data: toSends
+                        }));
+                        this.RTSyncQueue.splice(0, 5);
                     }
                 }, 1000);
             }
