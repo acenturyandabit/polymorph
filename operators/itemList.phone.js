@@ -21,6 +21,7 @@ if (isPhone()) {
                 title: "text",
                 description: "text"
             },
+            showAllProperties: true,
             phonePrimeProperty: "title" // properties for phone
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -128,7 +129,8 @@ if (isPhone()) {
             editingID = id;
             this.taskList.style.display = "none";
             let props = Array.from(backDiv.querySelectorAll("[data-prop]")).reduce((p, i) => { p[i.dataset.prop] = { div: i }; return p }, {});
-            for (let i in this.settings.phoneProperties) {
+
+            let renderProp = (i) => {
                 if (props[i]) {
                     props[i].keep = true;
                 } else {
@@ -139,8 +141,22 @@ if (isPhone()) {
                     props[i].div.dataset.prop = i;
                     backDiv.appendChild(props[i].div);
                 }
-                //if () // special treatment of dates
-                props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
+                if (this.settings.phoneProperties[i] == 'date') {
+                    // special treatment of dates
+                    if (polymorph_core.items[id][i]) props[i].div.children[1].innerText = polymorph_core.items[id][i].datestring || "";
+                    else props[i].div.children[1].innerText = "";
+                } else {
+                    props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
+                }
+            }
+
+            for (let i in this.settings.phoneProperties) {
+                renderProp(i);
+            }
+            if (this.settings.showAllProperties) {
+                for (let i in polymorph_core.items[id]) {
+                    renderProp(i);
+                }
             }
             for (let i in props) {
                 if (!props[i].keep) {
@@ -154,9 +170,6 @@ if (isPhone()) {
             let currentItem = polymorph_core.items[editingID];
             if (this.settings.phoneProperties[i] == 'date') {
                 if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
-                if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
-                    "datestring": ""
-                };
                 currentItem[e.target.dataset.role].datestring = e.target.value;
                 currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
             } else {
@@ -269,6 +282,13 @@ if (isPhone()) {
                 object: this.settings,
                 property: "filter",
                 label: "Filter for items to be shown"
+            }),
+            phonePrimeProperty: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "phonePrimeProperty",
+                label: "Property to display in front"
             })
         }
         this.showDialog = () => {
