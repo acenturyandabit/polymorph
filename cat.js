@@ -6522,6 +6522,7 @@ if (isPhone()) {
                 title: "text",
                 description: "text"
             },
+            showAllProperties: true,
             phonePrimeProperty: "title" // properties for phone
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -6570,6 +6571,10 @@ if (isPhone()) {
                     background: purple;
                     position:sticky;
                     top:0;
+                }
+
+                .propertyLabel{
+                    border-top: 1px solid white;
                 }
             </style>
             <div class="taskList">
@@ -6625,18 +6630,34 @@ if (isPhone()) {
             editingID = id;
             this.taskList.style.display = "none";
             let props = Array.from(backDiv.querySelectorAll("[data-prop]")).reduce((p, i) => { p[i.dataset.prop] = { div: i }; return p }, {});
-            for (let i in this.settings.phoneProperties) {
+
+            let renderProp = (i) => {
                 if (props[i]) {
                     props[i].keep = true;
                 } else {
                     props[i] = {
-                        div: htmlwrap(`<p>${i}</p><p contenteditable></p>`),
+                        div: htmlwrap(`<p class="propertyLabel">${i}</p><p contenteditable></p>`),
                         keep: true
                     }
                     props[i].div.dataset.prop = i;
                     backDiv.appendChild(props[i].div);
                 }
-                props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
+                if (this.settings.phoneProperties[i] == 'date') {
+                    // special treatment of dates
+                    if (polymorph_core.items[id][i]) props[i].div.children[1].innerText = polymorph_core.items[id][i].datestring || "";
+                    else props[i].div.children[1].innerText = "";
+                } else {
+                    props[i].div.children[1].innerText = polymorph_core.items[id][i] || "";
+                }
+            }
+
+            for (let i in this.settings.phoneProperties) {
+                renderProp(i);
+            }
+            if (this.settings.showAllProperties) {
+                for (let i in polymorph_core.items[id]) {
+                    renderProp(i);
+                }
             }
             for (let i in props) {
                 if (!props[i].keep) {
@@ -6647,7 +6668,14 @@ if (isPhone()) {
         }
 
         backDiv.addEventListener("input", (e) => {
-            polymorph_core.items[editingID][e.target.parentElement.dataset.prop] = e.target.innerText;
+            let currentItem = polymorph_core.items[editingID];
+            if (this.settings.phoneProperties[i] == 'date') {
+                if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
+                currentItem[e.target.dataset.role].datestring = e.target.value;
+                currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+            } else {
+                currentItem[e.target.parentElement.dataset.prop] = e.target.innerText;
+            }
             container.fire("updateItem", { id: editingID });
         })
 
@@ -6755,6 +6783,13 @@ if (isPhone()) {
                 object: this.settings,
                 property: "filter",
                 label: "Filter for items to be shown"
+            }),
+            phonePrimeProperty: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "phonePrimeProperty",
+                label: "Property to display in front"
             })
         }
         this.showDialog = () => {
@@ -9631,7 +9666,7 @@ if (isPhone()) {
             let myRectContainerParent = container.rect.listContainer.querySelector(`[data-containerid='${container.id}']`);
             myRectContainerParent.innerHTML = `
             <p>${container.settings.tabbarName} V </p>`;
-            myRectContainerParent.children[0].style.margin = 0;
+            myRectContainerParent.children[0].style.marginTop = 0;
             myRectContainerParent.children[0].addEventListener("click", (e) => {
                 this.settings.expanded = !this.settings.expanded;
                 checkExpanded();
@@ -10529,8 +10564,6 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     }
 };
 
-
-
 function _itemcluster_extend_contextmenu() {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
@@ -10540,13 +10573,14 @@ function _itemcluster_extend_contextmenu() {
         if (!e.target.matches("g[data-id] *")) {
             //if (e.target.tagNathis.toLowerCase() == "svg" || e.target == this.tempTR.node) {
             centerXY = this.mapPageToSvgCoords(e.pageX, e.pageY);
-            return true;//only activate on clicks to the background.  
+            return true; //only activate on clicks to the background.  
         }
     }
     this.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
+        <li class="hierarchy horizontal">Arrange in horizontal hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
         <li class="hierarchy biradial">Arrange in biradial hierarchy</li>
         <li class="search">Search
@@ -10580,22 +10614,22 @@ function _itemcluster_extend_contextmenu() {
         }
     })
     this.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
-        let rect = this.itemSpace.getBoundingClientRect();
-        for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
-                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
-                this.arrangeItem(i);
+            let rect = this.itemSpace.getBoundingClientRect();
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
+                    this.arrangeItem(i);
+                }
             }
-        }
-        for (let i in polymorph_core.items) {
-            //second update to fix lines; also alert everyone of changes.
-            this.container.fire("updateItem", {
-                id: i
-            });
-        }
-    })
-    //hierarchy buttons
+            for (let i in polymorph_core.items) {
+                //second update to fix lines; also alert everyone of changes.
+                this.container.fire("updateItem", {
+                    id: i
+                });
+            }
+        })
+        //hierarchy buttons
 
     let generateHierarchy = () => {
         //get position of items, and the links to other items
@@ -10616,23 +10650,23 @@ function _itemcluster_extend_contextmenu() {
 
         //make sure links are relevant (point to items we care about) and directed (not bidirectional)
         visibleItems.forEach((v, _i) => {
-            if (v.children) {
-                for (let i = 0; i < v.children.length; i++) {
-                    let pos = visibleItemIds.indexOf(v.children[i]);
-                    if (pos == -1) {
-                        v.children.splice(i, 1);
-                        i--;
-                    } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) {//bidirectional links
-                        v.children.splice(i, 1);
-                        i--;
-                    } else {
-                        //assign the to item a parent
-                        visibleItems[pos].parents.push(_i);
+                if (v.children) {
+                    for (let i = 0; i < v.children.length; i++) {
+                        let pos = visibleItemIds.indexOf(v.children[i]);
+                        if (pos == -1) {
+                            v.children.splice(i, 1);
+                            i--;
+                        } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) { //bidirectional links
+                            v.children.splice(i, 1);
+                            i--;
+                        } else {
+                            //assign the to item a parent
+                            visibleItems[pos].parents.push(_i);
+                        }
                     }
                 }
-            }
-        })
-        //figure out the level of the item (its level in the hierarchy)
+            })
+            //figure out the level of the item (its level in the hierarchy)
         let queue = [];
         let roots = [];
         for (let i = 0; i < visibleItems.length; i++) {
@@ -10698,11 +10732,11 @@ function _itemcluster_extend_contextmenu() {
         //sort children as well
         let indexedOrder = visibleItems.map((v) => v.id);
         visibleItems.forEach((v) => {
-            if (v.children) {
-                v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
-            }
-        })
-        //calculate widths
+                if (v.children) {
+                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
+                }
+            })
+            //calculate widths
         let getWidth = (id) => {
             if (id == '0') return 0;
             let c = visibleItems[indexedOrder.indexOf(id)].children;
@@ -10747,6 +10781,66 @@ function _itemcluster_extend_contextmenu() {
 
         for (let i = 0; i < visibleItems.length; i++) {
             if (visibleItems[i].parent == undefined) currentx += render(visibleItems[i], currentx, currenty);
+        }
+    }
+
+    let cartesianHierarchyY = (e, visibleItems) => {
+        //sort for rendering
+        visibleItems.sort((a, b) => {
+            return (a.level - b.level) + (a.level == b.level) * (a.y - b.y);
+        });
+        //sort children as well
+        let indexedOrder = visibleItems.map((v) => v.id);
+        visibleItems.forEach((v) => {
+                if (v.children) {
+                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
+                }
+            })
+            //calculate widths
+        let getWidth = (id) => {
+            if (id == '0') return 0;
+            let c = visibleItems[indexedOrder.indexOf(id)].children;
+            if (!c || !c.length) {
+                return Number(/\d+/.exec(this.itemPointerCache[id].children()[1].height())) + 10;
+            } else {
+                let sum = 0;
+                for (let i = 0; i < c.length; i++) {
+                    if (visibleItems[indexedOrder.indexOf(c[i])].parent == id) sum = sum + getWidth(c[i]);
+                }
+                let alt = Number(/\d+/.exec(this.itemPointerCache[id].children()[1].height())) + 10;
+                if (sum < alt) sum = alt;
+                return sum;
+            }
+        }
+        for (let i = 0; i < visibleItems.length; i++) {
+            //this needs to be optimised with caching.
+            visibleItems[i].height = getWidth(visibleItems[i].id);
+        }
+
+        // calculate total width
+        let th = 0;
+        for (let i = 0; i < visibleItems.length; i++) {
+            if (visibleItems[i].parent == undefined) th += visibleItems[i].height;
+            else break;
+        }
+        let rect = this.itemSpace.getBoundingClientRect();
+        let currenty = e.clientX - rect.top - th / 2;
+        let currentx = e.clientX - rect.left;
+
+        let render = (itm, tx, ty) => { // itm is a visibleItem
+            if (itm.id != '0') {
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].x = tx;
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].y = ty + (itm.height - Number(/\d+/ig.exec(this.itemPointerCache[itm.id].first().height))) / 2;
+            }
+            let cty = ty;
+            for (let i = 0; i < itm.children.length; i++) {
+                if (visibleItems[indexedOrder.indexOf(itm.children[i])].parent == itm.id) cty += render(visibleItems[indexedOrder.indexOf(itm.children[i])], tx + 200, cty);
+            }
+            return itm.height;
+        }
+
+        for (let i = 0; i < visibleItems.length; i++) {
+            if (visibleItems[i].parent == undefined) currenty += render(visibleItems[i], currentx, currenty);
         }
     }
     let rings = [];
@@ -10847,7 +10941,7 @@ function _itemcluster_extend_contextmenu() {
                 radii[lastLevel] = Math.max(radii[previous] + 200, 200 / minTheta);
                 previous = lastLevel;
                 lastLevel = visibleItems[i].level;
-                minTheta = Math.PI * 3;//reset
+                minTheta = Math.PI * 3; //reset
                 lastLevelZero = i;
             } else {
                 let tdeviation = (visibleItems[i - 1].angle + visibleItems[i].angle) / 2;
@@ -10902,8 +10996,7 @@ function _itemcluster_extend_contextmenu() {
             if (v.parent) {
                 let vp = visibleItems[indexedOrder.indexOf(v.parent)];
                 v.angle = Math.atan2(v.y - vp.y, v.x - vp.x);
-            }
-            else {
+            } else {
                 v.angle = Math.atan2(v.y, v.x);
             }
             if (v.angle < 0) v.angle += Math.PI * 2;
@@ -10915,28 +11008,28 @@ function _itemcluster_extend_contextmenu() {
         //render
 
         let binarySolve = (start, end, f, epsilon = 0.1) => {
-            let pme, me;
-            let cycleCount = 0;
-            me = 2 * epsilon;
-            pme = 0;
-            while (Math.abs(me) > epsilon && cycleCount < 100) { //ack
-                pme = me;
-                me = f((start + end) / 2);
-                if (me < 0) {
-                    start = (start + end) / 2;
-                } else {
-                    end = (start + end) / 2
-                }//there's another case where both are negative and that should throw a phat exception...
-                if (isNaN(me)) return NaN;//error...
-                cycleCount++;
+                let pme, me;
+                let cycleCount = 0;
+                me = 2 * epsilon;
+                pme = 0;
+                while (Math.abs(me) > epsilon && cycleCount < 100) { //ack
+                    pme = me;
+                    me = f((start + end) / 2);
+                    if (me < 0) {
+                        start = (start + end) / 2;
+                    } else {
+                        end = (start + end) / 2
+                    } //there's another case where both are negative and that should throw a phat exception...
+                    if (isNaN(me)) return NaN; //error...
+                    cycleCount++;
+                }
+                if (cycleCount == 100) {
+                    return start - 1;
+                }
+                return (start + end) / 2;
             }
-            if (cycleCount == 100) {
-                return start - 1;
-            }
-            return (start + end) / 2;
-        }
-        //calculate radii - from the bottom up
-        //let maxLvl = visibleItems[visibleItems.length - 1].level;
+            //calculate radii - from the bottom up
+            //let maxLvl = visibleItems[visibleItems.length - 1].level;
         const itemRadius = 100;
         for (let i = visibleItems.length - 1; i >= 0; i--) {
 
@@ -11015,6 +11108,8 @@ function _itemcluster_extend_contextmenu() {
             radialHierarchy(e, visibleItems);
         } else if (e.target.classList.contains('biradial')) {
             biradialHierarchy(e, visibleItems);
+        } else if (e.target.classList.contains("horizontal")) {
+            cartesianHierarchyY(e, visibleItems);
         } else {
             cartesianHierarchy(e, visibleItems);
         }
@@ -11273,8 +11368,7 @@ function _itemcluster_extend_contextmenu() {
             let newIDs = innerText.map(i => {
                 let newItem = {
                     itemcluster: {
-                        viewData: {
-                        }
+                        viewData: {}
                     },
                     to: {}
                 };
@@ -11300,18 +11394,18 @@ function _itemcluster_extend_contextmenu() {
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
             innerText = segment(innerText)
-            //filter out newlinefullstops; todo filter out numbered lists?
-            //quick adjustement since lookbehinds are not a thing yet
-            /*for (let i = 0; i < innerText.length; i++) {
-                if (innerText[i][0] == '.' || innerText[i][0] == '?') {
-                    if (i > 0) {
-                        innerText[i - 1] += innerText[i][0];
+                //filter out newlinefullstops; todo filter out numbered lists?
+                //quick adjustement since lookbehinds are not a thing yet
+                /*for (let i = 0; i < innerText.length; i++) {
+                    if (innerText[i][0] == '.' || innerText[i][0] == '?') {
+                        if (i > 0) {
+                            innerText[i - 1] += innerText[i][0];
+                        }
                     }
                 }
-            }
-            for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
-            */
-            //first
+                for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
+                */
+                //first
             polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
             //create a bunch of items
             let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
@@ -11320,8 +11414,7 @@ function _itemcluster_extend_contextmenu() {
             let newIDs = innerText.map((i, ii) => {
                 let newItem = {
                     itemcluster: {
-                        viewData: {
-                        }
+                        viewData: {}
                     },
                     to: {}
                 };
@@ -11383,7 +11476,7 @@ function _itemcluster_extend_contextmenu() {
             polymorph_core.items[
                 this.contextedElement.dataset.id
             ].itemcluster.viewName = polymorph_core.items[
-            this.contextedElement.dataset.id
+                this.contextedElement.dataset.id
             ][this.settings.textProp];
             this.switchView(this.contextedElement.dataset.id, true, true);
             this.itemContextMenu.style.display = "none";
@@ -11397,7 +11490,7 @@ function _itemcluster_extend_contextmenu() {
     this.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
         if (this.settings.filter) delete polymorph_core.items[this.trayContextedElement][this.settings.filter];
         else {
-            polymorph_core.items[this.trayContextedElement].itemcluster.viewData = {};//nerf it completely
+            polymorph_core.items[this.trayContextedElement].itemcluster.viewData = {}; //nerf it completely
         }
         this.container.fire("updateItem", { id: this.trayContextedElement });
         this.trayContextMenu.style.display = "none";
@@ -14365,6 +14458,22 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
     xmlhttp.send();
 
     this.updateRTstate = () => {
+
+        let initialiseWSQueueDigester = () => setInterval(() => {
+            toSends = this.RTSyncQueue.slice(0, 5);
+            if (this.ws.readyState != WebSocket.OPEN) {
+                console.log("ws error, reconnecting...");
+                setTimeout(this.updateRTstate);
+                clearInterval(this.wsQueueDigester);
+            } else if (toSends.length) {
+                this.ws.send(JSON.stringify({
+                    type: "postUpdate",
+                    data: toSends
+                }));
+                this.RTSyncQueue.splice(0, 5);
+            }
+        }, 1000);
+
         if (this.settings.RTactive) {
             this.RTSyncQueue = Object.keys(polymorph_core.items).map(i => [i, polymorph_core.items[i]._lu_]);
             this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
@@ -14388,22 +14497,7 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                             type: "mergeCheck",
                             items: lus
                         }))
-                        this.wsQueueDigester = setInterval(() => {
-                            toSends = this.RTSyncQueue.slice(0, 5);
-                            if (toSends.length) {
-                                if (this.ws.readyState != WebSocket.OPEN) {
-                                    console.log("ws error, reconnecting in 5...");
-                                    setTimeout(this.updateRTstate, 5000);
-                                    clearInterval(this.wsQueueDigester);
-                                } else {
-                                    this.ws.send(JSON.stringify({
-                                        type: "postUpdate",
-                                        data: toSends
-                                    }));
-                                    this.RTSyncQueue.splice(0, 5);
-                                }
-                            }
-                        }, 1000);
+                        this.wsQueueDigester = initialiseWSQueueDigester();
                     }, 1000);
                 })
                 this.ws.addEventListener("message", (d) => {
@@ -14435,27 +14529,12 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                     } catch (e) {
                         //ws already closed
                     }
-                    console.log("ws error, reconnecting in 5...");
-                    setTimeout(this.updateRTstate, 5000);
+                    console.log("ws error, reconnecting...");
+                    setTimeout(this.updateRTstate);
                     clearInterval(this.wsQueueDigester);
                 })
             } else {
-                this.wsQueueDigester = setInterval(() => {
-                    toSends = this.RTSyncQueue.slice(0, 5);
-                    if (toSends.length) {
-                        if (this.ws.readyState != WebSocket.OPEN) {
-                            console.log("ws error, reconnecting in 5...");
-                            setTimeout(this.updateRTstate, 5000);
-                            clearInterval(this.wsQueueDigester);
-                        } else {
-                            this.ws.send(JSON.stringify({
-                                type: "postUpdate",
-                                data: toSends
-                            }));
-                            this.RTSyncQueue.splice(0, 5);
-                        }
-                    }
-                }, 1000);
+                this.wsQueueDigester = initialiseWSQueueDigester();
             }
         } else {
             if (this.wsQueueDigester) clearInterval(this.wsQueueDigester);
