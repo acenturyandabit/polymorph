@@ -101,28 +101,24 @@ if (isPhone()) {
             backDiv.style.display = "none";
         });
         //this is called when an item is updated (e.g. by another container)
+        let itemCache = {};
         this.renderItem = (id) => {
             if (this.itemRelevant(id)) {
-                let obj = this.taskList.querySelector(`[data-id='${id}']`);
-                if (!obj) {
-                    obj = htmlwrap(`<p data-id="${id}"></p>`);
-                    this.taskList.appendChild(obj);
+                if (!itemCache[id]) {
+                    itemCache[id] = htmlwrap(`<p data-id="${id}"></p>`);
+                    this.taskList.appendChild(itemCache[id]);
                 }
-                obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
+                itemCache[id].innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
                 //render the item, if we care about it.
+            } else {
+                if (itemCache[id]) {
+                    itemCache[id].remove();
+                }
             }
         }
         container.on("updateItem", (d) => {
             let id = d.id;
-            if (this.itemRelevant(id)) {
-                let obj = this.taskList.querySelector(`[data-id='${id}']`);
-                if (!obj) {
-                    obj = htmlwrap(`<p data-id="${id}"></p>`);
-                    this.taskList.appendChild(obj);
-                }
-                obj.innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
-                //render the item, if we care about it.
-            }
+            this.renderItem(id);
         });
         let editingID = undefined;
         let showBackDiv = (id) => {
