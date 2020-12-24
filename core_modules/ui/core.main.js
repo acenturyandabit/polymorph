@@ -197,8 +197,21 @@ if (!isPhone()) {
         polymorph_core.topbar.add("File/New").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
         })
-        polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
+        polymorph_core.topbar.add("Help/Tutorial").addEventListener("click", () => {
             polymorph_core.resetTutorial();
+        })
+        polymorph_core.topbar.add("Help/Date Syntax").addEventListener("click", () => {
+            polymorph_core.dialog.prompt(htmlwrap(`
+                <div>
+                    <h1>Date syntax</h1>
+                    <table>
+                        <tr>
+                            <td>(10:00)</td>
+                            <td>Every 10:00am (smart allocator assumes you'll probably mean the morning.).</td>
+                        </tr>
+                    </table>
+                </div>
+            `));
         })
         polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
             let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
