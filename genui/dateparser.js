@@ -14,15 +14,6 @@ Date dt = d.extractTime(string data,Date reference);
 function _dateParser() {
     let me = this;
     this.dateParserRegexes = [{
-            name: "repetition",
-            regex: /\((\d+)*\)/ig,
-            operate: function(regres, data) {
-                if (regres[1]) {
-                    data.repetition = Number(regres[1]);
-                } else data.repetition = -1;
-            }
-        },
-        {
             name: "pmtime",
             regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
             operate: function(regres, data) {
@@ -168,6 +159,13 @@ function _dateParser() {
         }
     ];
     this.reverse = false;
+    /**
+     * 
+     * @param {string} str The string to be parsed
+     * @param {Date()} refdate The starting reference date.
+     * 
+     * Returns a Date() object containing the time if a valid time is detected; otherwise returns undefined.
+     */
     this.extractTime = function(str, refdate) {
         let d;
         if (!refdate) {
@@ -207,6 +205,7 @@ function _dateParser() {
         let result = []; //see below.
         for (let k = 0; k < dvchain.length; k++) {
             //Check for repetition structure.
+            // repetition looks like: ( reference date || next date | number of repetitions)
             let rsplit = /\((?:([^\)\|]+)\|\|)?([^\)\|]+)(?:\|([^\)\|]+))?\)/ig.exec(dvchain[k]);
             let toParse;
             let reps = undefined;
@@ -219,9 +218,20 @@ function _dateParser() {
                 toParse = rsplit[2];
                 if (rsplit[3]) {
                     reps = Number(rsplit[3]);
+                    if (isNaN(reps)) {
+                        //try and dateparse it
+                        reps = this.extractTime(rsplit[3], refdate);
+                        if (!reps) reps = -1;
+                        else reps = reps.toISOString();
+                    }
+                } else {
+                    reps = -1;
                 }
-                if (isNaN(reps)) reps = -1;
-                part = "(" + refdate.toLocaleString() + "||" + rsplit[2] + "|" + reps + ")";
+                if (typeof(reps) == "number") {
+                    part = "(" + refdate.toLocaleString() + "||" + rsplit[2] + "|" + rsplit[3] + ")";
+                } else {
+                    part = "(" + refdate.toLocaleString() + "||" + rsplit[2] + "|" + reps + ")";
+                }
             } else {
                 toParse = dvchain[k]; //the whole thing
             }
@@ -258,7 +268,8 @@ function _dateParser() {
                 endDate: date.getTime() representing the end of the next occurence of the event, if specified.
                 opart: string: the original string that created this chunk.
                 part: string: a string that would create this same chunk (some references may have been updated.).
-                reps: integer representing number of times the recurrence should occur. -1 if forever.
+                reps: integer OR ISO date string representing number of times the recurrence should occur. -1 if forever.
+                    because storeable in json and ifferent from # reps
             }]
 
         */
@@ -276,12 +287,17 @@ function _dateParser() {
             if (!isNaN(recurCount)) {
                 if (recurCount < 0 || recurCount > 100) recurCount = 100;
             } else {
-                recurCount = 1;
+                if (!recurCount) recurCount = 1;
+                else {
+                    end = Math.min(end, new Date(recurCount).getTime());
+                    recurCount = 100;
+                }
             }
             do {
                 output = this.richExtractTime(dateArray[i].part, refstart)[0];
                 if (!output) break;
-                results.push(output); //um it's an array?
+                // check if it is past the recurcount date, if recurcount is a date
+                results.push(output);
                 recurCount--;
                 refstart = new Date(output.endDate);
             } while (output.date < end && recurCount != 0);
