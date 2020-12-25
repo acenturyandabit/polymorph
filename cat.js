@@ -1044,13 +1044,13 @@ polymorph_core.on("titleButtonsReady", () => {
             for (let i in polymorph_core.saveSources) {
                 if (polymorph_core.saveSourceOptions[i].canHandle) {
                     let result = await polymorph_core.saveSourceOptions[i].canHandle(params);
-                    if (result) {
+                    if (result && result.id && result.data) {
                         polymorph_core.currentDocID = result.id;
                         sourcesToAdd.push({
                             load: true,
                             save: true,
                             type: i,
-                            data: result.source
+                            data: result.data
                         });
                     }
                 }
@@ -1139,8 +1139,17 @@ polymorph_core.on("titleButtonsReady", () => {
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
+                let errorMessage = undefined;
                 if (!polymorph_core.saveSources[i.type]) {
-                    if (confirm(`Ack! Looks like the ${i.type} save source is not working right now. Remove it?`)) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is not working right now. Remove it?`;
+                }
+
+                if (!errorMessage && !i.data) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is misconfigured. Remove it?`;
+                }
+
+                if (errorMessage) {
+                    if (confirm(errorMessage)) {
                         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
                         polymorph_core.saveUserData();
                         u--;
@@ -1502,7 +1511,7 @@ function _dialogManager(userSettings) {
                     e.parentElement.appendChild(closeButton);
                     //only bind escape close to dialogs that have a closeButton
                     window.addEventListener("keydown", (e) => {
-                        if (e.key == "Escape" && prediv.style.display!="none") {
+                        if (e.key == "Escape" && prediv.style.display != "none") {
                             closeButton.click();
                         }
                     });
@@ -1552,18 +1561,18 @@ polymorph_core.dialog.div.classList.add("dialog");
 polymorph_core.dialog.div = dialogManager.checkDialogs(polymorph_core.dialog.div)[0];
 polymorph_core.dialog.innerDialog = polymorph_core.dialog.div.querySelector(".innerDialog");
 document.body.appendChild(polymorph_core.dialog.div)
-//polymorph_core.dialog.currentBaseOperator
+    //polymorph_core.dialog.currentBaseOperator
 
 //Register a dialog to a calling rect. Rect calls this when the settings cog is clicked.
-polymorph_core.dialog.prompt = function (dialog, closeCB) {
+polymorph_core.dialog.prompt = function(dialog, closeCallback) {
     //instantly show a dialog with contents 'dialog'.
     //use HTMLwrap to create a dom element or otherwise.
     while (polymorph_core.dialog.innerDialog.children.length > 2) polymorph_core.dialog.innerDialog.children[2].remove();
     polymorph_core.dialog.innerDialog.appendChild(dialog);
     polymorph_core.dialog.div.style.display = "block";
-    polymorph_core.dialog.closeCB = closeCB;
+    polymorph_core.dialog.closeCB = closeCallback;
 }
-polymorph_core.dialog.div.querySelector(".cb").addEventListener("click", function () {
+polymorph_core.dialog.div.querySelector(".cb").addEventListener("click", function() {
     if (polymorph_core.dialog.closeCB) {
         try {
             polymorph_core.dialog.closeCB(polymorph_core.dialog.innerDialog);
@@ -4717,8 +4726,21 @@ if (!isPhone()) {
         polymorph_core.topbar.add("File/New").addEventListener("click", () => {
             window.open(window.location.pathname + "?o", "_blank");
         })
-        polymorph_core.topbar.add("Tutorial").addEventListener("click", () => {
+        polymorph_core.topbar.add("Help/Tutorial").addEventListener("click", () => {
             polymorph_core.resetTutorial();
+        })
+        polymorph_core.topbar.add("Help/Date Syntax").addEventListener("click", () => {
+            polymorph_core.dialog.prompt(htmlwrap(`
+                <div>
+                    <h1>Date syntax</h1>
+                    <table>
+                        <tr>
+                            <td>(10:00)</td>
+                            <td>Every 10:00am (smart allocator assumes you'll probably mean the morning.).</td>
+                        </tr>
+                    </table>
+                </div>
+            `));
         })
         polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
             let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
@@ -5309,6 +5331,7 @@ function _dateParser() {
                         //try and dateparse it
                         reps = this.extractTime(rsplit[3], refdate);
                         if (!reps) reps = -1;
+                        else reps = reps.toISOString();
                     }
                 } else {
                     reps = -1;
@@ -5354,7 +5377,8 @@ function _dateParser() {
                 endDate: date.getTime() representing the end of the next occurence of the event, if specified.
                 opart: string: the original string that created this chunk.
                 part: string: a string that would create this same chunk (some references may have been updated.).
-                reps: integer OR Date() representing number of times the recurrence should occur. -1 if forever.
+                reps: integer OR ISO date string representing number of times the recurrence should occur. -1 if forever.
+                    because storeable in json and ifferent from # reps
             }]
 
         */
@@ -5374,7 +5398,7 @@ function _dateParser() {
             } else {
                 if (!recurCount) recurCount = 1;
                 else {
-                    end = Math.min(end, recurCount.getTime());
+                    end = Math.min(end, new Date(recurCount).getTime());
                     recurCount = 100;
                 }
             }
@@ -14314,7 +14338,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     prettyName: "Localforage (offline storage)"
 });
 
-polymorph_core.registerSaveSource("permalink", function (save_source_data) {
+polymorph_core.registerSaveSource("permalink", function(save_source_data) {
     //special permalink operator: for when i want to create a permalink to a doc. 
 
     //fetches JSON from an XHR that is embedded in the url in base64 format. 
@@ -14323,7 +14347,7 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
     //initialise here
     //id, source
 
-    this.pullAll = async function () {
+    this.pullAll = async function() {
         let d = save_source_data.data;
         return d;
     }
@@ -14331,13 +14355,13 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
 }, {
     prettyName: "Permalink",
     createable: false,
-    canHandle: async (params) => {
+    canHandle: async(params) => {
         return new Promise((res, rej) => {
             if (params.has("pml")) {
                 var xmlhttp = new XMLHttpRequest();
                 let url = atob(params.get("pml"));
                 xmlhttp.open('GET', url, true);
-                xmlhttp.onreadystatechange = function () {
+                xmlhttp.onreadystatechange = function() {
                     if (xmlhttp.readyState == 4) {
                         if (xmlhttp.status == 200) {
                             try {
@@ -14345,7 +14369,7 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
                                 let tempID = polymorph_core.guid(6, polymorph_core.userData.documents);
                                 obj = polymorph_core.datautils.decompress(obj);
                                 obj._meta.id = tempID;
-                                res({ id: tempID, source: obj });
+                                res({ id: tempID, data: obj });
                             } catch (e) {
                                 res(false);
                             }
@@ -14362,9 +14386,24 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
     }
 });
 
-polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("lobby", function(save_source_data) {
+    // redirect to server
+    return new polymorph_core.saveSources["srv"](save_source_data);
+}, {
+    prettyName: "Save to local lobby",
+});
+
+polymorph_core.registerSaveSource("srv", function(save_source_data) {
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
+    if (save_source_data.type == "lobby") {
+        // do a few switcheroos
+        this.settings.data.saveTo = window.location.origin + "/lobbysave?f=" + this.settings.data.id;
+        this.settings.data.loadFrom = window.location.origin + "/lobbyload?f=" + this.settings.data.id;
+        this.settings.data.wsAddr = `ws://${window.location.hostname}:18036`
+    }
+
+
     this.pushAll = async function(data) {
         //push to the source (force save)
         let compressedData = polymorph_core.datautils.IDCompress.compress(data);
@@ -14374,12 +14413,10 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                 //alert("Save success!");
             }
         };
-        xmlhttp.open("POST", window.location.origin + "/lobbysave?f=" + this.settings.data.id, true);
+        xmlhttp.open("POST", this.settings.data.saveTo, true);
         xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xmlhttp.send(JSON.stringify(compressedData));
     }
-
-
 
     this.pullAll = async function() {
         let xmlhttp = new XMLHttpRequest();
@@ -14406,7 +14443,7 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
                 reject("An error occured...");
             }
         });
-        xmlhttp.open("GET", window.location.origin + "/lobbyload?f=" + this.settings.data.id, true);
+        xmlhttp.open("GET", this.settings.data.loadFrom, true);
         xmlhttp.send();
         return p;
     }
@@ -14432,40 +14469,6 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
         }
     })
 
-    this.dialog = document.createElement("div");
-    let ops = [
-        new polymorph_core._option({
-            div: this.dialog,
-            type: "text",
-            object: this.settings.data,
-            property: "id",
-            label: "The ID of this document."
-        }),
-        new polymorph_core._option({
-            div: this.dialog,
-            type: "text",
-            object: this.settings.data,
-            property: "throttle",
-            label: "Throttle (number of saves before sending)",
-            placeholder: 0
-        })
-    ]
-    this.showDialog = function() {
-        ops.forEach(i => i.load());
-    };
-    //send a quick get to the lobby to check it exists
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = () => {
-        if (xmlhttp.readyState == 4) {
-            if (xmlhttp.status != 200) {
-                //something wrong rip
-                this.dialog.innerHTML = "<h2>The lobby operator is not installed on the host system.</h2>";
-            }
-            //alert("yay there is a lobby lah");
-        }
-    };
-    xmlhttp.open("GET", window.location.origin + "/lobby", true);
-    xmlhttp.send();
 
     this.updateRTstate = () => {
 
@@ -14488,7 +14491,7 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
             this.RTSyncQueue = Object.keys(polymorph_core.items).map(i => [i, polymorph_core.items[i]._lu_]);
             this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
             if (!this.ws || this.ws.readyState != WebSocket.OPEN) {
-                this.ws = new WebSocket(`ws://${window.location.hostname}:18036`);
+                this.ws = new WebSocket(this.settings.data.wsAddr);
                 this.ws.addEventListener("open", () => {
                     this.ws.send(JSON.stringify({
                         type: "selfID",
@@ -14573,89 +14576,23 @@ polymorph_core.registerSaveSource("lobby", function(save_source_data) { // a sam
         // sort the RTSyncQueue
         this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
     });
-    polymorph_core.addToSaveDialog(this);
-
-}, {
-    prettyName: "Save to local lobby",
-    createable: true
-});
-
-polymorph_core.registerSaveSource("srv", function(save_source_data) { // a sample save source, implementing a number of functions.
-    polymorph_core.saveSourceTemplate.call(this, save_source_data);
-    //initialise here
-    this.pushAll = async function(data) {
-        //push to the source (force save)
-        let compressedData = polymorph_core.datautils.IDCompress.compress(data);
-        let xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                //alert("Save success!");
-            }
-        };
-        xmlhttp.open("POST", this.settings.data.saveTo, true);
-        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xmlhttp.send(JSON.stringify(compressedData));
-    }
-
-    this.pullAll = async function() {
-        let xmlhttp = new XMLHttpRequest();
-        let p = new Promise((resolve, reject) => {
-            xmlhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    try {
-                        let obj = JSON.parse(this.responseText);
-                        obj = polymorph_core.datautils.decompress(obj);
-                        console.log(obj);
-                        resolve(obj);
-                    } catch (e) {
-                        reject("server response invalid - see console");
-                        console.log(e);
-                    }
-
-                } else if (this.readyState == 4) {
-                    //failure; direct load or backup!
-                    reject("server was unavailable :/");
-                    //if (fail) fail();
-                }
-            };
-            xmlhttp.onerror = function() {
-                reject("An error occured...");
-            }
-        });
-        xmlhttp.open("GET", this.settings.data.loadFrom, true);
-        xmlhttp.send();
-        return p;
-    }
-
-    polymorph_core.on("userSave", (d) => {
-        if (this.settings.save) {
-            if (this.settings.data.throttle && this.settings.data.throttle != "") {
-                if (!this.settings.tmpthrottle) {
-                    this.settings.tmpthrottle = 0;
-                }
-                if (this.settings.tmpthrottle > Number(this.settings.data.throttle)) {
-                    this.settings.tmpthrottle = 0;
-                    this.pushAll(d);
-                } else {
-                    this.settings.tmpthrottle++;
-                }
-            } else {
-                this.pushAll(d);
-            }
-            return true; //return true if we save
-        } else {
-            return false;
-        }
-    })
 
     this.dialog = document.createElement("div");
     polymorph_core.addToSaveDialog(this);
+
+    let fixSharingLink = () => {
+        let tmpurl = new URL(window.location);
+        tmpurl.search = "srvl=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
+        this.settings.data.sharing = tmpurl.href;
+    }
+
     let ops = [
         new polymorph_core._option({
             div: this.dialog,
             type: "text",
             object: this.settings.data,
             property: "saveTo",
+            afterInput: fixSharingLink,
             label: "Full server save address (include document name)"
         }),
         new polymorph_core._option({
@@ -14663,7 +14600,15 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) { // a sampl
             type: "text",
             object: this.settings.data,
             property: "loadFrom",
+            afterInput: fixSharingLink,
             label: "Full server load address (include document name)"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "sharing",
+            label: "Link for sharing"
         }),
         new polymorph_core._option({
             div: this.dialog,
@@ -14672,14 +14617,38 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) { // a sampl
             property: "throttle",
             label: "Throttle (number of changes before sending)",
             placeholder: 0
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "wsAddr",
+            afterInput: fixSharingLink,
+            label: "Websocket addr for real time sync(include protocol, path, port.)"
         })
     ]
     this.showDialog = function() {
+        fixSharingLink();
         ops.forEach(i => i.load());
     }
+
+
 }, {
     prettyName: "Save to server",
-    createable: true
+    createable: true,
+    canHandle: (params) => {
+        if (params.has("srvl")) {
+            let config = undefined;
+            try {
+                config = params.get("srvl");
+                config = atob(config);
+                config = JSON.parse(config);
+            } catch (e) {
+                return false;
+            }
+            return config;
+        }
+    }
 });
 
 polymorph_core.registerSaveSource("gitlite", function(save_source_data) { // a sample save source, implementing a number of functions.
