@@ -107,13 +107,13 @@
             for (let i in polymorph_core.saveSources) {
                 if (polymorph_core.saveSourceOptions[i].canHandle) {
                     let result = await polymorph_core.saveSourceOptions[i].canHandle(params);
-                    if (result) {
+                    if (result && result.id && result.data) {
                         polymorph_core.currentDocID = result.id;
                         sourcesToAdd.push({
                             load: true,
                             save: true,
                             type: i,
-                            data: result.source
+                            data: result.data
                         });
                     }
                 }
@@ -202,8 +202,17 @@
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
+                let errorMessage = undefined;
                 if (!polymorph_core.saveSources[i.type]) {
-                    if (confirm(`Ack! Looks like the ${i.type} save source is not working right now. Remove it?`)) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is not working right now. Remove it?`;
+                }
+
+                if (!errorMessage && !i.data) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is misconfigured. Remove it?`;
+                }
+
+                if (errorMessage) {
+                    if (confirm(errorMessage)) {
                         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
                         polymorph_core.saveUserData();
                         u--;
