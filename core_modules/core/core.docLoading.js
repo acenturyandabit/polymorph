@@ -112,6 +112,7 @@
                         sourcesToAdd.push({
                             load: true,
                             save: true,
+                            RTactive: true, // not ideal but let's see
                             type: i,
                             data: result.data
                         });
