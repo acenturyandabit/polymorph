@@ -148,9 +148,9 @@ polymorph_core.registerOperator("workflow", {
     }
 
     let focusOnPrev = (etarget) => {
-        let toFocusOnSpan = etarget.parentElement.previousElementSibling;
+        let toFocusOnSpan = etarget.parentElement.parentElement.previousElementSibling;
         if (!toFocusOnSpan) {
-            toFocusOnSpan = etarget.parentElement.parentElement.parentElement;
+            toFocusOnSpan = etarget.parentElement.parentElement.parentElement.parentElement;
         } else {
             if (toFocusOnSpan.tagName == "STYLE") return false;
             while (toFocusOnSpan.children[1].children.length) {
@@ -160,7 +160,7 @@ polymorph_core.registerOperator("workflow", {
         focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
     let focusOnNext = (etarget) => {
-        let toFocusOnSpan = etarget.parentElement.nextElementSibling;
+        let toFocusOnSpan = etarget.parentElement.parentElement.nextElementSibling;
         if (etarget.nextElementSibling.children.length) {
             toFocusOnSpan = etarget.nextElementSibling.children[0];
         }
@@ -253,10 +253,10 @@ polymorph_core.registerOperator("workflow", {
                     this.orderedLink(e.target.parentElement.dataset.id, newID);
                 } else {
                     //     span     span          div        span or null
-                    if (e.target.parentElement.parentElement.parentElement) {
-                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
+                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN") {
+                        this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
                     } else {
-                        this.settings.rootItems.push(newID);
+                        this.settings.rootItems.splice(newID, this.settings.rootItems.indexOf(id));
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
@@ -365,8 +365,8 @@ polymorph_core.registerOperator("workflow", {
     });
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
-            let id = e.target.parentElement.dataset.id;
-            polymorph_core.items[e.target.parentElement.dataset.id][this.settings.titleProperty] = e.target.innerText;
+            let id = e.target.parentElement.parentElement.dataset.id;
+            polymorph_core.items[id][this.settings.titleProperty] = e.target.innerText;
             //parse stuff
             this.parse(e.target);
             container.fire("updateItem", { id: id, sender: this });
