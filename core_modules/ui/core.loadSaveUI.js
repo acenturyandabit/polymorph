@@ -80,7 +80,9 @@
                 }
             };
             polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(newSaveSource)
-            polymorph_core.saveSourceInstances.push(new polymorph_core.saveSources[nss.querySelector("select").value](newSaveSource));
+            let newSaveSourceInstance = new polymorph_core.saveSources[nss.querySelector("select").value](newSaveSource);
+            polymorph_core.saveSourceInstances.push(newSaveSourceInstance);
+            newSaveSourceInstance.showDialog();
             //reshow the dialog cos i cbs
         });
 

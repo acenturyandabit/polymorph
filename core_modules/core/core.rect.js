@@ -555,31 +555,31 @@ if (!isPhone()) {
                 tabmenu.style.display = "none";
             })
             /*
-                tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-                    let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-                    tabmenu.style.display = "none";
-                    polymorph_core.dialog.prompt(tta);
-                    tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-                })
-        
-                tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-                    let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-                    polymorph_core.dialog.prompt(tta);
-                    tta.querySelector("button").addEventListener("click", () => {
-                        if (tta.querySelector("textarea").value) {
-                            let importObject = JSON.parse(tta.querySelector("textarea").value);
-                            this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                            this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                            polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                            //force update all items to reload the view
-                            for (let i in polymorph_core.items) {
-                                polymorph_core.fire('updateItem', { id: i });
-                            }
+            tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+                let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+                tabmenu.style.display = "none";
+                polymorph_core.dialog.prompt(tta);
+                tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+            })
+    
+            tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+                let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+                polymorph_core.dialog.prompt(tta);
+                tta.querySelector("button").addEventListener("click", () => {
+                    if (tta.querySelector("textarea").value) {
+                        let importObject = JSON.parse(tta.querySelector("textarea").value);
+                        this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                        polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                        //force update all items to reload the view
+                        for (let i in polymorph_core.items) {
+                            polymorph_core.fire('updateItem', { id: i });
                         }
-                    })
-                    tabmenu.style.display = "none";
+                    }
                 })
-            */
+                tabmenu.style.display = "none";
+            })
+        */
             //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
@@ -996,3 +996,13 @@ if (!isPhone()) {
     polymorph_core.rects = {};
 
 }
+
+
+// make sure that new operators are properly instantiated
+polymorph_core.on("updateItem", (d) => {
+    let itm = polymorph_core.items[d.id];
+    if (itm._rd && !polymorph_core.rects[d.id]) {
+        polymorph_core.rects[d.id] = new polymorph_core.rect(d.id);
+        polymorph_core.switchView(polymorph_core.currentDoc.currentView)
+    }
+})
