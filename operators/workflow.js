@@ -93,14 +93,14 @@ polymorph_core.registerOperator("workflow", {
     this.rootdiv.addEventListener("click", (e) => {
         if (e.target.classList.contains("arrow")) {
             //expand or contract
-            if (e.target.parentElement.parentElement.children[1].style.display == "none") {
-                e.target.parentElement.parentElement.children[1].style.display = "block";
+            if (e.target.parentElement.parentElement.parentElement.children[1].style.display == "none") {
+                e.target.parentElement.parentElement.parentElement.children[1].style.display = "block";
                 e.target.innerHTML = "&#x25BC;";
-                polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = false;
+                polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id].collapsed = false;
             } else {
-                e.target.parentElement.parentElement.children[1].style.display = "none";
+                e.target.parentElement.parentElement.parentElement.children[1].style.display = "none";
                 e.target.innerHTML = "&#x25B6;";
-                polymorph_core.items[e.target.parentElement.parentElement.dataset.id].collapsed = true;
+                polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id].collapsed = true;
             }
         }
     });
@@ -132,19 +132,23 @@ polymorph_core.registerOperator("workflow", {
         return id;
     }
 
-    let focusOnElement = function(el, index) {
+    let focusOnElement = (el, index) => {
         let range = document.createRange();
         let newP = el;
         if (!newP.childNodes.length) {
             newP.focus();
             return;
         }
+        if (!index) index = 0;
+        if (index < 0) index = newP.childNodes[0].textContent.length;
         range.setStart(newP.childNodes[0], index);
         range.collapse(true);
-        let sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        newP.focus();
+        let sel = this.rootdiv.getRootNode().getSelection();
+        setTimeout(() => {
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+        //newP.focus();
     }
 
     let focusOnPrev = (etarget) => {
@@ -153,25 +157,25 @@ polymorph_core.registerOperator("workflow", {
             toFocusOnSpan = etarget.parentElement.parentElement.parentElement.parentElement;
         } else {
             if (toFocusOnSpan.tagName == "STYLE") return false;
-            while (toFocusOnSpan.children[1].children.length) {
+            while (toFocusOnSpan.children[1].children.length && toFocusOnSpan.children[1].style.display != "none") {
                 toFocusOnSpan = toFocusOnSpan.children[1].children[toFocusOnSpan.children[1].children.length - 1];
             }
         }
-        focusOnElement(toFocusOnSpan.children[0].children[1]);
+        focusOnElement(toFocusOnSpan.children[0].children[1], -1);
     }
     let focusOnNext = (etarget) => {
         let toFocusOnSpan = etarget.parentElement.parentElement.nextElementSibling;
-        if (etarget.nextElementSibling.children.length) {
-            toFocusOnSpan = etarget.nextElementSibling.children[0];
+        if (etarget.parentElement.nextElementSibling.children.length && etarget.parentElement.parentElement.children[1].style.display != "none") {
+            toFocusOnSpan = etarget.parentElement.nextElementSibling.children[0];
         }
         if (!toFocusOnSpan) {
             //                     span   pspan           div?
             let tmpParentSpan = etarget.parentElement.parentElement;
-            while (tmpParentSpan && !tmpParentSpan.parentElement.nextElementSibling) {
+            while (tmpParentSpan && !tmpParentSpan.parentElement.parentElement.nextElementSibling) {
                 tmpParentSpan = tmpParentSpan.parentElement.parentElement;
-                if (!tmpParentSpan.parentElement) return false;
+                if (!tmpParentSpan.parentElement.parentElement) return false;
             }
-            if (tmpParentSpan) toFocusOnSpan = tmpParentSpan.parentElement.nextElementSibling;
+            if (tmpParentSpan) toFocusOnSpan = tmpParentSpan.parentElement.parentElement.nextElementSibling;
         }
         focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
@@ -236,27 +240,27 @@ polymorph_core.registerOperator("workflow", {
 
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
-            let id = e.target.parentElement.dataset.id;
+            let id = e.target.parentElement.parentElement.dataset.id;
             if (e.key == "Backspace") {
-                if (e.target.innerText.length == 0) {
+                if (e.target.innerText.length == 0 || e.target.innerText == "\n") { // odd newline issue
                     //delete the item
                     unparent(id);
                     let theI = this.settings.rootItems.indexOf(id);
                     if (theI != -1) this.settings.rootItems.splice(theI, 1);
-                    if (!focusOnPrev(e.target)) focusOnPrev(e.target);
-                    e.target.parentElement.remove();
+                    if (focusOnPrev(e.target) == false) focusOnNext(e.target);
+                    e.target.parentElement.parentElement.remove();
                     //focus on the previous item if exists, otherwise on next element
                 }
             } else if (e.key == "Enter") {
                 let newID = this.createItem();
                 if (e.shiftKey) {
-                    this.orderedLink(e.target.parentElement.dataset.id, newID);
+                    this.orderedLink(id, newID);
                 } else {
-                    //     span     span          div        span or null
-                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN") {
+                    //     span     span          span           div        span or null
+                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
                         this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
                     } else {
-                        this.settings.rootItems.splice(newID, this.settings.rootItems.indexOf(id));
+                        this.settings.rootItems.splice(this.settings.rootItems.indexOf(id) + 1, 0, newID);
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
@@ -274,7 +278,7 @@ polymorph_core.registerOperator("workflow", {
                         e.target.focus();
                     } else {
                         //could be a root item
-                        if (e.target.parentElement.previousElementSibling.tagName != "STYLE") {
+                        if (e.target.parentElement.parentElement.previousElementSibling.tagName != "STYLE") {
                             let previ = this.settings.rootItems.indexOf(id);
                             this.settings.rootItems.splice(previ, 1);
                             this.settings.rootItems.splice(previ - 1, 0, id);
@@ -287,12 +291,12 @@ polymorph_core.registerOperator("workflow", {
                 }
             } else if (e.key == "ArrowDown") {
                 if (e.altKey) {
-                    if (e.target.parentElement.parentElement.parentElement && e.target.parentElement.nextElementSibling) {
+                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN" && e.target.parentElement.nextElementSibling) {
                         this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.dataset.id, e.target.parentElement.nextElementSibling.dataset.id, true);
                         this.renderItem(e.target.parentElement.dataset.id);
                         e.target.focus();
                     } else {
-                        if (e.target.parentElement.nextElementSibling) {
+                        if (e.target.parentElement.parentElement.nextElementSibling) {
                             let previ = this.settings.rootItems.indexOf(id);
                             this.settings.rootItems.splice(previ, 1);
                             this.settings.rootItems.splice(previ + 1, 0, id);
@@ -386,8 +390,10 @@ polymorph_core.registerOperator("workflow", {
         if (!selection.rangeCount) return undefined;
         let oldRange = selection.getRangeAt(0);
         let oldso = oldRange.startOffset;
+        let oldctn = oldRange.startContainer; // all this convoluted machinery to get both backspace delete refocus and also normal text edit refocus to both work
+        if (oldctn.nodeName == "#text") oldctn = oldctn.parentElement;
         return {
-            root: oldRange.startContainer.parentElement,
+            root: oldctn,
             offset: oldso,
         };
     }
@@ -432,7 +438,7 @@ polymorph_core.registerOperator("workflow", {
             span.children[0].children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
             if (polymorph_core.items[id].collapsed) {
                 span.children[1].style.display = "none";
-                span.children[0].children[0].innerHTML = "&#x25B6;";
+                span.children[0].children[0].children[0].innerHTML = "&#x25B6;";
             }
             let nxtid;
             let parent;
@@ -443,6 +449,7 @@ polymorph_core.registerOperator("workflow", {
                 if (!this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`)) {
                     //this is a multi-parent item and its primary parent hasnt appeared
                     //just ignore for the time being? we'll get another chance later
+                    restoreFocus(oldFocus);
                     return;
                 }
                 parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[1];
@@ -458,7 +465,7 @@ polymorph_core.registerOperator("workflow", {
                     this.renderItem(id, true);
                 }
             } else {
-                parent.appendChild(span);
+                parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
             }
             if (!polymorph_core.items[id].contracted) {
                 for (let i in polymorph_core.items[id].to) {
@@ -493,7 +500,7 @@ polymorph_core.registerOperator("workflow", {
         // This is called when the parent container is resized.
         // needs to be here so that when item is instantialised, items will render.
         if (this.container.visible()) {
-            this.settings.rootItems.forEach((i) => container.fire("updateItem", { id: i }));
+            this.settings.rootItems.forEach((i) => container.fire("updateItem", { id: i, sender: this }));
         }
     }
 
