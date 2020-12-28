@@ -515,6 +515,10 @@ if (!isPhone()) {
         }
 
         this.taskList.addEventListener("focusin", (e) => {
+            if (this.internalRefocus) {
+                this.internalRefocus = false;
+                return;
+            }
             if (e.target.matches("input")) {
                 container.fire("focusItem", {
                     id: e.target.parentElement.parentElement.parentElement.dataset.id,

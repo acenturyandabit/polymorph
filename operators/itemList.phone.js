@@ -43,7 +43,10 @@ if (isPhone()) {
                 .taskList p{
                     margin: 10px;
                     background: purple;
+                }
+                .taskList p span{
                     padding: 10px;
+                    display: inline-block;
                 }
                 
                 .taskList .plusButton{
@@ -75,6 +78,11 @@ if (isPhone()) {
                 .propertyLabel{
                     border-top: 1px solid white;
                 }
+                .closebtn{
+                    float: right;
+                    background: #cf0000;
+                }
+
             </style>
             <div class="taskList">
                 <div class="plusButton"> + </div>
@@ -105,11 +113,20 @@ if (isPhone()) {
         this.renderItem = (id) => {
             if (this.itemRelevant(id)) {
                 if (!itemCache[id]) {
-                    itemCache[id] = htmlwrap(`<p data-id="${id}"></p>`);
+                    itemCache[id] = htmlwrap(`<p data-id="${id}"><span></span><span class="closebtn">&#xd7;</span></p>`);
                     this.taskList.appendChild(itemCache[id]);
                 }
-                itemCache[id].innerText = polymorph_core.items[id][this.settings.phonePrimeProperty];
-                //render the item, if we care about it.
+                itemCache[id].children[0].innerText = this.settings.phonePrimeProperty.split(",").map(i => {
+                        if (!polymorph_core.items[id][i]) return "";
+                        if (polymorph_core.items[id][i].datestring) {
+                            try {
+                                return dateParser.humanReadableRelativeDate(polymorph_core.items[id][i].date[0].date);
+                            } catch (e) {
+                                return polymorph_core.items[id][i].datestring;
+                            }
+                        } else return polymorph_core.items[id][i];
+                    }).join("  |  ")
+                    //render the item, if we care about it.
             } else {
                 if (itemCache[id]) {
                     itemCache[id].remove();
@@ -164,14 +181,40 @@ if (isPhone()) {
 
         backDiv.addEventListener("input", (e) => {
             let currentItem = polymorph_core.items[editingID];
-            if (this.settings.phoneProperties[i] == 'date') {
-                if (!currentItem[e.target.dataset.role]) currentItem[e.target.dataset.role] = {};
-                currentItem[e.target.dataset.role].datestring = e.target.value;
-                currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+            let currentProp = e.target.parentElement.dataset.prop;
+            if (this.settings.phoneProperties[currentProp] == 'date') {
+                if (!currentItem[currentProp] || typeof(currentItem[currentProp]) == "string") currentItem[currentProp] = {};
+                currentItem[currentProp].datestring = e.target.innerText;
+                currentItem[currentProp].date = dateParser.richExtractTime(currentItem[currentProp].datestring);
             } else {
-                currentItem[e.target.parentElement.dataset.prop] = e.target.innerText;
+                currentItem[currentProp] = e.target.innerText;
             }
             container.fire("updateItem", { id: editingID });
+        })
+
+        backDiv.addEventListener("focusout", (e) => {
+            let currentItem = polymorph_core.items[editingID];
+            let currentProp = e.target.parentElement.dataset.prop;
+            if (this.settings.phoneProperties[currentProp] == 'date') {
+                let toDisplay = "";
+                if (currentItem[currentProp]) {
+                    try {
+                        toDisplay = dateParser.humanReadableRelativeDate(currentItem[currentProp].date[0].date);
+                    } catch (e) {
+                        toDisplay = currentItem[currentProp].datestring;
+                    }
+                    e.target.innerText = toDisplay;
+                }
+            }
+        })
+
+        backDiv.addEventListener("focusin", (e) => {
+            let currentItem = polymorph_core.items[editingID];
+            let currentProp = e.target.parentElement.dataset.prop;
+            if (this.settings.phoneProperties[currentProp] == 'date') {
+                if (!currentItem[currentProp]) currentItem[currentProp] = {};
+                e.target.innerText = currentItem[currentProp].datestring || "";
+            }
         })
 
         this.taskList.querySelector(".plusButton").addEventListener("click", () => {
@@ -184,27 +227,19 @@ if (isPhone()) {
         })
 
         this.taskList.addEventListener("click", (e) => {
-            if (e.target.dataset.id) {
-                showBackDiv(e.target.dataset.id);
+            if (e.target.dataset.id || e.target.matches("[data-id]>span:first-child")) {
+                showBackDiv(e.target.dataset.id || e.target.parentElement.dataset.id);
             }
         })
 
-        let stillHoldingTimer = 0;
         this.taskList.addEventListener("touchstart", (e) => {
-            if (e.target.dataset.id) {
-                let targ = e.target;
-                stillHoldingTimer = setTimeout(() => {
-                    if (confirm(`Delete item ${targ.dataset.id}?`)) {
-                        delete polymorph_core.items[targ.dataset.id][this.settings.filter];
-                        targ.remove();
-                        container.fire("updateItem", { id: targ.dataset.id });
-                    }
-                }, 1000);
+            if (e.target.matches(".closebtn")) {
+                if (confirm(`Delete item ${e.target.parentElement.dataset.id}?`)) {
+                    delete polymorph_core.items[e.target.parentElement.dataset.id][this.settings.filter];
+                    e.target.parentElement.remove();
+                    container.fire("updateItem", { id: e.target.parentElement.dataset.id });
+                }
             }
-        })
-
-        this.taskList.addEventListener("touchend", (e) => {
-            clearTimeout(stillHoldingTimer);
         })
 
         __itemlist_searchsort.apply(this);
@@ -228,17 +263,16 @@ if (isPhone()) {
         `;
 
         this.proplist = this.dialogDiv.querySelector(".proplist");
-        this.proplist.addEventListener("input", (e) => {
-            if (e.target.matches("[name='sortie']")) {
-                this.settings.implicitOrder = false;
-                options.implicitOrder.load();
-            }
-        })
+
 
         this.dialogUpdateSettings = () => {
             // pull settings and update when your dialog is closed.
             this.sortItems();
+            for (let i in this.itemCache) {
+                this.renderItem(i);
+            }
             container.fire("updateItem", { id: this.container.id });
+            this.sortItems();
         };
         //adding new buttons
         this.dialogDiv.querySelector(".adbt").addEventListener("click",
@@ -256,18 +290,13 @@ if (isPhone()) {
         //Handle select's in proplist
         this.proplist.addEventListener('change', (e) => {
             if (e.target.matches("select")) this.settings.phoneProperties[e.target.dataset.role] = e.target.value;
-        })
+        });
         this.proplist.addEventListener('click', (e) => {
             if (e.target.matches("[data-krole]")) {
                 delete this.settings.phoneProperties[e.target.dataset.krole];
                 this.showDialog();
             }
-        })
-        this.proplist.addEventListener("input", (e) => {
-            if (e.target.matches("input[type='radio']")) {
-                this.settings.sortby = e.target.dataset.ssrole;
-            }
-        })
+        });
 
         this.opList = this.dialogDiv.querySelector("select._prop");
 
@@ -284,9 +313,26 @@ if (isPhone()) {
                 type: "text",
                 object: this.settings,
                 property: "phonePrimeProperty",
-                label: "Property to display in front"
+                label: "Propert(ies) to display in front (include as csv)"
+            }),
+            phonePrimeProperty: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "sortby",
+                label: "Property to sort by (leave blank for sort by creation time)",
+                afterInput: (e) => {
+                    if (e.target.value) {
+                        this.settings.implicitOrder = false;
+                    } else {
+                        this.settings.implicitOrder = true;
+                    }
+                }
             })
         }
+
+
+
         this.showDialog = () => {
 
             //Get all available properties, by looping through all elements (?)
@@ -321,9 +367,8 @@ if (isPhone()) {
                 <option value="date">Date</option>
                 <option value="object">Object</option>
                 <option value="number">Number</option>
-            </select><label>Sort <input type="radio" name="sortie" data-ssrole=${prop}></label>` + `<button data-krole="` + prop + `">X</button>`
+            </select>` + `<button data-krole="` + prop + `">X</button>`
                 pspan.querySelector("select").value = this.settings.phoneProperties[prop];
-                pspan.querySelector("input[type='radio']").checked = (this.settings.sortby == prop);
                 this.proplist.appendChild(pspan);
             }
         }

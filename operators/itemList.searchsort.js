@@ -171,6 +171,7 @@ function __itemlist_searchsort() {
             }
             //return focused item
             if (fi) {
+                this.internalRefocus = true;
                 fi.focus();
                 try {
                     fi.selectionStart = cp;
