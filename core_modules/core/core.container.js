@@ -119,7 +119,7 @@ polymorph_core.container = function container(containerID) {
             return;
         }
         if (!this.operator) this.loadOperator(cold);
-        if (this.operator && this.operator.refresh) this.operator.refresh();
+        if (this.operator && this.operator.refresh && !cold) this.operator.refresh();
     }
 
     //event remapping

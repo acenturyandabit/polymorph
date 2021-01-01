@@ -209,6 +209,12 @@ if (!isPhone()) {
                             <td>(10:00)</td>
                             <td>Every 10:00am (smart allocator assumes you'll probably mean the morning.).</td>
                         </tr>
+                        <tr>
+                            <td>
+                                ( start date || next date generator | number of repetitions OR end date)
+                            </td>
+                            <td> Repetition structure </td>
+                        </tr>
                     </table>
                 </div>
             `));

@@ -50,7 +50,7 @@ if (isPhone()) {
         this.tieRect = function(rectID) {
             this.rectID = rectID;
             this.outerDiv.appendChild(polymorph_core.rects[rectID].listContainer);
-            polymorph_core.rects[rectID].refresh();
+            //polymorph_core.rects[rectID].refresh(); // we'll be told to refresh later anyways
         }
 
         //Check if i have any rects waiting for pickup
@@ -133,7 +133,7 @@ if (isPhone()) {
         this.tieRect = function(rectID) {
             this.rectID = rectID;
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
-            polymorph_core.rects[rectID].refresh();
+            //polymorph_core.rects[rectID].refresh();
         }
 
         //Check if i have any rects waiting for pickup

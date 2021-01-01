@@ -18,7 +18,7 @@ polymorph_core.registerOperator("workflow", {
         get: () => {
             if (this._existingItemsCache) return this._existingItemsCache;
             else {
-                this._existingItemsCache = Array.from(this.settings.rootItems);
+                this._existingItemsCache = Array.from(this.settings.rootItems).filter(i => polymorph_core.items[i]); // occasionally strange things happen
                 for (let i = 0; i < this._existingItemsCache.length; i++) {
                     if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
                 }
@@ -62,6 +62,13 @@ polymorph_core.registerOperator("workflow", {
     span.toprow{
         display:flex;
     }
+    span.utils{
+        display: flex;
+    }
+    span.arrow{
+        display: inline-block;
+        width: 20px;
+    }
     </style>
     <span class="cursorspan">
         <span class="toprow">
@@ -89,19 +96,26 @@ polymorph_core.registerOperator("workflow", {
             else polymorph_core.items[from].toOrder.push(to);
         }
     };
-
+    let setExpandedState = (spanWithID, toExpanded) => {
+        if (toExpanded == undefined) { // toggle
+            if (spanWithID.children[1].style.display == "none") toExpanded = true;
+            else toExpanded = false;
+        }
+        if (!spanWithID.children[1].children.length) return;
+        if (toExpanded) {
+            spanWithID.children[1].style.display = "block";
+            spanWithID.children[0].children[0].children[0].innerHTML = "&#x25BC;";
+            polymorph_core.items[spanWithID.dataset.id].collapsed = false;
+        } else {
+            spanWithID.children[1].style.display = "none";
+            spanWithID.children[0].children[0].children[0].innerHTML = "&#x25B6;";
+            polymorph_core.items[spanWithID.dataset.id].collapsed = true;
+        }
+    }
     this.rootdiv.addEventListener("click", (e) => {
         if (e.target.classList.contains("arrow")) {
             //expand or contract
-            if (e.target.parentElement.parentElement.parentElement.children[1].style.display == "none") {
-                e.target.parentElement.parentElement.parentElement.children[1].style.display = "block";
-                e.target.innerHTML = "&#x25BC;";
-                polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id].collapsed = false;
-            } else {
-                e.target.parentElement.parentElement.parentElement.children[1].style.display = "none";
-                e.target.innerHTML = "&#x25B6;";
-                polymorph_core.items[e.target.parentElement.parentElement.parentElement.dataset.id].collapsed = true;
-            }
+            setExpandedState(e.target.parentElement.parentElement.parentElement);
         }
     });
     //return true if we care about an item and dont want it garbage-cleaned :(
@@ -156,7 +170,7 @@ polymorph_core.registerOperator("workflow", {
         if (!toFocusOnSpan) {
             toFocusOnSpan = etarget.parentElement.parentElement.parentElement.parentElement;
         } else {
-            if (toFocusOnSpan.tagName == "STYLE") return false;
+            if (toFocusOnSpan.tagName == "STYLE" || toFocusOnSpan.matches(".cursorspan")) return false;
             while (toFocusOnSpan.children[1].children.length && toFocusOnSpan.children[1].style.display != "none") {
                 toFocusOnSpan = toFocusOnSpan.children[1].children[toFocusOnSpan.children[1].children.length - 1];
             }
@@ -171,12 +185,13 @@ polymorph_core.registerOperator("workflow", {
         if (!toFocusOnSpan) {
             //                     span   pspan           div?
             let tmpParentSpan = etarget.parentElement.parentElement;
-            while (tmpParentSpan && !tmpParentSpan.parentElement.parentElement.nextElementSibling) {
+            while (tmpParentSpan && tmpParentSpan.parentElement.parentElement && !tmpParentSpan.parentElement.parentElement.nextElementSibling) {
                 tmpParentSpan = tmpParentSpan.parentElement.parentElement;
                 if (!tmpParentSpan.parentElement.parentElement) return false;
             }
-            if (tmpParentSpan) toFocusOnSpan = tmpParentSpan.parentElement.parentElement.nextElementSibling;
+            if (tmpParentSpan && tmpParentSpan.parentElement.parentElement) toFocusOnSpan = tmpParentSpan.parentElement.parentElement.nextElementSibling;
         }
+        if (!toFocusOnSpan) return;
         focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
 
@@ -248,6 +263,13 @@ polymorph_core.registerOperator("workflow", {
                     let theI = this.settings.rootItems.indexOf(id);
                     if (theI != -1) this.settings.rootItems.splice(theI, 1);
                     if (focusOnPrev(e.target) == false) focusOnNext(e.target);
+                    if (e.target.parentElement.parentElement.parentElement.children.length == 1) {
+                        // remove the arrow
+                        e.target.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "";
+                    }
+                    if (!e.target.parentElement.parentElement.parentElement.parentElement && e.target.parentElement.parentElement.parentElement.children.length == 3) {
+                        this.rootdiv.querySelector(".cursorspan").style.display = "block";
+                    }
                     e.target.parentElement.parentElement.remove();
                     //focus on the previous item if exists, otherwise on next element
                 }
@@ -272,10 +294,13 @@ polymorph_core.registerOperator("workflow", {
             } else if (e.key == "ArrowUp") {
                 if (e.altKey) {
                     //move item up
-                    if (e.target.parentElement.parentElement.parentElement && e.target.parentElement.previousElementSibling) {
-                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.dataset.id, e.target.parentElement.previousElementSibling.dataset.id);
-                        this.renderItem(e.target.parentElement.dataset.id);
-                        e.target.focus();
+                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
+                        // not a root item
+                        if (e.target.parentElement.parentElement.previousElementSibling) {
+                            this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.previousElementSibling.dataset.id);
+                            this.renderItem(e.target.parentElement.parentElement.dataset.id);
+                            e.target.focus();
+                        }
                     } else {
                         //could be a root item
                         if (e.target.parentElement.parentElement.previousElementSibling.tagName != "STYLE") {
@@ -286,15 +311,19 @@ polymorph_core.registerOperator("workflow", {
                             e.target.focus();
                         }
                     }
+                } else if (e.ctrlKey) {
+                    setExpandedState(e.target.parentElement.parentElement, false);
                 } else {
                     focusOnPrev(e.target);
                 }
             } else if (e.key == "ArrowDown") {
                 if (e.altKey) {
-                    if (e.target.parentElement.parentElement.parentElement.tagName == "SPAN" && e.target.parentElement.nextElementSibling) {
-                        this.orderedLink(e.target.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.dataset.id, e.target.parentElement.nextElementSibling.dataset.id, true);
-                        this.renderItem(e.target.parentElement.dataset.id);
-                        e.target.focus();
+                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
+                        if (e.target.parentElement.parentElement.nextElementSibling) {
+                            this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.nextElementSibling.dataset.id, true);
+                            this.renderItem(e.target.parentElement.parentElement.dataset.id);
+                            e.target.focus();
+                        }
                     } else {
                         if (e.target.parentElement.parentElement.nextElementSibling) {
                             let previ = this.settings.rootItems.indexOf(id);
@@ -304,6 +333,8 @@ polymorph_core.registerOperator("workflow", {
                             e.target.focus();
                         }
                     }
+                } else if (e.ctrlKey) {
+                    setExpandedState(e.target.parentElement.parentElement, true);
                 } else {
                     focusOnNext(e.target);
                 }
@@ -312,12 +343,13 @@ polymorph_core.registerOperator("workflow", {
                 if (cursorPos == 0) {
                     e.preventDefault();
                     if (e.shiftKey == false) {
+                        if (!e.target.parentElement.parentElement.previousElementSibling) return;
                         //clear the parentof cache
                         unparent(id);
                         let wasme = e.target;
                         //kick the thing up four spaces
-                        if (e.target.parentElement.previousElementSibling) {
-                            this.orderedLink(e.target.parentElement.previousElementSibling.dataset.id, id);
+                        if (e.target.parentElement.parentElement.previousElementSibling.dataset.id) {
+                            this.orderedLink(e.target.parentElement.parentElement.previousElementSibling.dataset.id, id);
                             if (this.settings.rootItems.indexOf(id) != -1) this.settings.rootItems.splice(this.settings.rootItems.indexOf(id), 1);
                             this.renderItem(id);
                             wasme.focus();
@@ -329,8 +361,8 @@ polymorph_core.registerOperator("workflow", {
                         delete this._parentOfCache[id];
                         let wasme = e.target;
                         if (e.target.parentElement.parentElement.parentElement) {
-                            if (e.target.parentElement.parentElement.parentElement.parentElement.parentElement) {
-                                let prev = e.target.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
+                            if (e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement) {
+                                let prev = e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
                                 this.orderedLink(prev, id);
                                 this.renderItem(id);
                                 wasme.focus();
@@ -383,7 +415,6 @@ polymorph_core.registerOperator("workflow", {
     }
 
     //this is called when an item is updated (e.g. by another container)
-    let renderTrain = {};
 
     let saveFocus = () => {
         var selection = this.rootdiv.getRootNode().getSelection();
@@ -415,9 +446,11 @@ polymorph_core.registerOperator("workflow", {
     }
 
     var oldFocus;
+    let renderTrain = {};
     this.renderItem = (id, recursive) => {
         if (!recursive) {
             oldFocus = saveFocus();
+            renderTrain = {};
         }
         if (renderTrain[id]) return;
         if (this.itemRelevant(id)) {
@@ -428,7 +461,7 @@ polymorph_core.registerOperator("workflow", {
             <span data-id="${id}">
                 <span class="toprow">
                     <span class="utils">
-                        <span class="arrow">&#x25BC;</span><span class="bullet">&#8226;</span>
+                        <span class="arrow"></span><span class="bullet">&#8226;</span>
                     </span>
                     <span contenteditable></span>
                 </span>
@@ -453,6 +486,7 @@ polymorph_core.registerOperator("workflow", {
                     return;
                 }
                 parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[1];
+                parent.parentElement.children[0].children[0].children[0].innerHTML = "&#x25BC;";
             } else {
                 nxtid = this.settings.rootItems[this.settings.rootItems.indexOf(id) + 1];
                 parent = this.rootdiv;
@@ -465,8 +499,9 @@ polymorph_core.registerOperator("workflow", {
                     this.renderItem(id, true);
                 }
             } else {
-                parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
+                parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`));
             }
+            this.rootdiv.querySelector(".cursorspan").style.display = "none";
             if (!polymorph_core.items[id].contracted) {
                 for (let i in polymorph_core.items[id].to) {
                     this.renderItem(i, true);
@@ -474,7 +509,6 @@ polymorph_core.registerOperator("workflow", {
             }
         }
         if (!recursive) {
-            renderTrain = {};
             restoreFocus(oldFocus);
         }
     }
@@ -500,7 +534,9 @@ polymorph_core.registerOperator("workflow", {
         // This is called when the parent container is resized.
         // needs to be here so that when item is instantialised, items will render.
         if (this.container.visible()) {
-            this.settings.rootItems.forEach((i) => container.fire("updateItem", { id: i, sender: this }));
+            this.settings.rootItems.forEach((i) => {
+                if (polymorph_core.items[i]) this.renderItem(i, true); // lie that the rendering is recursive, because the anti-collision system wont hurt
+            });
         }
     }
 

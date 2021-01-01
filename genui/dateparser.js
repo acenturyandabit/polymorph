@@ -205,7 +205,7 @@ function _dateParser() {
         let result = []; //see below.
         for (let k = 0; k < dvchain.length; k++) {
             //Check for repetition structure.
-            // repetition looks like: ( reference date || next date | number of repetitions)
+            // repetition looks like: ( start date || next date generator | number of repetitions OR end date)
             let rsplit = /\((?:([^\)\|]+)\|\|)?([^\)\|]+)(?:\|([^\)\|]+))?\)/ig.exec(dvchain[k]);
             let toParse;
             let reps = undefined;
