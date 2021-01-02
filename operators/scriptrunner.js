@@ -139,7 +139,16 @@ polymorph_core.registerOperator("scriptrunner", {
     this.rootdiv.querySelector(".updatebtn").addEventListener("click", () => {
         textarea.style.background = "white";
         this.settings.script = this.rootdiv.querySelector("textarea").value;
+        container.fire("updateItem", { id: this.container.id, sender: this });
         this.execute();
+    })
+
+    container.on("updateItem", (d) => {
+        if (d.id == this.container.id && d.sender != this) {
+            // consider updating the script
+            // again very dangerous xss target :(((
+            this.execute();
+        }
     })
 
     this.rootdiv.querySelector(".stopbtn").addEventListener("click", () => {
