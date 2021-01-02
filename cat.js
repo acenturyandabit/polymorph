@@ -7921,9 +7921,9 @@ polymorph_core.registerOperator("workflow", {
         float: right;*/ 
         width: calc(100% - 30px);
     }
-    span[data-id]>div{
+    /*span[data-id]>div{
         padding-left: 10px;
-    }
+    }*/
     span.toprow{
         display:flex;
     }
@@ -7933,6 +7933,9 @@ polymorph_core.registerOperator("workflow", {
     span.arrow{
         display: inline-block;
         width: 20px;
+    }
+    span[data-id] span[data-id]{
+        margin-left: 10px;
     }
     </style>
     <span class="cursorspan">
@@ -7966,8 +7969,10 @@ polymorph_core.registerOperator("workflow", {
             if (spanWithID.children[1].style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
-        if (!spanWithID.children[1].children.length) return;
-        if (toExpanded) {
+        if (!polymorph_core.items[spanWithID.dataset.id].to || !Object.keys(polymorph_core.items[spanWithID.dataset.id].to).length) return;
+        polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
+        this.renderItem(spanWithID.dataset.id);
+        /*if (toExpanded) {
             spanWithID.children[1].style.display = "block";
             spanWithID.children[0].children[0].children[0].innerHTML = "&#x25BC;";
             polymorph_core.items[spanWithID.dataset.id].collapsed = false;
@@ -7975,7 +7980,7 @@ polymorph_core.registerOperator("workflow", {
             spanWithID.children[1].style.display = "none";
             spanWithID.children[0].children[0].children[0].innerHTML = "&#x25B6;";
             polymorph_core.items[spanWithID.dataset.id].collapsed = true;
-        }
+        }*/
     }
     this.rootdiv.addEventListener("click", (e) => {
         if (e.target.classList.contains("arrow")) {
@@ -8349,6 +8354,9 @@ polymorph_core.registerOperator("workflow", {
             if (polymorph_core.items[id].collapsed) {
                 span.children[1].style.display = "none";
                 span.children[0].children[0].children[0].innerHTML = "&#x25B6;";
+            } else {
+                span.children[1].style.display = "block";
+                span.children[0].children[0].children[0].innerHTML = "&#x25BC;";
             }
             let nxtid;
             let parent;
