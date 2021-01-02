@@ -288,6 +288,7 @@ polymorph_core.registerOperator("workflow", {
                         this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
                     } else {
                         this.settings.rootItems.splice(this.settings.rootItems.indexOf(id) + 1, 0, newID);
+                        polymorph_core.fire("updateItem", { id: container.id, sender: this });
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
