@@ -463,6 +463,11 @@ polymorph_core.registerOperator("workflow", {
         if (this.itemRelevant(id)) {
             //render the item, if we care about it.
             let span = this.rootdiv.querySelector(`span[data-id='${id}']`);
+            if (!polymorph_core.items[id][this.settings.filter] && span) {
+                //item should be deleted
+                span.remove();
+                return;
+            }
             if (!span) {
                 span = htmlwrap(`
             <span data-id="${id}">
