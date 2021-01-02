@@ -8383,7 +8383,7 @@ polymorph_core.registerOperator("workflow", {
                 parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`));
             }
             this.rootdiv.querySelector(".cursorspan").style.display = "none";
-            if (!polymorph_core.items[id].contracted) {
+            if (!polymorph_core.items[id].collapsed) {
                 for (let i in polymorph_core.items[id].to) {
                     this.renderItem(i, true);
                 }
