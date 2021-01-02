@@ -147,6 +147,7 @@ polymorph_core.registerOperator("scriptrunner", {
         if (d.id == this.container.id && d.sender != this) {
             // consider updating the script
             // again very dangerous xss target :(((
+            this.rootdiv.querySelector("textarea").value = this.settings.script;
             this.execute();
         }
     })
