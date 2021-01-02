@@ -37,7 +37,7 @@ polymorph_core.registerOperator("workflow", {
                 }
             }
             this._parentOfCache[id] = "";
-            return this._parentOfCache[id]; //undefined = root.
+            return this._parentOfCache[id]; //undefined = maybe root.
         }
     }
 
@@ -271,6 +271,11 @@ polymorph_core.registerOperator("workflow", {
                         this.rootdiv.querySelector(".cursorspan").style.display = "block";
                     }
                     e.target.parentElement.parentElement.remove();
+                    delete polymorph_core.items[e.target.parentElement.parentElement.dataset.id][this.settings.filter];
+                    container.fire("updateItem", {
+                        id: e.target.parentElement.parentElement.dataset.id,
+                        sender: this
+                    });
                     //focus on the previous item if exists, otherwise on next element
                 }
             } else if (e.key == "Enter") {
@@ -446,6 +451,7 @@ polymorph_core.registerOperator("workflow", {
     }
 
     var oldFocus;
+    let missingChildrenCache = {};
     let renderTrain = {};
     this.renderItem = (id, recursive) => {
         if (!recursive) {
@@ -487,9 +493,13 @@ polymorph_core.registerOperator("workflow", {
                 }
                 parent = this.rootdiv.querySelector(`span[data-id="${this.parentOf(id)}"]`).children[1];
                 parent.parentElement.children[0].children[0].children[0].innerHTML = "&#x25BC;";
-            } else {
+            } else if (this.settings.rootItems.indexOf(id) != -1) {
                 nxtid = this.settings.rootItems[this.settings.rootItems.indexOf(id) + 1];
                 parent = this.rootdiv;
+            } else {
+                // parent doesnt exist yet maybe
+                // do nothing
+                return;
             }
             if (nxtid && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`)) {
                 if (this.rootdiv.querySelector(`span[data-id="${nxtid}"]`) && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`).parentElement == parent) {
@@ -513,10 +523,18 @@ polymorph_core.registerOperator("workflow", {
         }
     }
     container.on("updateItem", (d) => {
+        /*
+        if dealing with remote updates, we have a number of issues: 
+        parent arrives first: nonexistent child to render ??
+            add a queue of items we expect to exist and their prospective parents.
+        child arrives first: no parent to attach to
+            assuming parent actually arrives, thats fine
+        rootitems updated: update rootitems.
+        */
         if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.
         let id = d.id;
+        if (id == container.id) this.refresh();
         if (polymorph_core.items[d.id][this.settings.filter] && !this.itemRelevant(d.id)) {
-            this.settings.rootItems.push(d.id);
             this._existingItemsCache.push(d.id);
         }
         if ((polymorph_core.items[d.id][this.settings.filter] || this.itemRelevant(d.id))) this.renderItem(id);
