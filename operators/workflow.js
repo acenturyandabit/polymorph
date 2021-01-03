@@ -107,6 +107,7 @@ polymorph_core.registerOperator("workflow", {
         if (!polymorph_core.items[spanWithID.dataset.id].to || !Object.keys(polymorph_core.items[spanWithID.dataset.id].to).length) return;
         polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
         this.renderItem(spanWithID.dataset.id);
+        polymorph_core.fire("updateItem", { id: spanWithID.dataset.id, sender: this });
         /*if (toExpanded) {
             spanWithID.children[1].style.display = "block";
             spanWithID.children[0].children[0].children[0].innerHTML = "&#x25BC;";
@@ -124,14 +125,15 @@ polymorph_core.registerOperator("workflow", {
         }
     });
     //return true if we care about an item and dont want it garbage-cleaned :(
-    this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
+    //this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
+    this.itemRelevant = (id) => { return polymorph_core.items[id][this.settings.filter] }
 
     this.createItem = (id) => {
         if (!id) id = polymorph_core.insertItem({});
         itm = polymorph_core.items[id];
         if (!itm) itm = polymorph_core.items[id] = {};
         itm[this.settings.filter] = true;
-        itm[this.settings.titleProperty] = "";
+        itm[this.settings.titleProperty] = itm[this.settings.titleProperty] || ""; // in case title already exists from another operator
         //add any data you need
         let toDirectAdopt = true;
         for (let i = 0; i < this.existingItems.length; i++) {
@@ -287,10 +289,12 @@ polymorph_core.registerOperator("workflow", {
                 let newID = this.createItem();
                 if (e.shiftKey) {
                     this.orderedLink(id, newID);
+                    polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                 } else {
                     //     span     span          span           div        span or null
                     if (e.target.parentElement.parentElement.parentElement.parentElement) {
                         this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
+                        polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
                     } else {
                         this.settings.rootItems.splice(this.settings.rootItems.indexOf(id) + 1, 0, newID);
                         polymorph_core.fire("updateItem", { id: container.id, sender: this });
@@ -309,6 +313,7 @@ polymorph_core.registerOperator("workflow", {
                         // not a root item
                         if (e.target.parentElement.parentElement.previousElementSibling) {
                             this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.previousElementSibling.dataset.id);
+                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
                             this.renderItem(e.target.parentElement.parentElement.dataset.id);
                             e.target.focus();
                         }
@@ -332,6 +337,7 @@ polymorph_core.registerOperator("workflow", {
                     if (e.target.parentElement.parentElement.parentElement.parentElement) {
                         if (e.target.parentElement.parentElement.nextElementSibling) {
                             this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.nextElementSibling.dataset.id, true);
+                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
                             this.renderItem(e.target.parentElement.parentElement.dataset.id);
                             e.target.focus();
                         }
@@ -361,8 +367,17 @@ polymorph_core.registerOperator("workflow", {
                         //kick the thing up four spaces
                         if (e.target.parentElement.parentElement.previousElementSibling.dataset.id) {
                             this.orderedLink(e.target.parentElement.parentElement.previousElementSibling.dataset.id, id);
+                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.previousElementSibling.dataset.id, sender: this }); // kick update on item so that 'to' changes
+                            polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                             if (this.settings.rootItems.indexOf(id) != -1) this.settings.rootItems.splice(this.settings.rootItems.indexOf(id), 1);
                             this.renderItem(id);
+                            // expand all parent elements
+                            let toExpand = wasme.parentElement.parentElement.parentElement.parentElement;
+                            while (toExpand) {
+                                polymorph_core.items[toExpand.dataset.id].collapsed = false;
+                                this.renderItem(toExpand.dataset.id);
+                                toExpand = toExpand.parentElement.parentElement;
+                            }
                             wasme.focus();
                         }
                     } else {
@@ -371,10 +386,12 @@ polymorph_core.registerOperator("workflow", {
                         if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
                         delete this._parentOfCache[id];
                         let wasme = e.target;
-                        if (e.target.parentElement.parentElement.parentElement) {
+                        if (e.target.parentElement.parentElement.parentElement.parentElement) {
                             if (e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement) {
                                 let prev = e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
                                 this.orderedLink(prev, id);
+                                polymorph_core.fire("updateItem", { id: prev, sender: this }); // kick update on item so that 'to' changes
+                                polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                                 this.renderItem(id);
                                 wasme.focus();
                             } else {
@@ -486,12 +503,15 @@ polymorph_core.registerOperator("workflow", {
             </span>`);
             }
             span.children[0].children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
-            if (polymorph_core.items[id].collapsed) {
-                span.children[1].style.display = "none";
-                span.children[0].children[0].children[0].innerHTML = "&#x25B6;";
-            } else {
-                span.children[1].style.display = "block";
-                span.children[0].children[0].children[0].innerHTML = "&#x25BC;";
+            if (polymorph_core.items[id].to && Object.keys(polymorph_core.items[id].to).length) {
+
+                if (polymorph_core.items[id].collapsed) {
+                    span.children[1].style.display = "none";
+                    span.children[0].children[0].children[0].innerHTML = "&#x25B6;";
+                } else {
+                    span.children[1].style.display = "block";
+                    span.children[0].children[0].children[0].innerHTML = "&#x25BC;";
+                }
             }
             let nxtid;
             let parent;
@@ -528,6 +548,7 @@ polymorph_core.registerOperator("workflow", {
             this.rootdiv.querySelector(".cursorspan").style.display = "none";
             if (!polymorph_core.items[id].collapsed) {
                 for (let i in polymorph_core.items[id].to) {
+                    this._parentOfCache[i] = id;
                     this.renderItem(i, true);
                 }
             }
