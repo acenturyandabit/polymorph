@@ -1,5 +1,3 @@
-// we test a few things with commit hooks
-
 function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
     let options = {
         fireFirst: false,
