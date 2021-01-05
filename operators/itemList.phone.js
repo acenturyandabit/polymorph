@@ -315,7 +315,7 @@ if (isPhone()) {
                 property: "phonePrimeProperty",
                 label: "Propert(ies) to display in front (include as csv)"
             }),
-            phonePrimeProperty: new polymorph_core._option({
+            sortProperty: new polymorph_core._option({
                 div: this.dialogDiv,
                 type: "text",
                 object: this.settings,
