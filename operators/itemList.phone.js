@@ -43,12 +43,16 @@ if (isPhone()) {
                 .taskList p{
                     margin: 10px;
                     background: purple;
+                    position:relative;
                 }
                 .taskList p span{
                     padding: 10px;
-                    display: inline-block;
+                    display: inline-flex;
                 }
-                
+                .taskList p span:not(.closebtn){
+                    width: calc(100% - 80px);
+                    word-break: break-word;
+                }
                 .taskList .plusButton{
                     background: purple;
                     color:white;
@@ -79,8 +83,16 @@ if (isPhone()) {
                     border-top: 1px solid white;
                 }
                 .closebtn{
-                    float: right;
+                    position: absolute;
                     background: #cf0000;
+                    right: 0;
+                    height: calc(100% - 20px);
+                    justify-content: center;
+                    flex-direction: column;
+                }
+
+                .tasklist p .closebtn>span{
+                    padding: 0;
                 }
 
             </style>
@@ -113,7 +125,7 @@ if (isPhone()) {
         this.renderItem = (id) => {
             if (this.itemRelevant(id)) {
                 if (!itemCache[id]) {
-                    itemCache[id] = htmlwrap(`<p data-id="${id}"><span></span><span class="closebtn">&#xd7;</span></p>`);
+                    itemCache[id] = htmlwrap(`<p data-id="${id}"><span></span><span class="closebtn"><span>&#xd7;</span></span></p>`);
                     this.taskList.appendChild(itemCache[id]);
                 }
                 itemCache[id].children[0].innerText = this.settings.phonePrimeProperty.split(",").map(i => {
@@ -376,6 +388,7 @@ if (isPhone()) {
         //passive load means we need this
         this.reRenderEverything = () => {
             while (this.taskList.children.length > 1) {
+                delete itemCache[this.taskList.children[1].dataset.id];
                 this.taskList.children[1].remove();
             }
             this.renderedItems = [];
