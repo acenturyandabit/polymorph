@@ -390,6 +390,7 @@ if (isPhone()) {
         this.reRenderEverything();
 
         this.dialogUpdateSettings = function() {
+            this.reRenderEverything();
             // This is called when your dialog is closed. Use it to update your container!
         }
     });
