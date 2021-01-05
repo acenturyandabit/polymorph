@@ -54,7 +54,7 @@ if (isPhone()) {
                     word-break: break-word;
                 }
                 .taskList .plusButton{
-                    background: d9a6d9;
+                    background: #d9a6d9;
                     color:purple;
                     width: 50px;
                     height: 50px;
