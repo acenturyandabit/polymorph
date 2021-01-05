@@ -7937,6 +7937,26 @@ polymorph_core.registerOperator("workflow", {
     span[data-id] span[data-id]{
         margin-left: 10px;
     }
+    span.bottomControlPanel{
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        display: ${isPhone() ? "flex" : "none"};
+    }
+
+    span.bottomControlPanel button{
+        flex: 1 1 auto;
+        height: 40px;
+    }
+
+    span.bottomControlPanel button.pressed{
+        background:lightblue;
+    }
+    span.bottomControlPanel button.heavyPressed{
+        color:white;
+        background:darkblue;
+    }
+
     </style>
     <span class="cursorspan">
         <span class="toprow">
@@ -7945,6 +7965,15 @@ polymorph_core.registerOperator("workflow", {
             </span>
             <span contenteditable>&nbsp;</span>
         </span>
+    </span>
+    <span class="bottomControlPanel">
+        <button data-corrkey="shift" class="modifier">Shift</button>
+        <button data-corrkey="alt" class="modifier">Alt</button>
+        <button data-corrkey="ctrl" class="modifier">Ctrl</button>
+        <button data-corrkey="ArrowUp">Up</button>
+        <button data-corrkey="ArrowDown">Down</button>
+        <button data-corrkey="Enter">Enter</button>
+        <button data-corrkey="Tab">Tab</button>
     </span>
     `;
     this.rootdiv.style.color = "white";
@@ -8124,136 +8153,141 @@ polymorph_core.registerOperator("workflow", {
             polymorph_core.items[id]["_" + this.container.id + "_" + result[1]] = true;
         }
     }
-
-    this.rootdiv.addEventListener("keydown", (e) => {
-        if (e.target.matches(`span[data-id] span`)) {
-            let id = e.target.parentElement.parentElement.dataset.id;
-            if (e.key == "Backspace") {
-                if (e.target.innerText.length == 0 || e.target.innerText == "\n") { // odd newline issue
+    let modifiers = {
+        shift: false,
+        ctrl: false, // also command on mac, eventually
+        alt: false
+    };
+    let handleKeyEvent = (key, id) => {
+        let spanWithID = this.rootdiv.querySelector(`[data-id="${id}"]`);
+        switch (key) {
+            case "Backspace":
+                if (spanWithID.children[0].children[1].innerText.length == 0 || spanWithID.children[0].children[1].innerText == "\n") { // sometimes ghost <br>s hang around preventing deletion
                     //delete the item
                     unparent(id);
                     let theI = this.settings.rootItems.indexOf(id);
                     if (theI != -1) this.settings.rootItems.splice(theI, 1);
-                    if (focusOnPrev(e.target) == false) focusOnNext(e.target);
-                    if (e.target.parentElement.parentElement.parentElement.children.length == 1) {
+                    if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
+                    if (spanWithID.parentElement.children.length == 1) {
                         // remove the arrow
-                        e.target.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "";
+                        spanWithID.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "";
                     }
-                    if (!e.target.parentElement.parentElement.parentElement.parentElement && e.target.parentElement.parentElement.parentElement.children.length == 3) {
+                    if (!spanWithID.parentElement.parentElement && spanWithID.parentElement.children.length == 4) {
+                        // if this is a root item and it is about to be deleted, show the cursor span
                         this.rootdiv.querySelector(".cursorspan").style.display = "block";
                     }
-                    e.target.parentElement.parentElement.remove();
-                    delete polymorph_core.items[e.target.parentElement.parentElement.dataset.id][this.settings.filter];
+                    spanWithID.remove();
+                    delete polymorph_core.items[id][this.settings.filter];
                     container.fire("updateItem", {
-                        id: e.target.parentElement.parentElement.dataset.id,
+                        id: id,
                         sender: this
                     });
                     //focus on the previous item if exists, otherwise on next element
                 }
-            } else if (e.key == "Enter") {
+                break;
+            case "Enter":
                 let newID = this.createItem();
-                if (e.shiftKey) {
+                if (modifiers["shift"]) {
                     this.orderedLink(id, newID);
                     polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                 } else {
-                    //     span     span          span           div        span or null
-                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
-                        this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
-                        polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
+                    if (spanWithID.parentElement.parentElement) {
+                        // Not a root item
+                        this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
+                        polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
                     } else {
                         this.settings.rootItems.splice(this.settings.rootItems.indexOf(id) + 1, 0, newID);
                         polymorph_core.fire("updateItem", { id: container.id, sender: this });
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
-                e.preventDefault();
-
                 this.renderItem(newID);
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
-
-            } else if (e.key == "ArrowUp") {
-                if (e.altKey) {
+                break;
+            case "ArrowUp":
+                if (modifiers["alt"]) {
                     //move item up
-                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
+                    if (spanWithID.parentElement.parentElement) {
                         // not a root item
-                        if (e.target.parentElement.parentElement.previousElementSibling) {
-                            this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.previousElementSibling.dataset.id);
-                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
-                            this.renderItem(e.target.parentElement.parentElement.dataset.id);
-                            e.target.focus();
+                        if (spanWithID.previousElementSibling) {
+                            this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, id, spanWithID.previousElementSibling.dataset.id);
+                            polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
+                            this.renderItem(id);
+                            spanWithID.children[0].children[1].focus();
                         }
                     } else {
                         //could be a root item
-                        if (e.target.parentElement.parentElement.previousElementSibling.tagName != "STYLE") {
+                        if (spanWithID.previousElementSibling.dataset.id) { // this needs to be looked at
                             let previ = this.settings.rootItems.indexOf(id);
                             this.settings.rootItems.splice(previ, 1);
                             this.settings.rootItems.splice(previ - 1, 0, id);
                             this.renderItem(id);
-                            e.target.focus();
+                            spanWithID.children[0].children[1].focus();
                         }
                     }
-                } else if (e.ctrlKey) {
-                    setExpandedState(e.target.parentElement.parentElement, false);
+                } else if (modifiers["ctrl"]) {
+                    setExpandedState(spanWithID, false);
                 } else {
-                    focusOnPrev(e.target);
+                    focusOnPrev(spanWithID.children[0].children[1]);
                 }
-            } else if (e.key == "ArrowDown") {
-                if (e.altKey) {
-                    if (e.target.parentElement.parentElement.parentElement.parentElement) {
-                        if (e.target.parentElement.parentElement.nextElementSibling) {
-                            this.orderedLink(e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.dataset.id, e.target.parentElement.parentElement.nextElementSibling.dataset.id, true);
-                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
-                            this.renderItem(e.target.parentElement.parentElement.dataset.id);
-                            e.target.focus();
+                break;
+            case "ArrowDown":
+                if (modifiers["alt"]) {
+                    if (spanWithID.parentElement.parentElement) {
+                        if (spanWithID.nextElementSibling) {
+                            this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, id, spanWithID.nextElementSibling.dataset.id, true);
+                            polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
+                            this.renderItem(id);
+                            spanWithID.children[0].children[1].focus();
                         }
                     } else {
-                        if (e.target.parentElement.parentElement.nextElementSibling) {
+                        if (spanWithID.nextElementSibling) {
                             let previ = this.settings.rootItems.indexOf(id);
                             this.settings.rootItems.splice(previ, 1);
                             this.settings.rootItems.splice(previ + 1, 0, id);
                             this.renderItem(id);
-                            e.target.focus();
+                            spanWithID.children[0].children[1].focus();
                         }
                     }
-                } else if (e.ctrlKey) {
-                    setExpandedState(e.target.parentElement.parentElement, true);
+                } else if (modifiers["ctrl"]) {
+                    setExpandedState(spanWithID, true);
                 } else {
-                    focusOnNext(e.target);
+                    focusOnNext(spanWithID.children[0].children[1]);
                 }
-            } else if (e.key == "Tab") {
-                let cursorPos = e.target.getRootNode().getSelection().getRangeAt(0).startOffset;
-                if (cursorPos == 0) {
-                    e.preventDefault();
-                    if (e.shiftKey == false) {
-                        if (!e.target.parentElement.parentElement.previousElementSibling) return;
+                break;
+            case "Tab":
+                let cursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
+                if (cursorPos == 0 || isPhone()) {
+                    if (!modifiers["shift"]) {
+                        if (!spanWithID.previousElementSibling) return;
                         //clear the parentof cache
                         unparent(id);
-                        let wasme = e.target;
                         //kick the thing up four spaces
-                        if (e.target.parentElement.parentElement.previousElementSibling.dataset.id) {
-                            this.orderedLink(e.target.parentElement.parentElement.previousElementSibling.dataset.id, id);
-                            polymorph_core.fire("updateItem", { id: e.target.parentElement.parentElement.previousElementSibling.dataset.id, sender: this }); // kick update on item so that 'to' changes
+                        if (spanWithID.previousElementSibling.dataset.id) {
+                            this.orderedLink(spanWithID.previousElementSibling.dataset.id, id);
+                            polymorph_core.fire("updateItem", { id: spanWithID.previousElementSibling.dataset.id, sender: this }); // kick update on item so that 'to' changes
                             polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                             if (this.settings.rootItems.indexOf(id) != -1) this.settings.rootItems.splice(this.settings.rootItems.indexOf(id), 1);
                             this.renderItem(id);
                             // expand all parent elements
-                            let toExpand = wasme.parentElement.parentElement.parentElement.parentElement;
+                            let toExpand = spanWithID.parentElement.parentElement;
                             while (toExpand) {
                                 polymorph_core.items[toExpand.dataset.id].collapsed = false;
                                 this.renderItem(toExpand.dataset.id);
                                 toExpand = toExpand.parentElement.parentElement;
                             }
-                            wasme.focus();
+                            spanWithID.children[0].children[1].focus();
                         }
                     } else {
                         //clear the parentof cache
+                        let oldParent = this.parentOf(id);
                         unparent(id);
                         if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
                         delete this._parentOfCache[id];
-                        let wasme = e.target;
-                        if (e.target.parentElement.parentElement.parentElement.parentElement) {
-                            if (e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement) {
-                                let prev = e.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
+                        let wasme = spanWithID.children[0].children[1];
+                        if (spanWithID.parentElement.parentElement) {
+                            if (spanWithID.parentElement.parentElement.parentElement.parentElement) {
+                                let prev = spanWithID.parentElement.parentElement.parentElement.parentElement.dataset.id;
                                 this.orderedLink(prev, id);
                                 polymorph_core.fire("updateItem", { id: prev, sender: this }); // kick update on item so that 'to' changes
                                 polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
@@ -8265,13 +8299,26 @@ polymorph_core.registerOperator("workflow", {
                                 this.renderItem(id);
                                 wasme.focus();
                             }
+                            this.renderItem(oldParent); // remove arrow from parent if it was an only child
                         } else {
                             // it is already a root node, do nothing
-
                         }
+
                     }
                 }
+        }
+    }
 
+    this.rootdiv.addEventListener("keydown", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            let id = e.target.parentElement.parentElement.dataset.id;
+            modifiers["ctrl"] = e.ctrlKey;
+            modifiers["alt"] = e.altKey;
+            modifiers["shift"] = e.shiftKey;
+            handleKeyEvent(e.key, id);
+            // if enter or tab: 
+            if (e.key == "Enter" || e.key == "Tab") {
+                e.preventDefault();
             }
         } else if (e.target.matches("span.cursorspan span[contenteditable]")) {
             //create a new span right above it, and copy over the text, and create a new item
@@ -8286,9 +8333,34 @@ polymorph_core.registerOperator("workflow", {
         }
     })
 
+    let lastFocusedID = undefined;
+    let modifierButtons = Array.from(this.rootdiv.querySelector(".bottomControlPanel").children).filter(i => i.classList.contains("modifier"));
+    this.rootdiv.querySelector(".bottomControlPanel").addEventListener("click", (e) => {
+        if (e.target.matches("button")) {
+
+            if (e.target.classList.contains("modifier")) {
+                if (e.target.classList.contains("pressed")) {
+                    e.target.classList.remove("pressed");
+                    e.target.classList.add("heavyPressed");
+                } else if (e.target.classList.contains("heavyPressed")) {
+                    e.target.classList.remove("heavyPressed");
+                } else {
+                    e.target.classList.add("pressed");
+                }
+            } else {
+                if (lastFocusedID) {
+                    modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] = i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
+                    handleKeyEvent(e.target.dataset.corrkey, lastFocusedID);
+                }
+                modifierButtons.forEach(i => { if (i.classList.contains("pressed")) i.classList.remove("pressed") });
+            }
+        }
+    })
+
     this.rootdiv.addEventListener("focusin", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
-            let id = e.target.parentElement.dataset.id;
+            let id = e.target.parentElement.parentElement.dataset.id;
+            lastFocusedID = id;
             container.fire("focusItem", { id: id, sender: this });
         }
     });
@@ -8377,6 +8449,9 @@ polymorph_core.registerOperator("workflow", {
                     span.children[1].style.display = "block";
                     span.children[0].children[0].children[0].innerHTML = "&#x25BC;";
                 }
+            } else {
+                // maybe their child got removed
+                span.children[0].children[0].children[0].innerHTML = "";
             }
             let nxtid;
             let parent;
