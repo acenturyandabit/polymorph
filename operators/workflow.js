@@ -73,8 +73,7 @@ polymorph_core.registerOperator("workflow", {
         margin-left: 10px;
     }
     span.bottomControlPanel{
-        position: absolute;
-        bottom: 0;
+        flex: 0 0 5%
         width: 100%;
         display: ${isPhone() ? "flex" : "none"};
     }
@@ -93,12 +92,14 @@ polymorph_core.registerOperator("workflow", {
     }
 
     </style>
-    <span class="cursorspan">
-        <span class="toprow">
-            <span class="utils">
-                <span class="arrow">*</span><span class="bullet">&#8226;</span>
+    <span class="innerRoot" style="flex: 0 1 100%; min-height:0">${/* otherwise we get overflow issues*/ ""}
+        <span class="cursorspan">
+            <span class="toprow">
+                <span class="utils">
+                    <span class="arrow">*</span><span class="bullet">&#8226;</span>
+                </span>
+                <span contenteditable>&nbsp;</span>
             </span>
-            <span contenteditable>&nbsp;</span>
         </span>
     </span>
     <span class="bottomControlPanel">
@@ -112,6 +113,9 @@ polymorph_core.registerOperator("workflow", {
     </span>
     `;
     this.rootdiv.style.color = "white";
+    this.rootdiv.style.display = "flex";
+    this.rootdiv.style.flexDirection = "column";
+    this.innerRoot = this.rootdiv.querySelector(".innerRoot");
     this.orderedLink = (from, to, i, after) => {
         polymorph_core.link(from, to);
         if (!polymorph_core.items[from].toOrder) polymorph_core.items[from].toOrder = [];
@@ -198,7 +202,8 @@ polymorph_core.registerOperator("workflow", {
             sel.removeAllRanges();
             sel.addRange(range);
         });
-        //newP.focus();
+        newP.focus();
+        newP.click(); // for phones
     }
 
     let focusOnPrev = (etarget) => {
@@ -297,7 +302,12 @@ polymorph_core.registerOperator("workflow", {
         let spanWithID = this.rootdiv.querySelector(`[data-id="${id}"]`);
         switch (key) {
             case "Backspace":
-                if (spanWithID.children[0].children[1].innerText.length == 0 || spanWithID.children[0].children[1].innerText == "\n") { // sometimes ghost <br>s hang around preventing deletion
+                let bcursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
+                if (spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).endOffset != bcursorPos) bcursorPos = 1; // not 0
+                if ((bcursorPos == 0 && (spanWithID.parentElement.parentElement.dataset.id || spanWithID.previousElementSibling.dataset.id)) || (spanWithID.children[0].children[1].innerText.length == 0 || spanWithID.children[0].children[1].innerText == "\n")) { // sometimes ghost <br>s hang around preventing deletion
+                    let remainingText = spanWithID.children[0].children[1].innerText;
+                    let preParent = spanWithID.previousElementSibling;
+                    if (!(preParent && preParent.dataset.id)) preParent = spanWithID.parentElement.parentElement;
                     //delete the item
                     unparent(id);
                     let theI = this.settings.rootItems.indexOf(id);
@@ -307,26 +317,40 @@ polymorph_core.registerOperator("workflow", {
                         // remove the arrow
                         spanWithID.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "";
                     }
-                    if (!spanWithID.parentElement.parentElement && spanWithID.parentElement.children.length == 4) {
+                    if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 4) {
                         // if this is a root item and it is about to be deleted, show the cursor span
                         this.rootdiv.querySelector(".cursorspan").style.display = "block";
                     }
                     spanWithID.remove();
                     delete polymorph_core.items[id][this.settings.filter];
-                    container.fire("updateItem", {
-                        id: id,
-                        sender: this
-                    });
+                    container.fire("updateItem", { id: id, sender: this });
+                    if (preParent) {
+                        // attach the remaining text to the upper parent
+                        polymorph_core.items[preParent.dataset.id][this.settings.titleProperty] += remainingText;
+                        this.renderItem(preParent.dataset.id);
+                        focusOnElement(preParent.children[0].children[1], -1);
+                        container.fire("updateItem", { id: preParent.dataset.id, sender: this });
+                    }
                     //focus on the previous item if exists, otherwise on next element
                 }
                 break;
             case "Enter":
                 let newID = this.createItem();
+                // console.log the two parts
+                let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
+                let partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
+                let partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                if (partB.length) {
+                    polymorph_core.items[id][this.settings.titleProperty] = partA;
+                    this.renderItem(id);
+                    polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
+                    polymorph_core.items[newID][this.settings.titleProperty] = partB;
+                }
                 if (modifiers["shift"]) {
                     this.orderedLink(id, newID);
                     polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                 } else {
-                    if (spanWithID.parentElement.parentElement) {
+                    if (spanWithID.parentElement.parentElement.dataset.id) {
                         // Not a root item
                         this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, newID, polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id) + 1);
                         polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
@@ -342,7 +366,7 @@ polymorph_core.registerOperator("workflow", {
             case "ArrowUp":
                 if (modifiers["alt"]) {
                     //move item up
-                    if (spanWithID.parentElement.parentElement) {
+                    if (spanWithID.parentElement.parentElement.dataset.id) {
                         // not a root item
                         if (spanWithID.previousElementSibling) {
                             this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, id, spanWithID.previousElementSibling.dataset.id);
@@ -368,7 +392,7 @@ polymorph_core.registerOperator("workflow", {
                 break;
             case "ArrowDown":
                 if (modifiers["alt"]) {
-                    if (spanWithID.parentElement.parentElement) {
+                    if (spanWithID.parentElement.parentElement.dataset.id) {
                         if (spanWithID.nextElementSibling) {
                             this.orderedLink(spanWithID.parentElement.parentElement.dataset.id, id, spanWithID.nextElementSibling.dataset.id, true);
                             polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
@@ -406,7 +430,7 @@ polymorph_core.registerOperator("workflow", {
                             this.renderItem(id);
                             // expand all parent elements
                             let toExpand = spanWithID.parentElement.parentElement;
-                            while (toExpand) {
+                            while (toExpand.dataset.id) {
                                 polymorph_core.items[toExpand.dataset.id].collapsed = false;
                                 this.renderItem(toExpand.dataset.id);
                                 toExpand = toExpand.parentElement.parentElement;
@@ -420,7 +444,7 @@ polymorph_core.registerOperator("workflow", {
                         if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
                         delete this._parentOfCache[id];
                         let wasme = spanWithID.children[0].children[1];
-                        if (spanWithID.parentElement.parentElement) {
+                        if (spanWithID.parentElement.parentElement.dataset.id) {
                             if (spanWithID.parentElement.parentElement.parentElement.parentElement) {
                                 let prev = spanWithID.parentElement.parentElement.parentElement.parentElement.dataset.id;
                                 this.orderedLink(prev, id);
@@ -450,6 +474,8 @@ polymorph_core.registerOperator("workflow", {
             modifiers["ctrl"] = e.ctrlKey;
             modifiers["alt"] = e.altKey;
             modifiers["shift"] = e.shiftKey;
+            modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] |= i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
+            modifierButtons.forEach(i => { if (i.classList.contains("pressed")) i.classList.remove("pressed") });
             handleKeyEvent(e.key, id);
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
@@ -604,7 +630,7 @@ polymorph_core.registerOperator("workflow", {
                 parent.parentElement.children[0].children[0].children[0].innerHTML = "&#x25BC;";
             } else if (this.settings.rootItems.indexOf(id) != -1) {
                 nxtid = this.settings.rootItems[this.settings.rootItems.indexOf(id) + 1];
-                parent = this.rootdiv;
+                parent = this.innerRoot;
             } else {
                 // parent doesnt exist yet maybe
                 // do nothing
