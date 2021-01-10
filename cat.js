@@ -7972,7 +7972,7 @@ polymorph_core.registerOperator("workflow", {
     }
 
     </style>
-    <span class="innerRoot" style="flex: 0 1 100%; min-height:0">${/* otherwise we get overflow issues*/ ""}
+    <span class="innerRoot" style="flex: 0 1 100%; min-height:0; overflow:auto">${/* otherwise we get overflow issues*/ ""}
         <span class="cursorspan">
             <span class="toprow">
                 <span class="utils">
