@@ -8378,7 +8378,7 @@ polymorph_core.registerOperator("workflow", {
     let modifierButtons = Array.from(this.rootdiv.querySelector(".bottomControlPanel").children).filter(i => i.classList.contains("modifier"));
     this.rootdiv.querySelector(".bottomControlPanel").addEventListener("click", (e) => {
         if (e.target.matches("button")) {
-
+            let oldFocus = saveFocus();
             if (e.target.classList.contains("modifier")) {
                 if (e.target.classList.contains("pressed")) {
                     e.target.classList.remove("pressed");
@@ -8388,6 +8388,7 @@ polymorph_core.registerOperator("workflow", {
                 } else {
                     e.target.classList.add("pressed");
                 }
+                restoreFocus(oldFocus);
             } else {
                 if (lastFocusedID) {
                     modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] = i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
@@ -8449,6 +8450,7 @@ polymorph_core.registerOperator("workflow", {
         var selection = this.rootdiv.getRootNode().getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
+        if (root.firstChild) root.click(); // refocus on phone as well
     }
 
     var oldFocus;
