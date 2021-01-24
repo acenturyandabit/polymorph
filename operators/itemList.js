@@ -342,6 +342,7 @@ if (!isPhone()) {
                     id: e.target.parentElement.dataset.id,
                     sender: this
                 });
+                this.renderItem(d.id); // actually remove the item
             }
         })
 
