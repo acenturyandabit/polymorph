@@ -65,7 +65,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 previousHandle.add(fob);
                 me.itemPointerCache[id] = previousHandle;
                 fob.node.appendChild(htmlwrap(`<div style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'><p contenteditable class="tta"></p><p style="background:white; color:black" contenteditable class="ttb"></p></div>`));
-                //we will need to force link in from all existing items, because.
+                //we will need to force link in from all existing items, in case items point to the item
                 for (let i in me.itemPointerCache) {
                     if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                         // render the link
@@ -75,6 +75,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                             me.enforceLine(i, id);
                         }
                     }
+                }
+            }
+            // Also remove links that are now invalid
+            for (let i in me.fromcache[id]) {
+                if (!polymorph_core.items[i].to[id]) {
+                    if (me.activeLines[i] && me.activeLines[i][id]) me.activeLines[i][id].remove();
+                    delete me.activeLines[i][id];
+                    delete me.fromcache[id][i];
                 }
             }
             //actually update, only if necessary, to save processor time.
@@ -168,7 +176,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
 
             if (polymorph_core.items[id].to) {
                 for (let i in polymorph_core.items[id].to) {
-                    if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                    if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                         if (i == me.prevFocusID || id == me.prevFocusID) {
                             me.enforceLine(id, i, "red");
                         } else {
@@ -226,6 +234,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             me.enforceLine(start, end);
         }
     };
+
+    me.removeLine = (start, end) => {
+        if (me.fromcache[end] && me.fromcache[end][start]) {
+            me.activeLines[start][end].remove();
+            delete me.fromcache[end][start];
+            delete me.activeLines[start][end];
+        }
+    }
 
     me.redrawLines = function(ci, style = "black") {
         for (let j in me.activeLines[ci]) {

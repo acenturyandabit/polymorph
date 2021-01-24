@@ -301,6 +301,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             //Show blank
         } else {
+            if (!polymorph_core.items[this.settings.currentViewName][this.settings.filter]) polymorph_core.items[this.settings.currentViewName][this.settings.filter] = true;
             if (!polymorph_core.items[this.settings.currentViewName] ||
                 !polymorph_core.items[this.settings.currentViewName].itemcluster ||
                 !polymorph_core.items[this.settings.currentViewName].itemcluster.viewName) {
@@ -353,13 +354,14 @@ polymorph_core.registerOperator("itemcluster2", {
                         if (this.arrangeItem) this.arrangeItem(i);
                         //position the item appropriately.
                     }
-                }/*
-                for (i in polymorph_core.items) {
-                    if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
-                        if (this.arrangeItem) this.arrangeItem(i);
-                        //twice so that all lines show up. How efficient.
-                    }
-                }*/
+                }
+                /*
+                                for (i in polymorph_core.items) {
+                                    if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData) {
+                                        if (this.arrangeItem) this.arrangeItem(i);
+                                        //twice so that all lines show up. How efficient.
+                                    }
+                                }*/
             }
 
             this.viewAdjust();
@@ -977,7 +979,10 @@ polymorph_core.registerOperator("itemcluster2", {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewName) {
                 if (this.settings.filter && !(polymorph_core.items[i][this.settings.filter])) continue; //apply filter to views
                 //dont recreate viewdata if it exists already.
-                if (!it.itemcluster.viewData[i]) it.itemcluster.viewData[i] = { x: 0, y: 0 };
+                if (!it.itemcluster.viewData[i]) {
+                    let vb = this.svg.viewbox();
+                    it.itemcluster.viewData[i] = { x: vb.x + Math.random() * vb.width, y: vb.y + Math.random() * vb.height };
+                }
                 if (this.settings.filter) {
                     it[this.settings.filter] = true;
                 }
@@ -1011,7 +1016,7 @@ polymorph_core.registerOperator("itemcluster2", {
         for (let i in this.activeLines) {
             for (let j in this.activeLines[i]) {
                 if (i == id || j == id) { // this could STILL be done better
-                    this.toggleLine(i, j);
+                    this.removeLine(i, j);
                 }
             }
         }
@@ -1214,6 +1219,18 @@ polymorph_core.registerOperator("itemcluster2", {
             object: this.settings,
             property: "focusExtendProp",
             label: "Extened property to display..."
+        }),
+        resetViewPort: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "button",
+            label: "Reset viewport",
+            fn: () => {
+                let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
+                ic.scale = 1;
+                ic.cx = 0
+                ic.cy = 0;
+                this.viewAdjust();
+            }
         })
     }
     this.showDialog = () => {
