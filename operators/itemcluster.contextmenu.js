@@ -1,5 +1,3 @@
-
-
 function _itemcluster_extend_contextmenu() {
     ///////////////////////////////////////////////////////////////////////////////////////
     //Various context menus
@@ -9,13 +7,14 @@ function _itemcluster_extend_contextmenu() {
         if (!e.target.matches("g[data-id] *")) {
             //if (e.target.tagNathis.toLowerCase() == "svg" || e.target == this.tempTR.node) {
             centerXY = this.mapPageToSvgCoords(e.pageX, e.pageY);
-            return true;//only activate on clicks to the background.  
+            return true; //only activate on clicks to the background.  
         }
     }
     this.rootcontextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
+        <li class="hierarchy horizontal">Arrange in horizontal hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
         <li class="hierarchy biradial">Arrange in biradial hierarchy</li>
         <li class="search">Search
@@ -49,22 +48,22 @@ function _itemcluster_extend_contextmenu() {
         }
     })
     this.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
-        let rect = this.itemSpace.getBoundingClientRect();
-        for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
-                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
-                this.arrangeItem(i);
+            let rect = this.itemSpace.getBoundingClientRect();
+            for (let i in polymorph_core.items) {
+                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
+                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
+                    this.arrangeItem(i);
+                }
             }
-        }
-        for (let i in polymorph_core.items) {
-            //second update to fix lines; also alert everyone of changes.
-            this.container.fire("updateItem", {
-                id: i
-            });
-        }
-    })
-    //hierarchy buttons
+            for (let i in polymorph_core.items) {
+                //second update to fix lines; also alert everyone of changes.
+                this.container.fire("updateItem", {
+                    id: i
+                });
+            }
+        })
+        //hierarchy buttons
 
     let generateHierarchy = () => {
         //get position of items, and the links to other items
@@ -85,23 +84,23 @@ function _itemcluster_extend_contextmenu() {
 
         //make sure links are relevant (point to items we care about) and directed (not bidirectional)
         visibleItems.forEach((v, _i) => {
-            if (v.children) {
-                for (let i = 0; i < v.children.length; i++) {
-                    let pos = visibleItemIds.indexOf(v.children[i]);
-                    if (pos == -1) {
-                        v.children.splice(i, 1);
-                        i--;
-                    } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) {//bidirectional links
-                        v.children.splice(i, 1);
-                        i--;
-                    } else {
-                        //assign the to item a parent
-                        visibleItems[pos].parents.push(_i);
+                if (v.children) {
+                    for (let i = 0; i < v.children.length; i++) {
+                        let pos = visibleItemIds.indexOf(v.children[i]);
+                        if (pos == -1) {
+                            v.children.splice(i, 1);
+                            i--;
+                        } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) { //bidirectional links
+                            v.children.splice(i, 1);
+                            i--;
+                        } else {
+                            //assign the to item a parent
+                            visibleItems[pos].parents.push(_i);
+                        }
                     }
                 }
-            }
-        })
-        //figure out the level of the item (its level in the hierarchy)
+            })
+            //figure out the level of the item (its level in the hierarchy)
         let queue = [];
         let roots = [];
         for (let i = 0; i < visibleItems.length; i++) {
@@ -167,11 +166,11 @@ function _itemcluster_extend_contextmenu() {
         //sort children as well
         let indexedOrder = visibleItems.map((v) => v.id);
         visibleItems.forEach((v) => {
-            if (v.children) {
-                v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
-            }
-        })
-        //calculate widths
+                if (v.children) {
+                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
+                }
+            })
+            //calculate widths
         let getWidth = (id) => {
             if (id == '0') return 0;
             let c = visibleItems[indexedOrder.indexOf(id)].children;
@@ -216,6 +215,66 @@ function _itemcluster_extend_contextmenu() {
 
         for (let i = 0; i < visibleItems.length; i++) {
             if (visibleItems[i].parent == undefined) currentx += render(visibleItems[i], currentx, currenty);
+        }
+    }
+
+    let cartesianHierarchyY = (e, visibleItems) => {
+        //sort for rendering
+        visibleItems.sort((a, b) => {
+            return (a.level - b.level) + (a.level == b.level) * (a.y - b.y);
+        });
+        //sort children as well
+        let indexedOrder = visibleItems.map((v) => v.id);
+        visibleItems.forEach((v) => {
+                if (v.children) {
+                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
+                }
+            })
+            //calculate widths
+        let getWidth = (id) => {
+            if (id == '0') return 0;
+            let c = visibleItems[indexedOrder.indexOf(id)].children;
+            if (!c || !c.length) {
+                return Number(/\d+/.exec(this.itemPointerCache[id].children()[1].height())) + 10;
+            } else {
+                let sum = 0;
+                for (let i = 0; i < c.length; i++) {
+                    if (visibleItems[indexedOrder.indexOf(c[i])].parent == id) sum = sum + getWidth(c[i]);
+                }
+                let alt = Number(/\d+/.exec(this.itemPointerCache[id].children()[1].height())) + 10;
+                if (sum < alt) sum = alt;
+                return sum;
+            }
+        }
+        for (let i = 0; i < visibleItems.length; i++) {
+            //this needs to be optimised with caching.
+            visibleItems[i].height = getWidth(visibleItems[i].id);
+        }
+
+        // calculate total width
+        let th = 0;
+        for (let i = 0; i < visibleItems.length; i++) {
+            if (visibleItems[i].parent == undefined) th += visibleItems[i].height;
+            else break;
+        }
+        let rect = this.itemSpace.getBoundingClientRect();
+        let currenty = e.clientX - rect.top - th / 2;
+        let currentx = e.clientX - rect.left;
+
+        let render = (itm, tx, ty) => { // itm is a visibleItem
+            if (itm.id != '0') {
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].x = tx;
+                polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].y = ty + (itm.height - Number(/\d+/ig.exec(this.itemPointerCache[itm.id].first().height))) / 2;
+            }
+            let cty = ty;
+            for (let i = 0; i < itm.children.length; i++) {
+                if (visibleItems[indexedOrder.indexOf(itm.children[i])].parent == itm.id) cty += render(visibleItems[indexedOrder.indexOf(itm.children[i])], tx + 200, cty);
+            }
+            return itm.height;
+        }
+
+        for (let i = 0; i < visibleItems.length; i++) {
+            if (visibleItems[i].parent == undefined) currenty += render(visibleItems[i], currentx, currenty);
         }
     }
     let rings = [];
@@ -316,7 +375,7 @@ function _itemcluster_extend_contextmenu() {
                 radii[lastLevel] = Math.max(radii[previous] + 200, 200 / minTheta);
                 previous = lastLevel;
                 lastLevel = visibleItems[i].level;
-                minTheta = Math.PI * 3;//reset
+                minTheta = Math.PI * 3; //reset
                 lastLevelZero = i;
             } else {
                 let tdeviation = (visibleItems[i - 1].angle + visibleItems[i].angle) / 2;
@@ -371,8 +430,7 @@ function _itemcluster_extend_contextmenu() {
             if (v.parent) {
                 let vp = visibleItems[indexedOrder.indexOf(v.parent)];
                 v.angle = Math.atan2(v.y - vp.y, v.x - vp.x);
-            }
-            else {
+            } else {
                 v.angle = Math.atan2(v.y, v.x);
             }
             if (v.angle < 0) v.angle += Math.PI * 2;
@@ -384,28 +442,28 @@ function _itemcluster_extend_contextmenu() {
         //render
 
         let binarySolve = (start, end, f, epsilon = 0.1) => {
-            let pme, me;
-            let cycleCount = 0;
-            me = 2 * epsilon;
-            pme = 0;
-            while (Math.abs(me) > epsilon && cycleCount < 100) { //ack
-                pme = me;
-                me = f((start + end) / 2);
-                if (me < 0) {
-                    start = (start + end) / 2;
-                } else {
-                    end = (start + end) / 2
-                }//there's another case where both are negative and that should throw a phat exception...
-                if (isNaN(me)) return NaN;//error...
-                cycleCount++;
+                let pme, me;
+                let cycleCount = 0;
+                me = 2 * epsilon;
+                pme = 0;
+                while (Math.abs(me) > epsilon && cycleCount < 100) { //ack
+                    pme = me;
+                    me = f((start + end) / 2);
+                    if (me < 0) {
+                        start = (start + end) / 2;
+                    } else {
+                        end = (start + end) / 2
+                    } //there's another case where both are negative and that should throw a phat exception...
+                    if (isNaN(me)) return NaN; //error...
+                    cycleCount++;
+                }
+                if (cycleCount == 100) {
+                    return start - 1;
+                }
+                return (start + end) / 2;
             }
-            if (cycleCount == 100) {
-                return start - 1;
-            }
-            return (start + end) / 2;
-        }
-        //calculate radii - from the bottom up
-        //let maxLvl = visibleItems[visibleItems.length - 1].level;
+            //calculate radii - from the bottom up
+            //let maxLvl = visibleItems[visibleItems.length - 1].level;
         const itemRadius = 100;
         for (let i = visibleItems.length - 1; i >= 0; i--) {
 
@@ -484,6 +542,8 @@ function _itemcluster_extend_contextmenu() {
             radialHierarchy(e, visibleItems);
         } else if (e.target.classList.contains('biradial')) {
             biradialHierarchy(e, visibleItems);
+        } else if (e.target.classList.contains("horizontal")) {
+            cartesianHierarchyY(e, visibleItems);
         } else {
             cartesianHierarchy(e, visibleItems);
         }
@@ -556,6 +616,7 @@ function _itemcluster_extend_contextmenu() {
     this.itemContextMenu = contextMenuManager.registerContextMenu(
         `<li class="deleteButton">Delete</li>
         <li class="cascadebtn">Cascade by punctuation</li>
+        <li class="hierarchybtn">Hierarchy by punctuation</li>
         <li class="scramble">Scramble</li>
         <li class="collcon">Collect connected items</li>
         <li class="cpybtn">Copy (between views)</li>
@@ -704,14 +765,21 @@ function _itemcluster_extend_contextmenu() {
                 this.arrangeItem(v);
             })
         });
+
+    function segment(innerText) {
+        innerText = innerText.replace(/(\d+?)\./g, "*$* $1\\.");
+        innerText = innerText.replace(/(((?<!\\)\.|\?|\n)+)/g, "$1*$*");
+        innerText = innerText.replace(/\n/g, "");
+        innerText = innerText.split(/\*\$\*/g);
+        innerText = innerText.filter(i => i.length);
+        return innerText;
+    }
     this.itemContextMenu
         .querySelector(".cascadebtn")
         .addEventListener("click", e => {
             let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
-            innerText = innerText.replace(/([\.\?\n]+)/g, "$1*$*");
-            innerText = innerText.replace(/\n/g, "");
-            innerText = innerText.split(/\*\$\*/g);
-            innerText = innerText.filter(i => i.length);
+            innerText = segment(innerText);
+
             //filter out newlinefullstops; todo filter out numbered lists?
             //quick adjustement since lookbehinds are not a thing yet
             /*for (let i = 0; i < innerText.length; i++) {
@@ -734,8 +802,7 @@ function _itemcluster_extend_contextmenu() {
             let newIDs = innerText.map(i => {
                 let newItem = {
                     itemcluster: {
-                        viewData: {
-                        }
+                        viewData: {}
                     },
                     to: {}
                 };
@@ -748,6 +815,52 @@ function _itemcluster_extend_contextmenu() {
                 this.container.fire("updateItem", { id: newID, sender: this });
                 return newID;
             });
+            this.arrangeItem(this.contextedElement.dataset.id);
+            newIDs.forEach(i => {
+                this.arrangeItem(i);
+            })
+            this.itemContextMenu.style.display = "none";
+        });
+
+
+    this.itemContextMenu
+        .querySelector(".hierarchybtn")
+        .addEventListener("click", e => {
+            let innerText = polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp];
+            innerText = segment(innerText)
+                //filter out newlinefullstops; todo filter out numbered lists?
+                //quick adjustement since lookbehinds are not a thing yet
+                /*for (let i = 0; i < innerText.length; i++) {
+                    if (innerText[i][0] == '.' || innerText[i][0] == '?') {
+                        if (i > 0) {
+                            innerText[i - 1] += innerText[i][0];
+                        }
+                    }
+                }
+                for (let i = 0; i < innerText.length; i++)if (innerText[i][0] == '\n') innerText[i] = innerText[i].slice(1);// also slices newline chars
+                */
+                //first
+            polymorph_core.items[this.contextedElement.dataset.id][this.settings.textProp] = innerText.shift();
+            //create a bunch of items
+            let VDT = polymorph_core.items[this.contextedElement.dataset.id].itemcluster.viewData[this.settings.currentViewName];
+            let lastItem = polymorph_core.items[this.contextedElement.dataset.id];
+            if (!lastItem.to) lastItem.to = {};
+            let newIDs = innerText.map((i, ii) => {
+                let newItem = {
+                    itemcluster: {
+                        viewData: {}
+                    },
+                    to: {}
+                };
+                newItem[this.settings.textProp] = i;
+                newItem[this.settings.filter] = true;
+                newItem.itemcluster.viewData[this.settings.currentViewName] = { x: VDT.x + Math.cos(ii / innerText.length * Math.PI * 2) * 200, y: VDT.y + Math.sin(ii / innerText.length * Math.PI * 2) * 200 };
+                newID = polymorph_core.insertItem(newItem);
+                polymorph_core.items[this.contextedElement.dataset.id].to[newID] = true;
+                this.container.fire("updateItem", { id: newID, sender: this });
+                return newID;
+            });
+            this.container.fire("updateItem", { id: this.contextedElement.dataset.id, sender: this });
             this.arrangeItem(this.contextedElement.dataset.id);
             newIDs.forEach(i => {
                 this.arrangeItem(i);
@@ -797,7 +910,7 @@ function _itemcluster_extend_contextmenu() {
             polymorph_core.items[
                 this.contextedElement.dataset.id
             ].itemcluster.viewName = polymorph_core.items[
-            this.contextedElement.dataset.id
+                this.contextedElement.dataset.id
             ][this.settings.textProp];
             this.switchView(this.contextedElement.dataset.id, true, true);
             this.itemContextMenu.style.display = "none";
@@ -811,7 +924,7 @@ function _itemcluster_extend_contextmenu() {
     this.trayContextMenu.querySelector(".delete").addEventListener("click", (e) => {
         if (this.settings.filter) delete polymorph_core.items[this.trayContextedElement][this.settings.filter];
         else {
-            polymorph_core.items[this.trayContextedElement].itemcluster.viewData = {};//nerf it completely
+            polymorph_core.items[this.trayContextedElement].itemcluster.viewData = {}; //nerf it completely
         }
         this.container.fire("updateItem", { id: this.trayContextedElement });
         this.trayContextMenu.style.display = "none";

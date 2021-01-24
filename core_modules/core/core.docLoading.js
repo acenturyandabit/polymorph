@@ -1,4 +1,59 @@
 (() => {
+
+    //navigator.serviceWorker.controller.postMessage("not even ready yet");
+
+
+    /*let checkForURLConflict=()=>{}
+    navigator.serviceWorker.register('core_modules/core/core.workersync.js', {scope: './'}).then(function(registration) {
+        if (registration.active){
+            console.log("yay im active");
+            //navigator.serviceWorker.controller.postMessage("hello world!");
+        }
+    });*/
+    let instance_uuid = polymorph_core.guid();
+    const broadcast = new BroadcastChannel('channel1');
+    let is_challenger = false;
+    let alt_alive_warning = document.createElement("div");
+    alt_alive_warning.innerHTML = `
+        <div style="padding:10vw">
+            <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
+        </div>
+    `;
+    alt_alive_warning.style.cssText = `
+    display:none;
+    place-items: center center;
+    position:absolute;
+    height:100%;
+    width:100%;
+    z-index:2;
+    background: rgba(0,0,0,0.5);
+    color:white;
+    text-align:center;
+    `;
+    document.body.appendChild(alt_alive_warning);
+    broadcast.onmessage = (event) => {
+        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
+            if (is_challenger) {
+                alt_alive_warning.style.display = "grid";
+                // seppuku
+            } else {
+                broadcast.postMessage({
+                    url: window.location.href,
+                    uuid: instance_uuid
+                })
+            }
+        }
+    };
+
+    function checkForURLConflict() {
+        broadcast.postMessage({
+            url: window.location.href,
+            uuid: instance_uuid
+        })
+        is_challenger = true;
+        setTimeout(() => is_challenger = false, 500);
+    }
+    checkForURLConflict();
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
@@ -40,7 +95,9 @@
         } else return false;
     }
 
-    polymorph_core.handleURL = async function () {
+    let lfNotWorkingErr = false;
+
+    polymorph_core.handleURL = async function() {
         let params = new URLSearchParams(window.location.search);
         polymorph_core.resetDocument();
         let sourcesToAdd = [];
@@ -50,13 +107,14 @@
             for (let i in polymorph_core.saveSources) {
                 if (polymorph_core.saveSourceOptions[i].canHandle) {
                     let result = await polymorph_core.saveSourceOptions[i].canHandle(params);
-                    if (result) {
+                    if (result && result.id && result.data) {
                         polymorph_core.currentDocID = result.id;
                         sourcesToAdd.push({
                             load: true,
                             save: true,
+                            RTactive: true, // not ideal but let's see
                             type: i,
-                            data: result.source
+                            data: result.data
                         });
                     }
                 }
@@ -68,23 +126,22 @@
             let loc = window.location.href
             loc = loc.replace(/\?o/, "");
             history.pushState({}, "", loc);
-            // this is antiquated behaviour and will be deprecated in future.
+            // this is somewhat useful as an emergency fallback.
         }
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
             polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
             //add a local save source automatically; and then the user can add more save sources if they'd like
             polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
-            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                {
-                    load: true,
-                    save: true,
-                    type: 'lf',
-                    data: {
-                        id: polymorph_core.currentDocID
-                    }
+            polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                load: true,
+                save: true,
+                type: 'lf',
+                data: {
+                    id: polymorph_core.currentDocID
                 }
-            );
+            });
+            if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
             //Show the loading operator
@@ -92,6 +149,7 @@
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
+            checkForURLConflict();
 
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
@@ -105,43 +163,82 @@
 
             if (polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length == 0) {
                 if (confirm("Warning! This document doesn't have any save sources attached to it, so all your work will be lost. Would you like to add a local storage source? [OK] Otherwise, please go to file>preferences to manually add a save source.")) {
-                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(
-                        {
-                            load: true,
-                            save: true,
-                            type: 'lf',
-                            data: {
-                                id: polymorph_core.currentDocID
-                            }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
                         }
-                    )
+                    })
                 };
             }
             polymorph_core.saveUserData();
 
-            let successfulLoads = 0;
+            let noloadpanicask = () => {
+                if (confirm("There doesn't seem to be a valid document here. Press OK to create a new document with this name, or Cancel to be taken to a new document with a different name.")) {
+                    //create a new doc here
+                    if (lfNotWorkingErr) {
+                        alert("Polymorph has run into a critical error: LFNOTWORKING. Please report this to steeven.liu2@gmail.com.");
+                        return;
+                    }
+                    polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push({
+                        load: true,
+                        save: true,
+                        type: 'lf',
+                        data: {
+                            id: polymorph_core.currentDocID
+                        }
+                    })
+                    polymorph_core.saveUserData();
+                    lfNotWorkingErr = true;
+                    polymorph_core.handleURL();
+                    //todo: hard panic if this has been called twice
+                } else {
+                    // just go home
+                    window.location.href = window.location.origin + window.location.pathname + "?o";
+                }
+            }
+
+            let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
+                let errorMessage = undefined;
                 if (!polymorph_core.saveSources[i.type]) {
-                    if (confirm(`Ack! Looks like the ${i.type} save source is not working right now. Remove it?`)) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is not working right now. Remove it?`;
+                }
+
+                if (!errorMessage && !i.data) {
+                    errorMessage = `Ack! Looks like the ${i.type} save source is misconfigured. Remove it?`;
+                }
+
+                if (errorMessage) {
+                    if (confirm(errorMessage)) {
                         polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.splice(u, 1);
                         polymorph_core.saveUserData();
                         u--;
+                        loadAttemptsRemaining--;
+                        if (loadAttemptsRemaining == 0) {
+                            noloadpanicask();
+                        }
                     };
                     continue;
                 } else {
                     let newInstance = new polymorph_core.saveSources[i.type](i);
                     polymorph_core.saveSourceInstances.push(newInstance);
                     if (i.load) {
-                        (async () => {
+                        (async() => {
                             try {
-
                                 d = await newInstance.pullAll();
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                loadAttemptsRemaining--;
+                                if (loadAttemptsRemaining == 0) {
+                                    noloadpanicask();
+                                }
+                                throw (e);
                             }
-
                         })();
                     }
                 }
@@ -162,7 +259,7 @@
     }
 
     //This is called by polymorph_core.handleURL and the filescreen.
-    polymorph_core.sanityCheckDoc = function (data) {
+    polymorph_core.sanityCheckDoc = function(data) {
         //if none then create new
         if (!data) {
             data = polymorph_core.templates.blankNewDoc;
@@ -213,14 +310,14 @@
         //make sure all items have an _lu_s property.
         for (let i in data) {
             if (!data[i]._lu_) {
-                data[i]._lu_ = Date.now();
+                data[i]._lu_ = 0; // so as to not overwrite other stuff if initially it was null
             }
         }
 
         return data;
     }
 
-    polymorph_core.resetDocument = function () {
+    polymorph_core.resetDocument = function() {
         polymorph_core.items = {};
         polymorph_core.containers = {};
         for (let i in polymorph_core.rects) {
@@ -239,7 +336,7 @@
     polymorph_core.saveSources = {};
     polymorph_core.saveSourceOptions = {};
 
-    polymorph_core.registerSaveSource = function (id, f, ops) {
+    polymorph_core.registerSaveSource = function(id, f, ops) {
         polymorph_core.saveSources[id] = f;
         polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
@@ -248,7 +345,7 @@
 
     }
 
-    polymorph_core.switchView = function (view) {
+    polymorph_core.switchView = function(view) {
         polymorph_core.items._meta.currentView = view;
         while (document.body.querySelector(".rectspace").children.length) document.body.querySelector(".rectspace").children[0].remove();
         document.body.querySelector(".rectspace").appendChild(polymorph_core.rects[polymorph_core.items._meta.currentView].outerDiv);
@@ -257,7 +354,7 @@
     };
 
 
-    polymorph_core.integrateData = function (data, source) { // source: string
+    polymorph_core.integrateData = function(data, source) { // source: string
         //sanity check, decompress etc the data
         data = polymorph_core.sanityCheckDoc(data);
         //ensure the data id is matching; if not then @ the user
@@ -281,6 +378,7 @@
             }
         }
         if (!polymorph_core.rects) polymorph_core.rects = {};
+        polymorph_core.rectLoadCallbacks = {}; // clear this rl cache
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
             if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
@@ -295,6 +393,7 @@
                 polymorph_core.containers[i] = new polymorph_core.container(i);
             }
         }
+        polymorph_core.fire('mergeBegin'); // for save sources to recognise that we are starting a merge.
 
         for (let i in data) {
             //shouldnt hurt to fire update on other items
@@ -304,7 +403,7 @@
         polymorph_core.switchView(polymorph_core.items._meta.currentView);
         polymorph_core.datautils.linkSanitize();
         polymorph_core.updateSettings(true);
-
+        polymorph_core.fire('mergeComplete');
     }
 
 })();
@@ -325,13 +424,17 @@ polymorph_core.templates = {
             "_lu_": 0,
             "currentView": "default_container",
             "globalContextMenuOptions": ["Style::Item Background::item.edit(item.style.background)", "Style::Text color::item.edit(item.style.color)"]
-        }, "default_container": {
+        },
+        "default_container": {
             "_rd": { "x": 0, "f": 0, "ps": 1, "s": "default_operator" },
             "_lu_": 0
         },
         "default_operator": {
             "_od": {
-                "t": "welcome", "data": {}, "inputRemaps": {}, "outputRemaps": {},
+                "t": "welcome",
+                "data": {},
+                "inputRemaps": {},
+                "outputRemaps": {},
                 "tabbarName": "Home",
                 "p": "default_container"
             },

@@ -32,3 +32,11 @@ An undirected link is indicated by a->b and b->a both being enforced.
 - Ordered children (because e.g. workflowy and you can always go back to unordered)
 - Enforce from-to pairs? 
 - Get core in on the gig (anything that looks like a from-to pair will automatically be treated as a link list)
+
+
+-- categorical to vs dependent to are different and can/should be stored differently?
+-- things can belong in different categories. how to show this?
+--- bunches of slides containing sub-slides which are atoms of information, and can be arranged as such.
+--- tag slides, then have slides that contain their tagged slides.
+--- tables within slides? how to? if A:B and C:B, then can make a table with A vs C on B. 
+recursive, colon separated tags.

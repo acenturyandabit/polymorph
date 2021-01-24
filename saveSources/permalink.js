@@ -1,4 +1,4 @@
-polymorph_core.registerSaveSource("permalink", function (save_source_data) {
+polymorph_core.registerSaveSource("permalink", function(save_source_data) {
     //special permalink operator: for when i want to create a permalink to a doc. 
 
     //fetches JSON from an XHR that is embedded in the url in base64 format. 
@@ -7,7 +7,7 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
     //initialise here
     //id, source
 
-    this.pullAll = async function () {
+    this.pullAll = async function() {
         let d = save_source_data.data;
         return d;
     }
@@ -15,13 +15,13 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
 }, {
     prettyName: "Permalink",
     createable: false,
-    canHandle: async (params) => {
+    canHandle: async(params) => {
         return new Promise((res, rej) => {
             if (params.has("pml")) {
                 var xmlhttp = new XMLHttpRequest();
                 let url = atob(params.get("pml"));
                 xmlhttp.open('GET', url, true);
-                xmlhttp.onreadystatechange = function () {
+                xmlhttp.onreadystatechange = function() {
                     if (xmlhttp.readyState == 4) {
                         if (xmlhttp.status == 200) {
                             try {
@@ -29,7 +29,7 @@ polymorph_core.registerSaveSource("permalink", function (save_source_data) {
                                 let tempID = polymorph_core.guid(6, polymorph_core.userData.documents);
                                 obj = polymorph_core.datautils.decompress(obj);
                                 obj._meta.id = tempID;
-                                res({ id: tempID, source: obj });
+                                res({ id: tempID, data: obj });
                             } catch (e) {
                                 res(false);
                             }

@@ -30,252 +30,287 @@ Call pwaExtract() from a developer console to find a list of active scripts and 
 Place those scripts in the 'urlsToCache' property and you'll be ready to go.
 */
 var _pwaManager = (() => {
-  let serviceWorkerSettings = {
-    urlsToCache: [
-      "3pt/firebase-app.js",
-      "3pt/firebase-firestore.js",
-      "core_modules/core.rect.js",
-      "core_modules/core.dialog.js",
-      "core_modules/core.tutorial.js",
-      "core.js",
-      "core_modules/core.container.js",
-      "index.html",
-      "operators/opSelect.js",
-      "operators/itemList.js",
-      "operators/descbox.js",
-      "operators/calendar.js",
-      //"operators/iframe.js",
-      "operators/itemcluster.js",
-      //"operators/quillbox.js",
-      "operators/stack.js",
-      "operators/terminal.js",
-      //"operators/timeline.js",
-      //"operators/canvas.js",
-      "operators/subframe.js",
-      "operators/httree.js",
-      //"assets/jason.css",
-      "3pt/jquery.min.js",
-      "3pt/x-frame-bypass.js",
-      "3pt/quill.min.js",
-      "3pt/svg.min.js",
-      "3pt/moment.min.js",
-      "3pt/fullcalendar.min.js",
-      "3pt/localforage.min.js",
-      "manifest.json"
-    ],
-    CACHE_NAME: "version 8x",
-    SEARCH_SLICE: true,
-    RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
-    debug: false
-  };
+    let serviceWorkerSettings = {
+        urlsToCache: [
+            "utils.js",
+            "filemanager.js",
+            "core.js",
+            "core_modules/ui/core.tutorial.js",
+            "core_modules/core/core.docLoading.js",
+            "core_modules/ui/core.dialog.js",
+            "core_modules/ui/core.loadSaveUI.js",
+            "core_modules/core/core.dataUtils.js",
+            "core_modules/core/core.container.js",
+            "core_modules/ui/core.contextMenu.js",
+            "core_modules/core/core.itemfx.js",
+            "core_modules/core/core.operator.js",
+            "core_modules/ui/core.dragdrop.js",
+            "core_modules/core/core.phone.rect.js",
+            "core_modules/core/core.rect.js",
+            "core_modules/ui/core.phone.main.js",
+            "core_modules/ui/core.main.js",
+            "operators/opSelect.js",
+            "genui/dateparser.js",
+            "operators/itemList.searchsort.js",
+            "operators/itemList.js",
+            "operators/itemList.phone.js",
+            "operators/descbox.js",
+            "genui/intervalParser.js",
+            "operators/terminal.js",
+            "operators/inspector.js",
+            "operators/inspectolist.js",
+            "operators/subframe.js",
+            "operators/deltaLogger.js",
+            "3pt/jquery.min.js",
+            "3pt/moment.min.js",
+            "3pt/fullcalendar.min.js",
+            "genui/quickNotify.js",
+            "operators/calendar.js",
+            "3pt/svg.min.js",
+            "3pt/svg.foreignobject.js",
+            "operators/itemcluster.svg.js",
+            "operators/itemcluster.contextmenu.js",
+            "operators/itemcluster.scalegrid.js",
+            "operators/itemcluster.rapidentry.js",
+            "operators/itemcluster.js",
+            "operators/welcome.js",
+            "operators/litem.js",
+            "operators/scriptrunner.js",
+            "operators/timer.js",
+            "saveSources/outputToText.js",
+            "saveSources/localforage2.js",
+            "saveSources/permalink.js",
+            "saveSources/server.js",
+            "saveSources/gitlite.js"
+            //"manifest.json" DO NOT CACHE THIS OTHERWISE PWA WILL BE NONFUNCTIONAL
+        ],
+        CACHE_NAME: "version 8x",
+        SEARCH_SLICE: true,
+        RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
+        debug: false,
+        forcePassThrough: (url) => {
+            //replace with your custom function
 
-  function dbglog(message) {
-    if (serviceWorkerSettings.debug) console.log(message);
-  }
+            if (url.includes("lobby")) return true;
+            if (url.includes("saveme")) return true;
 
-  //Default functions (will be minified)
-  function waitDOMExecute(f) {
-    if (document.readyState != "loading") f();
-    else document.addEventListener("DOMContentLoaded", f);
-  }
 
-  function pwaExtract() {
-    //Extract an array of all the scripts that you might want to cache
-    let cacheURLs = [];
-    let elements;
-    elements = document.querySelectorAll("script");
-    for (let i = 0; i < elements.length; i++) {
-      cacheURLs.push(elements[i].src);
-    }
-    elements = document.querySelectorAll("link");
-    for (let i = 0; i < elements.length; i++) {
-      cacheURLs.push(elements[i].href);
-    }
-    return cacheURLs;
-  }
-
-  function _pwaManager(userSettings) {
-    let me = this;
-    this.settings = {
-      serviceWorkerURL: "pwa.js", // This can just be this file! This file serves both functions for the price of one. Yeets!
-      manifestURL: "manifest.json"
-    };
-    Object.assign(this.settings, userSettings);
-
-    this.firePrompt = function () {
-      function tryFirePrompt() {
-        if (me.deferredPrompt) {
-          me.deferredPrompt.prompt();
-        } else {
-          me.deferredPrompt = "autofire";
+            return false;
         }
-      }
-      if (document.readyState != "loading") tryFirePrompt();
-      else document.addEventListener("DOMContentLoaded", tryFirePrompt);
-    };
-    //DOM initalisation
-
-    this._init = function () {
-      if ("serviceWorker" in navigator) {
-        let link = document.createElement("link");
-        link.rel = "manifest";
-        link.href = this.settings.manifestURL;
-        document.head.appendChild(link);
-        window.addEventListener("load", function () {
-          navigator.serviceWorker.register(me.settings.serviceWorkerURL).then(
-            function (registration) {
-              // Registration was successful
-              dbglog(
-                `ServiceWorker registration successful with scope: ${registration.scope}`
-              );
-            },
-            function (err) {
-              // registration failed :(
-              dbglog("ServiceWorker registration failed: ", err);
-            }
-          );
-        });
-      }
     };
 
-    if (document.readyState != "loading") this._init();
-    else document.addEventListener("DOMContentLoaded", () => this._init());
-
-    //beforeunload event
-    if (this.settings.prompt) {
-      window.addEventListener("beforeinstallprompt", this.settings.prompt);
+    function dbglog(message) {
+        if (serviceWorkerSettings.debug) console.log(message);
     }
 
-  }
-
-  try {
-    window.title = window.title;
-    dbglog("win title ok! I'm a window level.");
-  } catch (err) {
-    dbglog("win title not ok! I'm a backend boi.");
-    //Ok we are a service worker so act like one!!11
-    self.addEventListener("install", function (event) {
-      self.skipWaiting();
-      // Perform install steps
-      event.waitUntil(
-        caches.open(serviceWorkerSettings.CACHE_NAME).then(function (cache) {
-          dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
-          return cache.addAll(serviceWorkerSettings.urlsToCache);
-        })
-      );
-      dbglog("hopefully everything is ok... ");
-    });
-    let cache;
-    async function setup() {
-      dbglog("setup ok");
-      cache = await caches.open(serviceWorkerSettings.CACHE_NAME);
+    //Default functions (will be minified)
+    function waitDOMExecute(f) {
+        if (document.readyState != "loading") f();
+        else document.addEventListener("DOMContentLoaded", f);
     }
-    setup();
 
-    function updateCache(event) {
-      return new Promise(async function (resolve) {
-        setTimeout(async function () {
-          try {
-            dbglog(`fetch start: ${event.request}`);
-            networkResponsePromise = fetch(event.request);
-            const networkResponse = await networkResponsePromise;
-            cache.put(event.request, networkResponse.clone());
-            dbglog("fetch OK: " + event.request.url);
-            resolve(networkResponse);
-          } catch (e) {
-            //network failure
-            dbglog("fetch error: " + event.request.url);
-            dbglog(e);
-            resolve(404);
-          }
-        }, 1000); //deliver content to user asap
-      });
+    function pwaExtract() {
+        //Extract an array of all the scripts that you might want to cache
+        let cacheURLs = [];
+        let elements;
+        elements = document.querySelectorAll("script");
+        for (let i = 0; i < elements.length; i++) {
+            cacheURLs.push(elements[i].src);
+        }
+        elements = document.querySelectorAll("link");
+        for (let i = 0; i < elements.length; i++) {
+            cacheURLs.push(elements[i].href);
+        }
+        return cacheURLs;
     }
-    dbglog("adding fetch event handler...");
-    self.addEventListener("fetch", event => {
-      dbglog("fetch event handler firing...");
-      switch (serviceWorkerSettings.RETRIEVAL_METHOD) {
-        case "cacheOnly":
-          //cache only speed test
-          if (event.request.method == "GET") {
-            event.respondWith(caches.match(event.request));
-          }
 
-          break;
-        case "cacheReupdate":
-          dbglog("cacheReupdate method.");
-          //better version with self cache matching
-          if (event.request.url.startsWith(self.location.origin)) {
-            if (event.request.method == "GET") {
-              event.respondWith(
-                (async function () {
-                  let cachedResponse = undefined;
-                  if (cache) {
-                    cachedResponse = await cache.match(event.request);
-                  }
+    function _pwaManager(userSettings) {
+        let me = this;
+        this.settings = {
+            serviceWorkerURL: "pwa.js", // This can just be this file! This file serves both functions for the price of one. Yeets!
+            manifestURL: "manifest.json"
+        };
+        Object.assign(this.settings, userSettings);
 
-                  if (!cachedResponse && event.request.url.indexOf("?") != -1) {
-                    if (serviceWorkerSettings.SEARCH_SLICE) {
-                      event.request.url = event.request.url.slice(0, event.request.url.indexOf("?"));
-                      cachedResponse = await cache.match(event.request);
-                    } else {
-                      cachedResponse = await cache.match(event.request, {
-                        ignoreSearch: event.request.url.indexOf("?") != -1
-                      });
-                    }
-
-                  }
-
-                  // Returned the cached response if we have one, otherwise return the network response.
-                  if (event.request.type == "cors") {
-                    return fetch(event.request);
-                  } else {
-                    if (cachedResponse) {
-                      //avoid CORS for things like firebase
-                      dbglog("cacheUpdate: " + event.request.url);
-                      updateCache(event);
-                      return cachedResponse;
-                    } else {
-                      dbglog("passiveUpdate: " + event.request.url);
-                      return updateCache(event);
-                    }
-                  }
-                })()
-              );
-            } else {
-              dbglog("non-get: " + event.request.url);
-              event.respondWith(fetch(event.request));
+        this.firePrompt = function() {
+            function tryFirePrompt() {
+                if (me.deferredPrompt) {
+                    me.deferredPrompt.prompt();
+                } else {
+                    me.deferredPrompt = "autofire";
+                }
             }
-          } else {
-            try {
-              event.respondWith(fetch(event.request));
-            }catch (e){
-              return 404;
-            }
-          }
+            if (document.readyState != "loading") tryFirePrompt();
+            else document.addEventListener("DOMContentLoaded", tryFirePrompt);
+        };
+        //DOM initalisation
 
-          break;
-        case "networkOnly":
-          //cache only speed test
-          event.respondWith(fetch(event.request));
-          break;
-      }
-    });
-    //broadcast
-    //Credits to here: http://craig-russell.co.uk/2016/01/29/service-worker-messaging.html#.XKKtSVUzZFQ
-    self.addEventListener("message", function (event) {
-      if (event.data && event.data.type == "broadcast") {
-        clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            let msgchan = new MessageChannel();
-            client.postMessage(event.data, [msgchan.port2]);
-          });
+        this._init = function() {
+            if ("serviceWorker" in navigator) {
+                let link = document.createElement("link");
+                link.rel = "manifest";
+                link.href = this.settings.manifestURL;
+                document.head.appendChild(link);
+                window.addEventListener("load", function() {
+                    navigator.serviceWorker.register(me.settings.serviceWorkerURL).then(
+                        function(registration) {
+                            // Registration was successful
+                            dbglog(
+                                `ServiceWorker registration successful with scope: ${registration.scope}`
+                            );
+                        },
+                        function(err) {
+                            // registration failed :(
+                            dbglog("ServiceWorker registration failed: ", err);
+                        }
+                    );
+                });
+            }
+        };
+
+        if (document.readyState != "loading") this._init();
+        else document.addEventListener("DOMContentLoaded", () => this._init());
+
+        //beforeunload event
+        if (this.settings.prompt) {
+            window.addEventListener("beforeinstallprompt", this.settings.prompt);
+        }
+
+    }
+
+    try {
+        window.title = window.title;
+        dbglog("win title ok! I'm a window level.");
+    } catch (err) {
+        dbglog("win title not ok! I'm a backend boi.");
+        //Ok we are a service worker so act like one!!11
+        self.addEventListener("install", function(event) {
+            dbglog("install fired.");
+            self.skipWaiting();
+            // Perform install steps
+            event.waitUntil(
+                caches.open(serviceWorkerSettings.CACHE_NAME).then(function(cache) {
+                    dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
+                    return cache.addAll(serviceWorkerSettings.urlsToCache);
+                })
+            );
+            dbglog("hopefully everything is ok... ");
         });
-      }
-    });
-    //broadcast
-  }
-  return _pwaManager;
+        let cache;
+        async function setup() {
+            dbglog("setup ok");
+            cache = await caches.open(serviceWorkerSettings.CACHE_NAME);
+        }
+        setup();
+
+        function updateCache(event) {
+            return new Promise(async function(resolve) {
+                setTimeout(async function() {
+                    try {
+                        dbglog(`fetch start: ${event.request}`);
+                        networkResponsePromise = fetch(event.request);
+                        const networkResponse = await networkResponsePromise;
+                        cache.put(event.request, networkResponse.clone());
+                        dbglog("fetch OK: " + event.request.url);
+                        resolve(networkResponse);
+                    } catch (e) {
+                        //network failure
+                        dbglog("fetch error: " + event.request.url);
+                        dbglog(e);
+                        resolve(404);
+                    }
+                }, 1000); //deliver content to user asap
+            });
+        }
+        dbglog("adding fetch event handler...");
+        self.addEventListener("fetch", event => {
+            dbglog("fetch event handler firing...");
+            switch (serviceWorkerSettings.RETRIEVAL_METHOD) {
+                case "cacheOnly":
+                    //cache only speed test
+                    if (event.request.method == "GET") {
+                        event.respondWith(caches.match(event.request));
+                    }
+
+                    break;
+                case "cacheReupdate":
+                    dbglog("cacheReupdate method.");
+                    //better version with self cache matching
+                    if (event.request.url.startsWith(self.location.origin) && !serviceWorkerSettings.forcePassThrough(event.request.url)) {
+                        if (event.request.method == "GET") {
+                            event.respondWith(
+                                (async function() {
+                                    let cachedResponse = undefined;
+                                    if (cache) {
+                                        cachedResponse = await cache.match(event.request);
+                                        if (!cachedResponse && event.request.url.indexOf("?") != -1) {
+                                            if (serviceWorkerSettings.SEARCH_SLICE) {
+                                                event.request.url = event.request.url.slice(0, event.request.url.indexOf("?"));
+                                                cachedResponse = await cache.match(event.request);
+                                            } else {
+                                                cachedResponse = await cache.match(event.request, {
+                                                    ignoreSearch: event.request.url.indexOf("?") != -1
+                                                });
+                                            }
+
+                                        }
+                                    }
+
+                                    // Returned the cached response if we have one, otherwise return the network response.
+                                    if (event.request.type == "cors") {
+                                        return fetch(event.request);
+                                    } else {
+                                        if (cachedResponse) {
+                                            //avoid CORS for things like firebase
+                                            dbglog("cacheUpdate: " + event.request.url);
+                                            updateCache(event);
+                                            return cachedResponse;
+                                        } else {
+                                            dbglog("passiveUpdate: " + event.request.url);
+                                            return updateCache(event);
+                                        }
+                                    }
+                                })()
+                            );
+                        } else {
+                            dbglog("non-get: " + event.request.url);
+                            event.respondWith(fetch(event.request));
+                        }
+                    } else {
+                        try {
+                            event.respondWith(fetch(event.request));
+                        } catch (e) {
+                            return 404;
+                        }
+                    }
+
+                    break;
+                case "networkOnly":
+                    //cache only speed test
+                    event.respondWith(fetch(event.request));
+                    break;
+            }
+        });
+        //broadcast
+        //Credits to here: http://craig-russell.co.uk/2016/01/29/service-worker-messaging.html#.XKKtSVUzZFQ
+        self.addEventListener("message", function(event) {
+            if (event.data && event.data.type == "broadcast") {
+                clients.matchAll().then(clients => {
+                    clients.forEach(client => {
+                        let msgchan = new MessageChannel();
+                        client.postMessage(event.data, [msgchan.port2]);
+                    });
+                });
+            }
+        });
+        //also this
+        //https://stackoverflow.com/questions/51562781/service-worker-fetch-event-is-not-firing
+        self.addEventListener('activate', function(event) {
+            console.log('Claiming control');
+            return self.clients.claim();
+        });
+    }
+    return _pwaManager;
 })();
 /*
 A sample web app manifest. Put this in a file in your home directory!

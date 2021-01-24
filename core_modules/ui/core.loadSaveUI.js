@@ -1,29 +1,28 @@
 (() => {
 
-    polymorph_core.userSave = function () {
+    polymorph_core.userSave = function() {
         //save to all sources
         //upgrade older save systems
         let d = polymorph_core.items;
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
+        polymorph_core.unsaved = false;
+        let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs")) || {};
+        recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
+        localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
     document.body.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
-            polymorph_core.unsaved = false;
             //also do the server save
             // success for green notification box, alert for red box. If second parameter is left out, the box is black
             try {
                 //try catch because mobile mode. TODO: Fix this.
                 polymorph_core.showNotification('Saved', 'success');
-            } catch (e) {
-            }
-            let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs"));
-            recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
-            localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
+            } catch (e) {}
         }
     });
 
@@ -60,9 +59,9 @@
             property: "autosave",
             label: "Autosave all changes"
         });
-        polymorph_core.autosaveCapacitor = new capacitor(200, 20, polymorph_core.userSave);
-        polymorph_core.on("updateItem", function (d) {
-            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving) {
+        polymorph_core.autosaveCapacitor = new capacitor(500, 2000, polymorph_core.userSave);
+        polymorph_core.on("updateItem", function(d) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
                 polymorph_core.autosaveCapacitor.submit();
             }
         });
@@ -81,14 +80,16 @@
                 }
             };
             polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.push(newSaveSource)
-            polymorph_core.saveSourceInstances.push(new polymorph_core.saveSources[nss.querySelector("select").value](newSaveSource));
+            let newSaveSourceInstance = new polymorph_core.saveSources[nss.querySelector("select").value](newSaveSource);
+            polymorph_core.saveSourceInstances.push(newSaveSourceInstance);
+            newSaveSourceInstance.showDialog();
             //reshow the dialog cos i cbs
         });
 
         //store the savedialogs so that we can toggle their save/load checkboxes down the line
         let saveDialogInstances = [];
 
-        polymorph_core.addToSaveDialog = function (save_source_instance) {
+        polymorph_core.addToSaveDialog = function(save_source_instance) {
             //called by instance on load.
             let wrapperText = `
         <div>
@@ -99,6 +100,7 @@
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_hardLoad">Load from this source</button>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_softLoad">Merge from this source</button>`;
             if (save_source_instance.pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
+            if (save_source_instance.updateRTstate) wrapperText += `<label>Subscribe to this source<input data-role="rtsync" type="checkbox"></input></label>`;
             wrapperText += `</span>
         </div>
         `;
@@ -120,7 +122,11 @@
             hookIfExists("[data-role='dlg_save']", "click", () => {
                 save_source_instance.pushAll(polymorph_core.items);
             });
-            hookIfExists("[data-role='dlg_hardLoad']", "click", async () => {
+            hookIfExists("[data-role='rtsync']", "click", (e) => {
+                save_source_instance.settings.RTactive = e.target.checked;
+                save_source_instance.updateRTstate();
+            });
+            hookIfExists("[data-role='dlg_hardLoad']", "click", async() => {
                 if (confirm("Overwrite existing data? You will lose any unsaved work.")) {
                     polymorph_core.resetDocument();
                     try {
@@ -128,17 +134,19 @@
                         polymorph_core.integrateData(d, i.type);
                     } catch (e) {
                         alert("Something went wrong with the save source: " + e);
+                        throw (e);
                         //todo: restore document
                     }
                 }
             });
             //Load from the save source
-            hookIfExists("[data-role='dlg_softLoad']", "click", async () => {
+            hookIfExists("[data-role='dlg_softLoad']", "click", async() => {
                 try {
                     d = await save_source_instance.pullAll();
                     polymorph_core.integrateData(d, i.type);
                 } catch (e) {
                     alert("Something went wrong with the save source: " + e);
+                    throw (e);
                     //todo: restore document
                 }
             });
@@ -157,11 +165,14 @@
         polymorph_core.showSavePreferencesDialog = () => {
             for (let i of saveDialogInstances) {
                 if (i.instance.showDialog) i.instance.showDialog();
-                if (i.instance.settings.save) {
-                    i.div.querySelector(`[data-role='tsync']`).checked = true;
+                if (i.div.querySelector(`[data-role='tsync']`)) {
+                    i.div.querySelector(`[data-role='tsync']`).checked = i.instance.settings.save;
                 }
-                if (i.instance.settings.load) {
-                    i.div.querySelector(`[data-role='lsync']`).checked = true;
+                if (i.div.querySelector(`[data-role='lsync']`)) {
+                    i.div.querySelector(`[data-role='lsync']`).checked = i.instance.settings.load;
+                }
+                if (i.div.querySelector(`[data-role='rtsync']`)) {
+                    i.div.querySelector(`[data-role='rtsync']`).checked = i.instance.settings.RTactive;
                 }
             }
             autosaveOp.load();
@@ -179,7 +190,7 @@
     //a little nicety to warn user of unsaved items.
     polymorph_core.unsaved = false;
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.loadProcess) {//if event was not triggered by a loading action
+        if (!e || !e.loadProcess) { //if event was not triggered by a loading action
             polymorph_core.unsaved = true;
         }
     })

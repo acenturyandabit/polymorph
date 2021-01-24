@@ -1,8 +1,6 @@
-
-
 function _itemcluster_extend_svg(me) { // very polymorph_core functions! 
     me.svg = SVG(me.rootdiv.querySelector(".itemcluster"));
-    me.mapPageToSvgCoords = function (pageX, pageY, vb) {
+    me.mapPageToSvgCoords = function(pageX, pageY, vb) {
         let rels = me.svg.node.getBoundingClientRect();
         if (!vb) vb = me.svg.viewbox();
         let ret = {};
@@ -10,10 +8,27 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         ret.y = (pageY - rels.y) / rels.height * vb.height + vb.y;
         return ret;
     }
-    let linePerformanceCache = {};// in start+end, cache [[x,y],[x,y]]
+    let linePerformanceCache = {}; // in start+end, cache [[x,y],[x,y]]
     me.fromcache = {};
 
-    me.arrangeItem = function (id) {
+    let whileNotVisibleCache = [];
+    let visChecker = 0;
+
+    me.arrangeItem = function(id) {
+        if (!me.container.visible()) {
+            whileNotVisibleCache.push(id);
+            if (!visChecker) visChecker = setInterval(() => {
+                if (me.container.visible()) {
+                    for (let i of whileNotVisibleCache) {
+                        me.arrangeItem(i);
+                    }
+                    whileNotVisibleCache = [];
+                    clearInterval(visChecker);
+                    visChecker = 0;
+                }
+            }, 500);
+            return;
+        }
         let sel = me.rootdiv.getRootNode().getSelection();
         let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
@@ -22,12 +37,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             //return;
             let _prerange = sel.getRangeAt(0);
             prerange = {}
-            let props = ["collapsed"
-                , "commonAncestorContainer"
-                , "endContainer"
-                , "endOffset"
-                , "startContainer"
-                , "startOffset"];
+            let props = ["collapsed", "commonAncestorContainer", "endContainer", "endOffset", "startContainer", "startOffset"];
             props.forEach(i => {
                 prerange[i] = _prerange[i];
             })
@@ -55,7 +65,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 previousHandle.add(fob);
                 me.itemPointerCache[id] = previousHandle;
                 fob.node.appendChild(htmlwrap(`<div style='position:absolute; margin:0; color: white; background:rgba(10,10,10,0.2)'><p contenteditable class="tta"></p><p style="background:white; color:black" contenteditable class="ttb"></p></div>`));
-                //we will need to force link in from all existing items, because.
+                //we will need to force link in from all existing items, in case items point to the item
                 for (let i in me.itemPointerCache) {
                     if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
                         // render the link
@@ -65,6 +75,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                             me.enforceLine(i, id);
                         }
                     }
+                }
+            }
+            // Also remove links that are now invalid
+            for (let i in me.fromcache[id]) {
+                if (!polymorph_core.items[i].to[id]) {
+                    if (me.activeLines[i] && me.activeLines[i][id]) me.activeLines[i][id].remove();
+                    delete me.activeLines[i][id];
+                    delete me.fromcache[id][i];
                 }
             }
             //actually update, only if necessary, to save processor time.
@@ -86,13 +104,23 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                     me.cachedStyle[id] = JSON.parse(JSON.stringify(polymorph_core.items[id].style));
                 }
             }
-            if (!(polymorph_core.items[id][this.settings.textProp] || polymorph_core.items[id][this.settings.focusExtendProp])) {
+            if (!(polymorph_core.items[id][this.settings.textProp])) {
                 polymorph_core.items[id][this.settings.textProp] = "_";
             }
-            if (((polymorph_core.items[id][this.settings.textProp] && tta.innerText != polymorph_core.items[id][this.settings.textProp]) || (polymorph_core.items[id][this.settings.focusExtendProp] && ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]))) {
-                tta.innerText = polymorph_core.items[id][this.settings.textProp] || "_";
-                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp] || "_";
-                dvd.style.width = (Math.sqrt(tta.innerText.length + ttb.innerText.length) + 1) * 23;
+            if (!polymorph_core.items[id][this.settings.focusExtendProp]) {
+                polymorph_core.items[id][this.settings.focusExtendProp] = "_";
+            }
+            let widthInvalidated = false;
+            if (tta.innerText != polymorph_core.items[id][this.settings.textProp]) {
+                tta.innerText = polymorph_core.items[id][this.settings.textProp];
+                widthInvalidated = true;
+            }
+            if (ttb.innerText != polymorph_core.items[id][this.settings.focusExtendProp]) {
+                ttb.innerText = polymorph_core.items[id][this.settings.focusExtendProp];
+                widthInvalidated = true;
+            }
+            if (widthInvalidated) {
+                dvd.style.width = me.getItemWidth(tta.innerText.length + ttb.innerText.length);
                 dvd.parentElement.setAttribute("width", dvd.scrollWidth);
                 if (me.prevFocusID == id) {
                     setTimeout(() => {
@@ -105,8 +133,13 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 }
             }
             let fob = me.itemPointerCache[id].children()[1];
-            if (fob.width() == 0) {// when container starts invisible, fob does not show.
-                fob.size(dvd.scrollWidth, tta.scrollHeight);
+            if (fob.width() == 0) { // when container starts invisible, fob does not show.
+                if (tta.scrollHeight < 1) {
+                    //wait 
+                    setTimeout(() => {
+                        fob.size(dvd.scrollWidth, tta.scrollHeight);
+                    })
+                }
             }
 
             //add icons if necessary
@@ -143,7 +176,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
 
             if (polymorph_core.items[id].to) {
                 for (let i in polymorph_core.items[id].to) {
-                    if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
+                    if (polymorph_core.items[i] && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[me.settings.currentViewName]) {
                         if (i == me.prevFocusID || id == me.prevFocusID) {
                             me.enforceLine(id, i, "red");
                         } else {
@@ -170,12 +203,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
                 let newRange = new Range();
                 newRange.setStart(prerange.startContainer, prerange.startOffset);
                 newRange.setEnd(prerange.startContainer, prerange.endOffset);
-                let props = ["collapsed"
-                    , "commonAncestorContainer"
-                    , "endContainer"
-                    , "endOffset"
-                    , "startContainer"
-                    , "startOffset"];
+                let props = ["collapsed", "commonAncestorContainer", "endContainer", "endOffset", "startContainer", "startOffset"];
                 props.forEach(i => {
                     newRange[i] = prerange[i];
                 })
@@ -193,7 +221,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         width: 3
     }).back();
     me.activeLines = {};
-    me.toggleLine = function (start, end) {
+    me.toggleLine = function(start, end) {
         //start and end is now directional. 
         //check if linked; if linked, remove link
         if (polymorph_core.isLinked(start, end) % 2) {
@@ -207,7 +235,15 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         }
     };
 
-    me.redrawLines = function (ci, style = "black") {
+    me.removeLine = (start, end) => {
+        if (me.fromcache[end] && me.fromcache[end][start]) {
+            me.activeLines[start][end].remove();
+            delete me.fromcache[end][start];
+            delete me.activeLines[start][end];
+        }
+    }
+
+    me.redrawLines = function(ci, style = "black") {
         for (let j in me.activeLines[ci]) {
             me.enforceLine(ci, j, style);
         }
@@ -217,7 +253,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     }
 
 
-    me.enforceLine = function (start, end, style = "black") {
+    me.enforceLine = function(start, end, style = "black") {
         let sd = me.itemPointerCache[start];
         let ed = me.itemPointerCache[end];
         if (!sd || !ed) {
@@ -232,7 +268,7 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
         } else {
             if (!me.activeLines[start]) me.activeLines[start] = {};
             cp = me.svg.path().stroke({ width: 2, color: style });
-            cp.marker('mid', 9, 6, function (add) {
+            cp.marker('mid', 9, 6, function(add) {
                 add.path("M0,0 L0,6 L9,3 z").fill("black");
             })
             me.activeLines[start][end] = cp;
@@ -247,14 +283,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.hide();
             return;
         } else {
-            if (!(!(linePerformanceCache[start])
-                || !(linePerformanceCache[start][end])
-                || !(Math.abs(linePerformanceCache[start][end][0][0] - sd.x()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][0][1] - sd.y()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][1][0] - ed.x()) < 0.01)
-                || !(Math.abs(linePerformanceCache[start][end][1][1] - ed.y()) < 0.01)
-                || !(linePerformanceCache[start][end][2] == style)
-            )) return;
+            if (!(!(linePerformanceCache[start]) ||
+                    !(linePerformanceCache[start][end]) ||
+                    !(Math.abs(linePerformanceCache[start][end][0][0] - sd.x()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][0][1] - sd.y()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][1][0] - ed.x()) < 0.01) ||
+                    !(Math.abs(linePerformanceCache[start][end][1][1] - ed.y()) < 0.01) ||
+                    !(linePerformanceCache[start][end][2] == style)
+                )) return;
             let x = [sd.cx(), 0, ed.cx()];
             let y = [sd.cy(), 0, ed.cy()];
             x[1] = (x[0] + x[2]) / 2;
@@ -263,7 +299,10 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             cp.stroke({ width: 2, color: style });
             cp.back();
             if (!linePerformanceCache[start]) linePerformanceCache[start] = {};
-            linePerformanceCache[start][end] = [[sd.x(), sd.y()], [ed.x(), ed.y()], style];
+            linePerformanceCache[start][end] = [
+                [sd.x(), sd.y()],
+                [ed.x(), ed.y()], style
+            ];
         }
     };
 

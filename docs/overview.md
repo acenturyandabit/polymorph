@@ -1,4 +1,14 @@
-# Polymorph overview
+# Overview
+
+Polymorph is a highly modular system, which makes it fantastic for modding. 
+
+If you're only looking to mod polymorph by adding your own functionality, you may only need to know about the following structure:
+
+![](https://raw.githubusercontent.com/acenturyandabit/polymorph/largeAssets/assets/readme2.gif)
+
+
+
+
 
 ## It's like...
 - ROS [https://www.ros.org/], but for user interfaces

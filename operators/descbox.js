@@ -4,12 +4,10 @@ polymorph_core.registerOperator("descbox", {
     imageurl: "assets/operators/descbox.png",
     section: "Standard",
     single_store: true // does it only store one thing? If so, drag and drop will not delete from containers storing multiple things.
-}, function (container) {
+}, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         property: "description",
-        operationMode: "static",
-        staticItem: "",
         auxProperty: "title",
         showTags: false
     };
@@ -36,8 +34,7 @@ polymorph_core.registerOperator("descbox", {
             })
 
         }
-        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {
-        };
+        let tagObj = polymorph_core.items[id]["_tags_" + this.settings.property] = {};
 
         polymorph_core.items[id]["_displayTags_" + this.settings.property] = "";
 
@@ -90,38 +87,32 @@ polymorph_core.registerOperator("descbox", {
 
     //Handle item updates
     this.updateItem = (id) => {
-        this.updateMeta(id);
-
-        //if focused, ignore
-        if (this.settings.operationMode != "putter") {
-            if (id == this.settings.currentID && id && polymorph_core.items[id]) {
-                if (this.textarea.matches(":focus")) {
-                    setTimeout(() => this.updateItem(id), 500);
-                } else {
-                    if (this.changed) {
-                        //someone else just called this so i'll have to save my modifications discreetly.
-                        polymorph_core.items[id][this.settings.property] = this.textarea.value;
-                    } else {
-                        if (polymorph_core.items[id] && polymorph_core.items[id][this.settings.property]) this.textarea.value = polymorph_core.items[id][this.settings.property];
-                        else this.textarea.value = "";
-                    }
-                    this.textarea.disabled = false;
-                    if (polymorph_core.items[id].style) {
-                        this.textarea.style.background = polymorph_core.items[id].style.background;
-                        this.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(this.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
-                    } else {
-                        this.textarea.style.background = "";
-                        this.textarea.style.color = "";
-                    }
-                }
+        //if focused, ignore; to prevent overwrites of data
+        if (id == this.settings.currentID && id && polymorph_core.items[id]) {
+            if (this.textarea.matches(":focus")) {
+                if (polymorph_core.items[id][this.settings.property] != this.textarea.value) setTimeout(() => this.updateItem(id), 500);
             } else {
-                if (!this.settings.currentID) {
-                    this.textarea.disabled = true;
-                    this.textarea.value = "Select an item to view its description.";
+                if (this.changed) {
+                    //someone else just called this so i'll have to save my modifications discreetly.
+                    polymorph_core.items[id][this.settings.property] = this.textarea.value;
+                } else {
+                    if (polymorph_core.items[id] && polymorph_core.items[id][this.settings.property]) this.textarea.value = polymorph_core.items[id][this.settings.property];
+                    else this.textarea.value = "";
+                }
+                this.textarea.disabled = false;
+                if (polymorph_core.items[id].style) {
+                    this.textarea.style.background = polymorph_core.items[id].style.background;
+                    this.textarea.style.color = polymorph_core.items[id].style.color || matchContrast((/rgba?\([\d,\s]+\)/.exec(getComputedStyle(this.textarea).background) || ['#ffffff'])[0]); //stuff error handling; 
+                } else {
+                    this.textarea.style.background = "";
+                    this.textarea.style.color = "";
                 }
             }
         } else {
-            this.textarea.disabled = false;
+            if (!this.settings.currentID) {
+                this.textarea.disabled = true;
+                this.textarea.value = "Select an item to view its description.";
+            }
         }
     }
 
@@ -131,6 +122,7 @@ polymorph_core.registerOperator("descbox", {
         if (sender == this) return;
         if (id == this.settings.currentID) {
             this.updateItem(id);
+            this.updateMeta(id);
             return true;
         }
     });
@@ -140,23 +132,26 @@ polymorph_core.registerOperator("descbox", {
     this.updateItem(this.settings.currentID);
 
     this.updateSettings = () => {
-        if (this.settings.operationMode == 'static') {
-            if (!this.settings.staticItem) this.settings.staticItem = polymorph_core.insertItem({});
-            let staticItem = this.settings.staticItem;
-            this.settings.currentID = this.settings.staticItem;
-            if (!polymorph_core.items[staticItem]) {
-                let it = {};
-                it[this.settings.property] = "";
-                polymorph_core.items[staticItem] = it;
-                container.fire("updateItem", {
-                    sender: this,
-                    id: staticItem
-                });
-            }
-        } else if (this.settings.operationMode == 'putter') {
-            if (this.settings.focusOperatorID) this.focusOperatorID = this.settings.focusOperatorID;
-            this.textarea.value = "";
-            this.textarea.disabled = false;
+        if (!this.settings.currentID) {
+            this.settings.currentID = polymorph_core.insertItem({});
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
+        }
+        if (!polymorph_core.items[this.settings.currentID]) {
+            polymorph_core.items[this.settings.currentID] = {};
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
+        }
+        if (!polymorph_core.items[this.settings.currentID][this.settings.property]) {
+            polymorph_core.items[this.settings.currentID][this.settings.property] = "";
+            container.fire("updateItem", {
+                sender: this,
+                id: this.settings.currentID
+            });
         }
         this.textarea.placeholder = this.settings.placeholder || "";
         this.updateItem(this.settings.currentID);
@@ -166,27 +161,25 @@ polymorph_core.registerOperator("descbox", {
     this.updateItem(this.settings.currentID);
 
     let upc = new capacitor(100, 40, (id, data) => {
-        if (id && polymorph_core.items[id] && this.changed) {
-            polymorph_core.items[id][this.settings.property] = data;
-            this.updateMeta(id);
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-            this.changed = false;
-        }
-    }, {
-        presubmit: () => {
-            this.changed = true;
-        }
-    })
-    //Register changes with polymorph_core
+            if (id && polymorph_core.items[id] && this.changed) {
+                polymorph_core.items[id][this.settings.property] = data;
+                this.updateMeta(id);
+                container.fire("updateItem", {
+                    id: id,
+                    sender: this
+                });
+                this.changed = false;
+            }
+        }, {
+            presubmit: () => {
+                this.changed = true;
+            }
+        })
+        //Register changes with polymorph_core
     this.somethingwaschanged = (e) => {
         //Check ctrl-S so that we dont save then
         if (e.key == "Control" || e.key == "Meta" || ((e.ctrlKey || e.metaKey) && e.key == "s")) return;
-        if (this.settings.operationMode != "putter") {
-            upc.submit(this.settings.currentID, this.textarea.value);
-        }
+        upc.submit(this.settings.currentID, this.textarea.value);
     }
 
     this.textarea.addEventListener("blur", () => { upc.forceSend() });
@@ -194,49 +187,25 @@ polymorph_core.registerOperator("descbox", {
     this.textarea.addEventListener("input", this.somethingwaschanged);
     this.textarea.addEventListener("keyup", this.somethingwaschanged);
     document.addEventListener('keydown', (e) => {
-        if (this.textarea.matches(":focus-within")) {
+        if (this.textarea == this.rootdiv.getRootNode().activeElement) {
             var keycode1 = (e.keyCode ? e.keyCode : e.which);
             if (keycode1 == 0 || keycode1 == 9) {
                 e.preventDefault();
                 e.stopPropagation();
-                document.execCommand('insertText', false /*no UI*/, "    ");
+                document.execCommand('insertText', false, "    ");
             }
         }
     })
-    this.createItem = (id, data) => {
-        polymorph_core.items[id][this.settings.property] = data;
-    }
-
-    this.textarea.addEventListener("keydown", (e) => {
-        if (e.key == "Enter" && this.settings.operationMode == "putter") {
-            this.createItem(undefined, this.textarea.value);
-            this.textarea.value = "";
-            e.preventDefault();
-        }
-    });
-
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     let options = {
-        operationMode: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "select",
-            object: this.settings,
-            property: "operationMode",
-            source: {
-                static: "Display static item",
-                focus: "Display focused item",
-                putter: "Use as data entry"
-            },
-            label: "Select operation mode:"
-        }),
-        staticItem: new polymorph_core._option({
+        currentItem: new polymorph_core._option({
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
-            property: "staticItem",
-            label: "Static item to display:"
+            property: "currentItem",
+            label: "Item to display:"
         }),
         property: new polymorph_core._option({
             div: this.dialogDiv,
@@ -252,13 +221,13 @@ polymorph_core.registerOperator("descbox", {
             property: "auxProperty",
             label: "Auxillary property to display:"
         }),
-        showWordCount: new polymorph_core._option({
+        /*showWordCount: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
             object: this.settings,
             property: "showWordCount",
             label: "Show wordcount?"
-        }),
+        }),*/
         showTags: new polymorph_core._option({
             div: this.dialogDiv,
             type: "bool",
@@ -288,17 +257,15 @@ polymorph_core.registerOperator("descbox", {
         let switchTo = (id) => {
             upc.forceSend();
             this.settings.currentID = id;
+            this.updateMeta(id);
             this.updateItem(id);
             container.fire("updateItem", { id: this.container.id });
         }
-        if (this.settings.operationMode == "focus") {
-            switchTo(id);
-        }
+        switchTo(id);
     });
 
-    //static items get deleted without this mod
     this.itemRelevant = (id) => {
-        if (this.settings.operationMode == "static" && id == this.settings.staticItem) return true;
+        if (id == this.settings.currentID) return true;
     }
 
     container.on("createItem", (d) => {

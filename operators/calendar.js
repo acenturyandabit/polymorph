@@ -1,23 +1,23 @@
 (() => {
     polymorph_core.registerOperator("calendar", {
-        displayName: "Calendar",
-        description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)",
-        section: "Display"
-    },
-        function (container) {
+            displayName: "Calendar",
+            description: "A simple calendar. Click on items to select them. (Does not yet support click-to-add but we'll get there one day.)",
+            section: "Display"
+        },
+        function(container) {
             let defaultSettings = {
                 dateproperties: ["datestring"],
                 titleproperty: 'title',
-                defaultView: "agendaWeek"
+                defaultView: "agendaWeek",
             };
             polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
             this.rootdiv.style.cssText = 'height:100%; overflow-y: scroll';
             this.cstyle = htmlwrap(`<link rel="stylesheet" type="text/css" href="3pt/fullcalendar.min.css"></link>`)
-            // this.cstyle = document.createElement("link");
-            // this.cstyle.rel = "stylesheet";
-            // this.cstyle.type = "text/css";
-            // this.cstyle.href = "3pt/fullcalendar.min.css";
+                // this.cstyle = document.createElement("link");
+                // this.cstyle.rel = "stylesheet";
+                // this.cstyle.type = "text/css";
+                // this.cstyle.href = "3pt/fullcalendar.min.css";
             this.rootdiv.appendChild(this.cstyle);
 
             $(this.rootdiv).fullCalendar({
@@ -31,10 +31,26 @@
                         let tzd = new Date();
                         try {
                             for (let dp = 0; dp < this.settings.dateproperties.length; dp++) {
-                                if (polymorph_core.items[i][this.settings.dateproperties[dp]] && polymorph_core.items[i][this.settings.dateproperties[dp]].date) {
-                                    let result = dateParser.getCalendarTimes(polymorph_core.items[i][this.settings.dateproperties[dp]].date, start, end);
+                                let currentDP = this.settings.dateproperties[dp];
+                                let isNumerical = false;
+                                if (this.settings.dateproperties[dp][0] == '*') {
+                                    isNumerical = true;
+                                    currentDP = this.settings.dateproperties[dp].slice(1);
+                                }
+                                if (polymorph_core.items[i][currentDP]) {
+                                    let result;
+                                    if (isNumerical) {
+                                        result = [{ date: Number(polymorph_core.items[i][currentDP]) }];
+                                        if (!result) continue;
+                                    } else {
+                                        if (polymorph_core.items[i][currentDP].date) {
+                                            result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP].date, start, end);
+                                        } else {
+                                            continue;
+                                        }
+                                    }
                                     for (let j = 0; j < result.length; j++) {
-                                        if (polymorph_core.items[i][this.settings.dateproperties[dp]].datestring != "auto now") {
+                                        if (polymorph_core.items[i][currentDP].datestring != "auto now" && this.settings.pushnotifs) {
                                             //prevent auto now spam
                                             this.notifstack.push({
                                                 txt: polymorph_core.items[i][this.settings.titleproperty],
@@ -111,30 +127,30 @@
 
             //Handle a change in settings (either from load or from the settings dialog or somewhere else)
             this.processSettings = () => {
-                try {
-                    $(this.rootdiv).fullCalendar('refetchEvents');
-                    container.fire("updateItem", { id: this.container.id });
-                } catch (e) {
-                    console.log("JQUERY not ready yet :/");
-                }
-                // pull settings and update when your dialog is closed.
-                if (this.settings.pushnotifs) {
-                    this.notify("Notifications enabled!", true);
-                }
-                if (this.settings.wsOn) {
-                    this.tryEstablishWS();
-                }
-                //create window if window option is open.
-                if (this.settings.notifWindow) {
-                    if (!this.notifWindow) {
-                        this.notifWindow = window.open("", "__blank", "dependent:on");
+                    try {
+                        $(this.rootdiv).fullCalendar('refetchEvents');
+                        container.fire("updateItem", { id: this.container.id });
+                    } catch (e) {
+                        console.log("JQUERY not ready yet :/");
                     }
-                } else {
-                    //this.notifWindow.close();
-                    //delete this.notifWindow;
+                    // pull settings and update when your dialog is closed.
+                    if (this.settings.pushnotifs) {
+                        this.notify("Notifications enabled!", true);
+                    }
+                    if (this.settings.wsOn) {
+                        this.tryEstablishWS();
+                    }
+                    //create window if window option is open.
+                    if (this.settings.notifWindow) {
+                        if (!this.notifWindow) {
+                            this.notifWindow = window.open("", "__blank", "dependent:on");
+                        }
+                    } else {
+                        //this.notifWindow.close();
+                        //delete this.notifWindow;
+                    }
                 }
-            }
-            //every 10 s, check for new notifs!
+                //every 10 s, check for new notifs!
             this.notifstack = [];
             setInterval(() => {
                 let ihtml = "";
@@ -147,7 +163,7 @@
                         }
                     }
                     if (Date.now() - this.notifstack[i].time > 0 && Date.now() - this.notifstack[i].time < 20000 && !this.notifstack[i].notified) {
-                        ihtml += `<p>${this.notifstack[i].txt}</p>`;//within 20 s
+                        ihtml += `<p>${this.notifstack[i].txt}</p>`; //within 20 s
                     }
                 }
                 if (this.notifWindow) {
@@ -162,7 +178,7 @@
                 if (this.settings.wsurl) {
                     try {
                         this.ws = new WebSocket(this.settings.wsurl);
-                        this.ws.onmessage = function (e) {
+                        this.ws.onmessage = function(e) {
                             if (this.settings.echoOn) {
                                 this.state.output(e.data);
                             }
@@ -174,7 +190,7 @@
                 }
             }
 
-            this.wsnotify = function (data) {
+            this.wsnotify = function(data) {
                 if (this.ws) this.ws.send(data);
             }
 
@@ -185,7 +201,7 @@
             }
 
             //Saving and loading
-            this.toSaveData = function () {
+            this.toSaveData = function() {
                 this.settings.defaultView = $(this.rootdiv).fullCalendar('getView').name;
             }
 
@@ -206,7 +222,7 @@
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
-                    label: "Enter the title property:"
+                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
@@ -238,16 +254,17 @@
                 })
             ];
 
-            this.showDialog = function () {
+            this.showDialog = function() {
                 // update your dialog elements with your settings
                 ops.forEach((i) => i.load());
             }
-            this.dialogUpdateSettings = function () {
+            this.dialogUpdateSettings = function() {
                 this.processSettings();
             }
-
+            let calRefreshTimer = 0;
             this.refresh = () => {
-                setTimeout(() => {
+                clearTimeout(calRefreshTimer);
+                calRefreshTimer = setTimeout(() => {
                     try {
                         $(this.rootdiv).fullCalendar('render');
                         $(this.rootdiv).fullCalendar('refetchEvents');

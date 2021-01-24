@@ -1,13 +1,15 @@
 polymorph_core.registerOperator("scriptrunner", {
     displayName: "Script Runner",
     description: "Runs scripts.",
-    section:"Advanced",
-    imageurl:"assets/operators/scriptrunner.png"
-}, function (container) {
+    section: "Advanced",
+    imageurl: "assets/operators/scriptrunner.png",
+    mustColdLoad: true
+}, function(container) {
     let defaultSettings = {
         autorun: false,
         reallyAutorun: false,
-        forceCareAbout: ""
+        forceCareAbout: "",
+        processDuringLoad: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -50,18 +52,23 @@ polymorph_core.registerOperator("scriptrunner", {
     //////////////////Handle polymorph_core item updates//////////////////
 
     //this is called when an item is updated (e.g. by another container)
+    let selfLooping = false;
     container.on("*", (d, e) => {
-        if (!d.sender || d.sender != "GARBAGE_COLLECTOR") {
+        if (!d) return; // documentCreated &c
+        if ((!d.sender || d.sender != "GARBAGE_COLLECTOR") && !selfLooping && (!d.loadProcess || this.settings.processDuringLoad)) {
+            selfLooping = true;
             e.forEach(e => {
                 if (this.currentInstance) this.currentInstance._fire(e, d);
             })
+            selfLooping = false; // not sure if this is helping or hindering but we'll see
         }
         return false;
     });
 
     let me = this;
+
     function instance() {
-        this.log = function (data) {
+        this.log = function(data) {
             let p = document.createElement("p");
             p.style.whiteSpace = "pre-wrap";
             p.innerHTML = JSON.stringify(data, null, 4);
@@ -132,7 +139,17 @@ polymorph_core.registerOperator("scriptrunner", {
     this.rootdiv.querySelector(".updatebtn").addEventListener("click", () => {
         textarea.style.background = "white";
         this.settings.script = this.rootdiv.querySelector("textarea").value;
+        container.fire("updateItem", { id: this.container.id, sender: this });
         this.execute();
+    })
+
+    container.on("updateItem", (d) => {
+        if (d.id == this.container.id && d.sender != this) {
+            // consider updating the script
+            // again very dangerous xss target :(((
+            this.rootdiv.querySelector("textarea").value = this.settings.script;
+            this.execute();
+        }
     })
 
     this.rootdiv.querySelector(".stopbtn").addEventListener("click", () => {
@@ -143,7 +160,7 @@ polymorph_core.registerOperator("scriptrunner", {
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS IN GENERAL!`;
+    this.dialogDiv.innerHTML = `WARNING: DO NOT ACCEPT OTHERS' SCRIPTS YOU DONT UNDERSTAND!`;
     let ops = [
         new polymorph_core._option({
             div: this.dialogDiv,
@@ -160,6 +177,13 @@ polymorph_core.registerOperator("scriptrunner", {
         }),
         new polymorph_core._option({
             div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "processDuringLoad",
+            label: "Process events during loading (reduces load performance)"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
             type: "text",
             object: this.settings,
             property: "forceCareAbout",
@@ -169,10 +193,10 @@ polymorph_core.registerOperator("scriptrunner", {
 
     this.itemRelevant = (id) => this.settings.forceCareAbout.split(",").includes(id);
 
-    this.showDialog = function () {
+    this.showDialog = function() {
         ops.forEach((op) => { op.load(); });
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // pull settings and update when your dialog is closed.
     }
 
