@@ -121,11 +121,6 @@ polymorph_core.registerOperator("workflow", {
     this.rootdiv.style.display = "flex";
     this.rootdiv.style.flexDirection = "column";
     this.innerRoot = this.rootdiv.querySelector(".innerRoot");
-    // TO DELETE: temporarily enroll all rootitems as items we care about
-    for (let r of this.settings.rootItems) {
-        polymorph_core.items[r][this.settings.filter] = true;
-        polymorph_core.fire("updateItem", { id: r, sender: this });
-    }
 
     this.orderedLink = (from, to, i, after) => {
         polymorph_core.link(from, to);
