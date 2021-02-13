@@ -660,7 +660,7 @@ polymorph_core.registerOperator("workflow", {
     }
 
     var oldFocus;
-    let missingChildrenCache = {};
+    let renderedItemCache = {}; // for deletions
     let renderTrain = {};
     this.renderItem = (id, recursive) => {
         if (!recursive) {
@@ -687,6 +687,7 @@ polymorph_core.registerOperator("workflow", {
                 </span>
                 <div></div>
             </span>`);
+                renderedItemCache[id] = span;
             }
             span.children[0].children[1].innerHTML = polymorph_core.RTRenderProperty(polymorph_core.items[id][this.settings.titleProperty] || " ");
             if (polymorph_core.items[id].to && Object.keys(polymorph_core.items[id].to).length) {
@@ -762,6 +763,10 @@ polymorph_core.registerOperator("workflow", {
             this._existingItemsCache.push(d.id);
         }
         if ((polymorph_core.items[d.id][this.settings.filter] || this.itemRelevant(d.id))) this.renderItem(id);
+        else if (renderedItemCache[d.id]) {
+            renderedItemCache[d.id].remove();
+            delete renderedItemCache[d.id];
+        }
         //do stuff with the item.
     });
 
