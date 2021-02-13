@@ -8296,8 +8296,8 @@ polymorph_core.registerOperator("workflow", {
                     let preParent = spanWithID.previousElementSibling;
                     if (!(preParent && preParent.dataset.id)) preParent = spanWithID.parentElement.parentElement;
                     //delete the item
-                    unparent(id);
                     let theI = this.settings.rootItems.indexOf(id);
+                    unparent(id);
                     if (theI != -1) {
                         this.settings.rootItems.splice(theI, 1);
                         container.fire("updateItem", { id: this.container.id, sender: this });
