@@ -8713,11 +8713,11 @@ polymorph_core.registerOperator("workflow", {
     this.refresh = function() {
         // This is called when the parent container is resized.
         // needs to be here so that when item is instantialised, items will render.
-        if (this.container.visible()) {
-            this.settings.rootItems.forEach((i) => {
-                if (polymorph_core.items[i]) this.renderItem(i, true); // lie that the rendering is recursive, because the anti-collision system wont hurt
-            });
-        }
+        //if (this.container.visible()) { // dont check visiblity because we need to update items in background anyway when refresh called from other client
+        this.settings.rootItems.forEach((i) => {
+            if (polymorph_core.items[i]) this.renderItem(i, true); // lie that the rendering is recursive, because the anti-collision system wont hurt
+        });
+        //}
     }
 
     //Handle the settings dialog click!
