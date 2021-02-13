@@ -1,44 +1,19 @@
 # Overview
 
-Polymorph is a highly modular system, which makes it fantastic for modding. 
+Polymorph is a highly modular system, which makes it fantastic for modding. The main classes of modules outside of the care are savesources and operators: 
 
-If you're only looking to mod polymorph by adding your own functionality, you may only need to know about the following structure:
+![](https://raw.githubusercontent.com/acenturyandabit/polymorph/largeAssets/docs/polymorph_overview.PNG)
 
-![](https://raw.githubusercontent.com/acenturyandabit/polymorph/largeAssets/assets/readme2.gif)
+- Operators operate on the data by rendering it and applying user edits to the underlying data. Operators also subscribe or publish to an event system allowing them to communicate with each other.
+- Save sources operate on the data by saving it to a remote location for safekeeping between sessions.
+
+There are also a number of core elements:
+- Containers wrap around operators to help isolate operators from each other in a field-reconfigurable manner.
+- Rects manage space by dividing the screen into rectangles. Each rect can either hold exactly two other rects; or an indefinite number of containers in tabs.
+- The core event system relays events between operators and from operators to realtime savesources. 
+- The core document loading system reads both the local machine data and the document data to determine which save source instances and operators to create.
+
+The unit of data in polymorph is an item. An item is a plain JSON-encoded entry in the document dictionary. Items can further have properties which are then rendered by operators.
 
 
-
-
-
-## It's like...
-- ROS [https://www.ros.org/], but for user interfaces
-- Outlook, but less integrated (sad) and more flexible (yay)
-## Software Architecture
-Polymorph is made up of a few main components:
-- polymorph_core: This represents a shared platform where everything interacts. It contains a main event interface.
-- Rects: This represents resizable rectangles that form the basis of Polymorph's UX.
-- Containers: Rects hold containers, which hold operators. Containers abstract away some common UX concerns from operators.
-- polymorph_core modules: These represent aspects of the polymorph_core's operation.
-- Items: These are created by users through operators.
-- [MODDING FOCUS] Operators: These represent different ways of representing, interacting with and creating items.
-
-## Data architecture
-The main data repositories of Polymorph include:
-- polymorph_core.userData: Device (browser) scope. 
-```javascript
-polymorph_core.userData={
-    documents:{
-        document_id:{
-            saveSources:{
-                saveSourceName:savesourceData
-            },
-            autosave: true/false
-        }
-    },
-    tutorialData:{
-        operatorName:operatorTutorialData
-    }
-}
-```
-- polymorph_core.items: Instance scope.
-## Living architecture
+[Back to contents](https://github.com/acenturyandabit/polymorph/tree/master/docs)

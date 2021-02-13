@@ -222,7 +222,7 @@
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
-                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):"
+                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):",
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,

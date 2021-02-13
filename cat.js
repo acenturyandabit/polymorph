@@ -2639,7 +2639,20 @@ polymorph_core.container = function container(containerID) {
 };;
 
 function _contextMenuManager(root) {
-    this.registerContextMenu = function (menu, element, delegate, contextmenuEventPassThrough) {
+    //menu is html; element is parent element; delegate is a class as string; contextmenueventpassthrough is a function that returns a bool given the event
+    /*
+        let contextMenuManager = new _contextMenuManager(this.rootdiv);
+    let contextmenu = contextMenuManager.registerContextMenu(
+        `<div>
+    <span>Sort by date</span>
+    </div>`)
+    contextmenu.addEventListener("click",()=>{
+        //do stuff
+    })
+    
+    
+    */
+    this.registerContextMenu = function(menu, element, delegate, contextmenuEventPassThrough) {
         let thisCTXM = document.createElement("div");
         thisCTXM.innerHTML = menu;
         thisCTXM.style.cssText = "display:none;"
@@ -2663,7 +2676,7 @@ function _contextMenuManager(root) {
             thisCTXM.style.left = _left;
             thisCTXM.style.display = "block";
         }
-        let f = function (e) {
+        let f = function(e) {
             //show the context menu
             e.preventDefault();
             if (contextmenuEventPassThrough) {
@@ -2674,7 +2687,7 @@ function _contextMenuManager(root) {
                 intellishow(e);
             }
         };
-        element.addEventListener("contextmenu", function (e) {
+        element.addEventListener("contextmenu", function(e) {
             if (delegate) {
                 if (e.target.matches(delegate) || e.target.matches(delegate + " *")) f(e);
             } else f(e);
@@ -2707,6 +2720,7 @@ function _contextMenuManager(root) {
             position:relative;
             padding: 2px;
             display: block;
+            color:black;
         }
         .contextMenu li:hover {
             background:pink;
@@ -2733,7 +2747,7 @@ function _contextMenuManager(root) {
 //deps: core.container.js
 //add a context menu configuration button to the container menu
 polymorph_core.showContextMenu = (container, settings, options) => {
-    container._tempCtxSettings = settings;//do this otherwise contextmenu will always point to first item contextmenu'ed... but what is this?
+    container._tempCtxSettings = settings; //do this otherwise contextmenu will always point to first item contextmenu'ed... but what is this?
     /*
     settings = {
         x:int
@@ -2767,7 +2781,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     let setItemProp = (prop, val, assignment, LHS = polymorph_core.items[container._tempCtxSettings.id]) => {
         //expect either item.potato.tomato from assignment or potato.tomato.
         if (assignment) {
-            prop = prop.slice(prop.indexOf(".") + 1);//nerf the first item
+            prop = prop.slice(prop.indexOf(".") + 1); //nerf the first item
         }
         let props = prop.split(".");
         let itm = LHS;
@@ -2925,7 +2939,7 @@ polymorph_core.ctxCommands = {
     }
 }
 
-polymorph_core.container.prototype.registerContextMenu = function (el, delegateFilter) {
+polymorph_core.container.prototype.registerContextMenu = function(el, delegateFilter) {
     el.addEventListener("contextmenu", (e) => {
         let itm = delegateFilter(e.target);
         if (itm) {
@@ -2948,7 +2962,7 @@ document.addEventListener("mousemove", (e) => {
 
 // add a topbar element that does it.
 polymorph_core.on("UIstart", () => {
-    let contextMenuDialog = htmlwrap(/*html*/`
+    let contextMenuDialog = htmlwrap( /*html*/ `
     <div>
         <h2>Context menu settings</h2>
         <textarea></textarea>
@@ -2964,12 +2978,11 @@ polymorph_core.on("UIstart", () => {
     contextMenuDialog.querySelector("textarea").addEventListener("input", () => {
         polymorph_core.currentDoc.globalContextMenuOptions = contextMenuDialog.querySelector("textarea").value.split("\n");
     });
-    polymorph_core.topbar.add("File");//add it so that it comes first before settings.
+    polymorph_core.topbar.add("File"); //add it so that it comes first before settings.
     /*polymorph_core.topbar.add("Settings/Context menu").addEventListener("click", () => {
         polymorph_core.dialog.prompt(contextMenuDialog);
     })*/
-})
-;
+});
 
 //Do we even need these?  Probably not....
 polymorph_core.isLinked = function (A, B) {
@@ -5040,6 +5053,50 @@ polymorph_core.on("UIstart", () => {
         loadDialog.style.display = "block";
     })
 });;
+
+(() => {
+    // rich text
+    polymorph_core.RTRenderProperty = (prop) => {
+        // convert markdown into HTML
+        return prop;
+    }
+
+
+    polymorph_core.RTParseElement = (el, id, prop) => {
+        // check if there are any child images
+        let deepCloned = el.cloneNode(true);
+        let strayImages = 0;
+        if (deepCloned.children) {
+            for (c of deepCloned.children) {
+                if (c.tagName == "IMG" && c.src.slice(0, 5) == "data:") {
+                    strayImages++;
+                    let rq = new XMLHttpRequest();
+                    rq.onreadystatechange = (e) => {
+                        if (rq.readyState == XMLHttpRequest.DONE) {
+                            if (rq.status == 200) {
+                                c.src = `${window.location.protocol}//${window.location.host}/getImage/${rq.responseText}.png`;
+                            }
+                            strayImages--;
+                            if (strayImages == 0) {
+                                // send an updateItem
+                                polymorph_core.items[id][prop] = deepCloned.innerHTML;
+                                polymorph_core.fire("updateItem", { id: id, sender: polymorph_core });
+                            }
+                        }
+                    }
+                    rq.open("POST", `${window.location.protocol}//${window.location.host}/saveImage`);
+                    rq.setRequestHeader('Content-Type', c.src.split(/;/g)[0].slice(5));
+                    rq.send(c.src);
+                }
+            }
+        }
+        // if there are, grab the url as a dataurl
+        // POST the dataurl to a backend image handler
+        // for now, just check whether localhost will take it
+        // when it comes back, fire an updateItem to update it.
+        return el.innerHTML;
+    }
+})();;
 
 (function() {
     polymorph_core.registerOperator("opSelect", { displayName: "New Operator", hidden: true }, function(container) {
@@ -7891,22 +7948,25 @@ polymorph_core.registerOperator("workflow", {
         titleProperty: "title",
         richtextProperty: "description",
         rootItems: [],
-        filter: polymorph_core.guid()
+        filter: polymorph_core.guid(),
+        propsAsDate: ""
     };
-
+    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Can probably replace this with direct instantiation instead of a getter, if we're careful.
     Object.defineProperty(this, "existingItems", {
-        get: () => {
-            if (this._existingItemsCache) return this._existingItemsCache;
-            else {
-                this._existingItemsCache = Array.from(this.settings.rootItems).filter(i => polymorph_core.items[i]); // occasionally strange things happen
-                for (let i = 0; i < this._existingItemsCache.length; i++) {
-                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
+            get: () => {
+                if (this._existingItemsCache) return this._existingItemsCache;
+                else {
+                    this._existingItemsCache = Array.from(this.settings.rootItems).filter(i => polymorph_core.items[i]); // occasionally strange things happen
+                    for (let i = 0; i < this._existingItemsCache.length; i++) {
+                        if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
+                    }
+                    return this._existingItemsCache;
                 }
-                return this._existingItemsCache;
             }
-        }
-    })
+        })
+        //force update existingitemscache
+    this.existingItems.length;
     this._parentOfCache = {};
     this.parentOf = (id) => {
         if (this._parentOfCache[id]) return this._parentOfCache[id];
@@ -7922,8 +7982,6 @@ polymorph_core.registerOperator("workflow", {
         }
     }
 
-    //this.rootdiv, this.settings, this.container instantiated here.
-    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
     <style>
@@ -7972,6 +8030,10 @@ polymorph_core.registerOperator("workflow", {
         background:darkblue;
     }
 
+    .tmpFocused{
+        background: rgba(255,255,0,0.5);
+    }
+
     </style>
     <span class="innerRoot" style="flex: 0 1 100%; min-height:0; overflow:auto">${/* otherwise we get overflow issues*/ ""}
         <span class="cursorspan">
@@ -8009,7 +8071,7 @@ polymorph_core.registerOperator("workflow", {
         if (polymorph_core.items[from].toOrder.indexOf(to) != -1) {
             polymorph_core.items[from].toOrder.splice(polymorph_core.items[from].toOrder.indexOf(to), 1);
         }
-        if (!i) polymorph_core.items[from].toOrder.push(to);
+        if (i == undefined) polymorph_core.items[from].toOrder.push(to);
         else if (typeof(i) == "number") {
             polymorph_core.items[from].toOrder.splice(i, 0, to);
         } else {
@@ -8045,27 +8107,29 @@ polymorph_core.registerOperator("workflow", {
             //expand or contract
             setExpandedState(e.target.parentElement.parentElement.parentElement);
         }
+        if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
     });
     //return true if we care about an item and dont want it garbage-cleaned :(
     //this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
     this.itemRelevant = (id) => { return polymorph_core.items[id][this.settings.filter] }
 
-    this.createItem = (id) => {
+    this.createItem = (id, toDirectAdopt) => {
         if (!id) id = polymorph_core.insertItem({});
         itm = polymorph_core.items[id];
         if (!itm) itm = polymorph_core.items[id] = {};
         itm[this.settings.filter] = true;
         itm[this.settings.titleProperty] = itm[this.settings.titleProperty] || ""; // in case title already exists from another operator
         //add any data you need
-        let toDirectAdopt = true;
-        for (let i = 0; i < this.existingItems.length; i++) {
-            if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
-                toDirectAdopt = false;
-                if (!polymorph_core.items[this.existingItems[i]].toOrder) polymorph_core.items[this.existingItems[i]].toOrder = [];
-                if (polymorph_core.items[this.existingItems[i]].toOrder.indexOf(id) == -1) {
-                    polymorph_core.items[this.existingItems[i]].toOrder.push(id);
+        if (toDirectAdopt) {
+            for (let i = 0; i < this.existingItems.length; i++) {
+                if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
+                    toDirectAdopt = false;
+                    if (!polymorph_core.items[this.existingItems[i]].toOrder) polymorph_core.items[this.existingItems[i]].toOrder = [];
+                    if (polymorph_core.items[this.existingItems[i]].toOrder.indexOf(id) == -1) {
+                        polymorph_core.items[this.existingItems[i]].toOrder.push(id);
+                    }
+                    break;
                 }
-                break;
             }
         }
         if (toDirectAdopt) {
@@ -8152,7 +8216,6 @@ polymorph_core.registerOperator("workflow", {
         else root = root.children[1];
         Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.regenerateToOrder(i));
     };
-    // called when debugging, ideally call before save...
 
     this.rootdiv.addEventListener("keyup", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
@@ -8172,6 +8235,7 @@ polymorph_core.registerOperator("workflow", {
     })
 
     this.parse = (el) => {
+
         while (el && !el.dataset.id) {
             el = el.parentElement;
         }
@@ -8186,8 +8250,34 @@ polymorph_core.registerOperator("workflow", {
         let text = el.children[0].children[1].innerText;
         let re = /\\\{(.+?)\}/g;
         let result = 0;
+        let validKeys = {};
         while (result = re.exec(text)) {
-            polymorph_core.items[id]["_" + this.container.id + "_" + result[1]] = true;
+            let parts = result[1].split(":");
+            let ltrkey = parts.shift();
+            key = `_${container.id}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
+            validKeys[key] = true;
+            let value = parts.join(":");
+            if (value) {
+                if (this.settings.propAsDate.split(",").includes(ltrkey)) {
+                    polymorph_core.items[id][key] = {
+                        datestring: value
+                    }
+                    polymorph_core.items[id][key].date = dateParser.richExtractTime(polymorph_core.items[id][key].datestring);
+                    if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
+                    container.fire("dateUpdate", { sender: this });
+                } else {
+                    polymorph_core.items[id][key] = value;
+                }
+            } else {
+                if (!polymorph_core.items[id][key]) polymorph_core.items[id][key] = true;
+            }
+        }
+        for (let p in polymorph_core.items[id]) {
+            if (p.startsWith(`_${container.id}_`)) {
+                if (!validKeys[p]) {
+                    delete polymorph_core.items[id][p];
+                }
+            }
         }
     }
     let modifiers = {
@@ -8208,7 +8298,10 @@ polymorph_core.registerOperator("workflow", {
                     //delete the item
                     unparent(id);
                     let theI = this.settings.rootItems.indexOf(id);
-                    if (theI != -1) this.settings.rootItems.splice(theI, 1);
+                    if (theI != -1) {
+                        this.settings.rootItems.splice(theI, 1);
+                        container.fire("updateItem", { id: this.container.id, sender: this });
+                    }
                     if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
                     if (spanWithID.parentElement.children.length == 1) {
                         // remove the arrow
@@ -8362,7 +8455,8 @@ polymorph_core.registerOperator("workflow", {
                                 wasme.focus();
                             } else {
                                 //make root
-                                this.settings.rootItems.push(id);
+                                let prev = spanWithID.parentElement.parentElement.dataset.id;
+                                this.settings.rootItems.splice(this.settings.rootItems.indexOf(prev) + 1, 0, id);
                                 this.renderItem(id);
                                 wasme.focus();
                             }
@@ -8437,7 +8531,7 @@ polymorph_core.registerOperator("workflow", {
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            polymorph_core.items[id][this.settings.titleProperty] = e.target.innerText;
+            polymorph_core.items[id][this.settings.titleProperty] = polymorph_core.RTParseElement(e.target, id, this.settings.titleProperty);
             //parse stuff
             this.parse(e.target);
             container.fire("updateItem", { id: id, sender: this });
@@ -8449,6 +8543,18 @@ polymorph_core.registerOperator("workflow", {
         if (this.innerRoot.querySelector(`[data-id="${d.id}"]`)) this.innerRoot.querySelector(`[data-id="${d.id}"]`).remove();
         if (this.settings.rootItems.indexOf(d.id)) {
             this.settings.rootItems.splice(this.settings.rootItems.indexOf(d.id), 1);
+        }
+    })
+
+    container.on("focusItem", (d) => {
+        if (d.sender == this) return;
+        if (!this.itemRelevant(d.id)) return;
+        let el = this.innerRoot.querySelector(`[data-id="${d.id}"]`);
+        if (el) {
+            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
+            el.scrollIntoViewIfNeeded();
+            focusOnElement(el, 0);
+            el.classList.add("tmpFocused");
         }
     })
 
@@ -8520,7 +8626,7 @@ polymorph_core.registerOperator("workflow", {
                 <div></div>
             </span>`);
             }
-            span.children[0].children[1].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
+            span.children[0].children[1].innerHTML = polymorph_core.RTRenderProperty(polymorph_core.items[id][this.settings.titleProperty] || " ");
             if (polymorph_core.items[id].to && Object.keys(polymorph_core.items[id].to).length) {
 
                 if (polymorph_core.items[id].collapsed) {
@@ -8600,7 +8706,7 @@ polymorph_core.registerOperator("workflow", {
     container.on("createItem", (d) => {
         if (d.sender == this) return;
         let id = d.id;
-        this.createItem(id);
+        this.createItem(id, true);
         this.renderItem(id);
     });
 
@@ -8638,7 +8744,15 @@ polymorph_core.registerOperator("workflow", {
                 }
             },
             label: "Import now"
-        })
+        }),
+        propsAsDate: new polymorph_core._option({
+                div: this.dialogDiv,
+                type: "text",
+                object: this.settings,
+                property: "propAsDate",
+                label: "Properties to be treated as dates (csv)"
+            })
+            // This is incredibly lazy but one day we'll fix it
     }
     this.showDialog = function() {
         for (let i in options) {
@@ -8650,361 +8764,80 @@ polymorph_core.registerOperator("workflow", {
         // This is called when your dialog is closed. Use it to update your container!
     }
 
-});;
-
-polymorph_core.registerOperator("textflow", {
-    displayName: "TextFlow",
-    description: "An operator designed for streams of text.",
-    section: "Standard"
-}, function(container) {
-    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
-    let defaultSettings = {
-        itemRootProperty: "textflow_irp_" + polymorph_core.guid(5),
-        titleProperty: "title",
-        richtextProperty: "description",
-        renderMode: "templateStrings",
-        filter: polymorph_core.insertItem({}),
-    };
-    let newStorageItem = {};
-    newStorageItem[defaultSettings.itemRootProperty] = [polymorph_core.insertItem({})];
-    defaultSettings.filter = polymorph_core.insertItem(newStorageItem);
-    //this.rootdiv, this.settings, this.container instantiated here.
-    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-
-    //load SoC extension
-    this.parsers = {};
-    /*scriptassert([["textflow_socparser", "operators/textflow/socParser.js"]], () => {
-        __textflow_soc_parser(this);
-    });*/
-
-    Object.defineProperty(this, "rootItems", {
-        get: () => {
-            return polymorph_core.items[this.settings.filter][this.settings.itemRootProperty];
+    let contextMenuManager = new _contextMenuManager(this.rootdiv);
+    let contextmenu = contextMenuManager.registerContextMenu(
+        `
+    <li data-action="cleanup">Clean up ordering</li>
+    <li data-action="sortbydate">Sort by date</li>
+    `, this.rootdiv);
+    contextmenu.addEventListener("click", (e) => {
+        switch (e.target.dataset.action) {
+            case "cleanup":
+                this.regenerateToOrder();
+                break;
+            case "sortbydate":
+                this.regenerateSortedToOrder();
+                break;
         }
+        contextmenu.style.display = "none";
     })
-    if (this.settings.rootItems) {
-        if (this.settings.rootItems.length) {
-            //its an array, so old version
-            let newStorageItem = {};
-            newStorageItem[this.settings.itemRootProperty] = this.settings.rootItems;
-            this.settings.filter = polymorph_core.insertItem(newStorageItem);
-        } else {
-            for (let i in this.settings.rootItems) {
-                let newStorageItem = {};
-                newStorageItem[this.settings.itemRootProperty] = this.settings.rootItems[i];
-                this.settings.filter = polymorph_core.insertItem(newStorageItem);
-            }
+
+    this.regenerateSortedToOrder = (root, property, recursive = false) => {
+        // clarify the toOrder first
+        if (!recursive) this.regenerateToOrder(root);
+        // for now, just assume property is a date
+        if (!property) {
+            property = this.settings.propAsDate.split(",")[0]
         }
-        delete this.settings.rootItems;
-    }
-    this.rootdiv.appendChild(htmlwrap(`<div style="color:white;overflow-y:auto;height:100%"></div>`))
-    this.itemListDiv = this.rootdiv.children[0];
-
-    let focusOnElement = (el, index) => {
-        let range = document.createRange();
-        let newP = el;
-        range.setStart(newP, index);
-        range.collapse(true);
-        let sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        //on deletion, focus is lost, so check focus exists
-        if (this.itemListDiv.querySelector(".focused")) this.itemListDiv.querySelector(".focused").classList.remove("focused");
-        el.parentElement.classList.add("focused");
-        newP.focus();
-        newP.scrollIntoViewIfNeeded();
-        container.fire("focusItem", { id: el.parentElement.dataset.id, sender: this });
-    }
-
-    this.createItem = (oldID) => {
-        if (this.settings.renderMode == "SoC") {
-            //it's a stream of consciousness
-            //poll the plugin for what to do
-            try {
-                this.parsers["soc"](oldID);
-            } catch (e) {
-                console.log(e);
-            }
+        if (!property) {
+            return;
         }
+        property = `_${container.id}_${property}`;
 
-        let newItem = {};
-        newItem[this.settings.titleProperty] = "";
-        let newID = polymorph_core.insertItem(newItem);
-        if (oldID) this.rootItems.splice(this.rootItems.indexOf(oldID) + 1, 0, newID);
-        else this.rootItems.push(newID);
-        container.fire("createItem", { id: newID, sender: this });
-        this.richRenderItem(newID);
-        focusOnElement(this.itemListDiv.querySelector(`span[data-id='${newID}'] p`));
-    }
-
-    this.itemRelevant = (id) => {
-        for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i][this.settings.itemRootProperty] && polymorph_core.items[i][this.settings.itemRootProperty].includes) {
-                if (i == id) return true;
-                if (polymorph_core.items[i][this.settings.itemRootProperty].includes(id)) return true;
-            }
-        }
-        return false;
-    }
-
-    this.itemRelevantNow = (id) => {
-        if (this.rootItems) return (this.rootItems.indexOf(id) != -1);
-        else return false;
-    }
-
-    this.itemListDiv.addEventListener("keydown", (e) => {
-        if (e.key == "Tab") e.preventDefault();
-        if (e.key == "ArrowDown" || e.key == "ArrowUp") {
-            let ckey = e.key;
-            let ctarget = e.target;
-            let baseElement = e.target.getRootNode();
-            range = baseElement.getSelection().getRangeAt(0);
-            let preRange = range.startOffset;
-            let preEl = range.startContainer;
-            setTimeout(() => {
-                range = baseElement.getSelection().getRangeAt(0);
-                if (preRange == range.startOffset && preEl == range.startContainer) {
-                    if (ckey == "ArrowDown") {
-                        if (ctarget.parentElement.nextElementSibling) {
-                            toFocusOnSpan = ctarget.parentElement.nextElementSibling.children[0];
-                            focusOnElement(toFocusOnSpan);
-                        } else if (ctarget.innerText) {
-                            let oldID = ctarget.parentElement.dataset.id;
-                            this.createItem(oldID);
-                        }
-                    } else {
-                        if (ctarget.parentElement.previousElementSibling) {
-                            let toFocusOnSpan = ctarget.parentElement.previousElementSibling.children[0];
-                            if (toFocusOnSpan) focusOnElement(toFocusOnSpan);
-                        }
-                    }
-                }
-            }, 100);
-        } else if (e.key == "Backspace") {
-            if (e.target.innerText == "" || e.target.innerText == "\n") { //occasionally you get a single <br> and it refuses to delete
-                let toFocusOnSpan;
-                if (e.target.parentElement.previousElementSibling) {
-                    toFocusOnSpan = e.target.parentElement.previousElementSibling.children[0];
-                } else if (e.target.parentElement.nextElementSibling) {
-                    toFocusOnSpan = e.target.parentElement.nextElementSibling.children[0];
-                }
-                if (toFocusOnSpan) { // if this is the last element, don't delete it!
-                    let id = e.target.parentElement.dataset.id;
-                    let idindex = this.rootItems.indexOf(id);
-                    if (idindex > -1) {
-                        this.rootItems.splice(idindex, 1);
-                    }
-                    e.target.parentElement.remove();
-                    container.fire("deleteItem", { id: id, sender: this });
-                    focusOnElement(toFocusOnSpan);
-                }
-            }
-        } else if (e.key == "Enter") {
-            if (e.getModifierState("Shift") == true) return;
-            let baseElement = e.target.getRootNode();
-            range = baseElement.getSelection().getRangeAt(0);
-            let preRange = range.startOffset;
-            if (preRange == range.startContainer.length &&
-                Array.from(range.startContainer.parentElement.childNodes).indexOf(range.startContainer) == range.startContainer.parentElement.childNodes.length - 1
-            ) {
-                //make a new node
-                e.preventDefault();
-                let oldID = e.target.parentElement.dataset.id;
-                this.createItem(oldID);
-            }
-        }
-    });
-
-    this.itemListDiv.addEventListener("click", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (e.path[i].host) return; //exist after shadow root
-            if (e.path[i].matches(`span[data-id]>div`)) {
-                focusOnElement(e.path[i].previousElementSibling);
-                break;
-            } else if (e.path[i].matches(`span[data-id]:not(.focused)>p`)) {
-                focusOnElement(e.path[i]);
-                break;
-            }
-        }
-    });
-
-    this.itemListDiv.addEventListener("input", (e) => {
-        if (e.target.matches(`span[data-id]>p`)) {
-            let id = e.target.parentElement.dataset.id;
-            polymorph_core.items[id][this.settings.titleProperty] = e.target.innerText;
-            container.fire("updateItem", { id: id, sender: this });
-        }
-    });
-
-    this.richRenderItem = (id) => {
-        if (this.itemRelevantNow(id)) {
-            //render the item, if we care about it.
-            let span = this.itemListDiv.querySelector(`span[data-id='${id}']`);
-            if (!span) {
-                span = htmlwrap(`
-            <span data-id="${id}">
-            <p class="code" contenteditable></p>
-            <div class="rendered"></div>
-            </span>`);
-            }
-            if (!span.classList.contains("focused")) span.children[0].innerText = polymorph_core.items[id][this.settings.titleProperty] || " ";
-            let innerText = polymorph_core.items[id][this.settings.titleProperty];
-            if (!innerText) innerText = " "; //on metafocus, this property may not be set
-            if (this.settings.renderMode == "templateString") span.children[1].innerHTML = eval(`\`${innerText}\``);
-            if (span.parentElement != this.itemListDiv) {
-                if (this.rootItems.indexOf(id) - 1 >= 0) {
-                    let prevID = this.rootItems[this.rootItems.indexOf(id) - 1];
-                    //not first item
-                    if (this.itemListDiv.querySelector(`span[data-id="${prevID}"]`)) {
-                        this.itemListDiv.insertBefore(span, this.itemListDiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
-                    } else {
-                        //on first run, some items may not exist yet. so recurse up.
-                        this.richRenderItem(prevID);
-                        this.itemListDiv.insertBefore(span, this.itemListDiv.querySelector(`span[data-id="${prevID}"]`).nextElementSibling);
-                    }
+        if (root && root.dataset.id) {
+            polymorph_core.items[root.dataset.id].toOrder.sort((a, b) => {
+                let aHasDate = (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) ? 1 : 0;
+                let bHasDate = (polymorph_core.items[b][property] && polymorph_core.items[b][property].date && polymorph_core.items[b][property].date.length) ? 1 : 0;
+                if (aHasDate != bHasDate) return aHasDate - bHasDate;
+                else if (aHasDate == bHasDate && !aHasDate) {
+                    return 0;
                 } else {
-                    //first item
-                    this.itemListDiv.insertBefore(span, this.itemListDiv.children[0]); //style
+                    return polymorph_core.items[a][property].date[0].date - polymorph_core.items[b][property].date[0].date
+                }
+            })
+            polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
+        } else if (!root) {
+            this.settings.rootItems.sort((a, b) => {
+                let aHasDate = (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) ? 1 : 0;
+                let bHasDate = (polymorph_core.items[b][property] && polymorph_core.items[b][property].date && polymorph_core.items[b][property].date.length) ? 1 : 0;
+                if (aHasDate != bHasDate) return bHasDate - aHasDate;
+                else if (aHasDate == bHasDate && !aHasDate) {
+                    return 0;
+                } else {
+                    return polymorph_core.items[a][property].date[0].date - polymorph_core.items[b][property].date[0].date
+                }
+            });
+            polymorph_core.fire("updateItem", { id: this.container.id, sender: this });
+        }
+        if (!root) root = this.innerRoot;
+        else if (root.matches(".cursorspan")) return;
+        else root = root.children[1];
+        Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.regenerateSortedToOrder(i, property, true));
+        if (!recursive) {
+            if (root != this.innerRoot) {
+                this.renderItem(root.dataset.id);
+            } else {
+                let rcopy = this.settings.rootItems.map(i => i).reverse();
+                let prevSpan = this.innerRoot.querySelector(`span[data-id="${rcopy[0]}"]`);
+                for (let i of rcopy) {
+                    let nextSpan = this.innerRoot.querySelector(`span[data-id="${i}"]`);
+                    this.innerRoot.insertBefore(nextSpan, prevSpan);
+                    prevSpan = nextSpan;
                 }
             }
-            if (polymorph_core.items[id].isSoCQuery && span.children[1].style.display != "block") {
-                setTimeout(() => this.parsers["soc"](id), 200);
-            }
         }
     }
-    container.on("updateItem", (d) => {
-        let id = d.id;
-        this.richRenderItem(id);
-        //do stuff with the item.
-    });
 
-    container.on("metaFocus", (data) => {
-        if (data.sender == this) return;
-        this.settings.filter = data.id;
-        if (!this.rootItems) polymorph_core.items[this.settings.filter][this.settings.itemRootProperty] = [polymorph_core.insertItem({})];
-        //clear out everything
-        while (this.itemListDiv.children.length > 0) {
-            this.itemListDiv.children[0].remove();
-        }
-        for (let i in polymorph_core.items) {
-            this.richRenderItem(i);
-        }
-        this.itemListDiv.children[0].classList.add("focused");
-    })
-    if (this.rootItems) {
-        if (!this.rootItems.length) {
-            this.rootItems.push(polymorph_core.insertItem({}))
-        };
-        this.rootItems.forEach((i) => container.fire("updateItem", { id: i }));
-    } else {
-        let newStorageItem = {};
-        let newTextItem = polymorph_core.insertItem({});
-        newStorageItem[this.settings.itemRootProperty] = [newTextItem];
-        this.settings.filter = polymorph_core.insertItem(newStorageItem);
-        this.richRenderItem(newTextItem);
-    }
-    this.itemListDiv.children[0].classList.add("focused");
-
-    this.refresh = function() {
-        // This is called when the parent container is resized.
-    }
-
-    //Handle the settings dialog click!
-    this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = ``;
-    let options = {
-        oneTimeImport: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "text",
-            object: this.settings,
-            property: "oneTimeImport",
-            label: "Filter for one time import"
-        }),
-        importNow: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "button",
-            fn: () => {
-                for (let i in polymorph_core.items) {
-                    if (polymorph_core.items[i][this.settings.oneTimeImport]) {
-                        //check if they are children of any of the existing items occurs on render.
-                        this.rootItems.push(i);
-                        this.richRenderItem(i);
-                        this.itemListDiv.children[0].classList.add("focused")
-                    }
-                }
-            },
-            label: "Import now"
-        }),
-        print: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "button",
-            fn: () => {
-                let preFocused = this.itemListDiv.querySelector(".focused");
-                if (preFocused) this.itemListDiv.querySelector(".focused").classList.remove("focused");
-                let nw = window.open("", "_blank");
-                let generatedHTML = this.itemListDiv.innerHTML;
-                nw.document.body.innerHTML = generatedHTML;
-                preFocused.classList.add("focused");
-            },
-            label: "Print this document"
-        }),
-        renderMode: new polymorph_core._option({
-            div: this.dialogDiv,
-            type: "select",
-            object: this.settings,
-            property: "renderMode",
-            source: ["templateString", "Markdown [todo]", "Textflow custom shortcuts [todo]", "SoC"],
-            label: "Rendering mode"
-        })
-    }
-    this.showDialog = function() {
-        for (let i in options) options[i].load();
-    }
-    this.baseStyle = htmlwrap(`<style>`);
-    this.rootdiv.appendChild(this.baseStyle);
-    this.dialogUpdateSettings = function() {
-        // This is called when your dialog is closed. Use it to update your container!
-        //Add content-independent HTML here.
-        switch (this.settings.renderMode) {
-            case "SoC":
-                this.baseStyle.innerHTML = `
-                span[data-id]{
-                    display:block;
-                    width:100%;
-                }
-                span[data-id]>p{
-                    display:block;
-                    font-family:monospace;
-                    margin:0;
-                }
-                span[data-id]>div.rendered{
-                    display:none;
-                }`
-                break;
-            default:
-                this.baseStyle.innerHTML = `
-                span[data-id]{
-                    display:block;
-                    width:100%;
-                }
-                p[contenteditable]{
-                    display:none;
-                    font-family:monospace;
-                }
-                span.focused p[contenteditable]{
-                    display:block;
-                }
-                `
-                break;
-
-        }
-        this.baseStyle = htmlwrap(`<style>
-  
-    </style>`);
-        this.rootdiv.appendChild(this.baseStyle);
-    }
-
-    this.dialogUpdateSettings();
 });;
 
 //todo: putter mode for inspector
@@ -10545,7 +10378,7 @@ function quickNotify(txt, ask, denyFn) {
                     type: "array",
                     object: this.settings,
                     property: "dateproperties",
-                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):"
+                    label: "Enter the date properties (begin with * for numerical dates instead of smart dates):",
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,

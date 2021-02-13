@@ -6,6 +6,7 @@ These articles outline how polymorph works in terms of its modules and informati
 - UI: Operators, containers, rects, helpers
 - Data: Save sources, core, backend
 - Items: _lu, linking
+- Local machine data
 - Messaging: event API, on/fire, remapping
 
 ## Operator specific

@@ -1,5 +1,18 @@
 function _contextMenuManager(root) {
-    this.registerContextMenu = function (menu, element, delegate, contextmenuEventPassThrough) {
+    //menu is html; element is parent element; delegate is a class as string; contextmenueventpassthrough is a function that returns a bool given the event
+    /*
+        let contextMenuManager = new _contextMenuManager(this.rootdiv);
+    let contextmenu = contextMenuManager.registerContextMenu(
+        `<div>
+    <span>Sort by date</span>
+    </div>`)
+    contextmenu.addEventListener("click",()=>{
+        //do stuff
+    })
+    
+    
+    */
+    this.registerContextMenu = function(menu, element, delegate, contextmenuEventPassThrough) {
         let thisCTXM = document.createElement("div");
         thisCTXM.innerHTML = menu;
         thisCTXM.style.cssText = "display:none;"
@@ -23,7 +36,7 @@ function _contextMenuManager(root) {
             thisCTXM.style.left = _left;
             thisCTXM.style.display = "block";
         }
-        let f = function (e) {
+        let f = function(e) {
             //show the context menu
             e.preventDefault();
             if (contextmenuEventPassThrough) {
@@ -34,7 +47,7 @@ function _contextMenuManager(root) {
                 intellishow(e);
             }
         };
-        element.addEventListener("contextmenu", function (e) {
+        element.addEventListener("contextmenu", function(e) {
             if (delegate) {
                 if (e.target.matches(delegate) || e.target.matches(delegate + " *")) f(e);
             } else f(e);
@@ -67,6 +80,7 @@ function _contextMenuManager(root) {
             position:relative;
             padding: 2px;
             display: block;
+            color:black;
         }
         .contextMenu li:hover {
             background:pink;
@@ -93,7 +107,7 @@ function _contextMenuManager(root) {
 //deps: core.container.js
 //add a context menu configuration button to the container menu
 polymorph_core.showContextMenu = (container, settings, options) => {
-    container._tempCtxSettings = settings;//do this otherwise contextmenu will always point to first item contextmenu'ed... but what is this?
+    container._tempCtxSettings = settings; //do this otherwise contextmenu will always point to first item contextmenu'ed... but what is this?
     /*
     settings = {
         x:int
@@ -127,7 +141,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
     let setItemProp = (prop, val, assignment, LHS = polymorph_core.items[container._tempCtxSettings.id]) => {
         //expect either item.potato.tomato from assignment or potato.tomato.
         if (assignment) {
-            prop = prop.slice(prop.indexOf(".") + 1);//nerf the first item
+            prop = prop.slice(prop.indexOf(".") + 1); //nerf the first item
         }
         let props = prop.split(".");
         let itm = LHS;
@@ -285,7 +299,7 @@ polymorph_core.ctxCommands = {
     }
 }
 
-polymorph_core.container.prototype.registerContextMenu = function (el, delegateFilter) {
+polymorph_core.container.prototype.registerContextMenu = function(el, delegateFilter) {
     el.addEventListener("contextmenu", (e) => {
         let itm = delegateFilter(e.target);
         if (itm) {
@@ -308,7 +322,7 @@ document.addEventListener("mousemove", (e) => {
 
 // add a topbar element that does it.
 polymorph_core.on("UIstart", () => {
-    let contextMenuDialog = htmlwrap(/*html*/`
+    let contextMenuDialog = htmlwrap( /*html*/ `
     <div>
         <h2>Context menu settings</h2>
         <textarea></textarea>
@@ -324,7 +338,7 @@ polymorph_core.on("UIstart", () => {
     contextMenuDialog.querySelector("textarea").addEventListener("input", () => {
         polymorph_core.currentDoc.globalContextMenuOptions = contextMenuDialog.querySelector("textarea").value.split("\n");
     });
-    polymorph_core.topbar.add("File");//add it so that it comes first before settings.
+    polymorph_core.topbar.add("File"); //add it so that it comes first before settings.
     /*polymorph_core.topbar.add("Settings/Context menu").addEventListener("click", () => {
         polymorph_core.dialog.prompt(contextMenuDialog);
     })*/
