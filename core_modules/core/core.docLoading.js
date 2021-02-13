@@ -233,6 +233,7 @@
                                 polymorph_core.integrateData(d, i.type);
                             } catch (e) {
                                 alert("Something went wrong with the save source: " + e);
+                                console.log(e);
                                 loadAttemptsRemaining--;
                                 if (loadAttemptsRemaining == 0) {
                                     noloadpanicask();
