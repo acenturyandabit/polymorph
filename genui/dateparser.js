@@ -30,11 +30,11 @@ function _dateParser() {
                 data.d.setMinutes(0);
                 data.d.setSeconds(0);
                 //data.noDateSpecific = true;
+                if (regres[2]) data.d.setMonth(Number(regres[2]) - 1); // do month first otherwise e.g. 31st in feb will cause an overflow
                 if (regres[1]) {
                     data.d.setDate(Number(regres[1]))
                     data.noDateSpecific = false;
                 }
-                if (regres[2]) data.d.setMonth(Number(regres[2]) - 1)
                 if (regres[3]) {
                     data.yr = Number(regres[3]);
                     if (data.yr < 100) data.yr += 2000;
