@@ -274,7 +274,7 @@ polymorph_core.registerOperator("workflow", {
         Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.regenerateToOrder(i));
     };
 
-    this.rootdiv.addEventListener("keyup", (e) => {
+    this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.dataset.id;
             if (e.key == '\\') {
@@ -282,11 +282,12 @@ polymorph_core.registerOperator("workflow", {
                 let selection = e.target.getRootNode().getSelection().getRangeAt(0);
                 console.log(selection);
                 result = selection.commonAncestorContainer.textContent.split("");
-                result.splice(selection.startOffset, 0, "{", "}");
+                result.splice(selection.startOffset, 0, "\\", "{", "}");
                 result = result.join("");
                 let oldStart = selection.startOffset;
                 selection.commonAncestorContainer.textContent = result;
-                focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 1);
+                focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
+                e.preventDefault();
             }
         }
     })
@@ -732,10 +733,18 @@ polymorph_core.registerOperator("workflow", {
             }
             this.rootdiv.querySelector(".cursorspan").style.display = "none";
             if (!polymorph_core.items[id].collapsed) {
+                if (!polymorph_core.items[id].toOrder) {
+                    polymorph_core.items[id].toOrder = [];
+                }
                 for (let i in polymorph_core.items[id].to) {
+                    if (polymorph_core.items[id].toOrder.indexOf(i) == -1) {
+                        polymorph_core.items[id].toOrder.push(i);
+                    }
+                }
+                polymorph_core.items[id].toOrder.forEach((i) => {
                     this._parentOfCache[i] = id;
                     this.renderItem(i, true);
-                }
+                });
             }
         }
         if (!recursive) {
