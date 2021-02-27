@@ -301,7 +301,7 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             //Show blank
         } else {
-            if (!polymorph_core.items[this.settings.currentViewName][this.settings.filter]) polymorph_core.items[this.settings.currentViewName][this.settings.filter] = true;
+            if (polymorph_core.items[this.settings.currentViewName] && !polymorph_core.items[this.settings.currentViewName][this.settings.filter]) polymorph_core.items[this.settings.currentViewName][this.settings.filter] = true;
             if (!polymorph_core.items[this.settings.currentViewName] ||
                 !polymorph_core.items[this.settings.currentViewName].itemcluster ||
                 !polymorph_core.items[this.settings.currentViewName].itemcluster.viewName) {
