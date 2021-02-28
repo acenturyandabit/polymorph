@@ -3947,31 +3947,31 @@ if (!isPhone()) {
                 tabmenu.style.display = "none";
             })
             /*
-            tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-                let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-                tabmenu.style.display = "none";
-                polymorph_core.dialog.prompt(tta);
-                tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-            })
-    
-            tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-                let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-                polymorph_core.dialog.prompt(tta);
-                tta.querySelector("button").addEventListener("click", () => {
-                    if (tta.querySelector("textarea").value) {
-                        let importObject = JSON.parse(tta.querySelector("textarea").value);
-                        this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                        polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                        //force update all items to reload the view
-                        for (let i in polymorph_core.items) {
-                            polymorph_core.fire('updateItem', { id: i });
-                        }
+        tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+            tabmenu.style.display = "none";
+            polymorph_core.dialog.prompt(tta);
+            tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+        })
+ 
+        tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+            let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+            polymorph_core.dialog.prompt(tta);
+            tta.querySelector("button").addEventListener("click", () => {
+                if (tta.querySelector("textarea").value) {
+                    let importObject = JSON.parse(tta.querySelector("textarea").value);
+                    this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                    this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                    polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                    //force update all items to reload the view
+                    for (let i in polymorph_core.items) {
+                        polymorph_core.fire('updateItem', { id: i });
                     }
-                })
-                tabmenu.style.display = "none";
+                }
             })
-        */
+            tabmenu.style.display = "none";
+        })
+    */
             //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
@@ -4010,7 +4010,7 @@ if (!isPhone()) {
         })
 
         //handle a resize event.
-        this.refresh = () => {
+        this.refresh = (scalingOnly) => {
             //perform some sanity checks; if these fail, do nothing (in worse case that we accidentally manually delete sth)
             if (this.settings.f != RECT_FIRST_SIBLING && !(this.otherSiblingID)) {
                 console.log(`refresh assert failed for ${rectID}`);
@@ -4042,29 +4042,35 @@ if (!isPhone()) {
                 this.outerDiv.style.width = "100%"; //this.outerDiv.parentElement.offsetWidth;
                 //this.outerDiv.style.left = 0;
             }
-            //also refresh any of my children
-            if (this.children) {
-                //when tieing doubly-nested rects, sometimes a refresh is called on a child before it is tied, resulting in parentElement error.
-                //so check parentElement before refreshing
-                this.children.forEach((c) => {
-                    if (c.outerDiv.parentElement) c.refresh()
-                });
-            } else {
-                //show my container
-                this.switchOperator(this.settings.s);
-                //order the tabbars
-                if (this.settings.containerOrder) {
-                    this.settings.containerOrder.forEach(i => {
-                        let currentTab = this.tabbar.querySelector(`[data-containerid='${i}']`);
-                        if (currentTab) this.tabbar.appendChild(currentTab);
-                    })
-                    this.tabbar.appendChild(this.plus);
+            if (!scalingOnly) {
+                //also refresh any of my children
+                if (this.children) {
+                    //when tieing doubly-nested rects, sometimes a refresh is called on a child before it is tied, resulting in parentElement error.
+                    //so check parentElement before refreshing
+                    this.children.forEach((c) => {
+                        if (c.outerDiv.parentElement) c.refresh(true);
+                    });
+                    // refresh a second time because scaling adjustments take two to tango;
+                    this.children.forEach((c) => {
+                        if (c.outerDiv.parentElement) c.refresh();
+                    });
+                } else {
+                    //show my container
+                    this.switchOperator(this.settings.s);
+                    //order the tabbars
+                    if (this.settings.containerOrder) {
+                        this.settings.containerOrder.forEach(i => {
+                            let currentTab = this.tabbar.querySelector(`[data-containerid='${i}']`);
+                            if (currentTab) this.tabbar.appendChild(currentTab);
+                        })
+                        this.tabbar.appendChild(this.plus);
+                    }
                 }
+                if (this.containers) this.containers.forEach((c) => {
+                    //containers may not exist on fromSaveData
+                    if (c) c.refresh(true)
+                });
             }
-            if (this.containers) this.containers.forEach((c) => {
-                //containers may not exist on fromSaveData
-                if (c) c.refresh(true)
-            });
         }
         let rectChanged = false;
 
@@ -13426,9 +13432,14 @@ polymorph_core.registerOperator("welcome", {
                 <div class="recentDocuments">
                 </div>
                 <div class="lobbydocs" style="display:none">
-                <h3>Local lobby documents:</h3>
-                <div>
+                    <h3>Local lobby documents:</h3>
+                    <div>
+                    </div>
                 </div>
+                <div class="globbydocs" style="display:none">
+                    <h3>Local git lobby documents:</h3>
+                    <div>
+                    </div>
                 </div>
             </div>
             <div>
@@ -13549,6 +13560,50 @@ polymorph_core.registerOperator("welcome", {
     })
     lobbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/lobby");
     lobbyreq.send();
+
+    //also the git lobby
+    // try and hit local lobby
+    let globbyreq = new XMLHttpRequest();
+    globbyreq.addEventListener("readystatechange", (e) => {
+        if (globbyreq.readyState == 4) {
+            // we are ready
+            let result = JSON.parse(globbyreq.responseText);
+            if (result) {
+                let resultDiv = this.rootdiv.querySelector(".globbydocs>div");
+                resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
+                this.rootdiv.querySelector(".globbydocs").style.display = "block";
+            }
+        }
+    })
+    this.rootdiv.querySelector(".globbydocs>div").addEventListener("click", (e) => {
+        if (e.target.tagName == "A") {
+            let theDocID = e.target.innerText;
+            if (!polymorph_core.userData.documents[theDocID]) polymorph_core.datautils.upgradeSaveData(theDocID);
+            let shouldMakeNewSave = true;
+            for (let i of polymorph_core.userData.documents[theDocID].saveSources) {
+                if (i.type == "lobby" && i.data && i.data.id == theDocID) {
+                    shouldMakeNewSave = false;
+                }
+            }
+            if (shouldMakeNewSave) {
+                polymorph_core.userData.documents[theDocID].saveSources.push({
+                    type: "gitlite",
+                    data: {
+                        saveTo: window.location.origin + "/gitsave?f=" + theDocID,
+                        loadFrom: window.location.origin + "/gitload?f=" + theDocID,
+                        wsAddr: `ws://${window.location.hostname}:29384`
+                    },
+                    load: true,
+                    save: true
+                });
+            }
+            polymorph_core.saveUserData();
+            window.location.href = window.location.origin + window.location.pathname + "?doc=" + theDocID;
+        }
+    })
+    globbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/globby");
+    globbyreq.send();
+
 
     recentDocDiv.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "em") {

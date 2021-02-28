@@ -224,23 +224,32 @@
                     };
                     continue;
                 } else {
-                    let newInstance = new polymorph_core.saveSources[i.type](i);
-                    polymorph_core.saveSourceInstances.push(newInstance);
-                    if (i.load) {
-                        (async() => {
-                            try {
-                                d = await newInstance.pullAll();
-                                polymorph_core.integrateData(d, i.type);
-                            } catch (e) {
-                                alert("Something went wrong with the save source: " + e);
-                                console.log(e);
-                                loadAttemptsRemaining--;
-                                if (loadAttemptsRemaining == 0) {
-                                    noloadpanicask();
+                    try {
+                        let newInstance = new polymorph_core.saveSources[i.type](i);
+                        polymorph_core.saveSourceInstances.push(newInstance);
+                        if (i.load) {
+                            (async() => {
+                                try {
+                                    d = await newInstance.pullAll();
+                                    polymorph_core.integrateData(d, i.type);
+                                } catch (e) {
+                                    alert("Something went wrong with the save source: " + e);
+                                    console.log(e);
+                                    loadAttemptsRemaining--;
+                                    if (loadAttemptsRemaining == 0) {
+                                        noloadpanicask();
+                                    }
+                                    throw (e);
                                 }
-                                throw (e);
-                            }
-                        })();
+                            })();
+                        }
+                    } catch (e) {
+                        alert("Something went wrong with the save source: " + e);
+                        console.log(e);
+                        loadAttemptsRemaining--;
+                        if (loadAttemptsRemaining == 0) {
+                            noloadpanicask();
+                        }
                     }
                 }
             }
