@@ -35,9 +35,14 @@ polymorph_core.registerOperator("welcome", {
                 <div class="recentDocuments">
                 </div>
                 <div class="lobbydocs" style="display:none">
-                <h3>Local lobby documents:</h3>
-                <div>
+                    <h3>Local lobby documents:</h3>
+                    <div>
+                    </div>
                 </div>
+                <div class="globbydocs" style="display:none">
+                    <h3>Local git lobby documents:</h3>
+                    <div>
+                    </div>
                 </div>
             </div>
             <div>
@@ -158,6 +163,50 @@ polymorph_core.registerOperator("welcome", {
     })
     lobbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/lobby");
     lobbyreq.send();
+
+    //also the git lobby
+    // try and hit local lobby
+    let globbyreq = new XMLHttpRequest();
+    globbyreq.addEventListener("readystatechange", (e) => {
+        if (globbyreq.readyState == 4) {
+            // we are ready
+            let result = JSON.parse(globbyreq.responseText);
+            if (result) {
+                let resultDiv = this.rootdiv.querySelector(".globbydocs>div");
+                resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
+                this.rootdiv.querySelector(".globbydocs").style.display = "block";
+            }
+        }
+    })
+    this.rootdiv.querySelector(".globbydocs>div").addEventListener("click", (e) => {
+        if (e.target.tagName == "A") {
+            let theDocID = e.target.innerText;
+            if (!polymorph_core.userData.documents[theDocID]) polymorph_core.datautils.upgradeSaveData(theDocID);
+            let shouldMakeNewSave = true;
+            for (let i of polymorph_core.userData.documents[theDocID].saveSources) {
+                if (i.type == "lobby" && i.data && i.data.id == theDocID) {
+                    shouldMakeNewSave = false;
+                }
+            }
+            if (shouldMakeNewSave) {
+                polymorph_core.userData.documents[theDocID].saveSources.push({
+                    type: "gitlite",
+                    data: {
+                        saveTo: window.location.origin + "/gitsave?f=" + theDocID,
+                        loadFrom: window.location.origin + "/gitload?f=" + theDocID,
+                        wsAddr: `ws://${window.location.hostname}:29384`
+                    },
+                    load: true,
+                    save: true
+                });
+            }
+            polymorph_core.saveUserData();
+            window.location.href = window.location.origin + window.location.pathname + "?doc=" + theDocID;
+        }
+    })
+    globbyreq.open("GET", window.location.protocol + "//" + window.location.host + "/globby");
+    globbyreq.send();
+
 
     recentDocDiv.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() == "em") {
