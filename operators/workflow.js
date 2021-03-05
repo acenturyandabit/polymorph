@@ -317,9 +317,14 @@ polymorph_core.registerOperator("workflow", {
             let value = parts.join(":");
             if (value) {
                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
+                    let oldDateString = "";
+                    try {
+                        oldDateString = polymorph_core.items[id][key].datestring;
+                    } catch (e) {}
                     polymorph_core.items[id][key] = {
                         datestring: value
                     }
+                    if (oldDateString == value) continue;
                     polymorph_core.items[id][key].date = dateParser.richExtractTime(polymorph_core.items[id][key].datestring);
                     if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
                     container.fire("dateUpdate", { sender: this });

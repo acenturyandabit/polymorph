@@ -2708,12 +2708,14 @@ function _contextMenuManager(root) {
         function hidemenu(e) {
             let rt = thisCTXM.getRootNode();
             try {
-                let el = rt.elementFromPoint(e.clientX, e.clientY);
-                if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
-            } catch (e) {
-                console.log(e);
-                document.removeEventListener("click", hidemenu);
-            }
+                if (rt.elementFromPoint) {
+                    let el = rt.elementFromPoint(e.clientX, e.clientY);
+                    if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
+                } else {
+                    console.log(e);
+                    document.removeEventListener("click", hidemenu);
+                }
+            } catch (e) {}
         }
 
         document.addEventListener("mousedown", hidemenu);
@@ -5398,6 +5400,9 @@ function _dateParser() {
             d = new Date();
             refdate = new Date();
         } else {
+            if (typeof refdate == "number") {
+                refdate = new Date(refdate);
+            }
             d = new Date(refdate.getTime());
         }
         me.tempdata = {
@@ -5438,8 +5443,9 @@ function _dateParser() {
             let part = dvchain[k];
             refdate = undefined;
             if (rsplit) {
-                if (rsplit[1] && !orefdate) {
+                if (rsplit[1]) {
                     refdate = this.extractTime(rsplit[1]);
+                    refdate = new Date(Math.max(orefdate, refdate));
                 } else refdate = orefdate || new Date();
                 toParse = rsplit[2];
                 if (rsplit[3]) {
@@ -8273,9 +8279,14 @@ polymorph_core.registerOperator("workflow", {
             let value = parts.join(":");
             if (value) {
                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
+                    let oldDateString = "";
+                    try {
+                        oldDateString = polymorph_core.items[id][key].datestring;
+                    } catch (e) {}
                     polymorph_core.items[id][key] = {
                         datestring: value
                     }
+                    if (oldDateString == value) continue;
                     polymorph_core.items[id][key].date = dateParser.richExtractTime(polymorph_core.items[id][key].datestring);
                     if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
                     container.fire("dateUpdate", { sender: this });
@@ -10265,7 +10276,7 @@ function quickNotify(txt, ask, denyFn) {
                                 }
                             }
                         } catch (e) {
-
+                            console.log(e);
                         }
                     }
                     callback(allList);

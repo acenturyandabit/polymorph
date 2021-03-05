@@ -172,6 +172,9 @@ function _dateParser() {
             d = new Date();
             refdate = new Date();
         } else {
+            if (typeof refdate == "number") {
+                refdate = new Date(refdate);
+            }
             d = new Date(refdate.getTime());
         }
         me.tempdata = {
@@ -212,8 +215,9 @@ function _dateParser() {
             let part = dvchain[k];
             refdate = undefined;
             if (rsplit) {
-                if (rsplit[1] && !orefdate) {
+                if (rsplit[1]) {
                     refdate = this.extractTime(rsplit[1]);
+                    refdate = new Date(Math.max(orefdate, refdate));
                 } else refdate = orefdate || new Date();
                 toParse = rsplit[2];
                 if (rsplit[3]) {

@@ -82,7 +82,7 @@
                                 }
                             }
                         } catch (e) {
-
+                            console.log(e);
                         }
                     }
                     callback(allList);

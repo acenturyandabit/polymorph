@@ -56,12 +56,14 @@ function _contextMenuManager(root) {
         function hidemenu(e) {
             let rt = thisCTXM.getRootNode();
             try {
-                let el = rt.elementFromPoint(e.clientX, e.clientY);
-                if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
-            } catch (e) {
-                console.log(e);
-                document.removeEventListener("click", hidemenu);
-            }
+                if (rt.elementFromPoint) {
+                    let el = rt.elementFromPoint(e.clientX, e.clientY);
+                    if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
+                } else {
+                    console.log(e);
+                    document.removeEventListener("click", hidemenu);
+                }
+            } catch (e) {}
         }
 
         document.addEventListener("mousedown", hidemenu);
