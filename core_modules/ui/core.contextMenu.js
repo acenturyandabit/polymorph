@@ -60,7 +60,7 @@ function _contextMenuManager(root) {
                     let el = rt.elementFromPoint(e.clientX, e.clientY);
                     if (!thisCTXM.contains(el)) thisCTXM.style.display = "none";
                 } else {
-                    console.log(e);
+                    //console.log(e);
                     document.removeEventListener("click", hidemenu);
                 }
             } catch (e) {}

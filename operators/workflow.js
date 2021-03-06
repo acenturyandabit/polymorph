@@ -31,7 +31,7 @@ polymorph_core.registerOperator("workflow", {
     this.existingItems.length;
     this._parentOfCache = {};
     this.parentOf = (id) => {
-        if (this._parentOfCache[id]) return this._parentOfCache[id];
+        if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]].to[id]) return this._parentOfCache[id];
         else {
             for (let i in polymorph_core.items) {
                 if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
@@ -250,8 +250,8 @@ polymorph_core.registerOperator("workflow", {
 
     let unparent = (id) => {
         if (this.parentOf(id)) {
-            delete polymorph_core.items[this.parentOf(id)].to[id];
             polymorph_core.items[this.parentOf(id)].toOrder.splice(polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id), 1);
+            delete polymorph_core.items[this.parentOf(id)].to[id];
         } else {
             if (this.settings.rootItems.indexOf(id)) {
                 this.settings.rootItems.splice(this.settings.rootItems.indexOf(id), 1);
@@ -613,8 +613,24 @@ polymorph_core.registerOperator("workflow", {
         if (d.sender == this) return;
         if (!this.itemRelevant(d.id)) return;
         let el = this.innerRoot.querySelector(`[data-id="${d.id}"]`);
+        if (!el) {
+            // render the parent
+            let parentTrain = [];
+            let p = d.id;
+            while (p) {
+                parentTrain.unshift(p);
+                p = this.parentOf(p);
+            }
+            parentTrain.forEach(i => this.renderItem(i));
+            el = this.innerRoot.querySelector(`[data-id="${d.id}"]`);
+        }
         if (el) {
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
+            let p = el.parentElement.parentElement;
+            while (p.dataset.id) {
+                setExpandedState(p, true);
+                p = p.parentElement.parentElement;
+            }
             el.scrollIntoViewIfNeeded();
             focusOnElement(el, 0);
             el.classList.add("tmpFocused");
@@ -731,7 +747,7 @@ polymorph_core.registerOperator("workflow", {
                     parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
                 } else {
                     parent.appendChild(span);
-                    this.regenerateToOrder(parent);
+                    this.regenerateToOrder(parent.parentElement);
                 }
             } else {
                 parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`));
