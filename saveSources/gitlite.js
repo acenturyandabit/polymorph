@@ -178,6 +178,99 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
     this.dialog = document.createElement("div");
     polymorph_core.addToSaveDialog(this);
 
+
+    let conflictDialog = htmlwrap(`
+    <div>
+        <h1>Conflicts editor</h1>
+        <p>Source</p>
+        <select class="gl_conflictsSource"></select>
+        <div style = "display:flex;flex-direction:row">
+            <div style="flex: 0 0 30px;">
+                <select class="gl_itemIDSelect" size="10"></select>
+            </div>
+            <div style="flex: 1 1 50%">
+                <p>This verison is the local version and will be saved.</p>
+                <textarea class="gl_local"></textarea>
+            </div>
+            <div style="flex: 1 1 50%; width: 100px">
+                <div class="gl_remote"></div>
+            </div>
+        </div>
+        <button>Done</button>
+    </div>
+    `);
+    let sourceSelect = conflictDialog.querySelector(".gl_conflictsSource");
+    let changesList = conflictDialog.querySelector(".gl_itemIDSelect");
+    let localVer = conflictDialog.querySelector(".gl_local");
+    let remoteVer = conflictDialog.querySelector(".gl_remote");
+    this.conflictResolutionInstructions = {};
+
+    let swapConflictSource = () => {
+        for (let i in this.conflicts[sourceSelect.value]) {
+            let op = htmlwrap(`<option>${i}</option>`);
+            changesList.appendChild(op);
+        }
+    }
+
+    let swapConflictItem = () => {
+        if (this.conflicts[sourceSelect.value] && this.conflicts[sourceSelect.value][changesList.value]) {
+            if (!this.conflictResolutionInstructions[changesList.value]) {
+                this.conflictResolutionInstructions[changesList.value] = polymorph_core.items[changesList.value];
+            }
+            localVer.value = JSON.stringify(this.conflictResolutionInstructions[changesList.value], null, 1);
+            remoteVer.innerText = JSON.stringify(this.conflicts[sourceSelect.value][changesList.value], null, 1);
+        }
+    }
+
+    sourceSelect.addEventListener("input", swapConflictSource);
+    changesList.addEventListener("input", swapConflictItem);
+    localVer.addEventListener("input", (e) => {
+        try {
+            this.conflictResolutionInstructions[changesList.value] = JSON.parse(localVer.value);
+            localVer.style.background = "white";
+        } catch (e) {
+            localVer.style.background = "#ffcccc";
+        }
+    })
+
+    this.showConflictDialog = () => {
+        while (sourceSelect.children.length) {
+            sourceSelect.children[0].remove();
+        }
+        this.conflictResolutionInstructions = {};
+        let x = new XMLHttpRequest();
+        x.addEventListener("readystatechange", (e) => {
+            if (x.readyState == XMLHttpRequest.DONE) {
+                this.conflicts = JSON.parse(x.responseText);
+                // ignore LU only differences
+                for (let r in this.conflicts) {
+                    for (let i in this.conflicts[r]) {
+                        //v v inefficient!!111 :(
+                        let tempCopy = JSON.parse(JSON.stringify(this.conflicts[r][i]));
+                        let tempCopy2 = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                        delete tempCopy._lu;
+                        delete tempCopy2._lu;
+                        if (JSON.stringify(tempCopy) == JSON.stringify(tempCopy2)) {
+                            delete this.conflicts[r][i];
+                        }
+                    }
+                }
+                for (let i in this.conflicts) {
+                    let op = htmlwrap(`<option>${i}</option>`);
+                    sourceSelect.appendChild(op);
+                    swapConflictSource();
+                }
+            }
+        });
+        x.open("GET", this.settings.data.conflictFrom);
+        x.send();
+        polymorph_core.dialog.prompt(conflictDialog, this.handleConflictsUpdate);
+    }
+    this.handleConflictsUpdate = () => {
+        for (let i in this.conflictResolutionInstructions) {
+            polymorph_core.items[i] = this.conflictResolutionInstructions[i];
+        }
+    };
     let fixSharingLink = () => {
         let tmpurl = new URL(window.location);
         tmpurl.search = "glt=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
@@ -205,6 +298,14 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
             div: this.dialog,
             type: "text",
             object: this.settings.data,
+            property: "conflictFrom",
+            afterInput: fixSharingLink,
+            label: "Conflict fetching address (include document name)"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
             property: "sharing",
             label: "Link for sharing"
         }),
@@ -216,6 +317,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
             label: "Throttle (number of changes before sending)",
             placeholder: 0
         }),
+        /*
         new polymorph_core._option({
             div: this.dialog,
             type: "text",
@@ -224,16 +326,26 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
             afterInput: fixSharingLink,
             label: "Websocket addr for real time sync(include protocol, path, port.)"
         }),
+        */
         new polymorph_core._option({
             div: this.dialog,
             type: "button",
             fn: () => {
-                this.settings.data.saveTo = window.location.origin + "/gitsave?f=" + this.settings.data.id;
-                this.settings.data.loadFrom = window.location.origin + "/gitload?f=" + this.settings.data.id;
+                this.settings.data.saveTo = window.location.origin + "/gitsave?f=" + polymorph_core.currentDocID;
+                this.settings.data.loadFrom = window.location.origin + "/gitload?f=" + polymorph_core.currentDocID;
+                this.settings.data.conflictFrom = window.location.origin + "/gitconflicts?f=" + polymorph_core.currentDocID;
                 this.settings.data.wsAddr = `ws://${window.location.hostname}:29384`
                 this.showDialog();
             },
             label: "Reset to defaults"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "button",
+            fn: () => {
+                this.showConflictDialog();
+            },
+            label: "View conflicts"
         })
     ]
     this.showDialog = function() {

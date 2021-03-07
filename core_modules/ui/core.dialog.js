@@ -89,7 +89,7 @@ function _dialogManager(userSettings) {
     }
 
     if (userSettings) Object.assign(this.settings, userSettings);
-    this.checkDialogs = (root) => {
+    this.checkDialogs = (root, options = {}) => {
         let returns = [];
         if (!root) root = document.body;
         let _toCheckDialogs = root.querySelectorAll("." + me.settings.dialogLayers[0].className);
@@ -108,6 +108,7 @@ function _dialogManager(userSettings) {
                     let thisdiv = document.createElement("div");
                     //chuck the relevant css in.
                     thisdiv.style.cssText = me.settings.dialogLayers[i].styling;
+                    if (options.zIndex) thisdiv.style.zIndex = options.zIndex;
                     thisdiv.classList.add(me.settings.dialogLayers[i].className);
                     thisdiv.appendChild(prediv);
                     prediv = thisdiv;

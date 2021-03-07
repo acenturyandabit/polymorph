@@ -31,11 +31,13 @@
         //Loading dialogs
         let loadDialog = document.createElement("div");
         loadDialog.classList.add("dialog");
-        loadDialog = dialogManager.checkDialogs(loadDialog)[0];
+        loadDialog.classList.add("loadDialog");
+        loadDialog = dialogManager.checkDialogs(
+            loadDialog, { zIndex: 999 })[0];
 
         polymorph_core.loadInnerDialog = document.createElement("div");
         loadDialog.querySelector(".innerDialog").appendChild(polymorph_core.loadInnerDialog);
-        polymorph_core.loadInnerDialog.classList.add("loadInnerDialog")
+        polymorph_core.loadInnerDialog.classList.add("loadInnerDialog");
         polymorph_core.loadInnerDialog.innerHTML = `
     <style>
     .loadInnerDialog>div{
@@ -68,7 +70,7 @@
 
         //adding additional savesources
         polymorph_core.loadInnerDialog.appendChild(htmlwrap(`
-        <label class="nss">Add new savesource<select></select><button>Add</button></label>`))
+        <label class="nss">Add new savesource<select></select><button>Add</button></label>`));
         let nss = polymorph_core.loadInnerDialog.querySelector('.nss');
         nss.querySelector("button").addEventListener("click", () => {
             let newSaveSource = {
@@ -195,7 +197,7 @@
         if (!e || !e.loadProcess) { //if event was not triggered by a loading action
             polymorph_core.unsaved = true;
         }
-    })
+    });
     window.addEventListener("beforeunload", (e) => {
         if (polymorph_core.unsaved) {
             e.preventDefault();
