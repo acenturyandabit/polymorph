@@ -16,4 +16,4 @@ There are also a number of core elements:
 The unit of data in polymorph is an item. An item is a plain JSON-encoded entry in the document dictionary. Items can further have properties which are then rendered by operators.
 
 
-[Back to contents](https://github.com/acenturyandabit/polymorph/tree/master/docs)
+[Back to contents](README.md)

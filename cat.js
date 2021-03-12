@@ -5758,6 +5758,9 @@ function __itemlist_searchsort() {
                                 }
                             } else its[i].date = Date.now() * 10000;
                         } else its[i].date = Date.now() * 10000;
+                        if (isNaN(its[i].date)) {
+                            its[i].date = Date.now() * 10000;
+                        }
                     }
                     its.sort((a, b) => {
                         return a.date - b.date;
@@ -8821,12 +8824,44 @@ polymorph_core.registerOperator("workflow", {
         // This is called when your dialog is closed. Use it to update your container!
     }
 
+    let contextTarget;
+    let recordContexted = (e) => {
+        contextTarget = e.target;
+        return true;
+    }
     let contextMenuManager = new _contextMenuManager(this.rootdiv);
     let contextmenu = contextMenuManager.registerContextMenu(
         `
     <li data-action="cleanup">Clean up ordering</li>
     <li data-action="sortbydate">Sort by date</li>
-    `, this.rootdiv);
+    <li data-action="copylist">Copy subitems as list</li>
+    `, this.rootdiv, null, recordContexted);
+
+    //<li data-action="sortbydate">Copy subitems recursively as list</li>
+    this.copylist = function(e) {
+        console.log(contextTarget);
+        let text = contextTarget.parentElement.parentElement.innerText;
+        // cry();// Copies a string to the clipboard. Must be called from within an
+        if (window.clipboardData && window.clipboardData.setData) {
+            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+            return window.clipboardData.setData("Text", text);
+        } else
+        if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+            let textarea = document.createElement("textarea");
+            textarea.textContent = text;
+            textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+            } catch (ex) {
+                console.warn("Copy to clipboard failed.", ex);
+                return false;
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+    }
     contextmenu.addEventListener("click", (e) => {
         switch (e.target.dataset.action) {
             case "cleanup":
@@ -8834,6 +8869,9 @@ polymorph_core.registerOperator("workflow", {
                 break;
             case "sortbydate":
                 this.regenerateSortedToOrder();
+                break;
+            case "copylist":
+                this.copylist(e);
                 break;
         }
         contextmenu.style.display = "none";
@@ -13501,8 +13539,8 @@ polymorph_core.registerOperator("welcome", {
                 -->
             </div>
             <div>
-                <h2>Customise</h2>
-                <a>Nothing to see here, yet!</a>
+                <h2>Documentation</h2>
+                <p>You can find markdown documentation on polymorph <a href="docs">here</a>.
             </div>
         </div>
     </div>

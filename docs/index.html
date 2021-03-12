@@ -1,18 +1,40 @@
 <html>
 
 <head>
-    <script src="/3pt/showdown.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="../3pt/showdown.js"></script>
     <script>
         let converter = new showdown.Converter();
-        document.addEventListener("DOMContentLoaded", async () => {
-            let response = await fetch('/README.md');
+        document.addEventListener("DOMContentLoaded", async() => {
+            let file = localStorage.getItem("__docs_last_file_loaded") || "README.md";
+            let response = await fetch(file);
             let text = await response.text();
-            document.body.innerHTML = converter.makeHtml(text);
+            document.querySelector("._docs_container").innerHTML = converter.makeHtml(text);
+        })
+        document.addEventListener("click", async(e) => {
+            if (e.target.tagName == "A") {
+                e.preventDefault();
+                localStorage.setItem("__docs_last_file_loaded", e.target.href);
+                let response = await fetch(e.target.href);
+                let text = await response.text();
+                document.querySelector("._docs_container").innerHTML = converter.makeHtml(text);
+            }
         })
     </script>
+    <style>
+        body {
+            padding: 40px;
+        }
+    </style>
 </head>
 
 <body>
+    <div>
+        <a href="README.md">Back to contents</a>
+    </div>
+    <div class="_docs_container">
+
+    </div>
 </body>
 
 </html>

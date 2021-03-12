@@ -74,8 +74,8 @@ polymorph_core.registerOperator("welcome", {
                 -->
             </div>
             <div>
-                <h2>Customise</h2>
-                <a>Nothing to see here, yet!</a>
+                <h2>Documentation</h2>
+                <p>You can find markdown documentation on polymorph <a href="docs">here</a>.
             </div>
         </div>
     </div>
