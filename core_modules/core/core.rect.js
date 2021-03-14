@@ -1,16 +1,16 @@
 // the UI is composed of RECTS. 
 // a RECT can have another RECT or an OPERATOR in it.
+const RECT_ORIENTATION_X = 0;
+const RECT_ORIENTATION_Y = 1;
+const RECT_FIRST_SIBLING = 0;
+const RECT_SECOND_SIBLING = 1;
+const RECT_BORDER_WIDTH = 5;
+const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
+const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 if (!isPhone()) {
 
     /// PASS OPERATORS INSTEAD OF CONTENT DIVS
 
-    const RECT_ORIENTATION_X = 0;
-    const RECT_ORIENTATION_Y = 1;
-    const RECT_FIRST_SIBLING = 0;
-    const RECT_SECOND_SIBLING = 1;
-    const RECT_BORDER_WIDTH = 5;
-    const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
-    const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 
     //parent is either undefined or another rect-like object
     //pseudo parents should implement following methods:
