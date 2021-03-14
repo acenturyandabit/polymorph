@@ -1,7 +1,7 @@
 polymorph_core.registerOperator("ashley", {
     displayName: "AI assistant",
     description: "An AI assistant."
-}, function (container) {
+}, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         //filter: polymorph_core.guid() // used by the operator template to determine whether items are relevant to it.
@@ -19,8 +19,8 @@ polymorph_core.registerOperator("ashley", {
     </div>
     `;
 
-    this.rootdiv.querySelector("input").addEventListener(()=>{
-        
+    this.rootdiv.querySelector("input").addEventListener(() => {
+
     })
 
     container.on("createItem", (id) => {
@@ -40,17 +40,17 @@ polymorph_core.registerOperator("ashley", {
         //do stuff with the item.
     });
 
-    this.refresh = function () {
+    this.refresh = function() {
         // This is called when the parent container is resized.
     }
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = ``;
-    this.showDialog = function () {
+    this.showDialog = function() {
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function () {
+    this.dialogUpdateSettings = function() {
         // This is called when your dialog is closed. Use it to update your container!
     }
 
