@@ -13483,104 +13483,64 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.innerHTML = `
     <style>
         a{
-            color:blue;
+            color:lightblue;
         }
         em{
             padding: 5px;
         }
-        .inner_box{
-            color:black;
-        }
-        .minibuttons a{
-            flex: 1 1 33%;
-            padding: 10px;
-            margin: 10px;
-            background: violet;
-        }
-        .minibuttons a>div{
-            display: block;
-            padding-top: 100%;
-            position:relative;
-        }
-        .minibuttons a>div>span{
-            position:absolute;
-            width: 100%;
-            top: 0;
-            left: 0;
-            height: 100%;
-            display: block;
-        }
-        .minibuttons.templateList>a{
-            background: purple;
-            color: white;
-        }
     </style>
-    <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
-        <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
-            <div style="display: flex; flex-direction: row; padding: 30px; height: calc(100% - 60px);">
-                <div style="display: flex; flex-direction:column; flex: 1 1 50%">
-                    <div style="height:100%;display:flex; flex-direction: column;">
-                        <h2>Polymorph</h2>
-                        <!--<a class="newDocIDButton" href="#">New document with specified id...</a>-->
-                        <br>
-                        <h3>Open existing document:</h3>
-                        <div style="overflow-y: auto; flex: 0 1 500px;">
-                        <h3>Recent documents:</h3>
-                        <div class="recentDocuments">
-                            </div>
-                            <div class="lobbydocs" style="display:none">
-                                <h3>Local lobby documents:</h3>
-                                <div>
-                                </div>
-                            </div>
-                            <div class="globbydocs" style="display:none">
-                                <h3>Local git lobby documents:</h3>
-                                <div>
-                                </div>
-                            </div>
-                        </div>
+    <div style="display: flex; flex-direction: row; padding: 30px;">
+        <div style="display: flex; flex-direction:column; flex: 1 1 50%">
+            <div>
+                <h2>Start</h2>
+                <a class="newDocButton" href="#">New document</a> <br><br>
+                <a class="newDocIDButton" href="#">New document with specified id...</a>
+                <br>
+                <h3>Recent documents:</h3>
+                <div class="recentDocuments">
+                </div>
+                <div class="lobbydocs" style="display:none">
+                    <h3>Local lobby documents:</h3>
+                    <div>
                     </div>
                 </div>
-                <div style="flex: 1 1 50%">
-                    <div style="display:flex; flex-direction: column; height: 100%">
-                        <div style="flex: 3 3 75%">
-                            <h2>Create new document from template</h2>
-                                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
-                                    <a data-template="brainstorming" href="#">
-                                        <div>
-                                            <span>Brainstorming tool</span>
-                                        </div>
-                                    </a>
-                                    <a data-template="tasklist" href="#">
-                                        <div>
-                                            <span>Workflowy + Calendar</span>
-                                        </div>
-                                    </a>
-                                    <!--<li><a>A quick websocket front-end</a></li>
-                                    <li><a>A personal knowledge base</a></li>
-                                    <li><a>A reconfigurable UI</a></li>
-                                    <li><a>A collaboration tool</a></li>-->
-                                </div>
-                                <!--
-                                <h2>Examples</h2>
-                                <span>Want to see what polymorph is capable of? Check out some examples:</span>
-                                <ul class="templateList">
-                                <li><a href="permalink/techtree">A technology tree of the human race</a></li>
-                                <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
-                                </ul>
-                                -->
-                        </div>
-                        <div style="display: flex; flex: 1 1 25%;" class="minibuttons">
-                            <a class="newDocButton" href="#">
-                                <div>
-                                    <span>New document from scratch</span>
-                                </div>
-                            </a>
-                                    <a href="docs">Documentation</a>
-                            <a href="https://github.com/acenturyandabit/polymorph">View on Github</a>
-                        </div>
+                <div class="globbydocs" style="display:none">
+                    <h3>Local git lobby documents:</h3>
+                    <div>
                     </div>
                 </div>
+            </div>
+            <div>
+                <h2>Help</h2>
+                <p>Tutorial [TODO]</p>
+                <p>User Docs [TODO]</p>
+                <p><a href="mailto:steeven.liu2@gmail.com">Contact the developer</a></p>
+            </div>
+        </div>
+        <div style="flex: 1 1 50%">
+            <div>
+                <h2>About</h2>
+                <span>Polymorph is Steven's personal Web-based OS/document processing tool/brainstorming tool/UI testbed. To date, it has a number of use cases:</span>
+                <ul class="templateList">
+                    <li><a href="#" data-template="brainstorming">A brainstorming tool</a></li>
+                    <li><a href="#" data-template="tasklist">A todo-list with calendar</a></li>
+                    <!--<li><a>A quick websocket front-end</a></li>
+                    <li><a>A personal knowledge base</a></li>
+                    <li><a>A reconfigurable UI</a></li>
+                    <li><a>A collaboration tool</a></li>-->
+                </ul>
+                <!--
+                <h2>Examples</h2>
+                <span>Want to see what polymorph is capable of? Check out some examples:</span>
+                <ul class="templateList">
+                    <li><a href="permalink/techtree">A technology tree of the human race</a></li>
+                    <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
+                </ul>
+                -->
+            </div>
+            <div>
+                <h2>Documentation</h2>
+                <p>You can find markdown documentation on polymorph <a href="docs">here</a>.
             </div>
         </div>
     </div>
@@ -13588,34 +13548,27 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.style.color = "white";
 
     this.rootdiv.querySelector(".templateList").addEventListener("click", (e) => {
-            if (e.target.matches("[data-template] *")) {
-                // load a template, by loading in all of the data
-                let t = e.target;
-                while (t && !t.dataset.template) {
-                    t = t.parentElement;
-                }
-                if (!t) return;
-                let RTP = JSON.parse(templates[t.dataset.template]);
-                RTP._meta = polymorph_core.items._meta;
-                RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
-                for (let i in RTP) {
-                    RTP[i]._lu_ = Date.now();
-                }
-                delete polymorph_core.items.default_operator;
-                delete polymorph_core.containers.default_operator;
-                // remove this operator
-                polymorph_core.integrateData(RTP, "TEMPLATER");
-                polymorph_core.switchView("default_container");
+        if (e.target.matches("[data-template]")) {
+            // load a template, by loading in all of the data
+            let RTP = JSON.parse(templates[e.target.dataset.template]);
+            RTP._meta = polymorph_core.items._meta;
+            RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
+            for (let i in RTP) {
+                RTP[i]._lu_ = Date.now();
             }
-        })
-        /*
-        this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
-            let newID = window.prompt("Enter the new document ID below.");
-            if (newID) {
-                window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
-            }
-        })
-        */
+            delete polymorph_core.items.default_operator;
+            delete polymorph_core.containers.default_operator;
+            // remove this operator
+            polymorph_core.integrateData(RTP, "TEMPLATER");
+            polymorph_core.switchView("default_container");
+        }
+    })
+
+    this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
+        let newID = window.prompt("Enter the new document ID below.");
+        window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
+    })
+
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
         //get out of the way
         while (container.div.children.length) container.div.children[0].remove();

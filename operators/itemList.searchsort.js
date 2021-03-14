@@ -140,6 +140,9 @@ function __itemlist_searchsort() {
                                 }
                             } else its[i].date = Date.now() * 10000;
                         } else its[i].date = Date.now() * 10000;
+                        if (isNaN(its[i].date)) {
+                            its[i].date = Date.now() * 10000;
+                        }
                     }
                     its.sort((a, b) => {
                         return a.date - b.date;
