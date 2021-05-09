@@ -334,7 +334,8 @@
             polymorph_core.rects[i].outerDiv.remove();
             delete polymorph_core.rects[i];
         }
-        polymorph_core.unsaved = false;
+        polymorph_core.saved_until = 0;
+        polymorph_core.last_change_time = Date.now();
         if (polymorph_core.saveSourceInstances) {
             for (let i of polymorph_core.saveSourceInstances) {
                 if (i.unhook) i.unhook();

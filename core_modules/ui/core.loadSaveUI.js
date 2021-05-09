@@ -7,7 +7,6 @@
         polymorph_core.datautils.upgradeSaveData(polymorph_core.currentDocID);
         //trigger saving on all save sources
         polymorph_core.fire("userSave", d);
-        polymorph_core.unsaved = false;
         let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs")) || {};
         recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
         localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
@@ -192,14 +191,14 @@
     })();
 
     //a little nicety to warn user of unsaved items.
-    polymorph_core.unsaved = false;
+    polymorph_core.saved_until = Date.now();
     polymorph_core.on("updateItem", (e) => {
         if (!e || !e.loadProcess) { //if event was not triggered by a loading action
-            polymorph_core.unsaved = true;
+            polymorph_core.last_change_time = Date.now();
         }
     });
     window.addEventListener("beforeunload", (e) => {
-        if (polymorph_core.unsaved) {
+        if (polymorph_core.last_change_time > polymorph_core.saved_until) {
             e.preventDefault();
             e.returnValue = "Hold up, you seem to have some unsaved changes. Are you sure you want to close this window?";
         }
