@@ -7,8 +7,12 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
         let compressedData = polymorph_core.datautils.IDCompress.compress(data);
         let xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                //alert("Save success!");
+            if (this.readyState == 4) {
+                if (this.status != 200) {
+                    alert("Save error! Please ensure the gitlite backend is online.");
+                } else {
+                    polymorph_core.saved_until = Date.now();
+                }
             }
         };
         xmlhttp.open("POST", this.settings.data.saveTo, true);
@@ -182,6 +186,7 @@ polymorph_core.on("mergeComplete", () => {
     let conflictDialog = htmlwrap(`
     <div>
         <h1>Conflicts editor</h1>
+        <label>Ignore _lu_ changes <input type="checkbox" class="gl_ignorelu"/></label>
         <p>Source</p>
         <select class="gl_conflictsSource"></select>
         <div style = "display:flex;flex-direction:row">
@@ -193,24 +198,36 @@ polymorph_core.on("mergeComplete", () => {
                 <textarea class="gl_local"></textarea>
             </div>
             <div style="flex: 1 1 50%; width: 100px">
-                <div class="gl_remote"></div>
+            <div class="gl_remote"></div>
+            <button class="uremo">Use remote version</button>
             </div>
         </div>
-        <button>Done</button>
     </div>
     `);
     let sourceSelect = conflictDialog.querySelector(".gl_conflictsSource");
+    let ignoreLu = conflictDialog.querySelector(".gl_ignorelu");
     let changesList = conflictDialog.querySelector(".gl_itemIDSelect");
     let localVer = conflictDialog.querySelector(".gl_local");
+    let uremobtn = conflictDialog.querySelector(".uremo");
     let remoteVer = conflictDialog.querySelector(".gl_remote");
     this.conflictResolutionInstructions = {};
 
     let swapConflictSource = () => {
+        while (changesList.children.length) changesList.children[0].remove();
         for (let i in this.conflicts[sourceSelect.value]) {
+            if (ignoreLu.checked) {
+                let confcopy = JSON.parse(JSON.stringify(this.conflicts[sourceSelect.value][i]));
+                delete confcopy._lu_;
+                let micopy = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                delete micopy._lu_;
+                if (JSON.stringify(micopy) == JSON.stringify(confcopy)) continue;
+            }
             let op = htmlwrap(`<option>${i}</option>`);
             changesList.appendChild(op);
         }
     }
+    ignoreLu.addEventListener("input", swapConflictSource);
+
 
     let swapConflictItem = () => {
         if (this.conflicts[sourceSelect.value] && this.conflicts[sourceSelect.value][changesList.value]) {
@@ -218,19 +235,25 @@ polymorph_core.on("mergeComplete", () => {
                 this.conflictResolutionInstructions[changesList.value] = polymorph_core.items[changesList.value];
             }
             localVer.value = JSON.stringify(this.conflictResolutionInstructions[changesList.value], null, 1);
+            localVer.style.background = "white";
             remoteVer.innerText = JSON.stringify(this.conflicts[sourceSelect.value][changesList.value], null, 1);
         }
     }
-
-    sourceSelect.addEventListener("input", swapConflictSource);
-    changesList.addEventListener("input", swapConflictItem);
-    localVer.addEventListener("input", (e) => {
+    let saveNewValue = (e) => {
         try {
             this.conflictResolutionInstructions[changesList.value] = JSON.parse(localVer.value);
+            //updateConflictInstructions();
             localVer.style.background = "white";
         } catch (e) {
             localVer.style.background = "#ffcccc";
         }
+    };
+    sourceSelect.addEventListener("input", swapConflictSource);
+    changesList.addEventListener("input", swapConflictItem);
+    localVer.addEventListener("input", saveNewValue);
+    uremobtn.addEventListener("click", () => {
+        localVer.value = remoteVer.innerText;
+        saveNewValue();
     })
 
     this.showConflictDialog = () => {
@@ -271,6 +294,7 @@ polymorph_core.on("mergeComplete", () => {
     this.handleConflictsUpdate = () => {
         for (let i in this.conflictResolutionInstructions) {
             polymorph_core.items[i] = this.conflictResolutionInstructions[i];
+            polymorph_core.fire("updateItem", { id: i });
         }
     };
     let fixSharingLink = () => {

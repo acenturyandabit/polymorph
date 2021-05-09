@@ -14,8 +14,12 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) {
         let compressedData = polymorph_core.datautils.IDCompress.compress(data);
         let xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                //alert("Save success!");
+            if (this.readyState == 4) {
+                if (this.status != 200) {
+                    alert("Save error! Please ensure the server backend is online.");
+                } else {
+                    polymorph_core.saved_until = Date.now();
+                }
             }
         };
         xmlhttp.open("POST", this.settings.data.saveTo, true);
@@ -187,6 +191,7 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) {
 
     let fixSharingLink = () => {
         let tmpurl = new URL(window.location);
+        delete this.settings.data.sharing;
         tmpurl.search = "srvl=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
         this.settings.data.sharing = tmpurl.href;
     }
