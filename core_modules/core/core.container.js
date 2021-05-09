@@ -111,6 +111,7 @@ polymorph_core.container = function container(containerID) {
 
     //Interfacing with the underlying operator
     this.visible = () => {
+        if (!polymorph_core.rects[this.settings.p]) return false;
         return this.parent.containerVisible(containerID);
     }
 
