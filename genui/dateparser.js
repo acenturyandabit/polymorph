@@ -277,8 +277,16 @@ function _dateParser() {
             }]
 
         */
-    }
-
+    };
+    this.getSortingTimes = (str, refdate) => {
+        let rsplit = /\((?:([^\)\|]+)\|\|)?([^\)\|]+)(?:\|([^\)\|]+))?\)/ig.exec(str);
+        let hasAuto = /auto/ig.exec(str);
+        if (rsplit || hasAuto) {
+            return this.richExtractTime(str, new Date());
+        } else {
+            return this.richExtractTime(str, refdate);
+        }
+    };
     //Create calendar items for fullcalendar.io and other similar things.
     this.getCalendarTimes = function(dateArray, start, end) {
         // Param: dateArray: as specified above. start: date.getTime() of the starting date. end: date.getTime() of the ending date.
@@ -331,56 +339,6 @@ function _dateParser() {
             return d.toLocaleDateString().split(" ")[0]
         }
     }
-
-    // quarterMaster.itemComparer = function (a, b) {end
-    //     let result;
-    //     if (a.done != b.done) result = b.done - a.done;
-    //     else if (a.done * b.done) {
-    //         result = -(b.date - a.date);
-    //     } else {
-    //         result = (b.date - a.date);
-    //     }
-    //     if (!quarterMaster.isDateSortReversed) {
-    //         result = -result;
-    //     }
-    //     return result;
-    // };
-    // quarterMaster.sort = function () {
-    //     let itemsToSort = [];
-    //     for (let i in quarterMaster.items) {
-    //         let ti = {
-    //             id: i
-    //         }
-    //         if (quarterMaster.items[i].auto) quarterMaster.dateParse(quarterMaster.items[i]);
-    //         if (quarterMaster.items[i].dates && quarterMaster.items[i].dates.length > 0) {
-    //             ti.date = quarterMaster.items[i].dates[0].date;
-    //         } else {
-    //             ti.date = 9e15;
-    //         }
-    //         itemsToSort.push(ti);
-    //     }
-    //     itemsToSort.sort(quarterMaster.itemComparer);
-    //     for (let i = 0; i < itemsToSort.length; i++) {
-    //         quarterMaster.taskList.appendChild(quarterMaster.items[itemsToSort[i].id].span);
-    //     }
-    //     $("#calendarView").fullCalendar('refetchEvents');
-    // }
-    // //CONTEXT MENU OPTION FOR DATE
-    // document.addEventListener("DOMContentLoaded", () => {
-    //     let dateContextedTarget;
-    //     contextMenuManager.registerContextMenu(`
-    // <div>
-    //     <li id="rectify">Convert to fixed date</li>
-    // </div>
-    // `, document.body, "input[data-role='date']", (e) => {
-    //         dateContextedTarget = quarterMaster.items[e.target.parentElement.querySelector("[data-role='id']").innerText];
-    //         //find currentTarget
-    //     });
-    //     document.getElementById("rectify").addEventListener("click", () => {
-    //         dateContextedTarget.dateString = (new Date(dateContextedTarget.dates[0].date)).toLocaleString();
-    //         document.getElementById("rectify").parentElement.style.display = "none";
-    //     });
-    // });
 }
 
 var dateParser = new _dateParser();
