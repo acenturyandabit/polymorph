@@ -55,6 +55,7 @@ let fileList = [
     "saveSources/lobby.js",
     "saveSources/server.js",
     "saveSources/gitlite.js",
+    "saveSources/broadcastsync.js",
 ];
 
 try {

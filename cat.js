@@ -936,20 +936,39 @@ polymorph_core.on("titleButtonsReady", () => {
 */;
 
 (() => {
-
-    //navigator.serviceWorker.controller.postMessage("not even ready yet");
-
-
-    /*let checkForURLConflict=()=>{}
-    navigator.serviceWorker.register('core_modules/core/core.workersync.js', {scope: './'}).then(function(registration) {
-        if (registration.active){
-            console.log("yay im active");
-            //navigator.serviceWorker.controller.postMessage("hello world!");
-        }
-    });*/
-    let instance_uuid = polymorph_core.guid();
     const broadcast = new BroadcastChannel('channel1');
-    let is_challenger = false;
+    let instance_uuid = polymorph_core.guid();
+    let checkerPromiseResolve = undefined;
+    let nsent = 0;
+    broadcast.onmessage = (event) => {
+        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
+            if (checkerPromiseResolve) {
+                checkerPromiseResolve(true);
+                checkerPromiseResolve = undefined;
+            } else if (!event.data.echo) {
+                broadcast.postMessage({
+                    url: window.location.href,
+                    uuid: instance_uuid,
+                    echo: true
+                });
+            }
+        }
+    };
+    let checkForURLConflict = async() => {
+        return new Promise((res) => {
+            checkerPromiseResolve = res;
+            broadcast.postMessage({
+                url: window.location.href,
+                uuid: instance_uuid
+            })
+            setTimeout(() => {
+                if (checkerPromiseResolve) {
+                    checkerPromiseResolve(false);
+                    checkerPromiseResolve = undefined;
+                }
+            }, 500);
+        });
+    }
     let alt_alive_warning = document.createElement("div");
     alt_alive_warning.innerHTML = `
         <div style="padding:10vw">
@@ -957,40 +976,20 @@ polymorph_core.on("titleButtonsReady", () => {
         </div>
     `;
     alt_alive_warning.style.cssText = `
-    display:none;
+    display:flex;
+    visibility:hidden;
     place-items: center center;
     position:absolute;
     height:100%;
     width:100%;
-    z-index:2;
-    background: rgba(0,0,0,0.5);
+    z-index:5;
+    background: rgba(0,0,0,0.8);
     color:white;
     text-align:center;
     `;
     document.body.appendChild(alt_alive_warning);
-    broadcast.onmessage = (event) => {
-        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
-            if (is_challenger) {
-                alt_alive_warning.style.display = "grid";
-                // seppuku
-            } else {
-                broadcast.postMessage({
-                    url: window.location.href,
-                    uuid: instance_uuid
-                })
-            }
-        }
-    };
 
-    function checkForURLConflict() {
-        broadcast.postMessage({
-            url: window.location.href,
-            uuid: instance_uuid
-        })
-        is_challenger = true;
-        setTimeout(() => is_challenger = false, 500);
-    }
-    checkForURLConflict();
+
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
@@ -1135,7 +1134,9 @@ polymorph_core.on("titleButtonsReady", () => {
                     // just go home
                     window.location.href = window.location.origin + window.location.pathname + "?o";
                 }
-            }
+            };
+            // check for multiple windows
+            let hasURLConflict = await checkForURLConflict();
 
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
@@ -1164,10 +1165,13 @@ polymorph_core.on("titleButtonsReady", () => {
                     try {
                         let newInstance = new polymorph_core.saveSources[i.type](i);
                         polymorph_core.saveSourceInstances.push(newInstance);
+                        if (i.RTactive && polymorph_core.saveSourceOptions[i.type].handleCrossWindow) {
+                            hasURLConflict = false;
+                        }
                         if (i.load) {
                             (async() => {
                                 try {
-                                    d = await newInstance.pullAll();
+                                    let d = await newInstance.pullAll();
                                     polymorph_core.integrateData(d, i.type);
                                 } catch (e) {
                                     alert("Something went wrong with the save source: " + e);
@@ -1189,6 +1193,10 @@ polymorph_core.on("titleButtonsReady", () => {
                         }
                     }
                 }
+            }
+            if (hasURLConflict) {
+                alt_alive_warning.style.visibility = "visible";
+                return;
             }
             //try and catch when there is no data at all
             for (let i of polymorph_core.saveSourceInstances) {
@@ -2004,8 +2012,8 @@ polymorph_core.on("titleButtonsReady", () => {
         <div>
             <h2>${polymorph_core.saveSourceOptions[save_source_instance.settings.type].prettyName || save_source_instance.settings.type}</h2>
             <span>`;
-            wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
-            wrapperText += `<label>Load from this source<input data-role="lsync" type="checkbox"></input></label>`;
+            if (save_source_instance.pullAll) wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
+            if (save_source_instance.pushAll) wrapperText += `<label>Load from this source<input data-role="lsync" type="checkbox"></input></label>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_hardLoad">Load from this source</button>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_softLoad">Merge from this source</button>`;
             if (save_source_instance.pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;
@@ -7940,7 +7948,9 @@ polymorph_core.registerOperator("workflow", {
         filter: polymorph_core.guid(),
         propsAsDate: "",
         rootItemListItem: "",
-        rootItemListItemProperty: ""
+        rootItemListItemProperty: "",
+        linkProp: "to",
+        bracketPropertyPrefix: container.id
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Can probably replace this with direct instantiation instead of a getter, if we're careful.
@@ -7950,7 +7960,7 @@ polymorph_core.registerOperator("workflow", {
             else {
                 this._existingItemsCache = Array.from(this.rootItems).filter(i => polymorph_core.items[i]); // occasionally strange things happen
                 for (let i = 0; i < this._existingItemsCache.length; i++) {
-                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
+                    if (polymorph_core.items[this._existingItemsCache[i]][this.settings.linkProp]) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]][this.settings.linkProp]).filter(i => polymorph_core.items[i]));
                 }
                 return this._existingItemsCache;
             }
@@ -7984,10 +7994,11 @@ polymorph_core.registerOperator("workflow", {
     this.existingItems.length;
     this._parentOfCache = {};
     this.parentOf = (id) => {
-        if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]].to[id]) return this._parentOfCache[id];
+        if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]][this.settings.linkProp][id]) return this._parentOfCache[id];
+        if (this.rootItems.indexOf(id) != -1) return ""; // make rootitems default to top level because why not...?
         else {
             for (let i in polymorph_core.items) {
-                if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
+                if (polymorph_core.items[i][this.settings.linkProp] && polymorph_core.items[i][this.settings.linkProp][id]) {
                     this._parentOfCache[id] = i;
                     return this._parentOfCache[id];
                 }
@@ -8117,7 +8128,7 @@ polymorph_core.registerOperator("workflow", {
             if (spanWithID.children[1].style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
-        if (!polymorph_core.items[spanWithID.dataset.id].to || !Object.keys(polymorph_core.items[spanWithID.dataset.id].to).length) return;
+        if (!polymorph_core.items[spanWithID.dataset.id][this.settings.linkProp] || !Object.keys(polymorph_core.items[spanWithID.dataset.id][this.settings.linkProp]).length) return;
         polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
         this.renderItem(spanWithID.dataset.id);
         //set all immediate child spans to display: block, to account for search case
@@ -8143,8 +8154,10 @@ polymorph_core.registerOperator("workflow", {
         if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
     });
     //return true if we care about an item and dont want it garbage-cleaned :(
+    //ideally somehow automatically know whether or not it is on our tree
+    //temporary solution: use the filter property...
     //this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
-    this.itemRelevant = (id) => { return polymorph_core.items[id][this.settings.filter] }
+    this.itemRelevant = (id) => { return polymorph_core.items[id] && polymorph_core.items[id][this.settings.filter] }
 
     this.createItem = (id, toDirectAdopt) => {
         if (!id) id = polymorph_core.insertItem({});
@@ -8155,7 +8168,7 @@ polymorph_core.registerOperator("workflow", {
         //add any data you need
         if (toDirectAdopt) {
             for (let i = 0; i < this.existingItems.length; i++) {
-                if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
+                if (polymorph_core.items[this.existingItems[i]][this.settings.linkProp] && polymorph_core.items[this.existingItems[i]][this.settings.linkProp][id]) {
                     toDirectAdopt = false;
                     if (!polymorph_core.items[this.existingItems[i]].toOrder) polymorph_core.items[this.existingItems[i]].toOrder = [];
                     if (polymorph_core.items[this.existingItems[i]].toOrder.indexOf(id) == -1) {
@@ -8230,7 +8243,7 @@ polymorph_core.registerOperator("workflow", {
     let unparent = (id) => {
         if (this.parentOf(id)) {
             polymorph_core.items[this.parentOf(id)].toOrder.splice(polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id), 1);
-            delete polymorph_core.items[this.parentOf(id)].to[id];
+            delete polymorph_core.items[this.parentOf(id)][this.settings.linkProp][id];
         } else {
             if (this.rootItems.indexOf(id) != -1) {
                 this.rootItems.splice(this.rootItems.indexOf(id), 1);
@@ -8287,7 +8300,7 @@ polymorph_core.registerOperator("workflow", {
         if (!el) return;
         let id = el.dataset.id;
         for (let p in polymorph_core.items[el]) {
-            if (p.startsWith("_" + this.container.id)) {
+            if (p.startsWith("_" + this.settings.bracketPropertyPrefix)) {
                 //remove it? v inefficient but ok
                 delete polymorph_core.items[el][p];
             }
@@ -8299,7 +8312,7 @@ polymorph_core.registerOperator("workflow", {
         while (result = re.exec(text)) {
             let parts = result[1].split(":");
             let ltrkey = parts.shift();
-            key = `_${container.id}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
+            key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
             validKeys[key] = true;
             let value = parts.join(":");
             if (value) {
@@ -8323,7 +8336,7 @@ polymorph_core.registerOperator("workflow", {
             }
         }
         for (let p in polymorph_core.items[id]) {
-            if (p.startsWith(`_${container.id}_`)) {
+            if (p.startsWith(`_${this.settings.bracketPropertyPrefix}_`)) {
                 if (!validKeys[p]) {
                     delete polymorph_core.items[id][p];
                 }
@@ -8498,7 +8511,7 @@ polymorph_core.registerOperator("workflow", {
                         //clear the parentof cache
                         let oldParent = this.parentOf(id);
                         unparent(id);
-                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
+                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)][this.settings.linkProp][id];
                         delete this._parentOfCache[id];
                         let wasme = spanWithID.children[0].children[1];
                         if (spanWithID.parentElement.parentElement.dataset.id) {
@@ -8602,7 +8615,7 @@ polymorph_core.registerOperator("workflow", {
     container.on("deleteItem", (d) => {
         delete polymorph_core.items[d.id][this.settings.filter];
         if (this.innerRoot.querySelector(`[data-id="${d.id}"]`)) this.innerRoot.querySelector(`[data-id="${d.id}"]`).remove();
-        if (this.rootItems.indexOf(d.id)) {
+        if (this.rootItems.indexOf(d.id) != -1) {
             this.rootItems.splice(this.rootItems.indexOf(d.id), 1);
         }
     })
@@ -8715,7 +8728,7 @@ polymorph_core.registerOperator("workflow", {
                 span.children[0].children[1].innerHTML = polymorph_core.RTRenderProperty(polymorph_core.items[id][this.settings.titleProperty] || " ");
                 renderedItemCache[id].rendered = polymorph_core.items[id][this.settings.titleProperty] || " ";
             }
-            if (polymorph_core.items[id].to && Object.keys(polymorph_core.items[id].to).length) {
+            if (polymorph_core.items[id][this.settings.linkProp] && Object.keys(polymorph_core.items[id][this.settings.linkProp]).length) {
 
                 if (polymorph_core.items[id].collapsed) {
                     span.children[1].style.display = "none";
@@ -8765,7 +8778,7 @@ polymorph_core.registerOperator("workflow", {
                 if (!polymorph_core.items[id].toOrder) {
                     polymorph_core.items[id].toOrder = [];
                 }
-                for (let i in polymorph_core.items[id].to) {
+                for (let i in polymorph_core.items[id][this.settings.linkProp]) {
                     if (polymorph_core.items[id].toOrder.indexOf(i) == -1) {
                         polymorph_core.items[id].toOrder.push(i);
                     }
@@ -8879,7 +8892,20 @@ polymorph_core.registerOperator("workflow", {
             },
             label: "Copy root items to auxillary item"
         }),
-        // This is incredibly lazy but one day we'll fix it
+        linkProp: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "linkProp",
+            label: "Property that defines links"
+        }),
+        bracketPropertyPrefix: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "bracketPropertyPrefix",
+            label: "Prefix for bracket properties"
+        })
     }
     this.showDialog = function() {
         for (let i in options) {
@@ -9037,7 +9063,7 @@ polymorph_core.registerOperator("workflow", {
             if (!result) result = Date.now() * 10000;
             return [a, result];
         }
-        property = `_${container.id}_${property}`;
+        property = `_${this.settings.bracketPropertyPrefix}_${property}`;
         if (root && root.dataset.id) {
             let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
             objs.sort((a, b) => a[1] - b[1]);
@@ -13618,64 +13644,104 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.innerHTML = `
     <style>
         a{
-            color:lightblue;
+            color:blue;
         }
         em{
             padding: 5px;
         }
+        .inner_box{
+            color:black;
+        }
+        .minibuttons a{
+            flex: 1 1 33%;
+            padding: 10px;
+            margin: 10px;
+            background: violet;
+        }
+        .minibuttons a>div{
+            display: block;
+            padding-top: 100%;
+            position:relative;
+        }
+        .minibuttons a>div>span{
+            position:absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+            height: 100%;
+            display: block;
+        }
+        .minibuttons.templateList>a{
+            background: purple;
+            color: white;
+        }
     </style>
-    <div style="display: flex; flex-direction: row; padding: 30px;">
-        <div style="display: flex; flex-direction:column; flex: 1 1 50%">
-            <div>
-                <h2>Start</h2>
-                <a class="newDocButton" href="#">New document</a> <br><br>
-                <a class="newDocIDButton" href="#">New document with specified id...</a>
-                <br>
-                <h3>Recent documents:</h3>
-                <div class="recentDocuments">
-                </div>
-                <div class="lobbydocs" style="display:none">
-                    <h3>Local lobby documents:</h3>
-                    <div>
+    <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
+        <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
+            <div style="display: flex; flex-direction: row; padding: 30px; height: calc(100% - 60px);">
+                <div style="display: flex; flex-direction:column; flex: 1 1 50%">
+                    <div style="height:100%;display:flex; flex-direction: column;">
+                        <h2>Polymorph</h2>
+                        <!--<a class="newDocIDButton" href="#">New document with specified id...</a>-->
+                        <br>
+                        <h3>Open existing document:</h3>
+                        <div style="overflow-y: auto; flex: 0 1 500px;">
+                        <h3>Recent documents:</h3>
+                        <div class="recentDocuments">
+                            </div>
+                            <div class="lobbydocs" style="display:none">
+                                <h3>Local lobby documents:</h3>
+                                <div>
+                                </div>
+                            </div>
+                            <div class="globbydocs" style="display:none">
+                                <h3>Local git lobby documents:</h3>
+                                <div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="globbydocs" style="display:none">
-                    <h3>Local git lobby documents:</h3>
-                    <div>
+                <div style="flex: 1 1 50%">
+                    <div style="display:flex; flex-direction: column; height: 100%">
+                        <div style="flex: 3 3 75%">
+                            <h2>Create new document from template</h2>
+                                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
+                                    <a data-template="brainstorming" href="#">
+                                        <div>
+                                            <span>Brainstorming tool</span>
+                                        </div>
+                                    </a>
+                                    <a data-template="tasklist" href="#">
+                                        <div>
+                                            <span>Workflowy + Calendar</span>
+                                        </div>
+                                    </a>
+                                    <!--<li><a>A quick websocket front-end</a></li>
+                                    <li><a>A personal knowledge base</a></li>
+                                    <li><a>A reconfigurable UI</a></li>
+                                    <li><a>A collaboration tool</a></li>-->
+                                </div>
+                                <!--
+                                <h2>Examples</h2>
+                                <span>Want to see what polymorph is capable of? Check out some examples:</span>
+                                <ul class="templateList">
+                                <li><a href="permalink/techtree">A technology tree of the human race</a></li>
+                                <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
+                                </ul>
+                                -->
+                        </div>
+                        <div style="display: flex; flex: 1 1 25%;" class="minibuttons">
+                            <a class="newDocButton" href="#">
+                                <div>
+                                    <span>New document from scratch</span>
+                                </div>
+                            </a>
+                                    <a href="docs">Documentation</a>
+                            <a href="https://github.com/acenturyandabit/polymorph">View on Github</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div>
-                <h2>Help</h2>
-                <p>Tutorial [TODO]</p>
-                <p>User Docs [TODO]</p>
-                <p><a href="mailto:steeven.liu2@gmail.com">Contact the developer</a></p>
-            </div>
-        </div>
-        <div style="flex: 1 1 50%">
-            <div>
-                <h2>About</h2>
-                <span>Polymorph is Steven's personal Web-based OS/document processing tool/brainstorming tool/UI testbed. To date, it has a number of use cases:</span>
-                <ul class="templateList">
-                    <li><a href="#" data-template="brainstorming">A brainstorming tool</a></li>
-                    <li><a href="#" data-template="tasklist">A todo-list with calendar</a></li>
-                    <!--<li><a>A quick websocket front-end</a></li>
-                    <li><a>A personal knowledge base</a></li>
-                    <li><a>A reconfigurable UI</a></li>
-                    <li><a>A collaboration tool</a></li>-->
-                </ul>
-                <!--
-                <h2>Examples</h2>
-                <span>Want to see what polymorph is capable of? Check out some examples:</span>
-                <ul class="templateList">
-                    <li><a href="permalink/techtree">A technology tree of the human race</a></li>
-                    <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
-                </ul>
-                -->
-            </div>
-            <div>
-                <h2>Documentation</h2>
-                <p>You can find markdown documentation on polymorph <a href="docs">here</a>.
             </div>
         </div>
     </div>
@@ -13683,27 +13749,34 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.style.color = "white";
 
     this.rootdiv.querySelector(".templateList").addEventListener("click", (e) => {
-        if (e.target.matches("[data-template]")) {
-            // load a template, by loading in all of the data
-            let RTP = JSON.parse(templates[e.target.dataset.template]);
-            RTP._meta = polymorph_core.items._meta;
-            RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
-            for (let i in RTP) {
-                RTP[i]._lu_ = Date.now();
+            if (e.target.matches("[data-template] *")) {
+                // load a template, by loading in all of the data
+                let t = e.target;
+                while (t && !t.dataset.template) {
+                    t = t.parentElement;
+                }
+                if (!t) return;
+                let RTP = JSON.parse(templates[t.dataset.template]);
+                RTP._meta = polymorph_core.items._meta;
+                RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
+                for (let i in RTP) {
+                    RTP[i]._lu_ = Date.now();
+                }
+                delete polymorph_core.items.default_operator;
+                delete polymorph_core.containers.default_operator;
+                // remove this operator
+                polymorph_core.integrateData(RTP, "TEMPLATER");
+                polymorph_core.switchView("default_container");
             }
-            delete polymorph_core.items.default_operator;
-            delete polymorph_core.containers.default_operator;
-            // remove this operator
-            polymorph_core.integrateData(RTP, "TEMPLATER");
-            polymorph_core.switchView("default_container");
-        }
-    })
-
-    this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
-        let newID = window.prompt("Enter the new document ID below.");
-        window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
-    })
-
+        })
+        /*
+        this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
+            let newID = window.prompt("Enter the new document ID below.");
+            if (newID) {
+                window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
+            }
+        })
+        */
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
         //get out of the way
         while (container.div.children.length) container.div.children[0].remove();
@@ -15062,12 +15135,14 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) {
 
     polymorph_core.on("updateItem", (d) => {
         if (d.sender == this) return;
-        if (d.loadProcess) {
-            this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
-        } else {
-            if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
-                this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
-            } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+        if (this.settings.RTactive) {
+            if (d.loadProcess) {
+                this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
+            } else {
+                if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
+                    this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
+                } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+            }
         }
     })
 
@@ -15186,7 +15261,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
                     try {
                         let obj = JSON.parse(this.responseText);
                         obj = polymorph_core.datautils.decompress(obj);
-                        console.log(obj);
+                        //console.log(obj); // don't log the entire datacache, turns out that's memory expensive ehehh
                         resolve(obj);
                     } catch (e) {
                         reject("server response invalid - see console");
@@ -15390,7 +15465,7 @@ polymorph_core.on("mergeComplete", () => {
     let swapConflictItem = () => {
         if (this.conflicts[sourceSelect.value] && this.conflicts[sourceSelect.value][changesList.value]) {
             if (!this.conflictResolutionInstructions[changesList.value]) {
-                this.conflictResolutionInstructions[changesList.value] = polymorph_core.items[changesList.value];
+                this.conflictResolutionInstructions[changesList.value] = JSON.parse(JSON.stringify(polymorph_core.items[changesList.value]));
             }
             localVer.value = JSON.stringify(this.conflictResolutionInstructions[changesList.value], null, 1);
             localVer.style.background = "white";
@@ -15457,6 +15532,7 @@ polymorph_core.on("mergeComplete", () => {
     };
     let fixSharingLink = () => {
         let tmpurl = new URL(window.location);
+        delete this.settings.data.sharing; // prevent recursion causing explosion
         tmpurl.search = "glt=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
         this.settings.data.sharing = tmpurl.href;
     }
@@ -15541,6 +15617,7 @@ polymorph_core.on("mergeComplete", () => {
 }, {
     prettyName: "Save to git",
     createable: true,
+    handleCrossWindow: true,
     canHandle: (params) => {
         if (params.has("glt")) {
             let config = undefined;
@@ -15554,4 +15631,38 @@ polymorph_core.on("mergeComplete", () => {
             return config;
         }
     }
+});
+
+polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
+    //initialise here
+    const broadcast = new BroadcastChannel(polymorph_core.currentDocID);
+    let isBroadcasting = false;
+    broadcast.onmessage = (event) => {
+        polymorph_core.items[event.data.id] = event.data.data;
+        isBroadcasting = true;
+        polymorph_core.fire("updateItem", { id: event.data.id, sender: this });
+        isBroadcasting = false;
+    }
+
+    polymorph_core.on("updateItem", (e) => {
+        if (e.sender == this) return;
+        if (e.loadProcess) return;
+        if (this.settings.RTactive && !isBroadcasting) {
+            broadcast.postMessage({
+                id: e.id,
+                data: polymorph_core.items[e.id]
+            })
+        }
+    });
+    this.updateRTstate = () => {}; // signal that can do RT
+    this.dialog = document.createElement("div"); // meh
+    polymorph_core.addToSaveDialog(this);
+    this.showDialog = function() {
+        // do nothing
+    }
+}, {
+    prettyName: "Broadcast across browsers",
+    createable: true,
+    handleCrossWindow: true,
 })

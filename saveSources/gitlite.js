@@ -28,7 +28,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
                     try {
                         let obj = JSON.parse(this.responseText);
                         obj = polymorph_core.datautils.decompress(obj);
-                        console.log(obj);
+                        //console.log(obj); // don't log the entire datacache, turns out that's memory expensive ehehh
                         resolve(obj);
                     } catch (e) {
                         reject("server response invalid - see console");
@@ -232,7 +232,7 @@ polymorph_core.on("mergeComplete", () => {
     let swapConflictItem = () => {
         if (this.conflicts[sourceSelect.value] && this.conflicts[sourceSelect.value][changesList.value]) {
             if (!this.conflictResolutionInstructions[changesList.value]) {
-                this.conflictResolutionInstructions[changesList.value] = polymorph_core.items[changesList.value];
+                this.conflictResolutionInstructions[changesList.value] = JSON.parse(JSON.stringify(polymorph_core.items[changesList.value]));
             }
             localVer.value = JSON.stringify(this.conflictResolutionInstructions[changesList.value], null, 1);
             localVer.style.background = "white";
@@ -299,6 +299,7 @@ polymorph_core.on("mergeComplete", () => {
     };
     let fixSharingLink = () => {
         let tmpurl = new URL(window.location);
+        delete this.settings.data.sharing; // prevent recursion causing explosion
         tmpurl.search = "glt=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
         this.settings.data.sharing = tmpurl.href;
     }
@@ -383,6 +384,7 @@ polymorph_core.on("mergeComplete", () => {
 }, {
     prettyName: "Save to git",
     createable: true,
+    handleCrossWindow: true,
     canHandle: (params) => {
         if (params.has("glt")) {
             let config = undefined;

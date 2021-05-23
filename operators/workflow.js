@@ -13,7 +13,9 @@ polymorph_core.registerOperator("workflow", {
         filter: polymorph_core.guid(),
         propsAsDate: "",
         rootItemListItem: "",
-        rootItemListItemProperty: ""
+        rootItemListItemProperty: "",
+        linkProp: "to",
+        bracketPropertyPrefix: container.id
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Can probably replace this with direct instantiation instead of a getter, if we're careful.
@@ -23,7 +25,7 @@ polymorph_core.registerOperator("workflow", {
             else {
                 this._existingItemsCache = Array.from(this.rootItems).filter(i => polymorph_core.items[i]); // occasionally strange things happen
                 for (let i = 0; i < this._existingItemsCache.length; i++) {
-                    if (polymorph_core.items[this._existingItemsCache[i]].to) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]].to).filter(i => polymorph_core.items[i]));
+                    if (polymorph_core.items[this._existingItemsCache[i]][this.settings.linkProp]) this._existingItemsCache.push.apply(this._existingItemsCache, Object.keys(polymorph_core.items[this._existingItemsCache[i]][this.settings.linkProp]).filter(i => polymorph_core.items[i]));
                 }
                 return this._existingItemsCache;
             }
@@ -57,10 +59,11 @@ polymorph_core.registerOperator("workflow", {
     this.existingItems.length;
     this._parentOfCache = {};
     this.parentOf = (id) => {
-        if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]].to[id]) return this._parentOfCache[id];
+        if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]][this.settings.linkProp][id]) return this._parentOfCache[id];
+        if (this.rootItems.indexOf(id) != -1) return ""; // make rootitems default to top level because why not...?
         else {
             for (let i in polymorph_core.items) {
-                if (polymorph_core.items[i].to && polymorph_core.items[i].to[id]) {
+                if (polymorph_core.items[i][this.settings.linkProp] && polymorph_core.items[i][this.settings.linkProp][id]) {
                     this._parentOfCache[id] = i;
                     return this._parentOfCache[id];
                 }
@@ -190,7 +193,7 @@ polymorph_core.registerOperator("workflow", {
             if (spanWithID.children[1].style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
-        if (!polymorph_core.items[spanWithID.dataset.id].to || !Object.keys(polymorph_core.items[spanWithID.dataset.id].to).length) return;
+        if (!polymorph_core.items[spanWithID.dataset.id][this.settings.linkProp] || !Object.keys(polymorph_core.items[spanWithID.dataset.id][this.settings.linkProp]).length) return;
         polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
         this.renderItem(spanWithID.dataset.id);
         //set all immediate child spans to display: block, to account for search case
@@ -216,8 +219,10 @@ polymorph_core.registerOperator("workflow", {
         if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
     });
     //return true if we care about an item and dont want it garbage-cleaned :(
+    //ideally somehow automatically know whether or not it is on our tree
+    //temporary solution: use the filter property...
     //this.itemRelevant = (id) => { return (this.existingItems.indexOf(id) != -1) }
-    this.itemRelevant = (id) => { return polymorph_core.items[id][this.settings.filter] }
+    this.itemRelevant = (id) => { return polymorph_core.items[id] && polymorph_core.items[id][this.settings.filter] }
 
     this.createItem = (id, toDirectAdopt) => {
         if (!id) id = polymorph_core.insertItem({});
@@ -228,7 +233,7 @@ polymorph_core.registerOperator("workflow", {
         //add any data you need
         if (toDirectAdopt) {
             for (let i = 0; i < this.existingItems.length; i++) {
-                if (polymorph_core.items[this.existingItems[i]].to && polymorph_core.items[this.existingItems[i]].to[id]) {
+                if (polymorph_core.items[this.existingItems[i]][this.settings.linkProp] && polymorph_core.items[this.existingItems[i]][this.settings.linkProp][id]) {
                     toDirectAdopt = false;
                     if (!polymorph_core.items[this.existingItems[i]].toOrder) polymorph_core.items[this.existingItems[i]].toOrder = [];
                     if (polymorph_core.items[this.existingItems[i]].toOrder.indexOf(id) == -1) {
@@ -303,7 +308,7 @@ polymorph_core.registerOperator("workflow", {
     let unparent = (id) => {
         if (this.parentOf(id)) {
             polymorph_core.items[this.parentOf(id)].toOrder.splice(polymorph_core.items[this.parentOf(id)].toOrder.indexOf(id), 1);
-            delete polymorph_core.items[this.parentOf(id)].to[id];
+            delete polymorph_core.items[this.parentOf(id)][this.settings.linkProp][id];
         } else {
             if (this.rootItems.indexOf(id) != -1) {
                 this.rootItems.splice(this.rootItems.indexOf(id), 1);
@@ -360,7 +365,7 @@ polymorph_core.registerOperator("workflow", {
         if (!el) return;
         let id = el.dataset.id;
         for (let p in polymorph_core.items[el]) {
-            if (p.startsWith("_" + this.container.id)) {
+            if (p.startsWith("_" + this.settings.bracketPropertyPrefix)) {
                 //remove it? v inefficient but ok
                 delete polymorph_core.items[el][p];
             }
@@ -372,7 +377,7 @@ polymorph_core.registerOperator("workflow", {
         while (result = re.exec(text)) {
             let parts = result[1].split(":");
             let ltrkey = parts.shift();
-            key = `_${container.id}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
+            key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
             validKeys[key] = true;
             let value = parts.join(":");
             if (value) {
@@ -396,7 +401,7 @@ polymorph_core.registerOperator("workflow", {
             }
         }
         for (let p in polymorph_core.items[id]) {
-            if (p.startsWith(`_${container.id}_`)) {
+            if (p.startsWith(`_${this.settings.bracketPropertyPrefix}_`)) {
                 if (!validKeys[p]) {
                     delete polymorph_core.items[id][p];
                 }
@@ -571,7 +576,7 @@ polymorph_core.registerOperator("workflow", {
                         //clear the parentof cache
                         let oldParent = this.parentOf(id);
                         unparent(id);
-                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)].to[id];
+                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)][this.settings.linkProp][id];
                         delete this._parentOfCache[id];
                         let wasme = spanWithID.children[0].children[1];
                         if (spanWithID.parentElement.parentElement.dataset.id) {
@@ -675,7 +680,7 @@ polymorph_core.registerOperator("workflow", {
     container.on("deleteItem", (d) => {
         delete polymorph_core.items[d.id][this.settings.filter];
         if (this.innerRoot.querySelector(`[data-id="${d.id}"]`)) this.innerRoot.querySelector(`[data-id="${d.id}"]`).remove();
-        if (this.rootItems.indexOf(d.id)) {
+        if (this.rootItems.indexOf(d.id) != -1) {
             this.rootItems.splice(this.rootItems.indexOf(d.id), 1);
         }
     })
@@ -788,7 +793,7 @@ polymorph_core.registerOperator("workflow", {
                 span.children[0].children[1].innerHTML = polymorph_core.RTRenderProperty(polymorph_core.items[id][this.settings.titleProperty] || " ");
                 renderedItemCache[id].rendered = polymorph_core.items[id][this.settings.titleProperty] || " ";
             }
-            if (polymorph_core.items[id].to && Object.keys(polymorph_core.items[id].to).length) {
+            if (polymorph_core.items[id][this.settings.linkProp] && Object.keys(polymorph_core.items[id][this.settings.linkProp]).length) {
 
                 if (polymorph_core.items[id].collapsed) {
                     span.children[1].style.display = "none";
@@ -838,7 +843,7 @@ polymorph_core.registerOperator("workflow", {
                 if (!polymorph_core.items[id].toOrder) {
                     polymorph_core.items[id].toOrder = [];
                 }
-                for (let i in polymorph_core.items[id].to) {
+                for (let i in polymorph_core.items[id][this.settings.linkProp]) {
                     if (polymorph_core.items[id].toOrder.indexOf(i) == -1) {
                         polymorph_core.items[id].toOrder.push(i);
                     }
@@ -952,7 +957,20 @@ polymorph_core.registerOperator("workflow", {
             },
             label: "Copy root items to auxillary item"
         }),
-        // This is incredibly lazy but one day we'll fix it
+        linkProp: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "linkProp",
+            label: "Property that defines links"
+        }),
+        bracketPropertyPrefix: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "text",
+            object: this.settings,
+            property: "bracketPropertyPrefix",
+            label: "Prefix for bracket properties"
+        })
     }
     this.showDialog = function() {
         for (let i in options) {
@@ -1110,7 +1128,7 @@ polymorph_core.registerOperator("workflow", {
             if (!result) result = Date.now() * 10000;
             return [a, result];
         }
-        property = `_${container.id}_${property}`;
+        property = `_${this.settings.bracketPropertyPrefix}_${property}`;
         if (root && root.dataset.id) {
             let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
             objs.sort((a, b) => a[1] - b[1]);

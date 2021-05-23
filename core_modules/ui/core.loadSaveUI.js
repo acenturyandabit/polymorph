@@ -96,8 +96,8 @@
         <div>
             <h2>${polymorph_core.saveSourceOptions[save_source_instance.settings.type].prettyName || save_source_instance.settings.type}</h2>
             <span>`;
-            wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
-            wrapperText += `<label>Load from this source<input data-role="lsync" type="checkbox"></input></label>`;
+            if (save_source_instance.pullAll) wrapperText += `<label>Save to this source<input data-role="tsync" type="checkbox"></input></label>`;
+            if (save_source_instance.pushAll) wrapperText += `<label>Load from this source<input data-role="lsync" type="checkbox"></input></label>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_hardLoad">Load from this source</button>`;
             if (save_source_instance.pullAll) wrapperText += `<button data-role="dlg_softLoad">Merge from this source</button>`;
             if (save_source_instance.pushAll) wrapperText += `<button data-role="dlg_save">Save to this source</button>`;

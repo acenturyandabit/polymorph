@@ -1,18 +1,37 @@
 (() => {
-
-    //navigator.serviceWorker.controller.postMessage("not even ready yet");
-
-
-    /*let checkForURLConflict=()=>{}
-    navigator.serviceWorker.register('core_modules/core/core.workersync.js', {scope: './'}).then(function(registration) {
-        if (registration.active){
-            console.log("yay im active");
-            //navigator.serviceWorker.controller.postMessage("hello world!");
-        }
-    });*/
-    let instance_uuid = polymorph_core.guid();
     const broadcast = new BroadcastChannel('channel1');
-    let is_challenger = false;
+    let instance_uuid = polymorph_core.guid();
+    let checkerPromiseResolve = undefined;
+    let nsent = 0;
+    broadcast.onmessage = (event) => {
+        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
+            if (checkerPromiseResolve) {
+                checkerPromiseResolve(true);
+                checkerPromiseResolve = undefined;
+            } else if (!event.data.echo) {
+                broadcast.postMessage({
+                    url: window.location.href,
+                    uuid: instance_uuid,
+                    echo: true
+                });
+            }
+        }
+    };
+    let checkForURLConflict = async() => {
+        return new Promise((res) => {
+            checkerPromiseResolve = res;
+            broadcast.postMessage({
+                url: window.location.href,
+                uuid: instance_uuid
+            })
+            setTimeout(() => {
+                if (checkerPromiseResolve) {
+                    checkerPromiseResolve(false);
+                    checkerPromiseResolve = undefined;
+                }
+            }, 500);
+        });
+    }
     let alt_alive_warning = document.createElement("div");
     alt_alive_warning.innerHTML = `
         <div style="padding:10vw">
@@ -20,40 +39,20 @@
         </div>
     `;
     alt_alive_warning.style.cssText = `
-    display:none;
+    display:flex;
+    visibility:hidden;
     place-items: center center;
     position:absolute;
     height:100%;
     width:100%;
-    z-index:2;
-    background: rgba(0,0,0,0.5);
+    z-index:5;
+    background: rgba(0,0,0,0.8);
     color:white;
     text-align:center;
     `;
     document.body.appendChild(alt_alive_warning);
-    broadcast.onmessage = (event) => {
-        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
-            if (is_challenger) {
-                alt_alive_warning.style.display = "grid";
-                // seppuku
-            } else {
-                broadcast.postMessage({
-                    url: window.location.href,
-                    uuid: instance_uuid
-                })
-            }
-        }
-    };
 
-    function checkForURLConflict() {
-        broadcast.postMessage({
-            url: window.location.href,
-            uuid: instance_uuid
-        })
-        is_challenger = true;
-        setTimeout(() => is_challenger = false, 500);
-    }
-    checkForURLConflict();
+
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
             return polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources;
@@ -198,7 +197,9 @@
                     // just go home
                     window.location.href = window.location.origin + window.location.pathname + "?o";
                 }
-            }
+            };
+            // check for multiple windows
+            let hasURLConflict = await checkForURLConflict();
 
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
@@ -227,10 +228,13 @@
                     try {
                         let newInstance = new polymorph_core.saveSources[i.type](i);
                         polymorph_core.saveSourceInstances.push(newInstance);
+                        if (i.RTactive && polymorph_core.saveSourceOptions[i.type].handleCrossWindow) {
+                            hasURLConflict = false;
+                        }
                         if (i.load) {
                             (async() => {
                                 try {
-                                    d = await newInstance.pullAll();
+                                    let d = await newInstance.pullAll();
                                     polymorph_core.integrateData(d, i.type);
                                 } catch (e) {
                                     alert("Something went wrong with the save source: " + e);
@@ -252,6 +256,10 @@
                         }
                     }
                 }
+            }
+            if (hasURLConflict) {
+                alt_alive_warning.style.visibility = "visible";
+                return;
             }
             //try and catch when there is no data at all
             for (let i of polymorph_core.saveSourceInstances) {

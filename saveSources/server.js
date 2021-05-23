@@ -167,12 +167,14 @@ polymorph_core.registerSaveSource("srv", function(save_source_data) {
 
     polymorph_core.on("updateItem", (d) => {
         if (d.sender == this) return;
-        if (d.loadProcess) {
-            this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
-        } else {
-            if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
-                this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
-            } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+        if (this.settings.RTactive) {
+            if (d.loadProcess) {
+                this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
+            } else {
+                if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
+                    this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
+                } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+            }
         }
     })
 
