@@ -2655,7 +2655,7 @@ polymorph_core.container = function container(containerID) {
     //#endregion
 
     this.remove = () => {
-        if (this.operator.remove) this.operator.remove();
+        if (this.operator && this.operator.remove) this.operator.remove();
         delete polymorph_core.items[containerID]._od;
         delete polymorph_core.containers[containerID]; //seppuku
     }
@@ -4158,6 +4158,7 @@ if (!isPhone()) {
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
+                if (!this.settings) return;
                 if (shiftPressed) {
                     if (!this.children) {
                         this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;

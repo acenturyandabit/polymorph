@@ -752,6 +752,7 @@ if (!isPhone()) {
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
+                if (!this.settings) return;
                 if (shiftPressed) {
                     if (!this.children) {
                         this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;

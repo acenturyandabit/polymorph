@@ -340,7 +340,7 @@ polymorph_core.container = function container(containerID) {
     //#endregion
 
     this.remove = () => {
-        if (this.operator.remove) this.operator.remove();
+        if (this.operator && this.operator.remove) this.operator.remove();
         delete polymorph_core.items[containerID]._od;
         delete polymorph_core.containers[containerID]; //seppuku
     }
