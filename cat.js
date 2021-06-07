@@ -15286,6 +15286,14 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
                 if (this.status != 200) {
                     alert("Save error! Please ensure the gitlite backend is online.");
                 } else {
+                    //merge
+                    let updateReply = JSON.parse(xmlhttp.responseText);
+                    for (let i in updateReply) {
+                        if (!(polymorph_core.items[i]) || polymorph_core.items[i]._lu_ < updateReply[i]._lu_) {
+                            polymorph_core.items[i] = updateReply[i];
+                            polymorph_core.fire("updateItem", { id: i, sender: this });
+                        }
+                    }
                     polymorph_core.saved_until = Date.now();
                 }
             }
@@ -15349,109 +15357,109 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
 
 this.updateRTstate = () => {
 
-    let initialiseWSQueueDigester = () => setInterval(() => {
-        toSends = this.RTSyncQueue.slice(0, 5);
-        if (this.ws.readyState != WebSocket.OPEN) {
+let initialiseWSQueueDigester = () => setInterval(() => {
+    toSends = this.RTSyncQueue.slice(0, 5);
+    if (this.ws.readyState != WebSocket.OPEN) {
+        console.log("ws error, reconnecting...");
+        setTimeout(this.updateRTstate);
+        clearInterval(this.wsQueueDigester);
+    } else if (toSends.length) {
+        this.ws.send(JSON.stringify({
+            type: "postUpdate",
+            data: toSends
+        }));
+        this.RTSyncQueue.splice(0, 5);
+    }
+}, 1000);
+
+if (this.settings.RTactive) {
+    this.RTSyncQueue = Object.keys(polymorph_core.items).map(i => [i, polymorph_core.items[i]._lu_]);
+    this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
+    if (!this.ws || this.ws.readyState != WebSocket.OPEN) {
+        this.ws = new WebSocket(this.settings.data.wsAddr);
+        this.ws.addEventListener("open", () => {
+            this.ws.send(JSON.stringify({
+                type: "selfID",
+                data: polymorph_core.currentDocID
+            }));
+            setTimeout(() => {
+                let timekeys = Object.entries(polymorph_core.items).map((i) => ({ _lu_: i[1]._lu_, id: i[0] })).sort((a, b) => b._lu_ - a._lu_);
+                let pow2 = 0;
+                let lus = timekeys.filter((i, ii) => {
+                    if (!(ii % (2 ** pow2)) || ii == timekeys.length - 1) {
+                        pow2++;
+                        return true;
+                    } else return false;
+                });
+                this.ws.send(JSON.stringify({
+                    type: "mergeCheck",
+                    items: lus
+                }))
+                this.wsQueueDigester = initialiseWSQueueDigester();
+            }, 1000);
+        })
+        this.ws.addEventListener("message", (d) => {
+            let data = JSON.parse(d.data);
+            switch (data.type) {
+                case "request":
+                    // send over my copy of stuff
+                    this.ws.send(JSON.stringify({
+                        type: "transmit",
+                        data: data.data.map(i => [i, polymorph_core.items[i]])
+                    }))
+                    break;
+                case "transmit":
+                    if (this.settings.RTactive) {
+                        for (let i of data.data) {
+                            if (!polymorph_core.items[i[0]] || polymorph_core.items[i[0]]._lu_ < i[1]._lu_) {
+                                polymorph_core.items[i[0]] = i[1];
+                                polymorph_core.fire("updateItem", { sender: this, id: i[0] });
+                            }
+                        }
+                    }
+                    // decide whether or not to merge
+                    break;
+            }
+        })
+        this.ws.addEventListener("error", () => {
+            try {
+                this.ws.close();
+            } catch (e) {
+                //ws already closed
+            }
             console.log("ws error, reconnecting...");
             setTimeout(this.updateRTstate);
             clearInterval(this.wsQueueDigester);
-        } else if (toSends.length) {
-            this.ws.send(JSON.stringify({
-                type: "postUpdate",
-                data: toSends
-            }));
-            this.RTSyncQueue.splice(0, 5);
-        }
-    }, 1000);
-
-    if (this.settings.RTactive) {
-        this.RTSyncQueue = Object.keys(polymorph_core.items).map(i => [i, polymorph_core.items[i]._lu_]);
-        this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
-        if (!this.ws || this.ws.readyState != WebSocket.OPEN) {
-            this.ws = new WebSocket(this.settings.data.wsAddr);
-            this.ws.addEventListener("open", () => {
-                this.ws.send(JSON.stringify({
-                    type: "selfID",
-                    data: polymorph_core.currentDocID
-                }));
-                setTimeout(() => {
-                    let timekeys = Object.entries(polymorph_core.items).map((i) => ({ _lu_: i[1]._lu_, id: i[0] })).sort((a, b) => b._lu_ - a._lu_);
-                    let pow2 = 0;
-                    let lus = timekeys.filter((i, ii) => {
-                        if (!(ii % (2 ** pow2)) || ii == timekeys.length - 1) {
-                            pow2++;
-                            return true;
-                        } else return false;
-                    });
-                    this.ws.send(JSON.stringify({
-                        type: "mergeCheck",
-                        items: lus
-                    }))
-                    this.wsQueueDigester = initialiseWSQueueDigester();
-                }, 1000);
-            })
-            this.ws.addEventListener("message", (d) => {
-                let data = JSON.parse(d.data);
-                switch (data.type) {
-                    case "request":
-                        // send over my copy of stuff
-                        this.ws.send(JSON.stringify({
-                            type: "transmit",
-                            data: data.data.map(i => [i, polymorph_core.items[i]])
-                        }))
-                        break;
-                    case "transmit":
-                        if (this.settings.RTactive) {
-                            for (let i of data.data) {
-                                if (!polymorph_core.items[i[0]] || polymorph_core.items[i[0]]._lu_ < i[1]._lu_) {
-                                    polymorph_core.items[i[0]] = i[1];
-                                    polymorph_core.fire("updateItem", { sender: this, id: i[0] });
-                                }
-                            }
-                        }
-                        // decide whether or not to merge
-                        break;
-                }
-            })
-            this.ws.addEventListener("error", () => {
-                try {
-                    this.ws.close();
-                } catch (e) {
-                    //ws already closed
-                }
-                console.log("ws error, reconnecting...");
-                setTimeout(this.updateRTstate);
-                clearInterval(this.wsQueueDigester);
-            })
-        } else {
-            this.wsQueueDigester = initialiseWSQueueDigester();
-        }
+        })
     } else {
-        if (this.wsQueueDigester) clearInterval(this.wsQueueDigester);
-        if (this.ws && this.ws.readyState == WebSocket.OPEN) this.ws.close();
+        this.wsQueueDigester = initialiseWSQueueDigester();
     }
+} else {
+    if (this.wsQueueDigester) clearInterval(this.wsQueueDigester);
+    if (this.ws && this.ws.readyState == WebSocket.OPEN) this.ws.close();
+}
 }
 this.updateRTstate();
 
 polymorph_core.on("updateItem", (d) => {
-    if (d.sender == this) return;
-    if (d.loadProcess) {
-        this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
-    } else {
-        if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
-            this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
-        } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
-    }
+if (d.sender == this) return;
+if (d.loadProcess) {
+    this.RTSyncQueue.push([d.id, polymorph_core.items[d.id]._lu_]);
+} else {
+    if (this.RTSyncQueue.length && this.RTSyncQueue[0][0] == d.id) {
+        this.RTSyncQueue[0] = [d.id, Date.now(), polymorph_core.items[d.id]];
+    } else this.RTSyncQueue.unshift([d.id, Date.now(), polymorph_core.items[d.id]]);
+}
 })
 
 polymorph_core.on("mergeBegin", () => {
-    // clear out the RTSyncQueue
-    this.RTSyncQueue = [];
+// clear out the RTSyncQueue
+this.RTSyncQueue = [];
 })
 
 polymorph_core.on("mergeComplete", () => {
-    // sort the RTSyncQueue
-    this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
+// sort the RTSyncQueue
+this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
 });
 */
     this.dialog = document.createElement("div");
