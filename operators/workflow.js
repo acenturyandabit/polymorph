@@ -56,6 +56,11 @@ polymorph_core.registerOperator("workflow", {
             return v;
         }
     });
+    Object.defineProperty(this, "rootItemId", {
+        get: () => {
+            return (this.settings.rootItemListItem) ? this.settings.rootItemListItem : container.id;
+        }
+    });
     this.existingItems.length;
     this._parentOfCache = {};
     this.parentOf = (id) => {
@@ -97,10 +102,16 @@ polymorph_core.registerOperator("workflow", {
     }
     span.arrow{
         display: inline-block;
-        width: 20px;
+        width: 15px;
+        text-align: center;
     }
     span[data-id] span[data-id]{
-        margin-left: 10px;
+        margin-left: 5px;
+    }
+    span[data-id] div.inset-container{
+        border-left: 1px solid white;
+        margin-left: 7px;
+        padding-left: 8px;
     }
     span.bottomControlPanel{
         flex: 0 0 5%
@@ -432,7 +443,7 @@ polymorph_core.registerOperator("workflow", {
                     if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
                     if (spanWithID.parentElement.children.length == 1) {
                         // remove the arrow
-                        spanWithID.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "";
+                        spanWithID.parentElement.parentElement.children[0].children[0].children[0].innerHTML = "&#8226;";
                     }
                     if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 4) {
                         // if this is a root item and it is about to be deleted, show the cursor span
@@ -465,9 +476,7 @@ polymorph_core.registerOperator("workflow", {
                         polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         polymorph_core.items[newID][this.settings.titleProperty] = partB;
                     }
-                } else { // just make a new item
-
-                }
+                } //else just make a new item
                 if (modifiers["shift"]) {
                     this.orderedLink(id, newID);
                     polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
@@ -493,6 +502,7 @@ polymorph_core.registerOperator("workflow", {
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
+                container.fire("updateItem", { id: newID, sender: this });
                 this.renderItem(newID);
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
                 break;
@@ -555,7 +565,13 @@ polymorph_core.registerOperator("workflow", {
                     if (!modifiers["shift"]) {
                         if (!spanWithID.previousElementSibling) return;
                         //clear the parentof cache
+                        let oldParent = this.parentOf(id);
                         unparent(id);
+                        if (!oldParent) {
+                            polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this }); // kick update on item so that 'to' changes
+                        } else {
+                            polymorph_core.fire("updateItem", { id: oldParent, sender: this }); // kick update on item so that 'to' changes
+                        }
                         //kick the thing up four spaces
                         if (spanWithID.previousElementSibling.dataset.id) {
                             this.orderedLink(spanWithID.previousElementSibling.dataset.id, id);
@@ -576,13 +592,19 @@ polymorph_core.registerOperator("workflow", {
                         //clear the parentof cache
                         let oldParent = this.parentOf(id);
                         unparent(id);
-                        if (this.parentOf(id)) delete polymorph_core.items[this.parentOf(id)][this.settings.linkProp][id];
+                        let stillOldParent = this.parentOf(id);
+                        if (stillOldParent) { //huge amounts of duplication here. what's going on.
+                            delete polymorph_core.items[stillOldParent][this.settings.linkProp][id];
+                            polymorph_core.fire("updateItem", { id: stillOldParent, sender: this }); // kick update on item so that 'to' changes
+                        }
+                        polymorph_core.fire("updateItem", { id: oldParent, sender: this }); // kick update on item so that 'to' changes
+
                         delete this._parentOfCache[id];
                         let wasme = spanWithID.children[0].children[1];
                         if (spanWithID.parentElement.parentElement.dataset.id) {
                             if (spanWithID.parentElement.parentElement.parentElement.parentElement.parentElement) {
                                 let prev = spanWithID.parentElement.parentElement.parentElement.parentElement.dataset.id;
-                                this.orderedLink(prev, id);
+                                this.orderedLink(prev, id, oldParent);
                                 polymorph_core.fire("updateItem", { id: prev, sender: this }); // kick update on item so that 'to' changes
                                 polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                                 this.renderItem(id);
@@ -592,6 +614,8 @@ polymorph_core.registerOperator("workflow", {
                                 let prev = spanWithID.parentElement.parentElement.dataset.id;
                                 this.rootItems.splice(this.rootItems.indexOf(prev) + 1, 0, id);
                                 this.renderItem(id);
+                                polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
+                                polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this }); // force rerender of updateItem
                                 wasme.focus();
                             }
                             this.renderItem(oldParent); // remove arrow from parent if it was an only child
@@ -779,11 +803,11 @@ polymorph_core.registerOperator("workflow", {
             <span data-id="${id}">
                 <span class="toprow">
                     <span class="utils">
-                        <span class="arrow"></span><span class="bullet">&#8226;</span>
+                        <span class="arrow"></span>
                     </span>
                     <span contenteditable></span>
                 </span>
-                <div></div>
+                <div class="inset-container"></div>
             </span>`);
                 renderedItemCache[id] = {
                     el: span,
@@ -804,7 +828,7 @@ polymorph_core.registerOperator("workflow", {
                 }
             } else {
                 // maybe their child got removed
-                span.children[0].children[0].children[0].innerHTML = "";
+                span.children[0].children[0].children[0].innerHTML = "&#x25CF;";
             }
             let nxtid;
             let parent;
@@ -832,8 +856,14 @@ polymorph_core.registerOperator("workflow", {
                 if (this.rootdiv.querySelector(`span[data-id="${nxtid}"]`) && this.rootdiv.querySelector(`span[data-id="${nxtid}"]`).parentElement == parent) {
                     parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`))
                 } else {
+                    // for some reason, the next item of this item didn't share a common parent
+                    //so ask the parent to figure out what's going on 
                     parent.appendChild(span);
-                    this.regenerateToOrder(parent.parentElement);
+                    // its possible that an external update didn't actually register yet
+                    // so let's not jump the gun and treat the displayed info as the source of truth
+                    /*if (parent == this.innerRoot) this.regenerateToOrder();
+                    else this.regenerateToOrder(parent.parentElement);
+                    */
                 }
             } else {
                 parent.insertBefore(span, this.rootdiv.querySelector(`span[data-id="${nxtid}"]`));
@@ -843,15 +873,24 @@ polymorph_core.registerOperator("workflow", {
                 if (!polymorph_core.items[id].toOrder) {
                     polymorph_core.items[id].toOrder = [];
                 }
+                // Don't regenerate toorder on here because if externally item is deleted then that undeletes it
+                /*
                 for (let i in polymorph_core.items[id][this.settings.linkProp]) {
                     if (polymorph_core.items[id].toOrder.indexOf(i) == -1) {
                         polymorph_core.items[id].toOrder.push(i);
                     }
                 }
+                */
                 polymorph_core.items[id].toOrder.forEach((i) => {
                     this._parentOfCache[i] = id;
                     this.renderItem(i, true);
                 });
+                // also clear out the old parentCache
+                for (let i in this._parentOfCache) {
+                    if (polymorph_core.items[id].toOrder.indexOf(i) == -1) {
+                        delete this._parentOfCache[i];
+                    }
+                }
             }
         }
         if (!recursive) {

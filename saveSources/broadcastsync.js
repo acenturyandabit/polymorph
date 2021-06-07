@@ -7,10 +7,12 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     broadcast.onmessage = (event) => {
         switch (event.data.ev) {
             case "ev":
-                polymorph_core.items[event.data.d.id] = event.data.d.data;
-                fromBroadcast = true;
-                polymorph_core.fire("updateItem", { id: event.data.d.id, sender: this });
-                fromBroadcast = false;
+                if (event.data.d.data) { //bit of safety
+                    polymorph_core.items[event.data.d.id] = event.data.d.data;
+                    fromBroadcast = true;
+                    polymorph_core.fire("updateItem", { id: event.data.d.id, sender: this });
+                    fromBroadcast = false;
+                }
                 break;
             case "ll":
                 if (isRecievingLR) break;

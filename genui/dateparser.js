@@ -114,8 +114,9 @@ function _dateParser() {
         {
             name: "now",
             regex: /now/g,
-            operate: function(regres, data) {
-                data.d = new Date();
+            operate: function(regres, data, refdate) {
+                if (refdate) data.d = refdate;
+                else data.d = new Date();
                 data.noDateSpecific = false;
             }
         },
@@ -217,7 +218,7 @@ function _dateParser() {
             if (rsplit) {
                 if (rsplit[1]) {
                     refdate = this.extractTime(rsplit[1]);
-                    refdate = new Date(Math.max(orefdate, refdate));
+                    if (orefdate) refdate = new Date(Math.max(orefdate, refdate));
                 } else refdate = orefdate || new Date();
                 toParse = rsplit[2];
                 if (rsplit[3]) {

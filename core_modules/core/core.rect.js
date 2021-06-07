@@ -61,6 +61,7 @@ if (!isPhone()) {
                 } else {
                     this._childrenIDs = [];
                     for (let i in polymorph_core.items) {
+                        if (!polymorph_core.items[i]) continue; // an "" appeared as undefined and idek why but safety first!
                         if (polymorph_core.items[i]._rd && polymorph_core.items[i]._rd.p == rectID) {
                             this._childrenIDs.push(i);
                         }
