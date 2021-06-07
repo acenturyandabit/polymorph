@@ -8280,7 +8280,7 @@ polymorph_core.registerOperator("workflow", {
             polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
         } else if (!root) {
             this.rootItems = this.getLiveToOrder(root);
-            polymorph_core.fire("updateItem", { id: this.container.id, sender: this });
+            polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
         }
         if (!root) root = this.innerRoot;
         else if (root.matches(".cursorspan")) return;
@@ -8376,7 +8376,7 @@ polymorph_core.registerOperator("workflow", {
                     let theI = this.rootItems.indexOf(id);
                     unparent(id);
                     if (theI != -1) {
-                        container.fire("updateItem", { id: this.container.id, sender: this });
+                        container.fire("updateItem", { id: this.rootItemId, sender: this });
                     }
                     if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
                     if (spanWithID.parentElement.children.length == 1) {
@@ -8436,7 +8436,7 @@ polymorph_core.registerOperator("workflow", {
                         polymorph_core.fire("updateItem", { id: spanWithID.parentElement.parentElement.dataset.id, sender: this }); // kick update on item so that 'to' changes
                     } else {
                         this.rootItems.splice(this.rootItems.indexOf(id) + (shouldBefore ? 0 : 1), 0, newID);
-                        polymorph_core.fire("updateItem", { id: container.id, sender: this });
+                        polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
                     }
                 }
                 container.fire("createItem", { id: newID, sender: this });
@@ -8846,7 +8846,7 @@ polymorph_core.registerOperator("workflow", {
         */
         if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.
         let id = d.id;
-        if (id == container.id) this.refresh();
+        if (id == this.rootItemId) this.refresh();
         if (d.id == this.settings.rootItemListItem) {
             this.refresh();
         }
@@ -9064,7 +9064,7 @@ polymorph_core.registerOperator("workflow", {
         let theI = this.rootItems.indexOf(id);
         unparent(id);
         if (theI != -1) {
-            container.fire("updateItem", { id: this.container.id, sender: this });
+            container.fire("updateItem", { id: this.rootItemId, sender: this });
         }
         if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
         if (spanWithID.parentElement.children.length == 1) {
@@ -9115,7 +9115,7 @@ polymorph_core.registerOperator("workflow", {
             let objs = this.rootItems.map(itemMapper);
             objs.sort((a, b) => a[1] - b[1]);
             this.rootItems = objs.map(i => i[0]);
-            polymorph_core.fire("updateItem", { id: this.container.id, sender: this });
+            polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
         }
         if (!root) root = this.innerRoot;
         else if (root.matches(".cursorspan")) return;
