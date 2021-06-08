@@ -1,17 +1,16 @@
 polymorph_core.datautils = {};
 //detect and perform all decompression operations.
 //compressions should be an array of object with type = the type of compression used.
-polymorph_core.datautils.decompress = function (data) {
+polymorph_core.datautils.decompress = function(data) {
     if (data.compressions) {
         for (let i = 0; i < data.compressions.length; i++) {
             data = polymorph_core.datautils[data.compressions[i].type].decompress(data, i);
         }
         return data.items;
-    }
-    else return data;
+    } else return data;
 }
 
-polymorph_core.datautils.precompress = function (data, type) {
+polymorph_core.datautils.precompress = function(data, type) {
     //Deep copy it, just in case
     data = JSON.parse(JSON.stringify(data));
 
@@ -26,7 +25,7 @@ polymorph_core.datautils.precompress = function (data, type) {
 }
 
 polymorph_core.datautils.IDCompress = {
-    compress: function (data) {
+    compress: function(data) {
         data = polymorph_core.datautils.precompress(data, "IDCompress");
         let propDict = {};
         for (let i in data.items) {
@@ -36,6 +35,7 @@ polymorph_core.datautils.IDCompress = {
             }
         }
         let encodingIndex = 1;
+
         function numberToEncodable(n) {
             let base = "qwertyuiopasdfghjklzxcvbnm";
             if (n == 0) return base[0];
@@ -59,7 +59,7 @@ polymorph_core.datautils.IDCompress = {
                 let newkey = numberToEncodable(encodingIndex);
                 km[newkey] = i;
                 for (let it in data.items) {
-                    if (data.items[it][i]) {
+                    if (i in data.items[it]) { // otherwise zero items don't get converted
                         data.items[it][newkey] = data.items[it][i];
                         delete data.items[it][i];
                     }
@@ -70,10 +70,10 @@ polymorph_core.datautils.IDCompress = {
         }
         return data;
     },
-    decompress: function (data, cid) {
+    decompress: function(data, cid) {
         for (let it in data.items) {
             for (let k in data.compressions[cid].keymap) {
-                if (data.items[it][k]) {
+                if (k in data.items[it]) {
                     data.items[it][data.compressions[cid].keymap[k]] = data.items[it][k];
                     delete data.items[it][k];
                 }
@@ -141,7 +141,7 @@ polymorph_core.datautils.viewToItems = (obj) => {
             obj._rd.p = parent;
         }
         let newID = polymorph_core.guid(6, newObj);
-        newObj[newID] = {};//stake claim to the newID
+        newObj[newID] = {}; //stake claim to the newID
         if (r.c) {
             createObjectFromRect(r.c[0], newID);
             createObjectFromRect(r.c[1], newID);
@@ -165,26 +165,26 @@ polymorph_core.datautils.viewToItems = (obj) => {
 
 //called by docloading, and called when the preferences dialog is closed.
 
-polymorph_core.datautils.upgradeSaveData = function (id) {
-    if (!polymorph_core.userData.documents[id])polymorph_core.userData.documents[id]={};
-    if (!polymorph_core.userData.documents[id].saveSources)polymorph_core.userData.documents[id].saveSources=[];
-    if (!polymorph_core.userData.documents[id].saveSources.length){
+polymorph_core.datautils.upgradeSaveData = function(id) {
+    if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = {};
+    if (!polymorph_core.userData.documents[id].saveSources) polymorph_core.userData.documents[id].saveSources = [];
+    if (!polymorph_core.userData.documents[id].saveSources.length) {
         //old save source, we need to upgrade
-        let newSaveSources=[];
-        for (let i in polymorph_core.userData.documents[id].saveSources){
+        let newSaveSources = [];
+        for (let i in polymorph_core.userData.documents[id].saveSources) {
             let new_save_source_record = {
-                load: (polymorph_core.userData.documents[id].loadHooks[i])?true:false,
-                save: (polymorph_core.userData.documents[id].saveHooks[i])?true:false,
+                load: (polymorph_core.userData.documents[id].loadHooks[i]) ? true : false,
+                save: (polymorph_core.userData.documents[id].saveHooks[i]) ? true : false,
                 data: polymorph_core.userData.documents[id].saveSources[i],
                 type: i
             }
-            if (typeof new_save_source_record.data=='string'){
-                new_save_source_record.data={
-                    id:new_save_source_record.data
+            if (typeof new_save_source_record.data == 'string') {
+                new_save_source_record.data = {
+                    id: new_save_source_record.data
                 };
             }
             newSaveSources.push(new_save_source_record);
         }
-        polymorph_core.userData.documents[id].saveSources=newSaveSources;
+        polymorph_core.userData.documents[id].saveSources = newSaveSources;
     }
 }

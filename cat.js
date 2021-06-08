@@ -2125,17 +2125,16 @@ polymorph_core.on("titleButtonsReady", () => {
 polymorph_core.datautils = {};
 //detect and perform all decompression operations.
 //compressions should be an array of object with type = the type of compression used.
-polymorph_core.datautils.decompress = function (data) {
+polymorph_core.datautils.decompress = function(data) {
     if (data.compressions) {
         for (let i = 0; i < data.compressions.length; i++) {
             data = polymorph_core.datautils[data.compressions[i].type].decompress(data, i);
         }
         return data.items;
-    }
-    else return data;
+    } else return data;
 }
 
-polymorph_core.datautils.precompress = function (data, type) {
+polymorph_core.datautils.precompress = function(data, type) {
     //Deep copy it, just in case
     data = JSON.parse(JSON.stringify(data));
 
@@ -2150,7 +2149,7 @@ polymorph_core.datautils.precompress = function (data, type) {
 }
 
 polymorph_core.datautils.IDCompress = {
-    compress: function (data) {
+    compress: function(data) {
         data = polymorph_core.datautils.precompress(data, "IDCompress");
         let propDict = {};
         for (let i in data.items) {
@@ -2160,6 +2159,7 @@ polymorph_core.datautils.IDCompress = {
             }
         }
         let encodingIndex = 1;
+
         function numberToEncodable(n) {
             let base = "qwertyuiopasdfghjklzxcvbnm";
             if (n == 0) return base[0];
@@ -2183,7 +2183,7 @@ polymorph_core.datautils.IDCompress = {
                 let newkey = numberToEncodable(encodingIndex);
                 km[newkey] = i;
                 for (let it in data.items) {
-                    if (data.items[it][i]) {
+                    if (i in data.items[it]) { // otherwise zero items don't get converted
                         data.items[it][newkey] = data.items[it][i];
                         delete data.items[it][i];
                     }
@@ -2194,10 +2194,10 @@ polymorph_core.datautils.IDCompress = {
         }
         return data;
     },
-    decompress: function (data, cid) {
+    decompress: function(data, cid) {
         for (let it in data.items) {
             for (let k in data.compressions[cid].keymap) {
-                if (data.items[it][k]) {
+                if (k in data.items[it]) {
                     data.items[it][data.compressions[cid].keymap[k]] = data.items[it][k];
                     delete data.items[it][k];
                 }
@@ -2265,7 +2265,7 @@ polymorph_core.datautils.viewToItems = (obj) => {
             obj._rd.p = parent;
         }
         let newID = polymorph_core.guid(6, newObj);
-        newObj[newID] = {};//stake claim to the newID
+        newObj[newID] = {}; //stake claim to the newID
         if (r.c) {
             createObjectFromRect(r.c[0], newID);
             createObjectFromRect(r.c[1], newID);
@@ -2289,27 +2289,27 @@ polymorph_core.datautils.viewToItems = (obj) => {
 
 //called by docloading, and called when the preferences dialog is closed.
 
-polymorph_core.datautils.upgradeSaveData = function (id) {
-    if (!polymorph_core.userData.documents[id])polymorph_core.userData.documents[id]={};
-    if (!polymorph_core.userData.documents[id].saveSources)polymorph_core.userData.documents[id].saveSources=[];
-    if (!polymorph_core.userData.documents[id].saveSources.length){
+polymorph_core.datautils.upgradeSaveData = function(id) {
+    if (!polymorph_core.userData.documents[id]) polymorph_core.userData.documents[id] = {};
+    if (!polymorph_core.userData.documents[id].saveSources) polymorph_core.userData.documents[id].saveSources = [];
+    if (!polymorph_core.userData.documents[id].saveSources.length) {
         //old save source, we need to upgrade
-        let newSaveSources=[];
-        for (let i in polymorph_core.userData.documents[id].saveSources){
+        let newSaveSources = [];
+        for (let i in polymorph_core.userData.documents[id].saveSources) {
             let new_save_source_record = {
-                load: (polymorph_core.userData.documents[id].loadHooks[i])?true:false,
-                save: (polymorph_core.userData.documents[id].saveHooks[i])?true:false,
+                load: (polymorph_core.userData.documents[id].loadHooks[i]) ? true : false,
+                save: (polymorph_core.userData.documents[id].saveHooks[i]) ? true : false,
                 data: polymorph_core.userData.documents[id].saveSources[i],
                 type: i
             }
-            if (typeof new_save_source_record.data=='string'){
-                new_save_source_record.data={
-                    id:new_save_source_record.data
+            if (typeof new_save_source_record.data == 'string') {
+                new_save_source_record.data = {
+                    id: new_save_source_record.data
                 };
             }
             newSaveSources.push(new_save_source_record);
         }
-        polymorph_core.userData.documents[id].saveSources=newSaveSources;
+        polymorph_core.userData.documents[id].saveSources = newSaveSources;
     }
 };
 
@@ -9142,150 +9142,150 @@ polymorph_core.registerOperator("workflow", {
 (() => {
 
 
-    //render an item on focus or on settings update.
-    //must be able to handle null and "" in id
-    //also should be able to update instead of just rendering
-    function recursiveRender(obj, div, path) {
-        if (typeof obj == "object" && obj) {
-            for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used = "false";
-            for (let i in obj) {
-                let d;
+        //render an item on focus or on settings update.
+        //must be able to handle null and "" in id
+        //also should be able to update instead of just rendering
+        function recursiveRender(obj, div, path) {
+            if (typeof obj == "object" && obj) {
+                for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used = "false";
+                for (let i in obj) {
+                    let d;
+                    for (let j = 0; j < div.children.length; j++) {
+                        if (div.children[j].matches(`[data-prop="${i}"]`)) {
+                            d = div.children[j];
+                        }
+                    }
+                    if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
+                    d.dataset.prop = i;
+                    d.dataset.used = "true";
+                    d.style.marginLeft = "5px";
+                    recursiveRender(obj[i], d.children[1], path + "/" + i);
+                    div.appendChild(d);
+                }
                 for (let j = 0; j < div.children.length; j++) {
-                    if (div.children[j].matches(`[data-prop="${i}"]`)) {
-                        d = div.children[j];
+                    if (div.children[j].dataset.used == "false" && (div.children[j].tagName == "DIV" || div.children[j].tagName == "BUTTON")) {
+                        div.children[j].remove();
                     }
                 }
-                if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
-                d.dataset.prop = i;
-                d.dataset.used = "true";
-                d.style.marginLeft = "5px";
-                recursiveRender(obj[i], d.children[1], path + "/" + i);
-                div.appendChild(d);
-            }
-            for (let j = 0; j < div.children.length; j++) {
-                if (div.children[j].dataset.used == "false" && (div.children[j].tagName == "DIV" || div.children[j].tagName == "BUTTON")) {
-                    div.children[j].remove();
-                }
-            }
-            div.appendChild(htmlwrap(`<button>Add property...</button>`));
-        } else {
-            let i;
-            if (div.children[0] && div.children[0].tagName == "INPUT") {
-                i = div.children[0];
+                div.appendChild(htmlwrap(`<button>Add property...</button>`));
             } else {
-                while (div.children.length) div.children[0].remove();
-            }
-            if (!i) i = document.createElement("input");
-            i.value = obj;
-            div.dataset.role = path;
-            div.dataset.type = "Auto";
-            div.appendChild(i);
-        }
-    }
-
-
-    let datatypes = {
-        'Text': {
-            onInput: (e, it, i) => {
-                it[i] = e.target.value;
-            },
-            generate: (id) => {
-                return `<input>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj != undefined) div.querySelector("input").value = obj;
-                else div.querySelector("input").value = "";
-            }
-        },
-        'Large Text': {
-            onInput: (e, it, i) => {
-                it[i] = e.target.value;
-                e.target.style.height = e.target.scrollHeight;
-            },
-            generate: (id) => {
-                return `<textarea style="width:100%"></textarea>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj != undefined) div.querySelector("textarea").value = obj;
-                else div.querySelector("textarea").value = "";
-                //tiny nudge so the scroll bar doesnt show up
-                div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
-            }
-        },
-        'Date': {
-            onInput: (e, it, i) => {
-                if (!it[i]) it[i] = {};
-                if (typeof it[i] == "string") it[i] = {
-                    datestring: it[i]
-                };
-                it[i].datestring = e.target.value;
-                if (this.datereparse) this.datereparse(it, i);
-            },
-            generate: (id) => {
-                return `<input>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj) div.querySelector("input").value = obj.datestring || "";
-                else div.querySelector("input").value = "";
-            }
-        },
-        'Auto': {
-            onInput: (e, it, i) => {
-                // i is a path variable, decode it
-                let decodedPath = i.split("/");
-                let obj = it;
-                for (let pr=0;pr<decodedPath.length-1;pr++){
-                    obj=obj[decodedPath[pr]];
-                }
-                obj[decodedPath[decodedPath.length-1]]=e.target.value;
-            },
-            updateValue: (obj, div, i) => {
-                if (typeof (obj) == "object") {
-                    recursiveRender(obj, div, i);
+                let i;
+                if (div.children[0] && div.children[0].tagName == "INPUT") {
+                    i = div.children[0];
                 } else {
-                    div.innerHTML = `<p>${i}:</p><input>`;
+                    while (div.children.length) div.children[0].remove();
+                }
+                if (!i) i = document.createElement("input");
+                i.value = obj;
+                div.dataset.role = path;
+                div.dataset.type = "Auto";
+                div.appendChild(i);
+            }
+        }
+
+
+        let datatypes = {
+            'Text': {
+                onInput: (e, it, i) => {
+                    it[i] = e.target.value;
+                },
+                generate: (id) => {
+                    return `<input>`;
+                },
+                updateValue: (obj, div) => {
                     if (obj != undefined) div.querySelector("input").value = obj;
                     else div.querySelector("input").value = "";
-                    //fall through
+                }
+            },
+            'Large Text': {
+                onInput: (e, it, i) => {
+                    it[i] = e.target.value;
+                    e.target.style.height = e.target.scrollHeight;
+                },
+                generate: (id) => {
+                    return `<textarea style="width:100%"></textarea>`;
+                },
+                updateValue: (obj, div) => {
+                    if (obj != undefined) div.querySelector("textarea").value = obj;
+                    else div.querySelector("textarea").value = "";
+                    //tiny nudge so the scroll bar doesnt show up
+                    div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
+                }
+            },
+            'Date': {
+                onInput: (e, it, i) => {
+                    if (!it[i]) it[i] = {};
+                    if (typeof it[i] == "string") it[i] = {
+                        datestring: it[i]
+                    };
+                    it[i].datestring = e.target.value;
+                    if (this.datereparse) this.datereparse(it, i);
+                },
+                generate: (id) => {
+                    return `<input>`;
+                },
+                updateValue: (obj, div) => {
+                    if (obj) div.querySelector("input").value = obj.datestring || "";
+                    else div.querySelector("input").value = "";
+                }
+            },
+            'Auto': {
+                onInput: (e, it, i) => {
+                    // i is a path variable, decode it
+                    let decodedPath = i.split("/");
+                    let obj = it;
+                    for (let pr = 0; pr < decodedPath.length - 1; pr++) {
+                        obj = obj[decodedPath[pr]];
+                    }
+                    obj[decodedPath[decodedPath.length - 1]] = e.target.value;
+                },
+                updateValue: (obj, div, i) => {
+                    if (typeof(obj) == "object") {
+                        recursiveRender(obj, div, i);
+                    } else {
+                        div.innerHTML = `<p>${i}:</p><input>`;
+                        if (obj != undefined) div.querySelector("input").value = obj;
+                        else div.querySelector("input").value = "";
+                        //fall through
+                    }
                 }
             }
-        }
-    };
-    polymorph_core.registerOperator("inspector", {
-        displayName: "Inspector",
-        description: "Inspect all properties of a given element.",
-        section: "Advanced",
-        imageurl: "assets/operators/inspector.png"
-    }, function (container) {
-
-        let upc = new capacitor(300, 40, (id) => {
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-        })
-
-
-
-
-
-
-
-
-
-
-        let defaultSettings = {
-            operationMode: "focus",
-            currentItem: "",
-            globalEnabled: false,// whether or not it's enabled globally
         };
-        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-        this.rootdiv.style.cssText = `
+        polymorph_core.registerOperator("inspector", {
+                    displayName: "Inspector",
+                    description: "Inspect all properties of a given element.",
+                    section: "Advanced",
+                    imageurl: "assets/operators/inspector.png"
+                }, function(container) {
+
+                    let upc = new capacitor(300, 40, (id) => {
+                        container.fire("updateItem", {
+                            id: id,
+                            sender: this
+                        });
+                    })
+
+
+
+
+
+
+
+
+
+
+                    let defaultSettings = {
+                        operationMode: "focus",
+                        currentItem: "",
+                        globalEnabled: false, // whether or not it's enabled globally
+                    };
+                    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+                    this.rootdiv.style.cssText = `
     overflow:auto;
     height: 100%;
     color: white;
     `
-        let ttypes = `<select data-role="nttype">
+                    let ttypes = `<select data-role="nttype">
     ${(() => {
                 let output = "";
                 for (i in datatypes) {
@@ -9655,6 +9655,7 @@ polymorph_core.registerOperator("workflow", {
             let sender = d.sender;
             if (this.settings.operationMode == "focus") {
                 this.settings.currentItem = id;
+                polymorph_core.fire("updateItem",{id:container.id,sender:this}); // kick the _lu_
                 this.renderItem(id);
                 //using new focus paradigm we can skip this step, hopefully
                 /*

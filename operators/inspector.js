@@ -2,150 +2,150 @@
 (() => {
 
 
-    //render an item on focus or on settings update.
-    //must be able to handle null and "" in id
-    //also should be able to update instead of just rendering
-    function recursiveRender(obj, div, path) {
-        if (typeof obj == "object" && obj) {
-            for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used = "false";
-            for (let i in obj) {
-                let d;
+        //render an item on focus or on settings update.
+        //must be able to handle null and "" in id
+        //also should be able to update instead of just rendering
+        function recursiveRender(obj, div, path) {
+            if (typeof obj == "object" && obj) {
+                for (let j = 0; j < div.children.length; j++) div.children[j].dataset.used = "false";
+                for (let i in obj) {
+                    let d;
+                    for (let j = 0; j < div.children.length; j++) {
+                        if (div.children[j].matches(`[data-prop="${i}"]`)) {
+                            d = div.children[j];
+                        }
+                    }
+                    if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
+                    d.dataset.prop = i;
+                    d.dataset.used = "true";
+                    d.style.marginLeft = "5px";
+                    recursiveRender(obj[i], d.children[1], path + "/" + i);
+                    div.appendChild(d);
+                }
                 for (let j = 0; j < div.children.length; j++) {
-                    if (div.children[j].matches(`[data-prop="${i}"]`)) {
-                        d = div.children[j];
+                    if (div.children[j].dataset.used == "false" && (div.children[j].tagName == "DIV" || div.children[j].tagName == "BUTTON")) {
+                        div.children[j].remove();
                     }
                 }
-                if (!d) d = htmlwrap(`<div style="border-top: 1px solid black"><span>${i}</span><div></div></div>`);
-                d.dataset.prop = i;
-                d.dataset.used = "true";
-                d.style.marginLeft = "5px";
-                recursiveRender(obj[i], d.children[1], path + "/" + i);
-                div.appendChild(d);
-            }
-            for (let j = 0; j < div.children.length; j++) {
-                if (div.children[j].dataset.used == "false" && (div.children[j].tagName == "DIV" || div.children[j].tagName == "BUTTON")) {
-                    div.children[j].remove();
-                }
-            }
-            div.appendChild(htmlwrap(`<button>Add property...</button>`));
-        } else {
-            let i;
-            if (div.children[0] && div.children[0].tagName == "INPUT") {
-                i = div.children[0];
+                div.appendChild(htmlwrap(`<button>Add property...</button>`));
             } else {
-                while (div.children.length) div.children[0].remove();
-            }
-            if (!i) i = document.createElement("input");
-            i.value = obj;
-            div.dataset.role = path;
-            div.dataset.type = "Auto";
-            div.appendChild(i);
-        }
-    }
-
-
-    let datatypes = {
-        'Text': {
-            onInput: (e, it, i) => {
-                it[i] = e.target.value;
-            },
-            generate: (id) => {
-                return `<input>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj != undefined) div.querySelector("input").value = obj;
-                else div.querySelector("input").value = "";
-            }
-        },
-        'Large Text': {
-            onInput: (e, it, i) => {
-                it[i] = e.target.value;
-                e.target.style.height = e.target.scrollHeight;
-            },
-            generate: (id) => {
-                return `<textarea style="width:100%"></textarea>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj != undefined) div.querySelector("textarea").value = obj;
-                else div.querySelector("textarea").value = "";
-                //tiny nudge so the scroll bar doesnt show up
-                div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
-            }
-        },
-        'Date': {
-            onInput: (e, it, i) => {
-                if (!it[i]) it[i] = {};
-                if (typeof it[i] == "string") it[i] = {
-                    datestring: it[i]
-                };
-                it[i].datestring = e.target.value;
-                if (this.datereparse) this.datereparse(it, i);
-            },
-            generate: (id) => {
-                return `<input>`;
-            },
-            updateValue: (obj, div) => {
-                if (obj) div.querySelector("input").value = obj.datestring || "";
-                else div.querySelector("input").value = "";
-            }
-        },
-        'Auto': {
-            onInput: (e, it, i) => {
-                // i is a path variable, decode it
-                let decodedPath = i.split("/");
-                let obj = it;
-                for (let pr=0;pr<decodedPath.length-1;pr++){
-                    obj=obj[decodedPath[pr]];
-                }
-                obj[decodedPath[decodedPath.length-1]]=e.target.value;
-            },
-            updateValue: (obj, div, i) => {
-                if (typeof (obj) == "object") {
-                    recursiveRender(obj, div, i);
+                let i;
+                if (div.children[0] && div.children[0].tagName == "INPUT") {
+                    i = div.children[0];
                 } else {
-                    div.innerHTML = `<p>${i}:</p><input>`;
+                    while (div.children.length) div.children[0].remove();
+                }
+                if (!i) i = document.createElement("input");
+                i.value = obj;
+                div.dataset.role = path;
+                div.dataset.type = "Auto";
+                div.appendChild(i);
+            }
+        }
+
+
+        let datatypes = {
+            'Text': {
+                onInput: (e, it, i) => {
+                    it[i] = e.target.value;
+                },
+                generate: (id) => {
+                    return `<input>`;
+                },
+                updateValue: (obj, div) => {
                     if (obj != undefined) div.querySelector("input").value = obj;
                     else div.querySelector("input").value = "";
-                    //fall through
+                }
+            },
+            'Large Text': {
+                onInput: (e, it, i) => {
+                    it[i] = e.target.value;
+                    e.target.style.height = e.target.scrollHeight;
+                },
+                generate: (id) => {
+                    return `<textarea style="width:100%"></textarea>`;
+                },
+                updateValue: (obj, div) => {
+                    if (obj != undefined) div.querySelector("textarea").value = obj;
+                    else div.querySelector("textarea").value = "";
+                    //tiny nudge so the scroll bar doesnt show up
+                    div.querySelector("textarea").style.height = div.querySelector("textarea").scrollHeight;
+                }
+            },
+            'Date': {
+                onInput: (e, it, i) => {
+                    if (!it[i]) it[i] = {};
+                    if (typeof it[i] == "string") it[i] = {
+                        datestring: it[i]
+                    };
+                    it[i].datestring = e.target.value;
+                    if (this.datereparse) this.datereparse(it, i);
+                },
+                generate: (id) => {
+                    return `<input>`;
+                },
+                updateValue: (obj, div) => {
+                    if (obj) div.querySelector("input").value = obj.datestring || "";
+                    else div.querySelector("input").value = "";
+                }
+            },
+            'Auto': {
+                onInput: (e, it, i) => {
+                    // i is a path variable, decode it
+                    let decodedPath = i.split("/");
+                    let obj = it;
+                    for (let pr = 0; pr < decodedPath.length - 1; pr++) {
+                        obj = obj[decodedPath[pr]];
+                    }
+                    obj[decodedPath[decodedPath.length - 1]] = e.target.value;
+                },
+                updateValue: (obj, div, i) => {
+                    if (typeof(obj) == "object") {
+                        recursiveRender(obj, div, i);
+                    } else {
+                        div.innerHTML = `<p>${i}:</p><input>`;
+                        if (obj != undefined) div.querySelector("input").value = obj;
+                        else div.querySelector("input").value = "";
+                        //fall through
+                    }
                 }
             }
-        }
-    };
-    polymorph_core.registerOperator("inspector", {
-        displayName: "Inspector",
-        description: "Inspect all properties of a given element.",
-        section: "Advanced",
-        imageurl: "assets/operators/inspector.png"
-    }, function (container) {
-
-        let upc = new capacitor(300, 40, (id) => {
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-        })
-
-
-
-
-
-
-
-
-
-
-        let defaultSettings = {
-            operationMode: "focus",
-            currentItem: "",
-            globalEnabled: false,// whether or not it's enabled globally
         };
-        polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-        this.rootdiv.style.cssText = `
+        polymorph_core.registerOperator("inspector", {
+                    displayName: "Inspector",
+                    description: "Inspect all properties of a given element.",
+                    section: "Advanced",
+                    imageurl: "assets/operators/inspector.png"
+                }, function(container) {
+
+                    let upc = new capacitor(300, 40, (id) => {
+                        container.fire("updateItem", {
+                            id: id,
+                            sender: this
+                        });
+                    })
+
+
+
+
+
+
+
+
+
+
+                    let defaultSettings = {
+                        operationMode: "focus",
+                        currentItem: "",
+                        globalEnabled: false, // whether or not it's enabled globally
+                    };
+                    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+                    this.rootdiv.style.cssText = `
     overflow:auto;
     height: 100%;
     color: white;
     `
-        let ttypes = `<select data-role="nttype">
+                    let ttypes = `<select data-role="nttype">
     ${(() => {
                 let output = "";
                 for (i in datatypes) {
@@ -515,6 +515,7 @@
             let sender = d.sender;
             if (this.settings.operationMode == "focus") {
                 this.settings.currentItem = id;
+                polymorph_core.fire("updateItem",{id:container.id,sender:this}); // kick the _lu_
                 this.renderItem(id);
                 //using new focus paradigm we can skip this step, hopefully
                 /*
