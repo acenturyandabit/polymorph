@@ -20,6 +20,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
                         }
                     }
                     polymorph_core.saved_until = Date.now();
+                    polymorph_core.showNotification('Gitlite Saved', 'success');
                 }
             }
         };

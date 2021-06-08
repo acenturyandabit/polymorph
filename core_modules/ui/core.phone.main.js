@@ -185,4 +185,5 @@ if (isPhone()) {
             return document.createElement("div");
         }
     }
+    polymorph_core.showNotification = () => {}; //notifs take up too much space on phone
 }

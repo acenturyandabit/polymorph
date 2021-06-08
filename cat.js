@@ -1932,12 +1932,6 @@ polymorph_core.on("titleButtonsReady", () => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
-            //also do the server save
-            // success for green notification box, alert for red box. If second parameter is left out, the box is black
-            try {
-                //try catch because mobile mode. TODO: Fix this.
-                polymorph_core.showNotification('Saved', 'success');
-            } catch (e) {}
         }
     });
 
@@ -4608,6 +4602,7 @@ if (isPhone()) {
             return document.createElement("div");
         }
     }
+    polymorph_core.showNotification = () => {}; //notifs take up too much space on phone
 };
 
 if (!isPhone()) {
@@ -15296,6 +15291,7 @@ polymorph_core.registerSaveSource("gitlite", function(save_source_data) {
                         }
                     }
                     polymorph_core.saved_until = Date.now();
+                    polymorph_core.showNotification('Gitlite Saved', 'success');
                 }
             }
         };

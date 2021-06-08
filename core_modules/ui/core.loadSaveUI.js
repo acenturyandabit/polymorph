@@ -16,12 +16,6 @@
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
             polymorph_core.userSave();
-            //also do the server save
-            // success for green notification box, alert for red box. If second parameter is left out, the box is black
-            try {
-                //try catch because mobile mode. TODO: Fix this.
-                polymorph_core.showNotification('Saved', 'success');
-            } catch (e) {}
         }
     });
 
