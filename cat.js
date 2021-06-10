@@ -9846,13 +9846,21 @@ polymorph_core.registerOperator("workflow_gf", {
                         thisIDSpan.children[1].style.display = "block";
                         thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25BC;";
                     }
-                    //also reenumerate all my children [TODO]
+                    // might be wise to rerender them if they dont exist yet
+                    // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
+                    let renderedChildren = Array.from(renderedItemCache[i].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
+                    for (let i in cachedChildren[id]) {
+                        if (!renderedChildren[i] && this.itemRelevant(i)) {
+                            this.renderItem(i);
+                        }
+                    }
                 } else {
                     // maybe their child got removed
                     thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25CF;";
                 }
                 this.rootdiv.querySelector(".cursorspan").style.display = "none"; // something got rendered, hide the cursorspan
             } else {
+
                 // check that maybe my current parent is not my actual parent? ... todo
             }
         }
