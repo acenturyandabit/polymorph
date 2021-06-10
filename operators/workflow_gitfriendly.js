@@ -618,7 +618,9 @@ polymorph_core.registerOperator("workflow_gf", {
         parentsToReorganise[parentID] = true;
         clearTimeout(parentReorganiseTimeout);
         parentReorganiseTimeout = setTimeout(() => {
-            Object.keys(parentsToReorganise).forEach(i => {
+            let copyOfParentsToReorganise = Object.keys(parentsToReorganise);
+            parentsToReorganise = {};
+            copyOfParentsToReorganise.forEach(i => {
                 // reorder the root items by looking through the childrencache
                 if (cachedChildren[i]) {
                     Object.entries(cachedChildren[i]).sort((a, b) => a[1] - b[1]).forEach((v, ind) => {
@@ -629,7 +631,6 @@ polymorph_core.registerOperator("workflow_gf", {
                 //render the item so the arrow shows up
                 if (i) this.renderItem(i); // don't render the root which is nothing
             }); // verry lazy, should check whether or not the parent actually needs rerendering first
-            parentsToReorganise = {};
         });
     }
 
@@ -685,9 +686,24 @@ polymorph_core.registerOperator("workflow_gf", {
 
                 // attach to my parent, given it exists
                 // figure out where to place it among the children
-                let placeBefore = Object.entries(cachedChildren[parentID]).filter(i => i[1] > myOrder).sort((a, b) => a[1] - b[1]);
-                if (placeBefore.length) placeBefore = renderedItemCache[placeBefore[0][0]].el;
-                else placeBefore = undefined;
+                let placeBefore, placeBeforeOK = false;
+                while (!placeBeforeOK) {
+                    placeBefore = Object.entries(cachedChildren[parentID]).filter(i => i[1] > myOrder).sort((a, b) => a[1] - b[1]);
+                    if (placeBefore.length) {
+                        let placeBeforeID = placeBefore[0][0];
+                        placeBefore = renderedItemCache[placeBeforeID].el;
+                        if (!placeBefore) {
+                            // the thing is no longer in rendereditemcache
+                            // it shouldn't be in cachedchildren either
+                            delete cachedChildren[parentID][placeBeforeID];
+                        } else {
+                            placeBeforeOK = true;
+                        }
+                    } else {
+                        placeBefore = undefined;
+                        placeBeforeOK = true;
+                    }
+                }
                 renderedItemCache[parentID].el.children[1].insertBefore(thisIDSpan, placeBefore);
                 if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
                     // I have children yay
