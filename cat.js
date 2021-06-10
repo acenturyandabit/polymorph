@@ -414,10 +414,16 @@ function _polymorph_core() {
 
     this.oldCache = {}; // literally a copy of polymorph_core.items.
     this.on("updateItem", (d) => {
+        let copyOfItem = JSON.parse(JSON.stringify(this.items[d.id]));
+        delete copyOfItem._lu_;
+        copyOfItem = JSON.stringify(copyOfItem);
         if (!d.loadProcess && !d.unedit) {
-            if (JSON.stringify(this.items[d.id]) != this.oldCache[d.id]) this.items[d.id]._lu_ = Date.now();
+            if (this.oldCache[d.id] && copyOfItem != this.oldCache[d.id]) {
+                console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
+                this.items[d.id]._lu_ = Date.now();
+            }
         }
-        this.oldCache[d.id] = JSON.stringify(this.items[d.id]);
+        this.oldCache[d.id] = copyOfItem;
     })
 
     let _Rixits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
@@ -9821,24 +9827,17 @@ polymorph_core.registerOperator("workflow_gf", {
 
                 // attach to my parent, given it exists
                 // figure out where to place it among the children
-                let placeBefore, placeBeforeOK = false;
-                while (!placeBeforeOK) {
-                    placeBefore = Object.entries(cachedChildren[parentID]).filter(i => i[1] > myOrder).sort((a, b) => a[1] - b[1]);
-                    if (placeBefore.length) {
-                        let placeBeforeID = placeBefore[0][0];
-                        placeBefore = renderedItemCache[placeBeforeID].el;
-                        if (!placeBefore) {
-                            // the thing is no longer in rendereditemcache
-                            // it shouldn't be in cachedchildren either
-                            delete cachedChildren[parentID][placeBeforeID];
-                        } else {
-                            placeBeforeOK = true;
-                        }
-                    } else {
-                        placeBefore = undefined;
-                        placeBeforeOK = true;
+                let placeBefore = -1;
+                // just in case, remove the span from its current parent
+                thisIDSpan.remove();
+                let existingSiblings = Array.from(renderedItemCache[parentID].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => [i, polymorph_core.items[i.dataset.id][this.settings.orderProperty]]);
+                existingSiblings.forEach((v) => {
+                    if (polymorph_core.items[id][this.settings.orderProperty] <= v[1]) {
+                        placeBefore = v;
                     }
-                }
+                })
+                if (placeBefore != -1) placeBefore = placeBefore.nextElementSibling;
+                else placeBefore = renderedItemCache[parentID].el.children[1].children[0];
                 renderedItemCache[parentID].el.children[1].insertBefore(thisIDSpan, placeBefore);
                 if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
                     // I have children yay
