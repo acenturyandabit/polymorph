@@ -9848,7 +9848,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     }
                     // might be wise to rerender them if they dont exist yet
                     // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
-                    let renderedChildren = Array.from(renderedItemCache[i].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
+                    let renderedChildren = Array.from(thisIDSpan.el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
                     for (let i in cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
                             this.renderItem(i);
