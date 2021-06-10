@@ -641,7 +641,7 @@ polymorph_core.registerOperator("workflow_gf", {
             // other items would also have a 'renderedText' property
         }
     }; // for deletions
-    this.renderItem = (id) => {
+    this.renderItem = (id, fromParent) => {
         oldFocus = saveFocus();
         if (!this.itemRelevant(id)) {
             if (renderedItemCache[id]) {
@@ -654,7 +654,7 @@ polymorph_core.registerOperator("workflow_gf", {
             let myOrder = polymorph_core.items[id][this.settings.orderProperty] || 0;
             if (!cachedChildren[parentID]) cachedChildren[parentID] = {};
             cachedChildren[parentID][id] = myOrder;
-            bumpParentReorganise(parentID);
+            if (!fromParent) bumpParentReorganise(parentID);
 
             //let my parent know it has children either when it renders or if it has already rendered, now.
 
@@ -707,10 +707,10 @@ polymorph_core.registerOperator("workflow_gf", {
                     }
                     // might be wise to rerender them if they dont exist yet
                     // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
-                    let renderedChildren = Array.from(thisIDSpan.el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
+                    let renderedChildren = Array.from(thisIDSpan.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
                     for (let i in cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
-                            this.renderItem(i);
+                            this.renderItem(i, true);
                         }
                     }
                 } else {
