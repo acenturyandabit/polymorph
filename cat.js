@@ -9762,14 +9762,12 @@ polymorph_core.registerOperator("workflow_gf", {
             let copyOfParentsToReorganise = Object.keys(parentsToReorganise);
             parentsToReorganise = {};
             copyOfParentsToReorganise.forEach(i => {
-                // reorder the root items by looking through the childrencache
-                if (cachedChildren[i]) {
-                    Object.entries(cachedChildren[i]).sort((a, b) => a[1] - b[1]).forEach((v, ind) => {
-                        cachedChildren[i][v[0]] = ind;
-                        polymorph_core.items[v[0]][this.settings.orderProperty] = ind;
-                    })
-                }
-                //render the item so the arrow shows up
+                // look through my immediate children and assign them numbers
+                Array.from(renderedItemCache[i].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
+                    polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
+                    polymorph_core.fire("updateItem", { id: v.dataset.id, sender: this });
+                })
+
                 if (i) this.renderItem(i); // don't render the root which is nothing
             }); // verry lazy, should check whether or not the parent actually needs rerendering first
         });
