@@ -330,7 +330,7 @@ function _polymorph_core() {
         copyOfItem = JSON.stringify(copyOfItem);
         if (!d.loadProcess && !d.unedit) {
             if (this.oldCache[d.id] && copyOfItem != this.oldCache[d.id]) {
-                console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
+                //console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
                 this.items[d.id]._lu_ = Date.now();
             }
         }

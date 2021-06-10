@@ -691,8 +691,8 @@ polymorph_core.registerOperator("workflow_gf", {
                 thisIDSpan.remove();
                 let existingSiblings = Array.from(renderedItemCache[parentID].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => [i, polymorph_core.items[i.dataset.id][this.settings.orderProperty]]);
                 existingSiblings.forEach((v) => {
-                    if (polymorph_core.items[id][this.settings.orderProperty] <= v[1]) {
-                        placeBefore = v;
+                    if (polymorph_core.items[id][this.settings.orderProperty] >= v[1]) {
+                        placeBefore = v[0];
                     }
                 })
                 if (placeBefore != -1) placeBefore = placeBefore.nextElementSibling;
