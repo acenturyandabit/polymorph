@@ -65,6 +65,10 @@ polymorph_core.registerOperator("workflow", {
     this._parentOfCache = {};
     this.parentOf = (id) => {
         if (this._parentOfCache[id] && polymorph_core.items[this._parentOfCache[id]][this.settings.linkProp][id]) return this._parentOfCache[id];
+        else if (id in this._parentOfCache) {
+            // potentially actually ""
+            return "";
+        }
         if (this.rootItems.indexOf(id) != -1) return ""; // make rootitems default to top level because why not...?
         else {
             for (let i in polymorph_core.items) {
@@ -425,7 +429,7 @@ polymorph_core.registerOperator("workflow", {
         alt: false
     };
     let handleKeyEvent = (key, id) => {
-        let spanWithID = this.rootdiv.querySelector(`[data-id="${id}"]`);
+        let spanWithID = renderedItemCache[id].el;
         switch (key) {
             case "Backspace":
                 let bcursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;

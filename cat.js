@@ -7962,7 +7962,6 @@ polymorph_core.registerOperator("workflow", {
         rootItemListItem: "",
         rootItemListItemProperty: "",
         linkProp: "to",
-        sortDateProp: "",
         bracketPropertyPrefix: container.id
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
