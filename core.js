@@ -147,7 +147,6 @@ function _polymorph_core() {
                     });
                     break;
                 case 'button':
-
                     appendedElement = document.createElement("button");
                     appendedElement.innerText = settings.label;
                     appendedElement.addEventListener("click", (e) => {
@@ -155,22 +154,21 @@ function _polymorph_core() {
                     })
                     break;
             }
-            appendedElement.style.float = "right";
             if (settings.placeholder) appendedElement.placeholder = settings.placeholder;
             if (settings.label && settings.type != "button") {
                 let lb = document.createElement("label");
                 lb.innerHTML = settings.label;
                 lb.appendChild(appendedElement);
-                lb.style.display = "block";
-                lb.style.margin = "3px";
+                lb.style.display = "flex";
+                lb.style.justifyContent = "space-between";
                 settings.div.appendChild(lb);
             } else {
                 //create ghost wrapper so element doesnt become inoperable
                 let lb = document.createElement("label");
                 lb.innerHTML = "&nbsp;";
                 lb.appendChild(appendedElement);
-                lb.style.display = "block";
-                lb.style.margin = "3px";
+                lb.style.display = "flex";
+                lb.style.justifyContent = "space-between";
                 settings.div.appendChild(lb);
             }
             //initially load the property value.
