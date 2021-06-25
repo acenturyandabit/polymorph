@@ -213,42 +213,42 @@
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "text",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "titleproperty",
                     label: "Enter the title property:"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "array",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "dateproperties",
                     label: "Enter the date properties (begin with * for numerical dates instead of smart dates):",
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "pushnotifs",
                     label: "Show push notifications?"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "wsOn",
                     label: "Send events to a websocket?"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "text",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "wsurl",
                     label: "Websocket address"
                 }),
                 new polymorph_core._option({
                     div: this.dialogDiv,
                     type: "bool",
-                    object: this.settings,
+                    object: () => this.settings,
                     property: "notifWindow",
                     label: "Show Notification window"
                 })
