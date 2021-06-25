@@ -1,10 +1,14 @@
-polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("lf", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
 
-    this.pushAll = async function (data) {
+    this.pushAll = async function(data) {
+        localforage.setItem("__polymorph_" + polymorph_core.currentDocID, data).then(() => {
+            polymorph_core.saved_until = Date.now();
+            polymorph_core.showNotification('Localforage Saved', 'success');
+        });
         //used by user to force push. 
     }
-    this.pullAll = async function () {
+    this.pullAll = async function() {
         let d = await localforage.getItem("__polymorph_" + save_source_data.data.id);
         return d;
     }
@@ -26,7 +30,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
 
     polymorph_core.addToSaveDialog(this);
 
-    this.hook = async () => {
+    this.hook = async() => {
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -36,10 +40,6 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     polymorph_core.on("userSave", (d) => {
         if (save_source_data.save) {
             this.pushAll(d);
-            polymorph_core.savedOK = false;
-            localforage.setItem("__polymorph_" + polymorph_core.currentDocID, d).then(() => {
-                polymorph_core.savedOK = true; /// SUPER HACKY PLS FORMALISE
-            });
             return true; //return true if we save
         } else {
             return false;
@@ -47,7 +47,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     })
 
     // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async () => {
+    this.unhook = async() => {
         //unhook previous hooks.
         this.toSave = false;
     }

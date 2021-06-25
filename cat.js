@@ -236,7 +236,6 @@ function _polymorph_core() {
                     });
                     break;
                 case 'button':
-
                     appendedElement = document.createElement("button");
                     appendedElement.innerText = settings.label;
                     appendedElement.addEventListener("click", (e) => {
@@ -244,22 +243,21 @@ function _polymorph_core() {
                     })
                     break;
             }
-            appendedElement.style.float = "right";
             if (settings.placeholder) appendedElement.placeholder = settings.placeholder;
             if (settings.label && settings.type != "button") {
                 let lb = document.createElement("label");
                 lb.innerHTML = settings.label;
                 lb.appendChild(appendedElement);
-                lb.style.display = "block";
-                lb.style.margin = "3px";
+                lb.style.display = "flex";
+                lb.style.justifyContent = "space-between";
                 settings.div.appendChild(lb);
             } else {
                 //create ghost wrapper so element doesnt become inoperable
                 let lb = document.createElement("label");
                 lb.innerHTML = "&nbsp;";
                 lb.appendChild(appendedElement);
-                lb.style.display = "block";
-                lb.style.margin = "3px";
+                lb.style.display = "flex";
+                lb.style.justifyContent = "space-between";
                 settings.div.appendChild(lb);
             }
             //initially load the property value.
@@ -870,7 +868,7 @@ polymorph_core.on("UIstart", () => {
             target: () => { return polymorph_core.baseRect.outerDiv },
             type: "internal",
             location: 'left',
-            contents: `<p>&lt;---Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
+            contents: `<p>&lt;---Ctrl+Shift+Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
             to: [["Next", "clickop"], ["Skip"]]
         }, {
             id: "clickop",
@@ -1849,7 +1847,7 @@ polymorph_core.on("UIstart", () => {
             target: () => { return polymorph_core.baseRect.outerDiv },
             type: "internal",
             location: 'left',
-            contents: `<p>&lt;---Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
+            contents: `<p>&lt;---Ctrl+Shift+Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
             to: [["Next", "clickop"], ["Skip"]]
         }, {
             id: "clickop",
@@ -10035,6 +10033,53 @@ polymorph_core.registerOperator("workflow_gf", {
             label: "Property to be treated as date (\\{prop})"
         })
     }
+
+    let importFacilities = htmlwrap(`
+    <div style="display:flex">
+        <span>Import from old workflowish operator</span>
+        <span style="flex: 1"></span>
+        <input placeholder="Operator ID">
+        <button>Import</button>
+    </div>
+    `);
+    let importContainerIDInput = importFacilities.children[2];
+    let importButton = importFacilities.children[3];
+
+    importButton.addEventListener("click", (e) => {
+        let importContainer = polymorph_core.items[importContainerIDInput.value]._od.data;
+        let rootList = [];
+
+        if (importContainer.rootItemListItem) {
+            try {
+                rootList = [...polymorph_core.items[importContainer.rootItemListItem][importContainer.rootItemListItemProperty]];
+            } catch (e) {
+                //create the item if it doesnt exist
+                //create the property if it doesnt exist
+                rootList = [];
+            }
+        } else rootList = [...importContainer.rootItems];
+
+
+        let stack = rootList.map(i => [i, ""]);
+        let loopkiller = {};
+        while (stack.length) {
+            let topID = stack.pop();
+            if (loopkiller[topID[0]]) continue;
+            loopkiller[topID[0]] = true;
+            if (polymorph_core.items[topID[0]][importContainer.filter]) {
+                polymorph_core.items[topID[0]][this.settings.filter] = true;
+                polymorph_core.items[topID[0]][this.settings.parentProperty] = topID[1];
+                for (let i in polymorph_core.items[topID[0]].to) {
+                    stack.push([i, topID[0]]);
+                }
+                container.fire("updateItem", { id: topID[0], sender: this });
+                this.renderItem(topID[0], undefined, true);
+            }
+        }
+    });
+
+    this.dialogDiv.appendChild(importFacilities);
+
     this.showDialog = function() {
         for (let i in options) {
             options[i].load();
@@ -10779,21 +10824,18 @@ polymorph_core.registerOperator("workflow_gf", {
         imageurl: "assets/operators/inspector.png"
     }, function(container) {
 
-        let upc = new capacitor(300, 40, (id) => {
-            container.fire("updateItem", {
-                id: id,
-                sender: this
-            });
-        })
-
         let defaultSettings = {
             operationMode: "focus",
             currentItem: "",
             // manualSave: false
         };
+        let blankText = "Focus on an item to show it here.";
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-        this.rootdiv.innerHTML = `<textarea style="width:100%; height: 100%"></textarea>`;
-        this.textarea = this.rootdiv.children[0];
+        this.rootdiv.innerHTML = `
+        <span>${blankText}</span>
+        <textarea style="width:100%; height: 100%"></textarea>`;
+        this.textarea = this.rootdiv.children[1];
+        this.idLabel = this.rootdiv.children[0];
         /*
                 let commitbtn = htmlwrap(`
             <button>Commit changes</button>`);
@@ -10838,7 +10880,13 @@ polymorph_core.registerOperator("workflow_gf", {
             }*/
         })
         let renderCapacitor = new capacitor(400, 100, (id) => {
-            this.textarea.value = JSON.stringify(polymorph_core.items[id], undefined, 1);
+            if (id) {
+                this.idLabel.innerText = id;
+                this.textarea.value = JSON.stringify(polymorph_core.items[id], undefined, 1);
+            } else {
+                this.idLabel.innerText = blankText;
+                this.textarea.value = "";
+            }
         })
         this.renderItem = function(id, soft = false) {
             renderCapacitor.submit(id);
@@ -10902,20 +10950,6 @@ polymorph_core.registerOperator("workflow_gf", {
                 object: this.settings,
                 property: "currentItem",
                 label: "Set item to display:"
-            }),
-            orientation: new polymorph_core._option({
-                div: this.optionsDiv,
-                type: "bool",
-                object: this.settings,
-                property: "orientation",
-                label: "Horizontal orientation"
-            }),
-            showNonexistent: new polymorph_core._option({
-                div: this.optionsDiv,
-                type: "bool",
-                object: this.settings,
-                property: "showNonexistent",
-                label: "Show enabled but not currently filled fields"
             }),
             commitChanges: new polymorph_core._option({
                 div: this.optionsDiv,
@@ -15019,6 +15053,9 @@ polymorph_core.registerOperator("welcome", {
             background: purple;
             color: white;
         }
+        h4{
+            margin:0;
+        }
     </style>
     <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
         <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
@@ -15030,16 +15067,16 @@ polymorph_core.registerOperator("welcome", {
                         <br>
                         <h3>Open existing document:</h3>
                         <div style="overflow-y: auto; flex: 0 1 500px;">
-                        <h3>Recent documents:</h3>
+                        <h4>Recent documents:</h4>
                         <div class="recentDocuments">
                             </div>
                             <div class="lobbydocs" style="display:none">
-                                <h3>Local lobby documents:</h3>
+                                <h4>Local lobby documents:</h4>
                                 <div>
                                 </div>
                             </div>
                             <div class="globbydocs" style="display:none">
-                                <h3>Local git lobby documents:</h3>
+                                <h4>Local git lobby documents:</h4>
                                 <div>
                                 </div>
                             </div>
@@ -16196,13 +16233,17 @@ polymorph_core.registerSaveSource("toText", function (save_source_data) { // a s
 
 ;
 
-polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sample save source, implementing a number of functions.
+polymorph_core.registerSaveSource("lf", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
 
-    this.pushAll = async function (data) {
+    this.pushAll = async function(data) {
+        localforage.setItem("__polymorph_" + polymorph_core.currentDocID, data).then(() => {
+            polymorph_core.saved_until = Date.now();
+            polymorph_core.showNotification('Localforage Saved', 'success');
+        });
         //used by user to force push. 
     }
-    this.pullAll = async function () {
+    this.pullAll = async function() {
         let d = await localforage.getItem("__polymorph_" + save_source_data.data.id);
         return d;
     }
@@ -16224,7 +16265,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
 
     polymorph_core.addToSaveDialog(this);
 
-    this.hook = async () => {
+    this.hook = async() => {
         //hook to pull changes and push changes. 
         //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
         //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
@@ -16234,10 +16275,6 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     polymorph_core.on("userSave", (d) => {
         if (save_source_data.save) {
             this.pushAll(d);
-            polymorph_core.savedOK = false;
-            localforage.setItem("__polymorph_" + polymorph_core.currentDocID, d).then(() => {
-                polymorph_core.savedOK = true; /// SUPER HACKY PLS FORMALISE
-            });
             return true; //return true if we save
         } else {
             return false;
@@ -16245,7 +16282,7 @@ polymorph_core.registerSaveSource("lf", function (save_source_data) { // a sampl
     })
 
     // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async () => {
+    this.unhook = async() => {
         //unhook previous hooks.
         this.toSave = false;
     }
