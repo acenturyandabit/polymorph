@@ -16,7 +16,6 @@ if (!isPhone()) {
     //pseudo parents should implement following methods:
     //.polymorph_core property
     //
-
     polymorph_core.newRect = function(parent, ID) {
         if (!ID) ID = polymorph_core.insertItem({
             _rd: {
@@ -37,6 +36,21 @@ if (!isPhone()) {
         polymorph_core.rects[ID] = new polymorph_core.rect(ID);
         return ID;
     }
+
+    let globalKeyDownRectBarCalls = {
+        shiftx: [],
+        borderRedraw: []
+    };
+
+    document.addEventListener("keydown", (e) => {
+        if (e.getModifierState("Shift")) {
+            globalKeyDownRectBarCalls.shiftx.forEach(i => i());
+        }
+        if ((e.key == "Shift" || e.key == "Control" || e.key == "Meta")) {
+            let shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey)
+            globalKeyDownRectBarCalls.borderRedraw.forEach(i => i(shiftPressed));
+        }
+    })
 
     polymorph_core.rect = function(rectID) {
         this.id = rectID; //might be helpful
@@ -197,7 +211,7 @@ if (!isPhone()) {
         this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:${RECT_OUTER_DIV_COLOR}`
         this.plus = document.createElement("button");
         this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
-        this.plus.innerText = "+";
+        this.plus.innerHTML = "+";
         this.tabbar.appendChild(this.plus);
         this.outerDiv.appendChild(this.tabbar);
 
@@ -405,16 +419,14 @@ if (!isPhone()) {
             }
         })
 
-        document.addEventListener("keydown", (e) => {
-            if (e.getModifierState("Shift")) {
-                this.plus.innerText = "x";
-                this.plus.style.color = "red";
-            }
-        })
-
+        globalKeyDownRectBarCalls.shiftx.push(() => {
+            this.plus.innerHTML = "x";
+            this.plus.style.color = "red";
+        });
         document.addEventListener("keyup", (e) => {
             if (!e.getModifierState("Shift")) {
-                this.plus.innerText = "+";
+                if (this.plus.innerHTML != "+")
+                    this.plus.innerHTML = "+";
                 this.plus.style.color = "blue";
             }
         })
@@ -556,31 +568,31 @@ if (!isPhone()) {
                 tabmenu.style.display = "none";
             })
             /*
-        tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-            tabmenu.style.display = "none";
-            polymorph_core.dialog.prompt(tta);
-            tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-        })
+    tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+        let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+        tabmenu.style.display = "none";
+        polymorph_core.dialog.prompt(tta);
+        tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+    })
  
-        tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-            let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-            polymorph_core.dialog.prompt(tta);
-            tta.querySelector("button").addEventListener("click", () => {
-                if (tta.querySelector("textarea").value) {
-                    let importObject = JSON.parse(tta.querySelector("textarea").value);
-                    this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                    this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                    polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                    //force update all items to reload the view
-                    for (let i in polymorph_core.items) {
-                        polymorph_core.fire('updateItem', { id: i });
-                    }
+    tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+        let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+        polymorph_core.dialog.prompt(tta);
+        tta.querySelector("button").addEventListener("click", () => {
+            if (tta.querySelector("textarea").value) {
+                let importObject = JSON.parse(tta.querySelector("textarea").value);
+                this.containers[contextedOperatorIndex].fromSaveData(importObject);
+                this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+                polymorph_core.fire("updateItem", { id: rectID, sender: this });
+                //force update all items to reload the view
+                for (let i in polymorph_core.items) {
+                    polymorph_core.fire('updateItem', { id: i });
                 }
-            })
-            tabmenu.style.display = "none";
+            }
         })
-    */
+        tabmenu.style.display = "none";
+    })
+*/
             //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
@@ -748,13 +760,13 @@ if (!isPhone()) {
             else return false; // not attached yet
         }
 
-        let shiftPressed = false;
+        this.shiftPressed = false;
         let highlightDirn = -1;
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
                 if (!this.settings) return;
-                if (shiftPressed) {
+                if (this.shiftPressed) {
                     if (!this.children) {
                         this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
                         if (this.parent instanceof polymorph_core.rect) {
@@ -896,15 +908,13 @@ if (!isPhone()) {
         };
         this.outerDiv.addEventListener("mousemove", this.mouseMoveHandler);
 
-        document.addEventListener("keydown", (e) => {
-            if (!shiftPressed && (e.key == "Shift" || e.key == "Control" || e.key == "Meta")) {
-                shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
-                this.redrawBorders();
-            }
+        globalKeyDownRectBarCalls.borderRedraw.push((shiftPressed) => {
+            if (!this.shiftPressed && shiftPressed) this.redrawBorders();
+            this.shiftPressed = shiftPressed;
         })
         document.addEventListener("keyup", (e) => {
             if (e.key == "Shift" || e.key == "Control" || e.key == "Meta") {
-                shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
+                this.shiftPressed = e.shiftKey && (e.ctrlKey || e.metaKey);
                 this.redrawBorders();
             }
         })
