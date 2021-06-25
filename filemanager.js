@@ -31,6 +31,7 @@ let fileList = [
     "operators/workflow_gitfriendly.js",
     //"operators/textflow.js",
     "operators/inspector.js",
+    "operators/json_inspector.js",
     "operators/inspectolist.js",
     "operators/subframe.js",
     "operators/deltaLogger.js",
