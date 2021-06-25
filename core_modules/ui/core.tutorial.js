@@ -236,7 +236,7 @@ polymorph_core.on("UIstart", () => {
             target: () => { return polymorph_core.baseRect.outerDiv },
             type: "internal",
             location: 'left',
-            contents: `<p>&lt;---Shift-Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
+            contents: `<p>&lt;---Ctrl+Shift+Click and drag this border to split the item! (Then, just click and drag to resize)</p>`,
             to: [["Next", "clickop"], ["Skip"]]
         }, {
             id: "clickop",
