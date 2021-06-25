@@ -49,6 +49,9 @@ polymorph_core.registerOperator("welcome", {
             background: purple;
             color: white;
         }
+        h4{
+            margin:0;
+        }
     </style>
     <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
         <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
@@ -60,16 +63,16 @@ polymorph_core.registerOperator("welcome", {
                         <br>
                         <h3>Open existing document:</h3>
                         <div style="overflow-y: auto; flex: 0 1 500px;">
-                        <h3>Recent documents:</h3>
+                        <h4>Recent documents:</h4>
                         <div class="recentDocuments">
                             </div>
                             <div class="lobbydocs" style="display:none">
-                                <h3>Local lobby documents:</h3>
+                                <h4>Local lobby documents:</h4>
                                 <div>
                                 </div>
                             </div>
                             <div class="globbydocs" style="display:none">
-                                <h3>Local git lobby documents:</h3>
+                                <h4>Local git lobby documents:</h4>
                                 <div>
                                 </div>
                             </div>
