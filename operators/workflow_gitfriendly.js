@@ -1,8 +1,9 @@
 // todo: on enter or defocus, create new item
 // tab to indent
 polymorph_core.registerOperator("workflow_gf", {
-    displayName: "Git-friendly workflowish",
-    description: "Nested, plaintext lists. Workflowy emulation. Happily works with the gitlite system.",
+    displayName: "Workflowish",
+    description: "Nested, plaintext lists. Workflowy emulation.",
+    imageurl: "assets/operators/wkflow.PNG",
     section: "Standard"
 }, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
@@ -78,6 +79,10 @@ polymorph_core.registerOperator("workflow_gf", {
         background: rgba(255,255,0,0.5);
     }
 
+    .searchFocused{
+        background: rgba(0,0,255,0.5);
+    }
+
     </style>
     <label style="display: flex;"><span>Search</span><input style="flex: 1 0 auto" class="searcher"></label>
     <span class="innerRoot" style="flex: 0 1 100%; min-height:0; overflow:auto">${/* otherwise we get overflow issues*/ ""}
@@ -105,36 +110,76 @@ polymorph_core.registerOperator("workflow_gf", {
     this.rootdiv.style.flexDirection = "column";
     this.innerRoot = this.rootdiv.querySelector(".innerRoot");
     this.cursorSpan = this.rootdiv.querySelector(".cursorspan");
-
+    let holdExpanded = {};
     this.rootdiv.querySelector(".searcher").addEventListener("keyup", (e) => {
         //hide all items
-        for (let i in renderedItemCache) {
-            if (i) renderedItemCache[i].el.style.display = "none";
-        }
-        for (let i in renderedItemCache) {
-            if (i && polymorph_core.items[i][this.settings.titleProperty].toLowerCase().includes(e.target.value.toLowerCase())) {
-                let e = renderedItemCache[i].el;
-                while (e && e != this.innerRoot) { // somehow deleted items hang around
-                    if (e.tagName == "SPAN") e.style.display = "block";
-                    e = e.parentElement;
+        holdExpanded = {};
+        if (e.target.value.length > 0) {
+            for (let i in renderedItemCache) {
+                if (i) {
+                    renderedItemCache[i].el.style.display = "none";
+                    renderedItemCache[i].el.classList.remove("searchFocused");
                 }
-                // also show all parents (but don't expand?)
+            }
+            for (let i in polymorph_core.items) {
+                if (this.itemRelevant(i) && polymorph_core.items[i][this.settings.titleProperty].toLowerCase().includes(e.target.value.toLowerCase())) {
+                    let ptree = [i];
+                    let p = i;
+                    while (polymorph_core.items[p][this.settings.parentProperty]) {
+                        p = polymorph_core.items[p][this.settings.parentProperty];
+                        ptree.unshift(p);
+                        if (!this.itemRelevant(p)) {
+                            ptree = [];
+                            break;
+                        };
+                    }
+                    ptree.forEach((v, i) => {
+                        // force render it
+                        this.renderItem(v, "pdf");
+                        let el = renderedItemCache[v].el;
+                        el.style.display = "block";
+                        if (i == ptree.length - 1) {
+                            el.classList.add("searchFocused");
+                        }
+                        if (i != ptree.length - 1 || holdExpanded[v]) {
+                            holdExpanded[v] = true;
+                            setExpandedState(el, true, true, true);
+                        }
+                        // set it to expanded
+                        // unless it's the last one
+                    });
+                    // also show all parents (but don't expand?)
+                }
+            }
+        } else {
+            for (let i in renderedItemCache) {
+                if (i) {
+                    this.renderItem(i, "d");
+                    renderedItemCache[i].el.style.display = "block";
+                    renderedItemCache[i].el.classList.remove("searchFocused");
+                }
             }
         }
         //show selected items 
         //v comp expense! use cache if too hard  
     })
     let cachedChildren = {}; // dict of id of children id
-    let setExpandedState = (spanWithID, toExpanded) => {
+    let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
         if (toExpanded == undefined) { // toggle
             if (spanWithID.children[1].style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
         if (!cachedChildren[spanWithID.dataset.id] || !Object.keys(cachedChildren[spanWithID.dataset.id]).length) return;
-        polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
-        this.renderItem(spanWithID.dataset.id);
+        if (!temporary) {
+            delete holdExpanded[spanWithID.dataset.id];
+            polymorph_core.items[spanWithID.dataset.id].collapsed = !toExpanded;
+        }
+        this.renderItem(spanWithID.dataset.id, (temporary ? "p" : "") + (dontFocus ? "d" : "") + ((temporary && toExpanded) ? "e" : ""));
         //set all immediate child spans to display: block, to account for expanding an item during search
-        Array.from(spanWithID.children[1].children).map(i => i.style.display = "block");
+
+        if (!temporary) Array.from(spanWithID.children[1].children).map(i => {
+            i.style.display = "block";
+        });
     }
 
     let restoreClickFlag = false;
@@ -258,7 +303,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 delete polymorph_core.items[el][p];
             }
         };
-        renderedItemCache[id].renderedText = el.children[0].children[1].innerHTML;
+        renderedItemCache[id].renderedText = el.children[0].children[1].innerText;
         let text = el.children[0].children[1].innerText;
         let re = /\\\{(.+?)\}/g;
         let result = 0;
@@ -293,6 +338,9 @@ polymorph_core.registerOperator("workflow_gf", {
             if (p.startsWith(`_${this.settings.bracketPropertyPrefix}_`)) {
                 if (!validKeys[p]) {
                     delete polymorph_core.items[id][p];
+                    if (this.settings.propAsDate.split(",").map(ltrkey => `_${this.settings.bracketPropertyPrefix}_${ltrkey}`).includes(p)) {
+                        container.fire("dateUpdate", { sender: this });
+                    }
                 }
             }
         }
@@ -386,7 +434,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 container.fire("createItem", { id: newID, sender: this });
                 container.fire("updateItem", { id: newID, sender: this });
-                this.renderItem(newID, false, true);
+                this.renderItem(newID, "d");
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
                 break;
             case "ArrowUp":
@@ -448,7 +496,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         let toExpand = spanWithID.parentElement.parentElement;
                         while (toExpand.dataset.id) {
                             polymorph_core.items[toExpand.dataset.id].collapsed = false;
-                            this.renderItem(toExpand.dataset.id, false, true);
+                            this.renderItem(toExpand.dataset.id, "pd");
                             toExpand = toExpand.parentElement.parentElement;
                         }
                         focusOnElement(spanWithID.children[0].children[1]);
@@ -459,7 +507,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         if (spanWithID.parentElement.parentElement.dataset.id) {
                             setParent(id, polymorph_core.items[spanWithID.parentElement.parentElement.dataset.id][this.settings.parentProperty]);
                             polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
-                            this.renderItem(id, false, true);
+                            this.renderItem(id, "d");
                             wasme.focus();
                         } else {
                             // already a root node, do nothing
@@ -531,6 +579,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (restoreClickFlag) return;
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.parentElement.dataset.id;
+            if (!id) return; // clicking arrow should do nothing
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             renderedItemCache[id].el.classList.add("tmpFocused");
             lastFocusedID = id;
@@ -542,10 +591,23 @@ polymorph_core.registerOperator("workflow_gf", {
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.parentElement.dataset.id;
-            polymorph_core.items[id][this.settings.titleProperty] = polymorph_core.RTParseElement(e.target, id, this.settings.titleProperty);
+            polymorph_core.items[id][this.settings.titleProperty] = e.target.innerText; // polymorph_core.RTParseElement(e.target, id, this.settings.titleProperty);
             //parse stuff
             this.parse(e.target);
             container.fire("updateItem", { id: id, sender: this });
+        }
+    });
+
+    this.rootdiv.addEventListener("paste", (e) => {
+        if (e.target.matches(`span[data-id] span`)) {
+            // cancel paste
+            e.preventDefault();
+
+            // get text representation of clipboard
+            var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+
+            // insert text manually
+            document.execCommand("insertHTML", false, text);
         }
     });
 
@@ -598,6 +660,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (!this.container.visible()) return undefined;
         var selection = this.rootdiv.getRootNode().getSelection();
         if (!selection.rangeCount) return undefined;
+        if (selection.anchorNode.tagName == "LABEL") return undefined; // don't unfocus the search when rerendering
         let oldRange = selection.getRangeAt(0);
         let oldso = oldRange.startOffset;
         let oldctn = oldRange.startContainer; // all this convoluted machinery to get both backspace delete refocus and also normal text edit refocus to both work
@@ -674,7 +737,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         })
                     }
                 }
-                if (i) this.renderItem(i, false, true); // don't render the root which is nothing
+                if (i) this.renderItem(i, "d"); // don't render the root which is nothing
             }); // verry lazy, should check whether or not the parent actually needs rerendering first
         });
     }
@@ -689,7 +752,10 @@ polymorph_core.registerOperator("workflow_gf", {
         }
     }; // for deletions
 
-    this.renderItem = (id, fromParent, dontFocus) => {
+    this.renderItem = (id, flags = "") => {
+        fromParent = flags.includes("p");
+        dontFocus = flags.includes("d");
+        tmpExpanded = flags.includes("e");
         if (!this.itemRelevant(id)) {
             if (renderedItemCache[id]) {
                 renderedItemCache[id].el.remove();
@@ -712,7 +778,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
             //let my parent know it has children either when it renders or if it has already rendered, now.
 
-            if (!parentID || (renderedItemCache[parentID] && !polymorph_core.items[parentID].collapsed)) {
+            if (!parentID || (renderedItemCache[parentID] && !(!(parentID in holdExpanded) && polymorph_core.items[parentID].collapsed)) || flags.includes("f")) {
                 // only render if parent visible and not collapsed, or this is a root item
                 if (!renderedItemCache[id]) {
                     renderedItemCache[id] = {
@@ -739,7 +805,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 let notNullItemTitle = (polymorph_core.items[id][this.settings.titleProperty] || " ");
                 if (renderedItemCache[id].renderedText != notNullItemTitle) {
                     renderedItemCache[id].renderedText = notNullItemTitle;
-                    thisIDSpan.children[0].children[1].innerHTML = polymorph_core.RTRenderProperty(notNullItemTitle);
+                    thisIDSpan.children[0].children[1].innerText = notNullItemTitle; //= polymorph_core.RTRenderProperty(notNullItemTitle);
                 }
 
                 // attach to my parent, given it exists
@@ -770,19 +836,26 @@ polymorph_core.registerOperator("workflow_gf", {
 
                 if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
                     // I have children yay
-                    if (polymorph_core.items[id].collapsed) {
-                        thisIDSpan.children[1].style.display = "none";
-                        thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25B6;";
-                    } else {
-                        thisIDSpan.children[1].style.display = "block";
-                        thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25BC;";
+                    let shouldBeCollapsedNow = !(id in holdExpanded) && polymorph_core.items[id].collapsed;
+                    if (shouldBeCollapsedNow != renderedItemCache[id].collapsed) {
+                        if (shouldBeCollapsedNow) {
+                            thisIDSpan.children[1].style.display = "none";
+                            thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25B6;";
+                            thisIDSpan.children[0].children[0].children[0].style.color = "white";
+                        } else {
+                            thisIDSpan.children[1].style.display = "block";
+                            thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25BC;";
+                            if (id in holdExpanded) thisIDSpan.children[0].children[0].children[0].style.color = "orange";
+                            else thisIDSpan.children[0].children[0].children[0].style.color = "white";
+                        }
+                        renderedItemCache[id].collapsed = shouldBeCollapsedNow;
                     }
                     // might be wise to rerender them if they dont exist yet
                     // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
                     let renderedChildren = Array.from(thisIDSpan.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
                     for (let i in cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
-                            this.renderItem(i, true);
+                            this.renderItem(i, "pd");
                         }
                     }
                 } else {
@@ -798,7 +871,7 @@ polymorph_core.registerOperator("workflow_gf", {
     container.on("updateItem", (d) => {
         if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.
         let id = d.id;
-        this.renderItem(id, undefined, true);
+        this.renderItem(id, "d"); // prevent bumpparentreorganise on external updates
     });
 
     container.on("createItem", (d) => {
@@ -812,7 +885,7 @@ polymorph_core.registerOperator("workflow_gf", {
     this.refresh = function() {
         wasEditable = this.settings.isEditable;
         for (let i in polymorph_core.items) {
-            this.renderItem(i, undefined, true);
+            this.renderItem(i, "pd"); // dont reorganise parent here
         }
         // This is called when the parent container is resized.
         // needs to be here so that when item is instantialised, items will render.
@@ -919,7 +992,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     stack.push([i, topID[0]]);
                 }
                 container.fire("updateItem", { id: topID[0], sender: this });
-                this.renderItem(topID[0], undefined, true);
+                this.renderItem(topID[0], "d");
             }
         }
     });

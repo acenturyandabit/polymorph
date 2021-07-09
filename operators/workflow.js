@@ -3,7 +3,9 @@
 polymorph_core.registerOperator("workflow", {
     displayName: "Workflowish",
     description: "Nested, plaintext lists. Workflowy emulation.",
-    section: "Standard"
+    section: "Standard",
+    imageurl: "assets/operators/wkflow.PNG",
+    hidden: true
 }, function(container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {

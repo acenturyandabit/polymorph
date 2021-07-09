@@ -324,15 +324,17 @@ function _polymorph_core() {
     this.oldCache = {}; // literally a copy of polymorph_core.items.
     this.on("updateItem", (d) => {
         let copyOfItem = JSON.parse(JSON.stringify(this.items[d.id]));
-        delete copyOfItem._lu_;
-        copyOfItem = JSON.stringify(copyOfItem);
-        if (!d.loadProcess && !d.unedit) {
-            if (this.oldCache[d.id] && copyOfItem != this.oldCache[d.id]) {
-                //console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
-                this.items[d.id]._lu_ = Date.now();
+        if (copyOfItem) {
+            delete copyOfItem._lu_;
+            copyOfItem = JSON.stringify(copyOfItem);
+            if (!d.loadProcess && !d.unedit) {
+                if (this.oldCache[d.id] && copyOfItem != this.oldCache[d.id]) {
+                    //console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
+                    this.items[d.id]._lu_ = Date.now();
+                }
             }
+            this.oldCache[d.id] = copyOfItem;
         }
-        this.oldCache[d.id] = copyOfItem;
     })
 
     let _Rixits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";

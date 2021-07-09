@@ -7,14 +7,29 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     broadcast.onmessage = (event) => {
         switch (event.data.ev) {
             case "ev":
+                // fire an event
                 if (event.data.d.data) { //bit of safety
-                    polymorph_core.items[event.data.d.id] = event.data.d.data;
-                    fromBroadcast = true;
-                    polymorph_core.fire("updateItem", { id: event.data.d.id, sender: this });
-                    fromBroadcast = false;
+                    if (polymorph_core.items[event.data.d.id]._lu_ < event.data.d.data._lu_) {
+                        polymorph_core.items[event.data.d.id] = event.data.d.data;
+                        fromBroadcast = true;
+                        let sender = this;
+                        if (event.data.d.sender) {
+                            if (event.data.d.sender.type == "container") {
+                                try {
+                                    sender = polymorph_core.containers[event.data.d.sender.id].operator
+                                } catch (e) {
+                                    console.log(e);
+                                }
+                            }
+                        }
+                        polymorph_core.fire("updateItem", { id: event.data.d.id, sender: sender });
+                        fromBroadcast = false;
+                    }
                 }
                 break;
             case "ll":
+                // when an external merge is completed and large numbers of LUs are generated
+                // aka _lu_ list
                 if (isRecievingLR) break;
                 let dels = {};
                 for (let i in polymorph_core.items) {
@@ -31,6 +46,7 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
                 });
                 break;
             case "lr":
+                // aka _lu_ recieve
                 if (isRecievingLR) {
                     isRecievingLR = false;
                     fromBroadcast = true;
@@ -63,11 +79,23 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
         if (e.sender == this) return;
         if (e.loadProcess) return;
         if (this.settings.RTactive && !fromBroadcast) {
+            let sender = undefined;
+            try {
+                if (e.sender.container.id) {
+                    sender = {
+                        type: "container",
+                        id: e.sender.container.id
+                    }
+                }
+            } catch (e) {
+                sender = undefined;
+            }
             broadcast.postMessage({
                 ev: "ev",
                 d: {
                     id: e.id,
-                    data: polymorph_core.items[e.id]
+                    data: polymorph_core.items[e.id],
+                    sender: sender
                 }
             })
         }

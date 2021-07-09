@@ -16,8 +16,10 @@
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
         this.rootdiv.innerHTML = `
         <span>${blankText}</span>
+        <input placeholder = "Enter item ID..."></input>
         <textarea style="width:100%; height: 100%"></textarea>`;
-        this.textarea = this.rootdiv.children[1];
+        this.textarea = this.rootdiv.children[2];
+        this.enterItemInput = this.rootdiv.children[1];
         this.idLabel = this.rootdiv.children[0];
         /*
                 let commitbtn = htmlwrap(`
@@ -63,16 +65,20 @@
             }*/
         })
         let renderCapacitor = new capacitor(400, 100, (id) => {
-            if (id) {
-                this.idLabel.innerText = id;
-                this.textarea.value = JSON.stringify(polymorph_core.items[id], undefined, 1);
+            if (this.settings.currentItem) {
+                this.idLabel.innerText = this.settings.currentItem;
+                if (polymorph_core.items[this.settings.currentItem]) {
+                    this.textarea.value = JSON.stringify(polymorph_core.items[this.settings.currentItem], undefined, 1);
+                } else {
+                    this.textarea.value = "No item here!";
+                }
             } else {
                 this.idLabel.innerText = blankText;
                 this.textarea.value = "";
             }
         })
         this.renderItem = function(id, soft = false) {
-            renderCapacitor.submit(id);
+            renderCapacitor.forceSend();
         };
         ///////////////////////////////////////////////////////////////////////////////////////
         //First time load
@@ -85,14 +91,27 @@
             //Check if item is shown
             //Update item if relevant
             if (id == this.settings.currentItem) {
-                this.renderItem(id, true); //update for any new properties.
+                renderCapacitor.submit(); //update for any new properties.
                 return true;
             } else return false;
         });
 
+        this.enterItemInput.addEventListener("input", (e) => {
+            this.settings.currentItem = this.enterItemInput.value;
+            renderCapacitor.forceSend();
+        })
 
         //loading and saving
         this.updateSettings = () => {
+            if (this.settings.operationMode == "static") {
+                this.enterItemInput.style.display = "block";
+                this.enterItemInput.value = this.settings.currentItem;
+                this.idLabel.style.display = "none";
+            } else {
+                this.enterItemInput.style.display = "none";
+                this.idLabel.style.display = "block";
+                this.idLabel.innerText = this.settings.currentItem;
+            }
             /*
             if (this.settings.dataEntry) {
                 insertbtn.style.display = "block";
