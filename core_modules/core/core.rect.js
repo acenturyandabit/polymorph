@@ -424,7 +424,7 @@ if (!isPhone()) {
             this.plus.style.color = "red";
         });
         document.addEventListener("keyup", (e) => {
-            if (!e.getModifierState("Shift")) {
+            if (e.getModifierState && !e.getModifierState("Shift")) { // odd error when dropdowns are fired this throws, so check e.getModifierState even exists first.
                 if (this.plus.innerHTML != "+")
                     this.plus.innerHTML = "+";
                 this.plus.style.color = "blue";

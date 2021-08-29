@@ -28,6 +28,7 @@ let fileList = [
     "genui/intervalParser.js",
     "operators/terminal.js",
     "operators/workflow.js",
+    "operators/workflow/focusMode.js",
     "operators/workflow_gitfriendly.js",
     //"operators/textflow.js",
     "operators/inspector.js",

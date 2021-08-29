@@ -331,6 +331,7 @@ function _polymorph_core() {
                 if (this.oldCache[d.id] && copyOfItem != this.oldCache[d.id]) {
                     //console.log(`updated ${copyOfItem} against ${this.oldCache[d.id]}`)
                     this.items[d.id]._lu_ = Date.now();
+                    this.fire("modifiedItem", d);
                 }
             }
             this.oldCache[d.id] = copyOfItem;

@@ -9,7 +9,7 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
             case "ev":
                 // fire an event
                 if (event.data.d.data) { //bit of safety
-                    if (polymorph_core.items[event.data.d.id]._lu_ < event.data.d.data._lu_) {
+                    if (!polymorph_core.items[event.data.d.id] || polymorph_core.items[event.data.d.id]._lu_ < event.data.d.data._lu_) {
                         polymorph_core.items[event.data.d.id] = event.data.d.data;
                         fromBroadcast = true;
                         let sender = this;
@@ -51,8 +51,15 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
                     isRecievingLR = false;
                     fromBroadcast = true;
                     for (let i in event.data.dl) {
-                        polymorph_core.items[i] = event.data.dl[i];
-                        polymorph_core.fire("updateItem", { id: i, sender: this });
+                        if (event.data.dl[i]) {
+                            polymorph_core.items[i] = event.data.dl[i];
+                            polymorph_core.fire("updateItem", { id: i, sender: this });
+                        } else {
+                            if (this.settings.allowDeletions) {
+                                delete polymorph_core.items[i];
+                                polymorph_core.fire("updateItem", { id: i, sender: this });
+                            }
+                        }
                     }
                     fromBroadcast = false;
                 }
@@ -74,14 +81,13 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
         // recieve any future copies of items as an updateItem
 
     })
-
-    polymorph_core.on("updateItem", (e) => {
+    polymorph_core.on("modifiedItem", (e) => {
         if (e.sender == this) return;
         if (e.loadProcess) return;
         if (this.settings.RTactive && !fromBroadcast) {
             let sender = undefined;
             try {
-                if (e.sender.container.id) {
+                if (e.sender && e.sender.container.id) {
                     sender = {
                         type: "container",
                         id: e.sender.container.id
@@ -102,9 +108,20 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     });
     this.updateRTstate = () => {}; // signal that can do RT
     this.dialog = document.createElement("div"); // meh
+    let options = {
+        oneTimeImport: new polymorph_core._option({
+            div: this.dialog,
+            type: "bool",
+            object: () => this.settings,
+            property: "allowDeletions",
+            label: "Allow broadcast to delete objects that have been deleted from other instances."
+        })
+    }
     polymorph_core.addToSaveDialog(this);
     this.showDialog = function() {
-        // do nothing
+        for (let i in options) {
+            options[i].load();
+        }
     }
 }, {
     prettyName: "Broadcast across browsers",
