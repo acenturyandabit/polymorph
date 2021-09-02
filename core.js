@@ -76,6 +76,7 @@ function _polymorph_core() {
             //Create the input and register an event handler
             switch (settings.type) {
                 case "bool":
+                case "boolean":
                     appendedElement = document.createElement("input");
                     appendedElement.type = "checkbox";
                     appendedElement.addEventListener("input", (e) => {
@@ -178,6 +179,7 @@ function _polymorph_core() {
                 else {
                     switch (settings.type) {
                         case "bool":
+                        case "boolean":
                             if (actualObject[settings["property"]]) appendedElement.checked = actualObject[settings["property"]];
                             else appendedElement.checked = false;
                             break;
