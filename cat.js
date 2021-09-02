@@ -165,6 +165,7 @@ function _polymorph_core() {
             //Create the input and register an event handler
             switch (settings.type) {
                 case "bool":
+                case "boolean":
                     appendedElement = document.createElement("input");
                     appendedElement.type = "checkbox";
                     appendedElement.addEventListener("input", (e) => {
@@ -267,6 +268,7 @@ function _polymorph_core() {
                 else {
                     switch (settings.type) {
                         case "bool":
+                        case "boolean":
                             if (actualObject[settings["property"]]) appendedElement.checked = actualObject[settings["property"]];
                             else appendedElement.checked = false;
                             break;
@@ -5519,7 +5521,7 @@ function _dateParser() {
             return a.date - b.date
         });
         return result;
-        //returns an array of objects of the form:
+        //array: for each part of the date, returns the earliest object of the form:
         /*
             [{
                 refdate: date.getTime() representing the reference date (typically when the item was last updated).
@@ -9184,6 +9186,177 @@ function _workflow_focusMode_extend() {
     }
 };
 
+let workflowy_gitfriendly_extend_contextMenu = function() {
+    let contextTarget;
+    let contextmenu;
+    let recordContexted = (e) => {
+        contextTarget = e.target;
+        /*
+        while (!contextTarget.matches(".floatingItem")) contextTarget = contextTarget.parentElement;
+        if (polymorph_core.items[contextTarget.dataset.id].style) {
+            contextmenu.querySelector(".background").value = polymorph_core.items[contextTarget.dataset.id].style.background || "";
+            contextmenu.querySelector(".color").value = polymorph_core.items[contextTarget.dataset.id].style.color || "";
+        } else {
+            contextmenu.querySelector(".background").value = "";
+            contextmenu.querySelector(".color").value = "";
+        }
+        */
+        return true;
+    }
+    let contextMenuManager = new _contextMenuManager(this.rootdiv);
+    contextmenu = contextMenuManager.registerContextMenu(
+        `
+    <li data-action="sortbydate">Sort by date</li>
+    <li data-action="delitm">Delete item</li>
+    <li>Copy items
+    <ul class="submenu">
+        <li data-action="copylist">Copy item & sub as list</li>
+        <li data-action="copylistinternal">Copy item & sub for pasting</li>
+    </ul>
+    </li>
+    <li data-action="pasteInternal">Paste items</li>
+    <li>Edit style
+    <ul class="submenu">
+        <li data-action="cstyl">Copy style</li>
+        <li data-action="pstyl">Paste style</li>
+        <li><input data-action="background" placeholder="Background"></li>
+        <li><input data-action="color" placeholder="Color"></li>
+    </ul>
+    </li>
+    `, this.rootdiv, null, recordContexted);
+
+    contextmenu.addEventListener("click", (e) => {
+        if (this.contextMenuActions[e.target.dataset.action]) {
+            this.contextMenuActions[e.target.dataset.action](e);
+            contextmenu.style.display = "none";
+        }
+    });
+    contextmenu.addEventListener("input", (e) => {
+        if (this.contextMenuActions[e.target.dataset.action]) this.contextMenuActions[e.target.dataset.action](e);
+    });
+    //<li data-action="sortbydate">Copy subitems recursively as list</li>
+    this.contextMenuActions = {};
+    /*let savedStyle = undefined;
+    this.contextMenuActions["cstyl"] = (e) => {
+        let spanWithID = contextTarget.parentElement.parentElement;
+        let id = spanWithID.dataset.id;
+        savedStyle = polymorph_core.items[id].style;
+    }
+
+    this.contextMenuActions["pstyl"] = (e) => {
+        if (savedStyle) {
+            let spanWithID = contextTarget.parentElement.parentElement;
+            let id = spanWithID.dataset.id;
+            polymorph_core.items[id].style = savedStyle;
+            contextTarget.style.background = savedStyle.background;
+            contextTarget.style.color = savedStyle.color;
+        }
+    }
+
+    this.contextMenuActions["color"] = (e) => {
+        spanWithID = e.target.value;
+        let spanWithID = contextTarget.parentElement.parentElement;
+        let id = spanWithID.dataset.id;
+        savedStyle = polymorph_core.items[id].style;
+    }
+
+    this.contextMenuActions["background"] = (e) => {
+        let spanWithID = contextTarget.parentElement.parentElement;
+        let id = spanWithID.dataset.id;
+        savedStyle = polymorph_core.items[id].style;
+    }*/
+
+    this.contextMenuActions["copylist"] = function(e) {
+        console.log(contextTarget);
+        let text = contextTarget.parentElement.parentElement.innerText;
+        // cry();// Copies a string to the clipboard. Must be called from within an
+        if (window.clipboardData && window.clipboardData.setData) {
+            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+            return window.clipboardData.setData("Text", text);
+        } else
+        if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+            let textarea = document.createElement("textarea");
+            textarea.textContent = text;
+            textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+            } catch (ex) {
+                console.warn("Copy to clipboard failed.", ex);
+                return false;
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+    }
+    this.contextMenuActions["delitm"] = (e) => {
+        let spanWithID = contextTarget.parentElement.parentElement;
+        let id = spanWithID.dataset.id;
+        delete polymorph_core.items[id][this.settings.filter];
+        if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
+        if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 2) {
+            // if this is a root item and it is about to be deleted so that the root would only have the cursorspan, show the cursorspan
+            this.cursorSpan.style.display = "block";
+        }
+        this.renderItem(id); // remove the span
+        container.fire("updateItem", { id: id, sender: this });
+        container.fire("deleteItem", { id: id, sender: this });
+    }
+
+    // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
+    //     // clarify the toOrder first
+    //     if (root.target) root = undefined;
+    //     // for now, just assume property is a date
+    //     if (!property) {
+    //         property = this.settings.propAsDate.split(",")[0]
+    //     }
+    //     if (!property) {
+    //         return;
+    //     }
+
+    //     let itemMapper = (a) => {
+    //         let result;
+    //         if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
+    //             result = dateParser.getSortingTimes(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
+    //             if (result) result = result[0];
+    //             if (result) result = result.date;
+    //         }
+    //         if (!result) result = Date.now() * 10000;
+    //         return [a, result];
+    //     }
+    //     property = `_${this.settings.bracketPropertyPrefix}_${property}`;
+    //     if (root && root.dataset.id) {
+    //         let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
+    //         objs.sort((a, b) => a[1] - b[1]);
+    //         polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
+    //         polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
+    //     } else if (!root) {
+    //         let objs = this.rootItems.map(itemMapper);
+    //         objs.sort((a, b) => a[1] - b[1]);
+    //         this.rootItems = objs.map(i => i[0]);
+    //         polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
+    //     }
+    //     if (!root) root = this.innerRoot;
+    //     else if (root.matches(".cursorspan")) return;
+    //     else root = root.children[1];
+    //     Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.contextMenuActions["sortbydate"](i, property, true));
+    //     if (!recursive) {
+    //         if (root != this.innerRoot) {
+    //             this.renderItem(root.dataset.id);
+    //         } else {
+    //             let rcopy = this.rootItems.map(i => i).reverse();
+    //             let prevSpan = this.innerRoot.querySelector(`span[data-id="${rcopy[0]}"]`);
+    //             for (let i of rcopy) {
+    //                 let nextSpan = this.innerRoot.querySelector(`span[data-id="${i}"]`);
+    //                 this.innerRoot.insertBefore(nextSpan, prevSpan);
+    //                 prevSpan = nextSpan;
+    //             }
+    //         }
+    //     }
+    // }
+};
+
 // todo: on enter or defocus, create new item
 // tab to indent
 polymorph_core.registerOperator("workflow_gf", {
@@ -9191,7 +9364,7 @@ polymorph_core.registerOperator("workflow_gf", {
     description: "Nested, plaintext lists. Workflowy emulation.",
     imageurl: "assets/operators/wkflow.PNG",
     section: "Standard"
-}, function(container) {
+}, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         titleProperty: "title",
@@ -9204,7 +9377,8 @@ polymorph_core.registerOperator("workflow_gf", {
         autoSortDate: false,
         focusExclusionMode: false,
         focusExclusionID: "",
-        collapseProperty: "collapsed"
+        collapseProperty: "collapsed",
+        advancedInputMode: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
@@ -9301,27 +9475,7 @@ polymorph_core.registerOperator("workflow_gf", {
     this.cursorSpan = this.rootdiv.querySelector(".cursorspan");
     let holdExpanded = {};
 
-    // Takes an IDstring OR an element and returns a standardized tuple.
-    let resolveSpan = (item) => {
-        let baseSpan = undefined;
-        if (typeof(item) == "string") {
-            baseSpan = renderedItemCache[i].el;
-        } else {
-            // might be an element
-            while (item.dataset) {
-                if (item.dataset.id) {
-                    baseSpan = item;
-                    item = {};
-                } else {
-                    item = item.parentElement;
-                }
-            }
-        }
-        return {
-            el: baseSpan,
-            id: baseSpan.dataset.id
-        };
-    }
+
 
     this.rootdiv.querySelector(".searcher").addEventListener("keyup", (e) => {
         //hide all items
@@ -9329,8 +9483,8 @@ polymorph_core.registerOperator("workflow_gf", {
         if (e.target.value.length > 0) {
             for (let i in renderedItemCache) {
                 if (i) {
-                    resolveSpan(i).el.style.display = "none";
-                    resolveSpan(i).el.classList.remove("searchFocused");
+                    this.resolveSpan(i).el.style.display = "none";
+                    this.resolveSpan(i).el.classList.remove("searchFocused");
                 }
             }
             for (let i in polymorph_core.items) {
@@ -9397,8 +9551,12 @@ polymorph_core.registerOperator("workflow_gf", {
     let plaintextRender = document.createElement("span");
     plaintextRender.contentEditable = true;
     let setShowPlaintext = (resolvedObject) => {
-        resolvedObject.el.insertBefore(plaintextRender, resolvedObject.el.children[1]);
-        plaintextRender.innerText = polymorph_core.items[resolvedObject.id][this.settings.titleProperty];
+        if (this.settings.advancedInputMode && this.settings.isEditable) {
+            resolvedObject.el.insertBefore(plaintextRender, resolvedObject.el.children[1]);
+            plaintextRender.innerText = polymorph_core.items[resolvedObject.id][this.settings.titleProperty];
+        } else {
+            plaintextRender.remove();
+        }
     }
 
     let restoreClickFlag = false;
@@ -9493,7 +9651,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
-            let id = e.target.parentElement.parentElement.dataset.id;
+            let id = this.resolveSpan(e.target).id;
             if (e.key == '\\') {
                 // add curly brackets to the position
                 let selection = e.target.getRootNode().getSelection().getRangeAt(0);
@@ -9508,6 +9666,21 @@ polymorph_core.registerOperator("workflow_gf", {
             }
         }
     })
+
+    let getPropertiesFromString = (str) => {
+        let re = /\\\{(.+?)\}/g;
+        let result = 0;
+        let results = {};
+        let ltrsults = {};
+        while (result = re.exec(str)) {
+            let parts = result[1].split(":");
+            let ltrkey = parts.shift();
+            key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
+            results[key] = parts.join(":");
+            ltrsults[ltrkey] = parts.join(":");
+        }
+        return [results, ltrsults];
+    }
 
     this.parse = (el) => {
 
@@ -9524,38 +9697,33 @@ polymorph_core.registerOperator("workflow_gf", {
         };
         renderedItemCache[id].renderedText = el.children[0].children[1].innerText;
         let text = el.children[0].children[1].innerText;
-        let re = /\\\{(.+?)\}/g;
-        let result = 0;
-        let validKeys = {};
-        while (result = re.exec(text)) {
-            let parts = result[1].split(":");
-            let ltrkey = parts.shift();
-            key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
-            validKeys[key] = true;
-            let value = parts.join(":");
-            if (value) {
+        let keyset = getPropertiesFromString(text);
+        for (ltrkey in keyset[1]) {
+            if (keyset[1][ltrkey]) {
                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                     let oldDateString = "";
+                    let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
                     try {
                         oldDateString = polymorph_core.items[id][key].datestring;
-                    } catch (e) {}
-                    if (oldDateString == value) continue;
+                    } catch (e) { }
+                    if (oldDateString == keyset[1][ltrkey]) continue;
                     polymorph_core.items[id][key] = {
-                        datestring: value
+                        datestring: keyset[1][ltrkey]
                     }
                     polymorph_core.items[id][key].date = dateParser.richExtractTime(polymorph_core.items[id][key].datestring);
                     if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
                     container.fire("dateUpdate", { sender: this });
                 } else {
-                    polymorph_core.items[id][key] = value;
+                    polymorph_core.items[id][key] = keyset[1][ltrkey];
                 }
             } else {
                 if (!polymorph_core.items[id][key]) polymorph_core.items[id][key] = true;
             }
         }
+
         for (let p in polymorph_core.items[id]) {
             if (p.startsWith(`_${this.settings.bracketPropertyPrefix}_`)) {
-                if (!validKeys[p]) {
+                if (!(p in keyset[0])) {
                     delete polymorph_core.items[id][p];
                     if (this.settings.propAsDate.split(",").map(ltrkey => `_${this.settings.bracketPropertyPrefix}_${ltrkey}`).includes(p)) {
                         container.fire("dateUpdate", { sender: this });
@@ -9727,6 +9895,8 @@ polymorph_core.registerOperator("workflow_gf", {
                         let wasme = spanWithID.children[0].children[1];
                         //   this      div/innerroot span(prnt/base)
                         if (spanWithID.parentElement.parentElement.dataset.id) {
+                            // Also change the index
+                            polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.parentElement.parentElement.dataset.id][this.settings.orderProperty] + 0.5;
                             setParent(id, polymorph_core.items[spanWithID.parentElement.parentElement.dataset.id][this.settings.parentProperty]);
                             polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                             this.renderItem(id, "d");
@@ -9800,11 +9970,12 @@ polymorph_core.registerOperator("workflow_gf", {
     this.rootdiv.addEventListener("click", (e) => {
         if (restoreClickFlag) return;
         if (e.target.matches(`span[data-id] span.toprow span`)) {
-            let id = resolveSpan(e.target).id;
+            let id = this.resolveSpan(e.target).id;
             if (!id) return; // clicking arrow should do nothing
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             renderedItemCache[id].el.classList.add("tmpFocused");
-            setShowPlaintext(resolveSpan(e.target));
+            setShowPlaintext(this.resolveSpan(e.target));
+            // focus cursor there
             lastFocusedID = id;
             restoreClickFlag = true;
             container.fire("focusItem", { id: id, sender: this });
@@ -9841,7 +10012,9 @@ polymorph_core.registerOperator("workflow_gf", {
 
     container.on("focusItem", (d) => {
         if (restoreClickFlag) return;
-        //if (d.sender == this) return; // Comment out because focusing this should make it yellow
+
+        // ignore own sender because we focus when we type text and it resets the cursor on restorefocus, tripping up the editing
+        if (d.sender == this) return;
         if (!this.itemRelevant(d.id)) return;
         let el;
         let p = d.id;
@@ -9921,6 +10094,60 @@ polymorph_core.registerOperator("workflow_gf", {
     let bumpWasTriggeredByUserEvent = false;
     let parentReorganiseTimeout = -1;
     let parentsToReorganise = {};
+
+    let sortParent = (parent) => {
+        // look through my immediate children and assign them numbers
+        if (renderedItemCache[parent]) {
+            let itemsToUpdate = []; // store items to update and update them at the end because otherwise sometimes rendering will cause double-ups
+            if (this.settings.autoSortDate) {
+                let getDate = (obj) => {
+                    if (!obj) return undefined;
+                    try {
+                        obj = obj.date[0].date;
+                    } catch (e) {
+                        obj = undefined;
+                    }
+                    return obj;
+                }
+                Array.from(renderedItemCache[parent].el.children[1].children)
+                    .filter(i => !(i.classList.contains("cursorspan")))
+                    .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id][this.settings.sortDateProp] : undefined])
+                    .sort((a, b) => {
+                        let a_date = getDate(a[1]);
+                        let b_date = getDate(b[1]);
+                        if (a_date && !b_date) return -1;
+                        if (b_date && !a_date) return 1;
+                        if (!a_date && !b_date) return 0;
+                        return a_date - b_date;
+                    }).forEach((v, i) => {
+                        if (polymorph_core.items[v[0]][this.settings.orderProperty] != i) {
+                            polymorph_core.items[v[0]][this.settings.orderProperty] = i;
+                            itemsToUpdate.push(v[0]);
+                        }
+                    });
+            } else {
+                Array.from(renderedItemCache[parent].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
+                    if (polymorph_core.items[v.dataset.id][this.settings.orderProperty] != i) {
+                        polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
+                        itemsToUpdate.push(v.dataset.id);
+                    }
+                })
+            }
+            itemsToUpdate.forEach(i => {
+                polymorph_core.fire("updateItem", { id: i, sender: this });
+            })
+        }
+        //if (i) this.renderItem(i, "d"); // don't render the root which is nothing
+        //don't do ^ above render, because it causes defocus, and why is it even here
+        // verry lazy, should check whether or not the parent actually needs rerendering first
+    }
+
+
+    container.on("doSort", (d) => {
+        sortParent(d.id);
+    })
+
+
     let bumpParentReorganise = (parentID) => {
         if (!bumpWasTriggeredByUserEvent) return;
         bumpWasTriggeredByUserEvent = false;
@@ -9930,50 +10157,8 @@ polymorph_core.registerOperator("workflow_gf", {
             let copyOfParentsToReorganise = Object.keys(parentsToReorganise);
             parentsToReorganise = {};
             copyOfParentsToReorganise.forEach(i => {
-                // look through my immediate children and assign them numbers
-                if (renderedItemCache[i]) {
-                    let itemsToUpdate = []; // store items to update and update them at the end because otherwise sometimes rendering will cause double-ups
-                    if (this.settings.autoSortDate) {
-                        let getDate = (obj) => {
-                            if (!obj) return undefined;
-                            try {
-                                obj = obj.date[0].date;
-                            } catch (e) {
-                                obj = undefined;
-                            }
-                            return obj;
-                        }
-                        Array.from(renderedItemCache[i].el.children[1].children)
-                            .filter(i => !(i.classList.contains("cursorspan")))
-                            .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id][this.settings.sortDateProp] : undefined])
-                            .sort((a, b) => {
-                                let a_date = getDate(a[1]);
-                                let b_date = getDate(b[1]);
-                                if (a_date && !b_date) return -1;
-                                if (b_date && !a_date) return 1;
-                                if (!a_date && !b_date) return 0;
-                                return a_date - b_date;
-                            }).forEach((v, i) => {
-                                if (polymorph_core.items[v[0]][this.settings.orderProperty] != i) {
-                                    polymorph_core.items[v[0]][this.settings.orderProperty] = i;
-                                    itemsToUpdate.push(v[0]);
-                                }
-                            });
-                    } else {
-                        Array.from(renderedItemCache[i].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
-                            if (polymorph_core.items[v.dataset.id][this.settings.orderProperty] != i) {
-                                polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
-                                itemsToUpdate.push(v.dataset.id);
-                            }
-                        })
-                    }
-                    itemsToUpdate.forEach(i => {
-                        polymorph_core.fire("updateItem", { id: i, sender: this });
-                    })
-                }
-                //if (i) this.renderItem(i, "d"); // don't render the root which is nothing
-                //don't do ^ above render, because it causes defocus, and why is it even here
-            }); // verry lazy, should check whether or not the parent actually needs rerendering first
+                sortParent(i);
+            });
         });
     }
 
@@ -9986,6 +10171,28 @@ polymorph_core.registerOperator("workflow_gf", {
             // other items would also have a 'renderedText' property
         }
     }; // for deletions
+
+    // Takes an IDstring OR an element and returns a standardized tuple.
+    this.resolveSpan = (item) => {
+        let baseSpan = undefined;
+        if (typeof (item) == "string") {
+            baseSpan = renderedItemCache[item].el;
+        } else {
+            // might be an element
+            while (item.dataset) {
+                if (item.dataset.id) {
+                    baseSpan = item;
+                    item = {};
+                } else {
+                    item = item.parentElement;
+                }
+            }
+        }
+        return {
+            el: baseSpan,
+            id: baseSpan.dataset.id
+        };
+    }
 
     this.renderItem = (id, flags = "") => {
         fromParent = flags.includes("p");
@@ -10044,7 +10251,38 @@ polymorph_core.registerOperator("workflow_gf", {
                 let notNullItemTitle = (polymorph_core.items[id][this.settings.titleProperty] || " ");
                 if (renderedItemCache[id].renderedText != notNullItemTitle) {
                     renderedItemCache[id].renderedText = notNullItemTitle;
-                    thisIDSpan.children[0].children[1].innerText = notNullItemTitle; //= polymorph_core.RTRenderProperty(notNullItemTitle);
+                    if (this.settings.advancedInputMode) {
+                        // just do a replace of datestrings to actual dates
+                        // find all property-like objects
+
+                        let components = (notNullItemTitle).split(/(\\\{.+\})/g);
+                        components = components.map(i => {
+                            let match = /\\\{(.+?)\}/g.exec(i);
+                            if (match) {
+                                match = match[1];
+                                let parts = match.split(":");
+                                let ltrkey = parts.shift();
+                                let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
+                                if (this.settings.propAsDate.split(",").includes(ltrkey)) {
+                                    try {
+                                        return `\\{${ltrkey}:${new Date(polymorph_core.items[id][key].date[0].date).toString()}}`;
+                                    } catch (e) {
+                                        return `\\{${ltrkey}:${"Invalid Date"}}`;
+                                    }
+                                } else {
+                                    return i;
+                                }
+                            } else {
+                                return i;
+                            }
+                        })
+                        thisIDSpan.children[0].children[1].innerText = components.join("");
+                        // TODO deal with multiple case
+                        // check if they are dates or not
+                        // if they are dates, fetch the actual date and sub it in 
+                    } else {
+                        thisIDSpan.children[0].children[1].innerText = notNullItemTitle; //= polymorph_core.RTRenderProperty(notNullItemTitle);
+                    }
                 }
 
                 /////
@@ -10071,7 +10309,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     else placeBefore = this.innerRoot.children[1]; // special case because cursorspan exists in innerroot
 
                     if ((thisIDSpan.parentElement != renderedItemCache[parentID].el.children[1] || // parent wrong
-                            thisIDSpan.nextElementSibling != placeBefore) && // order wrong
+                        thisIDSpan.nextElementSibling != placeBefore) && // order wrong
                         thisIDSpan != placeBefore) { // not just a render-in-place
                         thisIDSpan.remove();
                         renderedItemCache[parentID].el.children[1].insertBefore(thisIDSpan, placeBefore);
@@ -10120,7 +10358,8 @@ polymorph_core.registerOperator("workflow_gf", {
     container.on("updateItem", (d) => {
         if (d.sender == this) return; // Dont handle our own updates so that the user does not lose focus.
         let id = d.id;
-        this.renderItem(id, "d"); // prevent bumpparentreorganise on external updates
+        let flags = d.flags || "d";
+        this.renderItem(id, flags); // prevent bumpparentreorganise on external updates
     });
 
     container.on("createItem", (d) => {
@@ -10131,8 +10370,8 @@ polymorph_core.registerOperator("workflow_gf", {
     });
 
     //first time load: render everything WITHOUT OLDFOCUS
-    this.refresh = function() {
-        wasEditable = this.settings.isEditable;
+    this.refresh = function () {
+        wasEditable = this.settings.isEditable && !this.settings.advancedInputMode;
         if (this.settings.focusExclusionMode) {
             this.focusModeRefresh();
         } else {
@@ -10224,6 +10463,13 @@ polymorph_core.registerOperator("workflow_gf", {
             object: () => this.settings,
             property: "focusExclusionID",
             label: "ID to focus on in focus exclusion mode"
+        }),
+        advancedInputMode: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "advancedInputMode",
+            label: "Advanced input mode (changed editing style)"
         })
     }
 
@@ -10273,185 +10519,18 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.dialogDiv.appendChild(importFacilities);
 
-    this.showDialog = function() {
+    this.showDialog = function () {
         for (let i in options) {
             options[i].load();
         }
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function() {
+    this.dialogUpdateSettings = function () {
         this.refresh();
         // This is called when your dialog is closed. Use it to update your container!
     }
+    workflowy_gitfriendly_extend_contextMenu.apply(this);
 
-    let contextTarget;
-    let contextmenu;
-    let recordContexted = (e) => {
-        contextTarget = e.target;
-        /*
-        while (!contextTarget.matches(".floatingItem")) contextTarget = contextTarget.parentElement;
-        if (polymorph_core.items[contextTarget.dataset.id].style) {
-            contextmenu.querySelector(".background").value = polymorph_core.items[contextTarget.dataset.id].style.background || "";
-            contextmenu.querySelector(".color").value = polymorph_core.items[contextTarget.dataset.id].style.color || "";
-        } else {
-            contextmenu.querySelector(".background").value = "";
-            contextmenu.querySelector(".color").value = "";
-        }
-        */
-        return true;
-    }
-    let contextMenuManager = new _contextMenuManager(this.rootdiv);
-    contextmenu = contextMenuManager.registerContextMenu(
-        `
-    <li data-action="sortbydate">Sort by date</li>
-    <li data-action="delitm">Delete item</li>
-    <li>Copy items
-    <ul class="submenu">
-        <li data-action="copylist">Copy item & sub as list</li>
-        <li data-action="copylistinternal">Copy item & sub for pasting</li>
-    </ul>
-    </li>
-    <li data-action="pasteInternal">Paste items</li>
-    <li>Edit style
-    <ul class="submenu">
-        <li data-action="cstyl">Copy style</li>
-        <li data-action="pstyl">Paste style</li>
-        <li><input data-action="background" placeholder="Background"></li>
-        <li><input data-action="color" placeholder="Color"></li>
-    </ul>
-    </li>
-    `, this.rootdiv, null, recordContexted);
-
-    contextmenu.addEventListener("click", (e) => {
-        if (this.contextMenuActions[e.target.dataset.action]) {
-            this.contextMenuActions[e.target.dataset.action](e);
-            contextmenu.style.display = "none";
-        }
-    });
-    contextmenu.addEventListener("input", (e) => {
-        if (this.contextMenuActions[e.target.dataset.action]) this.contextMenuActions[e.target.dataset.action](e);
-    });
-    //<li data-action="sortbydate">Copy subitems recursively as list</li>
-    this.contextMenuActions = {};
-    /*let savedStyle = undefined;
-    this.contextMenuActions["cstyl"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
-    }
-
-    this.contextMenuActions["pstyl"] = (e) => {
-        if (savedStyle) {
-            let spanWithID = contextTarget.parentElement.parentElement;
-            let id = spanWithID.dataset.id;
-            polymorph_core.items[id].style = savedStyle;
-            contextTarget.style.background = savedStyle.background;
-            contextTarget.style.color = savedStyle.color;
-        }
-    }
-
-    this.contextMenuActions["color"] = (e) => {
-        spanWithID = e.target.value;
-        let spanWithID = contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
-    }
-
-    this.contextMenuActions["background"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
-    }*/
-
-    this.contextMenuActions["copylist"] = function(e) {
-        console.log(contextTarget);
-        let text = contextTarget.parentElement.parentElement.innerText;
-        // cry();// Copies a string to the clipboard. Must be called from within an
-        if (window.clipboardData && window.clipboardData.setData) {
-            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-            return window.clipboardData.setData("Text", text);
-        } else
-        if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-            let textarea = document.createElement("textarea");
-            textarea.textContent = text;
-            textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                return document.execCommand("copy"); // Security exception may be thrown by some browsers.
-            } catch (ex) {
-                console.warn("Copy to clipboard failed.", ex);
-                return false;
-            } finally {
-                document.body.removeChild(textarea);
-            }
-        }
-    }
-    this.contextMenuActions["delitm"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        delete polymorph_core.items[id][this.settings.filter];
-        if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
-        if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 2) {
-            // if this is a root item and it is about to be deleted so that the root would only have the cursorspan, show the cursorspan
-            this.cursorSpan.style.display = "block";
-        }
-        this.renderItem(id); // remove the span
-        container.fire("updateItem", { id: id, sender: this });
-        container.fire("deleteItem", { id: id, sender: this });
-    }
-
-    // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
-    //     // clarify the toOrder first
-    //     if (root.target) root = undefined;
-    //     // for now, just assume property is a date
-    //     if (!property) {
-    //         property = this.settings.propAsDate.split(",")[0]
-    //     }
-    //     if (!property) {
-    //         return;
-    //     }
-
-    //     let itemMapper = (a) => {
-    //         let result;
-    //         if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
-    //             result = dateParser.getSortingTimes(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
-    //             if (result) result = result[0];
-    //             if (result) result = result.date;
-    //         }
-    //         if (!result) result = Date.now() * 10000;
-    //         return [a, result];
-    //     }
-    //     property = `_${this.settings.bracketPropertyPrefix}_${property}`;
-    //     if (root && root.dataset.id) {
-    //         let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
-    //     } else if (!root) {
-    //         let objs = this.rootItems.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         this.rootItems = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
-    //     }
-    //     if (!root) root = this.innerRoot;
-    //     else if (root.matches(".cursorspan")) return;
-    //     else root = root.children[1];
-    //     Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.contextMenuActions["sortbydate"](i, property, true));
-    //     if (!recursive) {
-    //         if (root != this.innerRoot) {
-    //             this.renderItem(root.dataset.id);
-    //         } else {
-    //             let rcopy = this.rootItems.map(i => i).reverse();
-    //             let prevSpan = this.innerRoot.querySelector(`span[data-id="${rcopy[0]}"]`);
-    //             for (let i of rcopy) {
-    //                 let nextSpan = this.innerRoot.querySelector(`span[data-id="${i}"]`);
-    //                 this.innerRoot.insertBefore(nextSpan, prevSpan);
-    //                 prevSpan = nextSpan;
-    //             }
-    //         }
-    //     }
-    // }
     oldFocus = 0; // ready to go
 });;
 
@@ -17237,9 +17316,318 @@ this.RTSyncQueue.sort((a, b) => { b[1] - a[1] });
     }
 });
 
+polymorph_core.registerSaveSource("gitlite2", function (save_source_data) {
+    polymorph_core.saveSourceTemplate.call(this, save_source_data);
+    //initialise here
+
+    this.internalCache = {};
+    this.lastRecvCommit = 0;
+
+
+    this.pushAll = async function (data) {
+        // data is useful if manual (first) push. if take data, then just send data. usersave should not have data.
+        let toSend = {commit: 0, items: {}};
+        if (data){
+            toSend.items=data;
+            toSend.commit=0;
+        }else{
+            toSend.commit=this.lastRecvCommit;
+            //try pushing deltas, if server doesn't recieve it then warn user
+            for (let i in this.internalCache) {
+                if (this.internalCache[i].c) {
+                    // item has changed
+                    toSend.items[i] = polymorph_core.items[i];
+                }
+            }
+        }
+        let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", headers: { "Content-Type": "application/json;charset=UTF-8" }, body: JSON.stringify(toSend) });
+        if (recvdata.ok){
+            let datajson = await recvdata.json();
+            this.lastRecvCommit = datajson.commit;
+            for (let i in datajson.changes) {
+                if (datajson.changes[i]._lu_ > polymorph_core.items[i]._lu_) {
+                    polymorph_core.items[i] = datajson.changes[i];
+                    if (!this.internalCache[i])this.internalCache[i]={};
+                    this.internalCache[i].c=false;
+                    polymorph_core.fire("updateItem", { id: i, sender: this });
+                }
+            }
+    
+            polymorph_core.saved_until = Date.now();
+            polymorph_core.showNotification('Gitlite Saved', 'success');
+        }
+    }
+
+    this.pullAll = async function () {
+        let data = await fetch(this.settings.data.loadFrom);
+        if (data.ok){
+            let datajson = await data.json();
+            // will have a commit id and a full document
+            datajson.doc = polymorph_core.datautils.decompress(datajson.doc);
+            for (let i in datajson.doc) {
+                this.internalCache[i] = {c: false };
+                this.lastRecvCommit = datajson.commit;
+            }
+            return datajson.doc;
+        }else{
+            alert("Warning: error form monogit");
+        }
+    }
+
+    polymorph_core.on("userSave", (d) => {
+        if (this.settings.save) {
+            if (this.settings.data.throttle && this.settings.data.throttle != "") {
+                if (!this.settings.tmpthrottle) {
+                    this.settings.tmpthrottle = 0;
+                }
+                if (this.settings.tmpthrottle > Number(this.settings.data.throttle)) {
+                    this.settings.tmpthrottle = 0;
+                    this.pushAll();
+                } else {
+                    this.settings.tmpthrottle++;
+                }
+            } else {
+                this.pushAll();
+            }
+            return true; //return true if we save
+        } else {
+            return false;
+        }
+    });
+
+    polymorph_core.on("modifiedItem",(d)=>{
+        if (!this.internalCache[d.id])this.internalCache[d.id]={};
+        this.internalCache[d.id].c=true;
+    })
+
+    this.dialog = document.createElement("div");
+    polymorph_core.addToSaveDialog(this);
+
+
+    let conflictDialog = htmlwrap(`
+    <div>
+        <h1>Conflicts editor</h1>
+        <label>Ignore _lu_ changes <input type="checkbox" class="gl_ignorelu"/></label>
+        <p>Source</p>
+        <select class="gl_conflictsSource"></select>
+        <div style = "display:flex;flex-direction:row">
+            <div style="flex: 0 0 30px;">
+                <select class="gl_itemIDSelect" size="10"></select>
+            </div>
+            <div style="flex: 1 1 50%">
+                <p>This verison is the local version and will be saved.</p>
+                <textarea class="gl_local"></textarea>
+            </div>
+            <div style="flex: 1 1 50%; width: 100px">
+            <div class="gl_remote"></div>
+            <button class="uremo">Use remote version</button>
+            </div>
+        </div>
+    </div>
+    `);
+    let sourceSelect = conflictDialog.querySelector(".gl_conflictsSource");
+    let ignoreLu = conflictDialog.querySelector(".gl_ignorelu");
+    let changesList = conflictDialog.querySelector(".gl_itemIDSelect");
+    let localVer = conflictDialog.querySelector(".gl_local");
+    let uremobtn = conflictDialog.querySelector(".uremo");
+    let remoteVer = conflictDialog.querySelector(".gl_remote");
+    this.conflictResolutionInstructions = {};
+
+    let swapConflictSource = () => {
+        while (changesList.children.length) changesList.children[0].remove();
+        for (let i in this.conflicts[sourceSelect.value]) {
+            if (ignoreLu.checked) {
+                let confcopy = JSON.parse(JSON.stringify(this.conflicts[sourceSelect.value][i]));
+                delete confcopy._lu_;
+                let micopy = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                delete micopy._lu_;
+                if (JSON.stringify(micopy) == JSON.stringify(confcopy)) continue;
+            }
+            let op = htmlwrap(`<option>${i}</option>`);
+            changesList.appendChild(op);
+        }
+    }
+    ignoreLu.addEventListener("input", swapConflictSource);
+
+
+    let swapConflictItem = () => {
+        if (this.conflicts[sourceSelect.value] && this.conflicts[sourceSelect.value][changesList.value]) {
+            if (!this.conflictResolutionInstructions[changesList.value]) {
+                this.conflictResolutionInstructions[changesList.value] = JSON.parse(JSON.stringify(polymorph_core.items[changesList.value]));
+            }
+            localVer.value = JSON.stringify(this.conflictResolutionInstructions[changesList.value], null, 1);
+            localVer.style.background = "white";
+            remoteVer.innerText = JSON.stringify(this.conflicts[sourceSelect.value][changesList.value], null, 1);
+        }
+    }
+    let saveNewValue = (e) => {
+        try {
+            this.conflictResolutionInstructions[changesList.value] = JSON.parse(localVer.value);
+            //updateConflictInstructions();
+            localVer.style.background = "white";
+        } catch (e) {
+            localVer.style.background = "#ffcccc";
+        }
+    };
+    sourceSelect.addEventListener("input", swapConflictSource);
+    changesList.addEventListener("input", swapConflictItem);
+    localVer.addEventListener("input", saveNewValue);
+    uremobtn.addEventListener("click", () => {
+        localVer.value = remoteVer.innerText;
+        saveNewValue();
+    })
+
+    this.showConflictDialog = () => {
+        while (sourceSelect.children.length) {
+            sourceSelect.children[0].remove();
+        }
+        this.conflictResolutionInstructions = {};
+        let x = new XMLHttpRequest();
+        x.addEventListener("readystatechange", (e) => {
+            if (x.readyState == XMLHttpRequest.DONE) {
+                this.conflicts = JSON.parse(x.responseText);
+                // ignore LU only differences
+                /*for (let r in this.conflicts) {
+                    for (let i in this.conflicts[r]) {
+                        //v v inefficient!!111 :(
+                        if (polymorph_core.items[i]) {
+                            let tempCopy = JSON.parse(JSON.stringify(this.conflicts[r][i]));
+                            let tempCopy2 = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                            delete tempCopy._lu;
+                            delete tempCopy2._lu;
+                            if (JSON.stringify(tempCopy) == JSON.stringify(tempCopy2)) {
+                                delete this.conflicts[r][i];
+                            }
+                        }
+                    }
+                }*/ // lu usually indicates something has changed so dont be too quick to dismiss it
+                for (let i in this.conflicts) {
+                    let op = htmlwrap(`<option>${i}</option>`);
+                    sourceSelect.appendChild(op);
+                    swapConflictSource();
+                }
+            }
+        });
+        x.open("GET", this.settings.data.conflictFrom);
+        x.send();
+        polymorph_core.dialog.prompt(conflictDialog, this.handleConflictsUpdate);
+    }
+    this.handleConflictsUpdate = () => {
+        for (let i in this.conflictResolutionInstructions) {
+            polymorph_core.items[i] = this.conflictResolutionInstructions[i];
+            polymorph_core.fire("updateItem", { id: i });
+        }
+    };
+    let fixSharingLink = () => {
+        let tmpurl = new URL(window.location);
+        delete this.settings.data.sharing; // prevent recursion causing explosion
+        tmpurl.search = "mglt=" + btoa(JSON.stringify({ id: polymorph_core.currentDocID, data: this.settings.data }))
+        this.settings.data.sharing = tmpurl.href;
+    }
+
+    let ops = [
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "saveTo",
+            afterInput: fixSharingLink,
+            label: "Full server save address (include document name)"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "loadFrom",
+            afterInput: fixSharingLink,
+            label: "Full server load address (include document name)"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "conflictFrom",
+            afterInput: fixSharingLink,
+            label: "Conflict fetching address (include document name)"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "sharing",
+            label: "Link for sharing"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "throttle",
+            label: "Throttle (number of changes before sending)",
+            placeholder: 0
+        }),
+        /*
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
+            property: "wsAddr",
+            afterInput: fixSharingLink,
+            label: "Websocket addr for real time sync(include protocol, path, port.)"
+        }),
+        */
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "button",
+            fn: () => {
+                this.settings.data.saveTo = window.location.origin + "/gitsave?f=" + polymorph_core.currentDocID;
+                this.settings.data.loadFrom = window.location.origin + "/gitload?f=" + polymorph_core.currentDocID;
+                this.settings.data.conflictFrom = window.location.origin + "/gitconflicts?f=" + polymorph_core.currentDocID;
+                this.settings.data.wsAddr = `ws://${window.location.hostname}:29384`
+                this.showDialog();
+            },
+            label: "Reset to defaults"
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "button",
+            fn: () => {
+                this.showConflictDialog();
+            },
+            label: "View conflicts"
+        })
+    ]
+    this.showDialog = function () {
+        fixSharingLink();
+        ops.forEach(i => i.load());
+    }
+
+
+}, {
+    prettyName: "Save deltas to git",
+    createable: true,
+    handleCrossWindow: true,
+    canHandle: (params) => {
+        if (params.has("dglt")) {
+            let config = undefined;
+            try {
+                config = params.get("dglt");
+                config = atob(config);
+                config = JSON.parse(config);
+            } catch (e) {
+                return false;
+            }
+            return config;
+        }
+    }
+});
+
 polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
+
+    //TODO: Add hook to get browser visibility state
+
+
     const broadcast = new BroadcastChannel(polymorph_core.currentDocID);
     let fromBroadcast = false;
     let isRecievingLR = false;

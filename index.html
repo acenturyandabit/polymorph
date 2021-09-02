@@ -13,12 +13,12 @@
         h1 {
             margin: 0;
         }
-        
+
         body {
             font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
             margin: 0;
         }
-        
+
         input,
         button {
             border-radius: 5px;
@@ -27,30 +27,18 @@
 </head>
 
 <body>
-    <!--<script src="pwa.js"></script>-->
+    <script src="pwa.js"></script>
     <script src="filemanager.js"></script>
     <!--Build starts here-->
 
 
     <!--Build ends here-->
     <script>
-        /*
         //ok now the PWA manager
 
         var pwaManager = new _pwaManager({
-            prompt: (e) => {
-                try {
-                    document.querySelector(".installPrompt").style.display = "block";
-                    document.querySelector(".installPrompt button").addEventListener("click", () => {
-                        e.prompt();
-                        document.querySelector(".installPrompt").style.display = "none";
-                    })
-                } catch (e) {
-                    console.log(e);
-                }
-            }
+            prompt: () => {} // Don't prompt by default
         });
-        */
     </script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-145664924-1"></script>

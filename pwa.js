@@ -86,7 +86,7 @@ var _pwaManager = (() => {
         ],
         CACHE_NAME: "version 8x",
         SEARCH_SLICE: true,
-        RETRIEVAL_METHOD: "cacheReupdate", // cacheReupdate, networkOnly, cacheOnly
+        RETRIEVAL_METHOD: "networkOnly", // cacheReupdate, networkOnly, cacheOnly
         debug: false,
         forcePassThrough: (url) => {
             //replace with your custom function
