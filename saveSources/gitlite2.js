@@ -22,7 +22,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
                 }
             }
         }
-        let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", headers: { "Content-Type": "application/json;charset=UTF-8" }, body: JSON.stringify(toSend) });
+        let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
         if (recvdata.ok) {
             let datajson = await recvdata.json();
             this.lastRecvCommit = datajson.commit;
