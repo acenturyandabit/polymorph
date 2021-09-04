@@ -29,6 +29,7 @@ let fileList = [
     "operators/terminal.js",
     "operators/workflow.js",
     "operators/workflow/focusMode.js",
+    "operators/workflow_gitfriendly_contextmenu.js",
     "operators/workflow_gitfriendly.js",
     //"operators/textflow.js",
     "operators/inspector.js",
@@ -58,6 +59,7 @@ let fileList = [
     "saveSources/lobby.js",
     "saveSources/server.js",
     "saveSources/gitlite.js",
+    "saveSources/gitlite2.js",
     "saveSources/broadcastsync.js",
 ];
 

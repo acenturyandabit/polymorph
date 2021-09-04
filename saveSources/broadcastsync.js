@@ -1,6 +1,10 @@
 polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
+
+    //TODO: Add hook to get browser visibility state
+
+
     const broadcast = new BroadcastChannel(polymorph_core.currentDocID);
     let fromBroadcast = false;
     let isRecievingLR = false;

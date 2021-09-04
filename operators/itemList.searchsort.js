@@ -136,7 +136,7 @@ function __itemlist_searchsort() {
                                 //check for repetition structure
                                 if (its[i].dt.datestring.indexOf("(") != -1) {
                                     //evaluate the repetition
-                                    its[i].date = dateParser.richExtractTime(its[i].dt.datestring)[0].date;
+                                    its[i].date = dateParser.getSortingTimes(its[i].dt.datestring)[0].date;
                                 }
                             } else its[i].date = Date.now() * 10000;
                         } else its[i].date = Date.now() * 10000;
