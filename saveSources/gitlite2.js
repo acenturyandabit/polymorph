@@ -26,9 +26,9 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         if (recvdata.ok) {
             let datajson = await recvdata.json();
             this.lastRecvCommit = datajson.commit;
-            for (let i in datajson.changes) {
-                if (datajson.changes[i]._lu_ > polymorph_core.items[i]._lu_) {
-                    polymorph_core.items[i] = datajson.changes[i];
+            for (let i in datajson.items) {
+                if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
+                    polymorph_core.items[i] = datajson.items[i];
                     if (!this.internalCache[i]) this.internalCache[i] = {};
                     this.internalCache[i].c = false;
                     polymorph_core.fire("updateItem", { id: i, sender: this });
