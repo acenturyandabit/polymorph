@@ -14,13 +14,28 @@
         };
         let blankText = "Focus on an item to show it here.";
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+        this.rootdiv.style.display = "flex";
+        this.rootdiv.style.flexDirection = "column";
         this.rootdiv.innerHTML = `
         <span>${blankText}</span>
         <input placeholder = "Enter item ID..."></input>
-        <textarea style="width:100%; height: 100%"></textarea>`;
+        <textarea style="width:100%; flex: 0 1 100%;"></textarea>
+        <button>Save</button>`;
         this.textarea = this.rootdiv.children[2];
         this.enterItemInput = this.rootdiv.children[1];
         this.idLabel = this.rootdiv.children[0];
+        let saveButton = this.rootdiv.children[3];
+        saveButton.addEventListener("click", () => {
+            if (this.settings.currentItem) {
+                try {
+                    polymorph_core.items[this.settings.currentItem] = JSON.parse(this.textarea.value);
+                    polymorph_core.fire("updateItem", { id: this.settings.currentItem })
+                } catch (e) {
+                    this.textarea.style.background = "orange";
+                }
+            }
+        });
+
         /*
                 let commitbtn = htmlwrap(`
             <button>Commit changes</button>`);
@@ -52,6 +67,7 @@
         //Actual editing the item
 
         this.textarea.addEventListener("input", (e) => {
+            this.textarea.style.background = "white";
             //change this to invalidate instead of directly edit?
             /*if (this.settings.commitChanges) {
                 e.target.parentElement.classList.add("modified");
@@ -69,6 +85,7 @@
                 this.idLabel.innerText = this.settings.currentItem;
                 if (polymorph_core.items[this.settings.currentItem]) {
                     this.textarea.value = JSON.stringify(polymorph_core.items[this.settings.currentItem], undefined, 1);
+                    this.textarea.style.background = "white";
                 } else {
                     this.textarea.value = "No item here!";
                 }
@@ -138,7 +155,7 @@
             operationMode: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "select",
-                object: this.settings,
+                object: () => this.settings,
                 property: "operationMode",
                 source: {
                     static: "Display static item",
@@ -149,21 +166,21 @@
             currentItem: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "text",
-                object: this.settings,
+                object: () => this.settings,
                 property: "currentItem",
                 label: "Set item to display:"
             }),
             commitChanges: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "commitChanges",
                 label: "Manually commit changes",
             }),
             dataEntry: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "dataEntry",
                 label: "Enable data entry",
                 afterInput: (e) => {
@@ -179,7 +196,7 @@
             globalEnabled: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "globalEnabled",
                 label: "Focus: listen for every container (regardless of origin)",
             })

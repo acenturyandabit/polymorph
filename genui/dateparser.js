@@ -1,23 +1,10 @@
 /*
 Use cases:
-- Given a string, emit a json-serializable representation of the string (stringPlusRefDate) plus a reference date (now or otherwise).
-- Given a stringPlusRefDate, emit the next singular occurence from {t or now}. (Date bump for sorting)
-- Given a stringPlusRefDate, emit all Occurences within a given time range. (Calendar)
--- what is permanently stored? 
-{// For calendar:
-    datestring: 
-    refdate:
-}
--> repetition structures: should generate datestring
-
-{// For sorting:
-    datestring:
-    refdate: 
-    dates: [dateobject]  // Guaranteed that all dates are valid after refdate but no guarantee on how many or until when or since when
-}
-
+- Given a string, create a serializable object that identifies when the string was last parsed as a reference date.
+- Parse a string and reference date to determine the next occurence(s) within a time range or after a certain number of occurrences.
 */
 
+//V5.0: Rebuild from ground up with better documentation.
 //V4.1: Now with how to use
 //V4.0: now with repetition and calendar item generator
 
@@ -186,12 +173,26 @@ function _dateParser() {
         }
     ];
 
-    this.resolveToDate = (item) => {
-        if (!item) return new Date();
-        if (item.constructor.name == "Date") return item;
-        if (typeof(item) == "number") {
-            return new Date(item);
+    /** 
+     * An object that can be resolved into a date.
+     * @typedef {number|string|Date()|undefined} TDateResolvable
+     */
+
+    /** 
+     * Resolve a TDateResolvable into a Date().
+     * @param {TDateResolvable} TDateInput
+     * @returns {Date()} A Date object which may be invalid.
+     */
+    this.resolveToDate = (TDateInput) => {
+        if (!TDateInput) return new Date();
+        if (TDateInput.constructor.name == "Date") return TDateInput;
+        if (typeof(TDateInput) == "number") {
+            return new Date(TDateInput);
         }
+        if (typeof(TDateInput) == "string") {
+            return new Date(TDateInput);
+        }
+        return new Date("Invalid Date");
     }
 
     /**
@@ -234,8 +235,24 @@ function _dateParser() {
         else return undefined;
     }
 
+    /** 
+     * An object containing options for getTimes.
+     * @typedef {Object} getTimesOptions
+     * @property {TDateResolvable} startDate The starting date.
+     * @property {TDateResolvable} [endDate]  The ending date.
+     * @property {number} [repetitions] The number of repetitions. Only used if endDate is undefined.
+     */
+
     /**
-     * Takes a rich string and emits the next recurrence from the nominated reference date.
+     * Takes a rich string and emits dateobjects based on the options specified.
+     * @param {string} str The string to be parsed
+     * @param {getTimesOptions} options Some options.
+     * 
+     * @returns {DateObject[]} An array of dateObjects that fulfill the options specified. 
+     */
+
+    /**
+     * Takes a rich string and emits the next datetime from the nominated reference datetime or now if unspecified.
      * 
      * @param {string} str The string to be parsed
      * @param {Date()} refdate The starting reference date.

@@ -5256,24 +5256,11 @@ polymorph_core.on("UIstart", () => {
 
 /*
 Use cases:
-- Given a string, emit a json-serializable representation of the string (stringPlusRefDate) plus a reference date (now or otherwise).
-- Given a stringPlusRefDate, emit the next singular occurence from {t or now}. (Date bump for sorting)
-- Given a stringPlusRefDate, emit all Occurences within a given time range. (Calendar)
--- what is permanently stored? 
-{// For calendar:
-    datestring: 
-    refdate:
-}
--> repetition structures: should generate datestring
-
-{// For sorting:
-    datestring:
-    refdate: 
-    dates: [dateobject]  // Guaranteed that all dates are valid after refdate but no guarantee on how many or until when or since when
-}
-
+- Given a string, create a serializable object that identifies when the string was last parsed as a reference date.
+- Parse a string and reference date to determine the next occurence(s) within a time range or after a certain number of occurrences.
 */
 
+//V5.0: Rebuild from ground up with better documentation.
 //V4.1: Now with how to use
 //V4.0: now with repetition and calendar item generator
 
@@ -5442,12 +5429,26 @@ function _dateParser() {
         }
     ];
 
-    this.resolveToDate = (item) => {
-        if (!item) return new Date();
-        if (item.constructor.name == "Date") return item;
-        if (typeof(item) == "number") {
-            return new Date(item);
+    /** 
+     * An object that can be resolved into a date.
+     * @typedef {number|string|Date()|undefined} TDateResolvable
+     */
+
+    /** 
+     * Resolve a TDateResolvable into a Date().
+     * @param {TDateResolvable} TDateInput
+     * @returns {Date()} A Date object which may be invalid.
+     */
+    this.resolveToDate = (TDateInput) => {
+        if (!TDateInput) return new Date();
+        if (TDateInput.constructor.name == "Date") return TDateInput;
+        if (typeof(TDateInput) == "number") {
+            return new Date(TDateInput);
         }
+        if (typeof(TDateInput) == "string") {
+            return new Date(TDateInput);
+        }
+        return new Date("Invalid Date");
     }
 
     /**
@@ -5490,8 +5491,24 @@ function _dateParser() {
         else return undefined;
     }
 
+    /** 
+     * An object containing options for getTimes.
+     * @typedef {Object} getTimesOptions
+     * @property {TDateResolvable} startDate The starting date.
+     * @property {TDateResolvable} [endDate]  The ending date.
+     * @property {number} [repetitions] The number of repetitions. Only used if endDate is undefined.
+     */
+
     /**
-     * Takes a rich string and emits the next recurrence from the nominated reference date.
+     * Takes a rich string and emits dateobjects based on the options specified.
+     * @param {string} str The string to be parsed
+     * @param {getTimesOptions} options Some options.
+     * 
+     * @returns {DateObject[]} An array of dateObjects that fulfill the options specified. 
+     */
+
+    /**
+     * Takes a rich string and emits the next datetime from the nominated reference datetime or now if unspecified.
      * 
      * @param {string} str The string to be parsed
      * @param {Date()} refdate The starting reference date.
@@ -11149,13 +11166,28 @@ polymorph_core.registerOperator("workflow_gf", {
         };
         let blankText = "Focus on an item to show it here.";
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+        this.rootdiv.style.display = "flex";
+        this.rootdiv.style.flexDirection = "column";
         this.rootdiv.innerHTML = `
         <span>${blankText}</span>
         <input placeholder = "Enter item ID..."></input>
-        <textarea style="width:100%; height: 100%"></textarea>`;
+        <textarea style="width:100%; flex: 0 1 100%;"></textarea>
+        <button>Save</button>`;
         this.textarea = this.rootdiv.children[2];
         this.enterItemInput = this.rootdiv.children[1];
         this.idLabel = this.rootdiv.children[0];
+        let saveButton = this.rootdiv.children[3];
+        saveButton.addEventListener("click", () => {
+            if (this.settings.currentItem) {
+                try {
+                    polymorph_core.items[this.settings.currentItem] = JSON.parse(this.textarea.value);
+                    polymorph_core.fire("updateItem", { id: this.settings.currentItem })
+                } catch (e) {
+                    this.textarea.style.background = "orange";
+                }
+            }
+        });
+
         /*
                 let commitbtn = htmlwrap(`
             <button>Commit changes</button>`);
@@ -11187,6 +11219,7 @@ polymorph_core.registerOperator("workflow_gf", {
         //Actual editing the item
 
         this.textarea.addEventListener("input", (e) => {
+            this.textarea.style.background = "white";
             //change this to invalidate instead of directly edit?
             /*if (this.settings.commitChanges) {
                 e.target.parentElement.classList.add("modified");
@@ -11204,6 +11237,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 this.idLabel.innerText = this.settings.currentItem;
                 if (polymorph_core.items[this.settings.currentItem]) {
                     this.textarea.value = JSON.stringify(polymorph_core.items[this.settings.currentItem], undefined, 1);
+                    this.textarea.style.background = "white";
                 } else {
                     this.textarea.value = "No item here!";
                 }
@@ -11273,7 +11307,7 @@ polymorph_core.registerOperator("workflow_gf", {
             operationMode: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "select",
-                object: this.settings,
+                object: () => this.settings,
                 property: "operationMode",
                 source: {
                     static: "Display static item",
@@ -11284,21 +11318,21 @@ polymorph_core.registerOperator("workflow_gf", {
             currentItem: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "text",
-                object: this.settings,
+                object: () => this.settings,
                 property: "currentItem",
                 label: "Set item to display:"
             }),
             commitChanges: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "commitChanges",
                 label: "Manually commit changes",
             }),
             dataEntry: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "dataEntry",
                 label: "Enable data entry",
                 afterInput: (e) => {
@@ -11314,7 +11348,7 @@ polymorph_core.registerOperator("workflow_gf", {
             globalEnabled: new polymorph_core._option({
                 div: this.optionsDiv,
                 type: "bool",
-                object: this.settings,
+                object: () => this.settings,
                 property: "globalEnabled",
                 label: "Focus: listen for every container (regardless of origin)",
             })
