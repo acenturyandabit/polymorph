@@ -278,7 +278,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         container.ctxMenuCache = ctxMenu;
         container.cacheCTXMenuStrings = JSON.stringify(commandStrings);
         document.body.addEventListener("mousedown", (e) => {
-            if (!e.path.includes(ctxMenu)) ctxMenu.style.display = "none";
+            if (!e.composedPath().includes(ctxMenu)) ctxMenu.style.display = "none";
         })
     }
     //actually show it

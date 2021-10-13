@@ -367,11 +367,12 @@ if (!isPhone()) {
         let resizingEl = undefined;
         //resizing
         container.div.addEventListener("mousedown", (e) => {
-            for (let i = 0; i < e.path.length; i++) {
-                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                    resizingRole = e.path[i].dataset.containsRole;
-                    resizingEl = e.path[i];
-                } else if (e.path[i] == this.taskList) break;
+            let composedPath = e.composedPath();
+            for (let i = 0; i < composedPath.length; i++) {
+                if (composedPath[i].dataset && composedPath[i].dataset.containsRole) {
+                    resizingRole = composedPath[i].dataset.containsRole;
+                    resizingEl = composedPath[i];
+                } else if (composedPath[i] == this.taskList) break;
             }
         })
         container.div.addEventListener("mousemove", (e) => {
@@ -781,10 +782,11 @@ if (!isPhone()) {
         container.div.addEventListener("mousedown", (e) => {
             //figure out which element this is
             dragDropID = undefined;
-            for (let i = 0; i < e.path.length; i++) {
-                if (!e.path[i].dataset) break; //shadow root
-                if (e.path[i].dataset.id) {
-                    dragDropID = e.path[i].dataset.id;
+            let composedPath = e.composedPath();
+            for (let i = 0; i < composedPath.length; i++) {
+                if (!composedPath[i].dataset) break; //shadow root
+                if (composedPath[i].dataset.id) {
+                    dragDropID = composedPath[i].dataset.id;
                     break;
                 }
             }
@@ -818,12 +820,13 @@ if (!isPhone()) {
             }
             */
             if (this.worryRow) {
-                for (let i = 0; i < e.path.length - 2; i++) {
+                let composedPath = e.composedPath();
+                for (let i = 0; i < composedPath.length - 2; i++) {
                     try {
-                        if (e.path[i].matches("[data-id]")) {
-                            if (e.path[i] == this.worryRow) break;
+                        if (composedPath[i].matches("[data-id]")) {
+                            if (composedPath[i] == this.worryRow) break;
                             if (lastBlued) lastBlued.style.borderTop = "";
-                            lastBlued = e.path[i];
+                            lastBlued = composedPath[i];
                             lastBlued.style.borderTop = "3px solid blue";
                             break;
                         }

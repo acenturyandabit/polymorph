@@ -281,3 +281,6 @@ if (!isPhone()) {
     });
 
 }
+
+// dirty little hack that allows shadow root code to work better on firefox
+if (!ShadowRoot.prototype.getSelection) ShadowRoot.prototype.getSelection = () => document.getSelection()

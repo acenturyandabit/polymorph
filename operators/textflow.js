@@ -162,13 +162,14 @@ polymorph_core.registerOperator("textflow", {
     });
 
     this.itemListDiv.addEventListener("click", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (e.path[i].host) return; //exist after shadow root
-            if (e.path[i].matches(`span[data-id]>div`)) {
-                focusOnElement(e.path[i].previousElementSibling);
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (composedPath[i].host) return; //exist after shadow root
+            if (composedPath[i].matches(`span[data-id]>div`)) {
+                focusOnElement(composedPath[i].previousElementSibling);
                 break;
-            } else if (e.path[i].matches(`span[data-id]:not(.focused)>p`)) {
-                focusOnElement(e.path[i]);
+            } else if (composedPath[i].matches(`span[data-id]:not(.focused)>p`)) {
+                focusOnElement(composedPath[i]);
                 break;
             }
         }

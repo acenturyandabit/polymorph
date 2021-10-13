@@ -1064,10 +1064,11 @@ polymorph_core.registerOperator("itemcluster2", {
     })
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return; // not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
                 else polymorph_core.items[id][this.settings.focusExtendProp] = e.target.innerText;
                 let pp = e.target.parentElement;

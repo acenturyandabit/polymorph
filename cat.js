@@ -1216,7 +1216,11 @@ polymorph_core.on("titleButtonsReady", () => {
             }
 
             //clear out url elements
-            window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}`);
+            try {
+                window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}`);
+            } catch (e) {
+                // Firefox / running index.html outright: causes fail
+            }
             //templates have been moved to their own module [todo]
         }
         document.querySelector(".wall").style.display = "none";
@@ -2948,7 +2952,7 @@ polymorph_core.showContextMenu = (container, settings, options) => {
         container.ctxMenuCache = ctxMenu;
         container.cacheCTXMenuStrings = JSON.stringify(commandStrings);
         document.body.addEventListener("mousedown", (e) => {
-            if (!e.path.includes(ctxMenu)) ctxMenu.style.display = "none";
+            if (!e.composedPath().includes(ctxMenu)) ctxMenu.style.display = "none";
         })
     }
     //actually show it
@@ -3798,10 +3802,11 @@ if (!isPhone()) {
                     this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
                     this.pulledDiv.style.top = 0;
                 } else {
-                    for (let i = 0; i < e.path.length; i++) {
-                        if (e.path[i] == this.pulledDiv) {
+                    let eventComposedPath = e.composedPath();
+                    for (let i = 0; i < eventComposedPath.length; i++) {
+                        if (eventComposedPath[i] == this.pulledDiv) {
                             break;
-                        } else if (e.path[i] == this.pulledDiv.parentElement) {
+                        } else if (eventComposedPath[i] == this.pulledDiv.parentElement) {
                             this.startPulling = true;
                         }
                     }
@@ -4916,7 +4921,10 @@ if (!isPhone()) {
         }
     });
 
-};
+}
+
+// dirty little hack that allows shadow root code to work better on firefox
+if (!ShadowRoot.prototype.getSelection) ShadowRoot.prototype.getSelection = () => document.getSelection();
 
 polymorph_core.on("UIstart", () => {
     //garbage collection
@@ -6285,11 +6293,12 @@ if (!isPhone()) {
         let resizingEl = undefined;
         //resizing
         container.div.addEventListener("mousedown", (e) => {
-            for (let i = 0; i < e.path.length; i++) {
-                if (e.path[i].dataset && e.path[i].dataset.containsRole) {
-                    resizingRole = e.path[i].dataset.containsRole;
-                    resizingEl = e.path[i];
-                } else if (e.path[i] == this.taskList) break;
+            let composedPath = e.composedPath();
+            for (let i = 0; i < composedPath.length; i++) {
+                if (composedPath[i].dataset && composedPath[i].dataset.containsRole) {
+                    resizingRole = composedPath[i].dataset.containsRole;
+                    resizingEl = composedPath[i];
+                } else if (composedPath[i] == this.taskList) break;
             }
         })
         container.div.addEventListener("mousemove", (e) => {
@@ -6699,10 +6708,11 @@ if (!isPhone()) {
         container.div.addEventListener("mousedown", (e) => {
             //figure out which element this is
             dragDropID = undefined;
-            for (let i = 0; i < e.path.length; i++) {
-                if (!e.path[i].dataset) break; //shadow root
-                if (e.path[i].dataset.id) {
-                    dragDropID = e.path[i].dataset.id;
+            let composedPath = e.composedPath();
+            for (let i = 0; i < composedPath.length; i++) {
+                if (!composedPath[i].dataset) break; //shadow root
+                if (composedPath[i].dataset.id) {
+                    dragDropID = composedPath[i].dataset.id;
                     break;
                 }
             }
@@ -6736,12 +6746,13 @@ if (!isPhone()) {
             }
             */
             if (this.worryRow) {
-                for (let i = 0; i < e.path.length - 2; i++) {
+                let composedPath = e.composedPath();
+                for (let i = 0; i < composedPath.length - 2; i++) {
                     try {
-                        if (e.path[i].matches("[data-id]")) {
-                            if (e.path[i] == this.worryRow) break;
+                        if (composedPath[i].matches("[data-id]")) {
+                            if (composedPath[i] == this.worryRow) break;
                             if (lastBlued) lastBlued.style.borderTop = "";
-                            lastBlued = e.path[i];
+                            lastBlued = composedPath[i];
                             lastBlued.style.borderTop = "3px solid blue";
                             break;
                         }
@@ -12608,7 +12619,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }, 500);
             return;
         }
-        let sel = me.rootdiv.getRootNode().getSelection();
+        let sel;
+        try {
+            //chrome
+            sel = me.rootdiv.getRootNode().getSelection();
+        } catch (e) {
+            // not chrome
+            sel = document.getSelection();
+        }
         let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
             //return immediately, delay the fn call
@@ -13995,7 +14013,7 @@ function _itemcluster_rapid_entry() {
 
     if (this.settings.rapidEntryOn == false) { // not undefined
     } else {
-        this.settings.rapidEntryOn = true;// on by default
+        this.settings.rapidEntryOn = true; // on by default
         // if rapidentry on, show the rapidentry interface
         this.rapidEntryDiv.style.display = "block";
     }
@@ -14015,14 +14033,15 @@ function _itemcluster_rapid_entry() {
     });
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 recacheCapacitor.submit(id, e.target.innerText);
             }
         }
-    })
+    });
     // nonshift enter is exit edit mode 
     let specialOptions = ["NEW", "CNT", "CNF", "DIS"];
     let RIE = this.rapidEntryDiv.querySelector("input");
@@ -14049,8 +14068,8 @@ function _itemcluster_rapid_entry() {
     let RIESRadical = undefined;
     this.focusOnRIES = () => {
         if (!RIESRadical) RIESRadical = this.svg.rect(30, 30).fill('transparent').stroke('blue').back();
-        RIESRadical.cx(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].x
-            * polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor).cy(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].y);
+        RIESRadical.cx(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].x *
+            polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor).cy(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].y);
     }
 
     let tryFocusOnEvent = (e) => {
@@ -14119,8 +14138,7 @@ function _itemcluster_rapid_entry() {
             while (sugbox.children.length) sugbox.children[0].remove();
             sugbox.style.height = 0;
             RIE.value = "";
-        }
-        else {
+        } else {
             if (e.key == "ArrowUp") {
                 if (rIndex > 0) rIndex--;
                 e.preventDefault();
@@ -14172,10 +14190,11 @@ function _itemcluster_rapid_entry() {
     })
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 if (e.target.classList.contains("tta")) REcache[i] = e.target.innerText;
             }
         }
@@ -15262,10 +15281,11 @@ polymorph_core.registerOperator("itemcluster2", {
     })
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return; // not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 if (e.target.classList.contains("tta")) polymorph_core.items[id][this.settings.textProp] = e.target.innerText;
                 else polymorph_core.items[id][this.settings.focusExtendProp] = e.target.innerText;
                 let pp = e.target.parentElement;
@@ -15664,7 +15684,12 @@ polymorph_core.registerOperator("welcome", {
     lobbyreq.addEventListener("readystatechange", (e) => {
         if (lobbyreq.readyState == 4) {
             // we are ready
-            let result = JSON.parse(lobbyreq.responseText);
+            let result;
+            try {
+                result = JSON.parse(lobbyreq.responseText);
+            } catch (e) {
+                // firefox: request will succeed but will fail to deserialize, catch for safety
+            }
             if (result) {
                 let resultDiv = this.rootdiv.querySelector(".lobbydocs>div");
                 resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
@@ -15698,7 +15723,12 @@ polymorph_core.registerOperator("welcome", {
     globbyreq.addEventListener("readystatechange", (e) => {
         if (globbyreq.readyState == 4) {
             // we are ready
-            let result = JSON.parse(globbyreq.responseText);
+            let result;
+            try {
+                result = JSON.parse(globbyreq.responseText);
+            } catch (e) {
+                // firefox: request will succeed but will fail to deserialize, catch for safety
+            }
             if (result) {
                 let resultDiv = this.rootdiv.querySelector(".globbydocs>div");
                 resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");

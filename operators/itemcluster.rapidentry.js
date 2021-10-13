@@ -34,7 +34,7 @@ function _itemcluster_rapid_entry() {
 
     if (this.settings.rapidEntryOn == false) { // not undefined
     } else {
-        this.settings.rapidEntryOn = true;// on by default
+        this.settings.rapidEntryOn = true; // on by default
         // if rapidentry on, show the rapidentry interface
         this.rapidEntryDiv.style.display = "block";
     }
@@ -54,14 +54,15 @@ function _itemcluster_rapid_entry() {
     });
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 recacheCapacitor.submit(id, e.target.innerText);
             }
         }
-    })
+    });
     // nonshift enter is exit edit mode 
     let specialOptions = ["NEW", "CNT", "CNF", "DIS"];
     let RIE = this.rapidEntryDiv.querySelector("input");
@@ -88,8 +89,8 @@ function _itemcluster_rapid_entry() {
     let RIESRadical = undefined;
     this.focusOnRIES = () => {
         if (!RIESRadical) RIESRadical = this.svg.rect(30, 30).fill('transparent').stroke('blue').back();
-        RIESRadical.cx(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].x
-            * polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor).cy(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].y);
+        RIESRadical.cx(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].x *
+            polymorph_core.items[this.settings.currentViewName].itemcluster.XZoomFactor).cy(polymorph_core.items[this.rapidEntrySelection].itemcluster.viewData[this.settings.currentViewName].y);
     }
 
     let tryFocusOnEvent = (e) => {
@@ -158,8 +159,7 @@ function _itemcluster_rapid_entry() {
             while (sugbox.children.length) sugbox.children[0].remove();
             sugbox.style.height = 0;
             RIE.value = "";
-        }
-        else {
+        } else {
             if (e.key == "ArrowUp") {
                 if (rIndex > 0) rIndex--;
                 e.preventDefault();
@@ -211,10 +211,11 @@ function _itemcluster_rapid_entry() {
     })
 
     this.rootdiv.addEventListener("input", (e) => {
-        for (let i = 0; i < e.path.length; i++) {
-            if (!e.path[i].dataset) return;// not an item, probably the rapid entry bar
-            if (e.path[i].dataset.id) {
-                let id = e.path[i].dataset.id;
+        let composedPath = e.composedPath();
+        for (let i = 0; i < composedPath.length; i++) {
+            if (!composedPath[i].dataset) return; // not an item, probably the rapid entry bar
+            if (composedPath[i].dataset.id) {
+                let id = composedPath[i].dataset.id;
                 if (e.target.classList.contains("tta")) REcache[i] = e.target.innerText;
             }
         }

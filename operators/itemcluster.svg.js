@@ -29,7 +29,14 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
             }, 500);
             return;
         }
-        let sel = me.rootdiv.getRootNode().getSelection();
+        let sel;
+        try {
+            //chrome
+            sel = me.rootdiv.getRootNode().getSelection();
+        } catch (e) {
+            // not chrome
+            sel = document.getSelection();
+        }
         let prerange = null;
         if (sel.rangeCount && me.rootdiv.getRootNode().activeElement && me.rootdiv.getRootNode().activeElement.matches(`[data-id="${id}"] *`)) {
             //return immediately, delay the fn call

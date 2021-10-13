@@ -186,7 +186,12 @@ polymorph_core.registerOperator("welcome", {
     lobbyreq.addEventListener("readystatechange", (e) => {
         if (lobbyreq.readyState == 4) {
             // we are ready
-            let result = JSON.parse(lobbyreq.responseText);
+            let result;
+            try {
+                result = JSON.parse(lobbyreq.responseText);
+            } catch (e) {
+                // firefox: request will succeed but will fail to deserialize, catch for safety
+            }
             if (result) {
                 let resultDiv = this.rootdiv.querySelector(".lobbydocs>div");
                 resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");
@@ -220,7 +225,12 @@ polymorph_core.registerOperator("welcome", {
     globbyreq.addEventListener("readystatechange", (e) => {
         if (globbyreq.readyState == 4) {
             // we are ready
-            let result = JSON.parse(globbyreq.responseText);
+            let result;
+            try {
+                result = JSON.parse(globbyreq.responseText);
+            } catch (e) {
+                // firefox: request will succeed but will fail to deserialize, catch for safety
+            }
             if (result) {
                 let resultDiv = this.rootdiv.querySelector(".globbydocs>div");
                 resultDiv.innerHTML = result.map(i => `<p><a href="#">${i}</a ></p> `).join("");

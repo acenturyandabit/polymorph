@@ -386,10 +386,11 @@ if (!isPhone()) {
                     this.pulledDiv.style.left = (e.clientX - rect.left) + "px"; //x position within the element.
                     this.pulledDiv.style.top = 0;
                 } else {
-                    for (let i = 0; i < e.path.length; i++) {
-                        if (e.path[i] == this.pulledDiv) {
+                    let eventComposedPath = e.composedPath();
+                    for (let i = 0; i < eventComposedPath.length; i++) {
+                        if (eventComposedPath[i] == this.pulledDiv) {
                             break;
-                        } else if (e.path[i] == this.pulledDiv.parentElement) {
+                        } else if (eventComposedPath[i] == this.pulledDiv.parentElement) {
                             this.startPulling = true;
                         }
                     }

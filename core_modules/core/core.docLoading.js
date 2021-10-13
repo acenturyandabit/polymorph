@@ -270,7 +270,11 @@
             }
 
             //clear out url elements
-            window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}`);
+            try {
+                window.history.pushState("", "", window.location.origin + window.location.pathname + `?doc=${polymorph_core.currentDocID}`);
+            } catch (e) {
+                // Firefox / running index.html outright: causes fail
+            }
             //templates have been moved to their own module [todo]
         }
         document.querySelector(".wall").style.display = "none";
