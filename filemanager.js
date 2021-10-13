@@ -19,6 +19,7 @@ let fileList = [
     "core_modules/ui/core.main.js",
     "core_modules/ui/ccleaner.js",
     "core_modules/ui/richText.js",
+    "core_modules/core/core.clip.js",
     "operators/opSelect.js",
     "genui/dateparser.js",
     "operators/itemList.searchsort.js",

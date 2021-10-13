@@ -407,8 +407,7 @@ polymorph_core.registerOperator("workflow", {
                         datestring: value
                     }
                     if (oldDateString == value) continue;
-                    polymorph_core.items[id][key].date = dateParser.richExtractTime(polymorph_core.items[id][key].datestring);
-                    if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
+                    polymorph_core.items[id][key] = dateParser.stringToEvent(polymorph_core.items[id][key].datestring);
                     container.fire("dateUpdate", { sender: this });
                 } else {
                     polymorph_core.items[id][key] = value;
@@ -1166,8 +1165,7 @@ polymorph_core.registerOperator("workflow", {
         let itemMapper = (a) => {
             let result;
             if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
-                result = dateParser.getSortingTimes(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
-                if (result) result = result[0];
+                result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
                 if (result) result = result.date;
             }
             if (!result) result = Date.now() * 10000;

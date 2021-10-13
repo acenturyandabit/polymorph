@@ -453,8 +453,7 @@ if (!isPhone()) {
                     if (!currentItem[e.target.dataset.role].datestring) currentItem[e.target.dataset.role] = {
                         "datestring": ""
                     };
-                    currentItem[e.target.dataset.role].datestring = e.target.value;
-                    currentItem[e.target.dataset.role].date = dateParser.richExtractTime(currentItem[e.target.dataset.role].datestring);
+                    currentItem[e.target.dataset.role] = dateParser.stringToEvent(e.target.value);
                     break;
             }
 
@@ -546,8 +545,7 @@ if (!isPhone()) {
                     //specifically reparse the date on it;
                     if (it) {
                         if (polymorph_core.items[it][dateprop]) {
-                            polymorph_core.items[it][dateprop].date = dateParser.richExtractTime(polymorph_core.items[it][dateprop].datestring);
-                            if (!polymorph_core.items[it][dateprop].date.length) polymorph_core.items[it][dateprop].date = undefined;
+                            polymorph_core.items[it][dateprop] = dateParser.stringToEvent(polymorph_core.items[it][dateprop].datestring);
                             //ds=this.taskList.querySelector('span[data-id="'+it+'"] input[data-role="'+dateprop+'"]').value;
                         }
                     }

@@ -78,10 +78,49 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
         savedStyle = polymorph_core.items[id].style;
     }*/
 
+    this.contextMenuActions["copylistinternal"] = (e) => {
+        let itmID = this.resolveSpan(contextTarget).id;
+        let itemsStack = [itmID];
+        let itemsSeen = {};
+        itemsSeen[itmID] = true;
+        let itemsAll = [itmID];
+        while (itemsStack.length) {
+            for (let i in this.renderedItemCache) {
+                if (polymorph_core.items[i] && polymorph_core.items[i][this.settings.parentProperty] == itemsStack[0] && !itemsSeen[i]) {
+                    itemsSeen[i] = true;
+                    itemsAll.push(i);
+                    itemsStack.push(i);
+                }
+            }
+            itemsStack.shift();
+        }
+        polymorph_core.toClip({
+            type: "itemListParent",
+            linkType: "parent",
+            linkProp: this.settings.parentProperty,
+            items: itemsAll
+        });
+    }
+
+    this.contextMenuActions["pasteInternal"] = (e) => {
+        if (polymorph_core.clipboard.length) {
+            let clip0 = polymorph_core.clipboard[0];
+            switch (clip0.type) {
+                case "itemListParent":
+                    for (let i of clip0.itemsAll) {
+                        polymorph_core.items[i][this.settings.filter] = true;
+                        polymorph_core.items[i][this.settings.parentProperty] = polymorph_core.items[i][clip0.linkProp];
+                        polymorph_core.fire("updateItem", { id: i });
+                    }
+            }
+        }
+    }
+
+
     this.contextMenuActions["copylist"] = function(e) {
         console.log(contextTarget);
         let text = contextTarget.parentElement.parentElement.innerText;
-        // cry();// Copies a string to the clipboard. Must be called from within an
+        // Copies a string to the clipboard. 
         if (window.clipboardData && window.clipboardData.setData) {
             // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
             return window.clipboardData.setData("Text", text);
@@ -130,8 +169,7 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     //     let itemMapper = (a) => {
     //         let result;
     //         if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
-    //             result = dateParser.getSortingTimes(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
-    //             if (result) result = result[0];
+    //             result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
     //             if (result) result = result.date;
     //         }
     //         if (!result) result = Date.now() * 10000;

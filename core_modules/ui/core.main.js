@@ -131,25 +131,6 @@ if (!isPhone()) {
     polymorph_core.on("UIsetup", () => {
         document.body.appendChild(htmlwrap( /*html*/ `
         <style>
-        #popup-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            line-height: 1;
-            background: #000;
-            color: white;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        #popup-notification.success {
-            background: green;
-        }
-        #popup-notification.alert {
-            background: red;
-        }
     
         .showAndFadeOut {
             transition: opacity visibility 3s;
@@ -243,21 +224,60 @@ if (!isPhone()) {
         })
     });
 
-    polymorph_core.showNotification = function(notificationMessage, notificationType = 'default') {
+    polymorph_core.on("UIsetup", () => {
 
-        if (!document.getElementById("popup-notification")) {
-            const popupNotification = document.createElement("div");
-            popupNotification.setAttribute("id", "popup-notification");
-            document.body.appendChild(popupNotification);
+        let notifArea = htmlwrap( /*html*/ `
+        <div class="notifArea">
+        <style>
+        .notifArea{
+            position: fixed;
+            right: 10px;
+            top: 10px;
+            z-index: 150;
         }
 
-        const popupNotificationBox = document.getElementById("popup-notification");
-        popupNotificationBox.innerHTML = notificationMessage;
-        popupNotificationBox.classList.add(notificationType);
-        popupNotificationBox.classList.add('showAndFadeOut');
-        const hideNotificationBox = setTimeout(() => {
-            popupNotificationBox.classList = '';
-        }, 2800)
-    }
+        .notifArea>div{
+            margin: 0 1vh;
+            font-size: 1.5vh;
+            line-height: 1;
+            background: #000;
+            color: white;
+            transition: all 0.3s;
+            height: 0px; /* Start hidden */
+            overflow: hidden;
+        }
+        .notifArea>div>div{
+            padding: 0.5vh 0.5vw;
+        }
+
+        .notifArea>div.success{
+            background: green;
+        }
+
+        </style>
+        </div>
+        `);
+        document.body.appendChild(notifArea);
+        polymorph_core.showNotification = function(notificationMessage, notificationType = 'default') {
+            // Spawn a new notif bubble
+            // Require wrapping otherwise scrollHeight below fails
+            let notifBubble = htmlwrap(`<div>
+                <div>${notificationMessage}
+                </div>
+            </div>`);
+            notifArea.appendChild(notifBubble);
+            let targetHeight = notifBubble.scrollHeight;
+            notifBubble.style.height = targetHeight + "px";
+            notifBubble.style.marginTop = "1vh";
+            notifBubble.classList.add(notificationType);
+            setTimeout(() => {
+                notifBubble.style.height = "";
+                notifBubble.style.marginTop = "0";
+                setTimeout(() => {
+                    notifBubble.remove();
+                }, 1000);
+            }, 5000);
+        }
+    });
 
 }

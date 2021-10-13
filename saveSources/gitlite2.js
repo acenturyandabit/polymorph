@@ -3,6 +3,19 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
     //initialise here
 
     this.internalCache = {};
+    let updateCache = (id, newLU, canClear) => {
+        if (!this.internalCache[id]) this.internalCache[id] = {
+            _lu_: 0,
+            c: false
+        };
+        if (this.internalCache[id]._lu_ < newLU) {
+            this.internalCache[id]._lu_ = newLU;
+            this.internalCache[id].c = true;
+        } else if (canClear) {
+            this.internalCache[id].c = false;
+        }
+
+    }
     this.lastRecvCommit = 0;
 
 
@@ -19,25 +32,30 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
                 if (this.internalCache[i].c) {
                     // item has changed
                     toSend.items[i] = polymorph_core.items[i];
-                }
-            }
-        }
-        let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
-        if (recvdata.ok) {
-            let datajson = await recvdata.json();
-            this.lastRecvCommit = datajson.commit;
-            for (let i in datajson.items) {
-                if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
-                    polymorph_core.items[i] = datajson.items[i];
-                    if (!this.internalCache[i]) this.internalCache[i] = {};
                     this.internalCache[i].c = false;
-                    polymorph_core.fire("updateItem", { id: i, sender: this });
                 }
             }
-
-            polymorph_core.saved_until = Date.now();
-            polymorph_core.showNotification('Gitlite Saved', 'success');
         }
+        if (Object.keys(toSend.items).length > 0) {
+            let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
+            if (recvdata.ok) {
+                let datajson = await recvdata.json();
+                this.lastRecvCommit = datajson.commit;
+                for (let i in datajson.items) {
+                    if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
+                        polymorph_core.items[i] = datajson.items[i];
+                        updateCache(i, datajson.items[i]._lu_);
+                        polymorph_core.fire("updateItem", { id: i, sender: this });
+                        this.internalCache[i].c = false; // remote has it, no need to flag it
+                    }
+                }
+            } else {
+                alert("Warning: error with gitlite source.");
+                return;
+            }
+        }
+        polymorph_core.saved_until = Date.now();
+        polymorph_core.showNotification('Gitlite Saved', 'success');
     }
 
     this.pullAll = async function() {
@@ -47,9 +65,9 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
             // will have a commit id and a full document
             datajson.items = polymorph_core.datautils.decompress(datajson.items);
             for (let i in datajson.items) {
-                this.internalCache[i] = { c: false };
-                this.lastRecvCommit = datajson.commit;
+                updateCache(i, datajson.items[i]._lu_, true);
             }
+            this.lastRecvCommit = datajson.commit;
             return datajson.items;
         } else {
             alert("Warning: error form monogit");
@@ -77,10 +95,10 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         }
     });
 
-    polymorph_core.on("modifiedItem", (d) => {
-        if (!this.internalCache[d.id]) this.internalCache[d.id] = {};
-        this.internalCache[d.id].c = true;
-    })
+    polymorph_core.on("updateItem", (d) => {
+        // Can't just use modifiedItem because if other source  loads lu 10 and I load lu 5 then want to push lu 10
+        updateCache(d.id, polymorph_core.items[d.id]._lu_);
+    });
 
     this.dialog = document.createElement("div");
     polymorph_core.addToSaveDialog(this);

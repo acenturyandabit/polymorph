@@ -309,7 +309,7 @@ polymorph_core.container = function container(containerID) {
             }
             if (!cold || options.mustColdLoad) {
                 try {
-                    this.operator = new polymorph_core.operators[this.settings.t].constructor(this, this.settings.data);
+                    this.operator = new polymorph_core.operators[this.settings.t].constructor(this);
                     this.operator.container = this;
                 } catch (e) {
                     console.log(e);

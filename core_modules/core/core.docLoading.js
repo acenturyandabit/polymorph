@@ -342,7 +342,7 @@
             polymorph_core.rects[i].outerDiv.remove();
             delete polymorph_core.rects[i];
         }
-        polymorph_core.saved_until = 0;
+        polymorph_core.saved_until = Date.now();
         polymorph_core.last_change_time = Date.now();
         if (polymorph_core.saveSourceInstances) {
             for (let i of polymorph_core.saveSourceInstances) {
@@ -400,9 +400,12 @@
         polymorph_core.rectLoadCallbacks = {}; // clear this rl cache
         //rects need each other to exist so they can attach appropriately, so do this separately to item adoption
         for (let i in data) {
-            if (polymorph_core.items[i]._rd && !polymorph_core.rects[i]) {
-                //overwriting rects? for future
-                polymorph_core.rects[i] = new polymorph_core.rect(i);
+            if (polymorph_core.items[i]._rd) {
+                if (!polymorph_core.rects[i]) {
+                    //overwriting rects? for future
+                    polymorph_core.rects[i] = new polymorph_core.rect(i);
+                }
+                polymorph_core.rects[i].attach();
             }
         }
 

@@ -697,6 +697,11 @@ if (!isPhone()) {
 
         this.rectsTied = [];
         this.tieRect = (rectID) => {
+            if (this.rectsTied.indexOf(rectID) != -1) {
+                // ignore - we already tied this rect
+                // this occurs if there are multiple save sources and an existing rect tries to reattach to us.
+                return;
+            }
             this.innerDivContainer.remove();
             this.tabbar.remove();
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
@@ -964,27 +969,29 @@ if (!isPhone()) {
             return this.settings;
         }
 
-        //connect to my parent
-        if (this.settings.p && polymorph_core.items[this.settings.p]) {
-            //there is or will be a rect / subframe for it.
-            if (polymorph_core.rects[this.settings.p]) {
-                polymorph_core.rects[this.settings.p].tieRect(rectID);
-            } else {
-                if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
-                polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+        //connect to my parent. Called after creation in load process.
+        this.attach = () => {
+            if (this.settings.p && polymorph_core.items[this.settings.p]) {
+                //there is or will be a rect / subframe for it.
+                if (polymorph_core.rects[this.settings.p]) {
+                    polymorph_core.rects[this.settings.p].tieRect(rectID);
+                } else {
+                    if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+                    polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+                }
             }
-        }
 
-        //Signal all children waiting for this that they can connect to this now.
-        if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
-            if (polymorph_core.items[v]._od) {
-                //v is container
-                this.tieContainer(v);
-            } else {
-                //v is rect
-                this.tieRect(v);
-            }
-        });
+            //Signal all children waiting for this that they can connect to this now.
+            if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
+                if (polymorph_core.items[v]._od) {
+                    //v is container
+                    this.tieContainer(v);
+                } else {
+                    //v is rect
+                    this.tieRect(v);
+                }
+            });
+        }
         this.remove = () => {
             // nerf all containers
             this.containers.forEach(i => i.remove());

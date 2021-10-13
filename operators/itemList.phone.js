@@ -197,8 +197,7 @@ if (isPhone()) {
             let currentProp = e.target.parentElement.dataset.prop;
             if (this.settings.phoneProperties[currentProp] == 'date') {
                 if (!currentItem[currentProp] || typeof(currentItem[currentProp]) == "string") currentItem[currentProp] = {};
-                currentItem[currentProp].datestring = e.target.innerText;
-                currentItem[currentProp].date = dateParser.richExtractTime(currentItem[currentProp].datestring);
+                currentItem[currentProp] = dateParser.stringToEvent(e.target.innerText);
             } else {
                 currentItem[currentProp] = e.target.innerText;
             }

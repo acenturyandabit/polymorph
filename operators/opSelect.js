@@ -57,7 +57,7 @@
                     //get out of the way
                     while (container.div.children.length) container.div.children[0].remove();
                     container.settings.t = b.dataset.underOperatorName;
-                    container.operator = new polymorph_core.operators[b.dataset.underOperatorName].constructor(container);
+                    container.operator = new polymorph_core.operators[b.dataset.underOperatorName].constructor(container, true);
                     //change the operator potato.
                     //change name if user has not already modified name
                     if (container.settings.tabbarName == "New Operator") container.settings.tabbarName = polymorph_core.operators[b.dataset.underOperatorName].options.displayName || b.dataset.underOperatorName;

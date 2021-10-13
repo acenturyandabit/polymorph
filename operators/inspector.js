@@ -262,8 +262,7 @@
         })
 
         this.datereparse = (it, i) => {
-            it[i].date = dateParser.richExtractTime(it[i].datestring);
-            if (!it[i].date.length) it[i].date = undefined;
+            it[i] = dateParser.stringToEvent(it[i].datestring);
             container.fire("dateUpdate");
         }
 

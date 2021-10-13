@@ -84,7 +84,6 @@ if (isPhone()) {
                     }
                 }
             }
-            polymorph_core.items[this.settings.operatorClonedFrom]
             delete this.settings.operatorClonedFrom;
         }
 
@@ -108,12 +107,20 @@ if (isPhone()) {
         description: "Place a new frame, with its own tabs, in this current frame.",
         section: "Layout",
         mustColdLoad: true
-    }, function(container) {
+    }, function(container, isCreating = false) {
         polymorph_core.operatorTemplate.call(this, container, {});
         this.rootdiv.remove(); //nerf the standard rootdiv because of differring naming conventions between rects and operators.
         this.outerDiv = document.createElement("div");
         //Add div HTML here
-        this.outerDiv.innerHTML = ``;
+        this.outerDiv.innerHTML = `
+        <div>
+            <button>Create Rect Here</button>
+        </div>`;
+        let createRectButton = this.outerDiv.children[0].children[0];
+        createRectButton.addEventListener("click", () => {
+            let rectID = polymorph_core.newRect(container.id);
+            this.tieRect(rectID);
+        })
         this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
         container.div.appendChild(this.outerDiv);
 
@@ -132,6 +139,9 @@ if (isPhone()) {
 
         this.tieRect = function(rectID) {
             this.rectID = rectID;
+            while (this.outerDiv.children.length) {
+                this.outerDiv.children[0].remove();
+            }
             this.outerDiv.appendChild(polymorph_core.rects[rectID].outerDiv);
             //polymorph_core.rects[rectID].refresh();
         }
@@ -140,7 +150,7 @@ if (isPhone()) {
         if (polymorph_core.rectLoadCallbacks[container.id]) {
             this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
             delete polymorph_core.rectLoadCallbacks[container.id];
-        } else if (!this.settings.operatorClonedFrom) {
+        } else if (!this.settings.operatorClonedFrom && isCreating) {
             let rectID = polymorph_core.newRect(container.id);
             this.tieRect(rectID);
         }

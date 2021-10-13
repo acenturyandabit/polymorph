@@ -351,8 +351,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     polymorph_core.items[id][key] = {
                         datestring: keyset[1][ltrkey]
                     }
-                    polymorph_core.items[id][key].date = dateParser.getSortingTimes(polymorph_core.items[id][key].datestring);
-                    if (!polymorph_core.items[id][key].date.length) polymorph_core.items[id][key].date = undefined;
+                    polymorph_core.items[id][key] = dateParser.stringToEvent(polymorph_core.items[id][key].datestring);
                     container.fire("dateUpdate", { sender: this });
                 } else {
                     polymorph_core.items[id][key] = keyset[1][ltrkey];
@@ -744,7 +743,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 let getDate = (obj) => {
                     if (!obj) return undefined;
                     try {
-                        obj = obj.date[0].date;
+                        obj = dateParser.getSortingTime(obj).date;
                     } catch (e) {
                         obj = undefined;
                     }
@@ -812,6 +811,7 @@ polymorph_core.registerOperator("workflow_gf", {
             // other items would also have a 'renderedText' property
         }
     }; // for deletions
+    this.renderedItemCache = renderedItemCache;
 
     // Takes an IDstring OR an element and returns a standardized tuple.
     this.resolveSpan = (item) => {
@@ -906,7 +906,7 @@ polymorph_core.registerOperator("workflow_gf", {
                                 let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
                                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                                     try {
-                                        return `\\{${ltrkey}:${new Date(polymorph_core.items[id][key].date[0].date).toString()}}`;
+                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toString()}}`;
                                     } catch (e) {
                                         return `\\{${ltrkey}:${"Invalid Date"}}`;
                                     }

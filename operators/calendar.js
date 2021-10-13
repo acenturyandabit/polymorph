@@ -43,8 +43,8 @@
                                         result = [{ date: Number(polymorph_core.items[i][currentDP]) }];
                                         if (!result) continue;
                                     } else {
-                                        if (polymorph_core.items[i][currentDP].date) {
-                                            result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP].date, start, end);
+                                        if (polymorph_core.items[i][currentDP]) {
+                                            result = dateParser.getCalendarTimes(polymorph_core.items[i][currentDP], start, end);
                                         } else {
                                             continue;
                                         }
