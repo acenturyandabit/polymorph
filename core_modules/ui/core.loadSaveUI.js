@@ -177,7 +177,7 @@
         }
 
         polymorph_core.on("UIstart", () => {
-            polymorph_core.topbar.add("File/Preferences").addEventListener("click", () => {
+            polymorph_core.topbar.add("File/Save Locations").addEventListener("click", () => {
                 polymorph_core.showSavePreferencesDialog();
             });
         });

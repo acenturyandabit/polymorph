@@ -2109,7 +2109,7 @@ polymorph_core.on("titleButtonsReady", () => {
         }
 
         polymorph_core.on("UIstart", () => {
-            polymorph_core.topbar.add("File/Preferences").addEventListener("click", () => {
+            polymorph_core.topbar.add("File/Save Locations").addEventListener("click", () => {
                 polymorph_core.showSavePreferencesDialog();
             });
         });
@@ -2129,6 +2129,98 @@ polymorph_core.on("titleButtonsReady", () => {
             e.returnValue = "Hold up, you seem to have some unsaved changes. Are you sure you want to close this window?";
         }
     })
+
+})();;
+
+(() => {
+
+    /*let customCSSDialog = document.createElement("div");
+    loadDialog.classList.add("dialog");
+    customCSSDialog = dialogManager.checkDialogs(
+        customCSSDialog, { zIndex: 999 })[0];
+    let customCSSInnerDialog = document.querySelector(".innerDialog");
+    customCSSInnerDialog.innerHTML = `
+    <h2>Edit the background css here.</h2> 
+    <textarea style="width: 100%; height: calc(100% - 50px); resize:none">
+    `;
+    document.body.appendChild(customCSSDialog);
+    */
+    let customCSSInnerDialog = document.createElement("div");
+    customCSSInnerDialog.innerHTML = `
+    <h2>Edit the css here.</h2> 
+    <p>Background css</p>
+    <textarea class="bgcss" style="width: 100%; height: 10vh; resize:none"></textarea>
+    <p>Rect colors</p>
+    <textarea class="rtcss" style="width: 100%; height: 30vh; resize:none"></textarea>
+    <button class='save'>Save</button><button class='reset'>Reset</button>
+    `;
+
+    // Background css
+    let base_css = {
+        bg: `
+.rectspace{
+    background: url('assets/purplestars.jpeg');
+}
+    `,
+        rt: `
+.tab.active{
+    background: #8093FF;
+}
+
+.tab{
+    background:#C074E8;
+}
+
+.rect_outer_div{
+    background:rgba(230, 204, 255,0.1);
+}
+    `
+    };
+    let cssTextarea = customCSSInnerDialog.querySelector(".bgcss");
+    let rtcssTextarea = customCSSInnerDialog.querySelector(".rtcss");
+    let saveBtn = customCSSInnerDialog.querySelector(".save");
+    let resetBtn = customCSSInnerDialog.querySelector(".reset");
+
+    let storedCSS;
+    try {
+        storedCSS = JSON.parse(localStorage.getItem("custom-css"));
+    } catch (e) {}
+    if (!storedCSS) storedCSS = Object.assign({}, base_css);
+    cssTextarea.value = storedCSS.bg;
+    rtcssTextarea.value = storedCSS.rt;
+
+    let globalStyleElement = document.createElement("style");
+    document.body.appendChild(globalStyleElement);
+    let updateCSS = () => {
+        storedCSS.bg = cssTextarea.value;
+        storedCSS.rt = rtcssTextarea.value;
+        localStorage.setItem("custom-css", JSON.stringify(storedCSS));
+        globalStyleElement.innerHTML = storedCSS.bg + "\n" + storedCSS.rt;
+        // update all containers
+        for (let ctr in polymorph_core.containers) {
+            if (polymorph_core.containers[ctr].operator) {
+                polymorph_core.containers[ctr].operator.rootStyle.innerHTML = storedCSS.rt;
+            }
+        }
+    };
+    updateCSS();
+    polymorph_core.updateCSS = updateCSS;
+
+    saveBtn.addEventListener("click", updateCSS);
+
+    resetBtn.addEventListener("click", (e) => {
+        cssTextarea.value = base_css.bg;
+        rtcssTextarea.value = base_css.rt;
+        updateCSS();
+    });
+
+    (() => {
+        polymorph_core.on("UIstart", () => {
+            polymorph_core.topbar.add("File/Custom CSS").addEventListener("click", () => {
+                polymorph_core.dialog.prompt(customCSSInnerDialog);
+            });
+        });
+    })();
 
 })();;
 
@@ -3080,6 +3172,9 @@ polymorph_core.operatorTemplate = function(container, defaultSettings) {
     this.settings = {};
     Object.assign(this.settings, defaultSettings);
     this.rootdiv = document.createElement("div");
+    this.rootStyle = document.createElement("style");
+    container.div.appendChild(this.rootStyle);
+    setTimeout(() => polymorph_core.updateCSS());
     this.rootdiv.style.height = "100%";
     this.rootdiv.style.overflow = "auto";
     container.div.appendChild(this.rootdiv);
@@ -3421,7 +3516,6 @@ const RECT_ORIENTATION_Y = 1;
 const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 5;
-const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
 const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 if (!isPhone()) {
 
@@ -3576,6 +3670,7 @@ if (!isPhone()) {
 
         // Create the outerDiv: the one with the active borders.
         this.outerDiv = document.createElement("div");
+        this.outerDiv.classList.add("rect_outer_div");
         this.outerDiv.style.cssText = `
         box-sizing: border-box;
         height: 100%; width:100%;
@@ -3583,7 +3678,6 @@ if (!isPhone()) {
         display:flex;
         flex-direction:column;
         flex: 0 1 auto;
-        background: ${RECT_OUTER_DIV_COLOR}
     `;
 
         this.createTabSpan = (containerid) => {
@@ -3604,10 +3698,9 @@ if (!isPhone()) {
             tabGear.src = "assets/gear.png";
             tabGear.style.cssText = "width: 1em; height:1em;"
             tabGear.style.display = "none";
-
+            tabSpan.classList.add("tab");
             tabSpan.style.cssText = `
         border: 1px solid black;
-        background: #C074E8;
         color: white;
         align-items: center;
         display: inline-flex;
@@ -3624,7 +3717,7 @@ if (!isPhone()) {
 
         // The actual tabbar.
         this.tabbar = document.createElement("p");
-        this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:${RECT_OUTER_DIV_COLOR}`
+        this.tabbar.style.cssText = `display:block;margin:0; width:100%;`
         this.plus = document.createElement("button");
         this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
         this.plus.innerHTML = "+";
@@ -3639,7 +3732,6 @@ if (!isPhone()) {
             indiv.style.height = "100%";
             indiv.style.width = "100%";
             indiv.style.overflow = "hidden";
-            indiv.style.background = RECT_OUTER_DIV_COLOR;
             indiv.style.display = "none";
             indiv.dataset.containerid = containerid;
             return indiv;
@@ -3703,13 +3795,13 @@ if (!isPhone()) {
             for (let i = 0; i < this.tabbar.children.length - 1; i++) {
                 this.tabbar.children[i].children[1].style.display = "none";
                 this.tabbar.children[i].children[2].style.display = "none";
-                this.tabbar.children[i].style.background = "#C074E8";
+                this.tabbar.children[i].classList.remove("active");
             }
             //show buttons on this operator
             let currentTab = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
             currentTab.children[1].style.display = "inline";
             currentTab.children[2].style.display = "inline";
-            currentTab.style.background = "#8093FF";
+            currentTab.classList.add("active");
             polymorph_core.containers[containerid].refresh();
             //Overall refresh because borders are dodgy
             polymorph_core.containers[this.settings.s].refresh();
@@ -4796,7 +4888,7 @@ if (!isPhone()) {
                 <div class="gdrivePrompt" style="right: 0;position: absolute;top: 0;display:none"><button>Try our Google Drive app for quick access to your files!</button></div>
                 <!--<button class="sharer" style="background:blueviolet; border-radius:3px; border:none; padding:3px; color:white; position:absolute; top: 10px; right: 10px;">Share</button>-->
             </div>
-            <div class="rectspace" style="width:100%; background: url('assets/purplestars.jpeg'); flex:0 1 100vh; max-height: calc(100% - 2.1em); position:relative">
+            <div class="rectspace" style="width:100%; flex:0 1 100vh; max-height: calc(100% - 2.1em); position:relative">
             </div>
         </div>
         `));

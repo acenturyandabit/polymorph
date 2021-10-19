@@ -7,6 +7,7 @@ let fileList = [
     "core_modules/ui/core.dialog.js",
     "core_modules/ui/core.tutorial.js",
     "core_modules/ui/core.loadSaveUI.js",
+    "core_modules/ui/core.customCSS.js",
     "core_modules/core/core.dataUtils.js",
     "core_modules/core/core.container.js",
     "core_modules/ui/core.contextMenu.js",

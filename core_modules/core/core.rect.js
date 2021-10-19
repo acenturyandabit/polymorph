@@ -5,7 +5,6 @@ const RECT_ORIENTATION_Y = 1;
 const RECT_FIRST_SIBLING = 0;
 const RECT_SECOND_SIBLING = 1;
 const RECT_BORDER_WIDTH = 5;
-const RECT_OUTER_DIV_COLOR = "rgba(230, 204, 255,0.1)";
 const RECT_BORDER_COLOR = "rgba(230, 204, 255,0.1)"; //"transparent";
 if (!isPhone()) {
 
@@ -160,6 +159,7 @@ if (!isPhone()) {
 
         // Create the outerDiv: the one with the active borders.
         this.outerDiv = document.createElement("div");
+        this.outerDiv.classList.add("rect_outer_div");
         this.outerDiv.style.cssText = `
         box-sizing: border-box;
         height: 100%; width:100%;
@@ -167,7 +167,6 @@ if (!isPhone()) {
         display:flex;
         flex-direction:column;
         flex: 0 1 auto;
-        background: ${RECT_OUTER_DIV_COLOR}
     `;
 
         this.createTabSpan = (containerid) => {
@@ -188,10 +187,9 @@ if (!isPhone()) {
             tabGear.src = "assets/gear.png";
             tabGear.style.cssText = "width: 1em; height:1em;"
             tabGear.style.display = "none";
-
+            tabSpan.classList.add("tab");
             tabSpan.style.cssText = `
         border: 1px solid black;
-        background: #C074E8;
         color: white;
         align-items: center;
         display: inline-flex;
@@ -208,7 +206,7 @@ if (!isPhone()) {
 
         // The actual tabbar.
         this.tabbar = document.createElement("p");
-        this.tabbar.style.cssText = `display:block;margin:0; width:100%;background:${RECT_OUTER_DIV_COLOR}`
+        this.tabbar.style.cssText = `display:block;margin:0; width:100%;`
         this.plus = document.createElement("button");
         this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
         this.plus.innerHTML = "+";
@@ -223,7 +221,6 @@ if (!isPhone()) {
             indiv.style.height = "100%";
             indiv.style.width = "100%";
             indiv.style.overflow = "hidden";
-            indiv.style.background = RECT_OUTER_DIV_COLOR;
             indiv.style.display = "none";
             indiv.dataset.containerid = containerid;
             return indiv;
@@ -287,13 +284,13 @@ if (!isPhone()) {
             for (let i = 0; i < this.tabbar.children.length - 1; i++) {
                 this.tabbar.children[i].children[1].style.display = "none";
                 this.tabbar.children[i].children[2].style.display = "none";
-                this.tabbar.children[i].style.background = "#C074E8";
+                this.tabbar.children[i].classList.remove("active");
             }
             //show buttons on this operator
             let currentTab = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
             currentTab.children[1].style.display = "inline";
             currentTab.children[2].style.display = "inline";
-            currentTab.style.background = "#8093FF";
+            currentTab.classList.add("active");
             polymorph_core.containers[containerid].refresh();
             //Overall refresh because borders are dodgy
             polymorph_core.containers[this.settings.s].refresh();

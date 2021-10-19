@@ -10,6 +10,9 @@ polymorph_core.operatorTemplate = function(container, defaultSettings) {
     this.settings = {};
     Object.assign(this.settings, defaultSettings);
     this.rootdiv = document.createElement("div");
+    this.rootStyle = document.createElement("style");
+    container.div.appendChild(this.rootStyle);
+    setTimeout(() => polymorph_core.updateCSS());
     this.rootdiv.style.height = "100%";
     this.rootdiv.style.overflow = "auto";
     container.div.appendChild(this.rootdiv);
