@@ -67,7 +67,7 @@ let fileList = [
 
 try {
     //we are working in the browser context
-    if (localStorage.getItem("__polymorph_debug_flag") == "true") {
+    if (true) {
         let f = 0;
         let loadNextFile = () => {
             let s = document.createElement("script");
