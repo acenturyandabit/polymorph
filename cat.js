@@ -14879,7 +14879,7 @@ polymorph_core.registerOperator("itemcluster2", {
     this.movingDivs = [];
     this.alreadyMoving = -1; //for deselecting nodes
     this.clearOutMovingDivs = () => {
-        this.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
+        this.movingDivs.forEach((v) => { v.el.children()[0].stroke("red") });
         this.movingDivs = []; //empty them
     }
     this.itemSpace.addEventListener("mousedown", (e) => {
@@ -15024,8 +15024,7 @@ polymorph_core.registerOperator("itemcluster2", {
                     });
 
                     // Style it
-
-                    this.itemPointerCache[i].node.children[0].style.border = "1px solid red";
+                    this.itemPointerCache[i].children()[0].stroke("blue");
                 }
             }
         }

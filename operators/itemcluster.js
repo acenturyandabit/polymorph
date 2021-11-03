@@ -491,7 +491,7 @@ polymorph_core.registerOperator("itemcluster2", {
     this.movingDivs = [];
     this.alreadyMoving = -1; //for deselecting nodes
     this.clearOutMovingDivs = () => {
-        this.movingDivs.forEach((v) => { v.el.node.children[0].style.border = "1px solid black" });
+        this.movingDivs.forEach((v) => { v.el.children()[0].stroke("red") });
         this.movingDivs = []; //empty them
     }
     this.itemSpace.addEventListener("mousedown", (e) => {
@@ -624,15 +624,19 @@ polymorph_core.registerOperator("itemcluster2", {
             }
             this.clearOutMovingDivs();
             for (let i in this.itemPointerCache) {
-                if (((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < this.rectangleDragging.sx) ||
+                if (
+                    ((this.itemPointerCache[i].cx() > coords.x && this.itemPointerCache[i].cx() < this.rectangleDragging.sx) ||
                         (this.itemPointerCache[i].cx() < coords.x && this.itemPointerCache[i].cx() > this.rectangleDragging.sx)) &&
                     ((this.itemPointerCache[i].cy() > coords.y && this.itemPointerCache[i].cy() < this.rectangleDragging.sy) ||
                         (this.itemPointerCache[i].cy() < coords.y && this.itemPointerCache[i].cy() > this.rectangleDragging.sy))) {
+
+                    //add to movingdivs
                     this.movingDivs.push({
                         el: this.itemPointerCache[i]
                     });
-                    this.itemPointerCache[i].node.children[0].style.border = "1px solid red";
-                    //add to movingdivs
+
+                    // Style it
+                    this.itemPointerCache[i].children()[0].stroke("blue");
                 }
             }
         }
