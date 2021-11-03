@@ -14,6 +14,7 @@ function _itemcluster_extend_contextmenu() {
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
         <li class="hierarchy">Arrange in hierarchy</li>
+        <li class="hierarchy squashed">Arrange in squashed hierarchy</li>
         <li class="hierarchy horizontal">Arrange in horizontal hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
         <li class="hierarchy biradial">Arrange in biradial hierarchy</li>
@@ -48,23 +49,23 @@ function _itemcluster_extend_contextmenu() {
         }
     })
     this.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
-            let rect = this.itemSpace.getBoundingClientRect();
-            for (let i in polymorph_core.items) {
-                if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
-                    polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
-                    this.arrangeItem(i);
-                }
+        let rect = this.itemSpace.getBoundingClientRect();
+        for (let i in polymorph_core.items) {
+            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x = e.clientX - rect.left;
+                polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y = e.clientY - rect.top;
+                this.arrangeItem(i);
             }
-            for (let i in polymorph_core.items) {
-                //second update to fix lines; also alert everyone of changes.
-                this.container.fire("updateItem", {
-                    id: i
-                });
-            }
-        })
-        //hierarchy buttons
+        }
+        for (let i in polymorph_core.items) {
+            //second update to fix lines; also alert everyone of changes.
+            if (this.itemRelevant(i)) this.container.fire("updateItem", {
+                id: i
+            });
+        }
+    });
 
+    //hierarchy buttons
     let generateHierarchy = () => {
         //get position of items, and the links to other items
         let visibleItems = [];
@@ -158,6 +159,73 @@ function _itemcluster_extend_contextmenu() {
         return visibleItems;
     }
 
+    let squashedHierarchy = (e, visibleItems) => {
+        //sort for rendering
+        visibleItems.sort((a, b) => {
+            return (a.level - b.level) + (a.level == b.level) * (a.x - b.x);
+        });
+
+        //Fetch individual item widths
+        for (let i = 0; i < visibleItems.length; i++) {
+            if (this.itemPointerCache[visibleItems[i].id]) {
+                let svgi = this.itemPointerCache[visibleItems[i].id].children()[1];
+                visibleItems[i].width = svgi.width() + 10;
+                visibleItems[i].height = svgi.height() + 10;
+            }
+        }
+
+        // Get total width of each level
+        let levelWidths = [];
+        let levelHeights = [];
+        visibleItems.forEach(i => {
+            if (!levelWidths[i.level]) {
+                levelWidths.push(0);
+                levelHeights.push(0);
+            }
+            levelWidths[i.level] += i.width;
+            if (i.height > levelHeights[i.level]) levelHeights[i.level] = i.height;
+        });
+
+        //roughly group children
+        // Start with the root items
+        let levelOrders = [
+            visibleItems.filter(i => i.level == 0)
+        ];
+        let seenBefore = {};
+        // For all other items, add children if not seen before
+        let IDmap = visibleItems.reduce((p, i) => {
+            p[i.id] = i;
+            return p;
+        }, {});
+        let addChildrenToLevels = (v) => {
+            if (v.children) {
+                v.children.forEach(i => {
+                    if (!seenBefore[i]) {
+                        seenBefore[i] = true;
+                        while (!levelOrders[IDmap[i].level]) levelOrders.push([]);
+                        levelOrders[IDmap[i].level].push(IDmap[i]);
+                        addChildrenToLevels(IDmap[i]);
+                    }
+                })
+            }
+        }
+        visibleItems.forEach((v) => addChildrenToLevels(v));
+
+        let heightSoFar = 0;
+        // render each layer at a time
+        levelOrders.forEach((level, li) => {
+            let widthSoFar = -levelWidths[li] / 2;
+            level.forEach((itm, ii) => {
+                if (polymorph_core.items[itm.id]) {
+                    polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].y = heightSoFar;
+                    polymorph_core.items[itm.id].itemcluster.viewData[this.settings.currentViewName].x = widthSoFar;
+                    widthSoFar += itm.width;
+                }
+            });
+            heightSoFar += levelHeights[li] + 30;
+        })
+    }
+
     let cartesianHierarchy = (e, visibleItems) => {
         //sort for rendering
         visibleItems.sort((a, b) => {
@@ -166,11 +234,11 @@ function _itemcluster_extend_contextmenu() {
         //sort children as well
         let indexedOrder = visibleItems.map((v) => v.id);
         visibleItems.forEach((v) => {
-                if (v.children) {
-                    v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
-                }
-            })
-            //calculate widths
+            if (v.children) {
+                v.children.sort((a, b) => { return indexedOrder.indexOf(a) - indexedOrder.indexOf(b) });
+            }
+        });
+        //calculate widths
         let getWidth = (id) => {
             if (id == '0') return 0;
             let c = visibleItems[indexedOrder.indexOf(id)].children;
@@ -538,7 +606,11 @@ function _itemcluster_extend_contextmenu() {
         x: -2544.984375,
         y: 278}]
         */
-        if (e.target.classList.contains('radial')) {
+
+        //There is a special id:'0' item that is added if there are multiple roots.
+        if (e.target.classList.contains('squashed')) {
+            squashedHierarchy(e, visibleItems);
+        } else if (e.target.classList.contains('radial')) {
             radialHierarchy(e, visibleItems);
         } else if (e.target.classList.contains('biradial')) {
             biradialHierarchy(e, visibleItems);
@@ -548,9 +620,9 @@ function _itemcluster_extend_contextmenu() {
             cartesianHierarchy(e, visibleItems);
         }
 
-        for (let i in polymorph_core.items) {
-            this.container.fire("updateItem", {
-                id: i
+        for (let id of visibleItems.map(i => i.id)) {
+            if (polymorph_core.items[id]) this.container.fire("updateItem", {
+                id: id
             });
         }
 
