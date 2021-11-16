@@ -22,8 +22,8 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     <li data-action="delitm">Delete item</li>
     <li>Copy items
     <ul class="submenu">
-        <li data-action="copylist">Copy item & sub as list</li>
-        <li data-action="copylistinternal">Copy item & sub for pasting</li>
+        <li data-action="copylist">Copy item tree for pasting</li>
+        <li data-action="copylistinternal">Copy item tree internally</li>
     </ul>
     </li>
     <li data-action="pasteInternal">Paste items</li>
@@ -120,6 +120,13 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     this.contextMenuActions["copylist"] = function(e) {
         console.log(contextTarget);
         let text = contextTarget.parentElement.parentElement.innerText;
+
+        // Format the text for a bit
+
+        // Replace > with *
+
+        // Remove extra newlines
+
         // Copies a string to the clipboard. 
         if (window.clipboardData && window.clipboardData.setData) {
             // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.

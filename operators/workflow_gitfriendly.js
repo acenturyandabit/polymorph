@@ -19,7 +19,8 @@ polymorph_core.registerOperator("workflow_gf", {
         focusExclusionMode: false,
         focusExclusionID: "",
         collapseProperty: "collapsed",
-        advancedInputMode: false
+        advancedInputMode: false,
+        filterHides: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
@@ -122,9 +123,10 @@ polymorph_core.registerOperator("workflow_gf", {
         //hide all items
         holdExpanded = {};
         if (e.target.value.length > 0) {
+            // Hide everything
             for (let i in renderedItemCache) {
                 if (i) {
-                    this.resolveSpan(i).el.style.display = "none";
+                    if (this.settings.filterHide) this.resolveSpan(i).el.style.display = "none";
                     this.resolveSpan(i).el.classList.remove("searchFocused");
                 }
             }
@@ -1111,6 +1113,13 @@ polymorph_core.registerOperator("workflow_gf", {
             object: () => this.settings,
             property: "advancedInputMode",
             label: "Advanced input mode (changed editing style)"
+        }),
+        filterHides: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "filterHides",
+            label: "Filter should hideitems"
         })
     }
 
