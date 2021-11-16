@@ -3879,7 +3879,7 @@ if (!isPhone()) {
             while (el != this.tabbar) {
                 if (el.dataset.containerid) {
                     this.pulledDiv = el;
-                    this.startPulling = false;
+                    this.pullingCommitted = false;
                 }
                 el = el.parentElement;
             }
@@ -3887,7 +3887,7 @@ if (!isPhone()) {
 
         document.addEventListener("mousemove", (e) => {
             if (this.pulledDiv) {
-                if (this.startPulling) {
+                if (this.pullingCommitted) {
                     //lift the item, by setting its display to position absolute
                     this.pulledDiv.style.position = "absolute";
                     this.pulledDiv.style.display = "flex"; //instead of inline flex
@@ -3900,7 +3900,7 @@ if (!isPhone()) {
                         if (eventComposedPath[i] == this.pulledDiv) {
                             break;
                         } else if (eventComposedPath[i] == this.pulledDiv.parentElement) {
-                            this.startPulling = true;
+                            this.pullingCommitted = true;
                         }
                     }
                 }
@@ -3908,23 +3908,25 @@ if (!isPhone()) {
         })
         document.addEventListener("mouseup", (e) => {
             if (this.pulledDiv) {
-                let rect = this.tabbar.getBoundingClientRect();
-                let elementsAtPoint = this.tabbar.getRootNode().elementsFromPoint(e.clientX, rect.top);
-                this.pulledDiv.style.display = "inline-flex";
-                this.pulledDiv.style.position = "static";
-                if (elementsAtPoint[1].tagName == "SPAN") {
-                    let childs = Array.from(this.tabbar.children)
-                    let pulledIndex = childs.indexOf(this.pulledDiv);
-                    let otherIndex = childs.indexOf(elementsAtPoint[1])
-                    if (otherIndex < pulledIndex) {
-                        this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1]);
-                    } else {
-                        this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
+                if (this.pullingCommitted) {
+                    let rect = this.tabbar.getBoundingClientRect();
+                    let elementsAtPoint = this.tabbar.getRootNode().elementsFromPoint(e.clientX, rect.top);
+                    this.pulledDiv.style.display = "inline-flex";
+                    this.pulledDiv.style.position = "static";
+                    if (elementsAtPoint[1].tagName == "SPAN") {
+                        let childs = Array.from(this.tabbar.children)
+                        let pulledIndex = childs.indexOf(this.pulledDiv);
+                        let otherIndex = childs.indexOf(elementsAtPoint[1])
+                        if (otherIndex < pulledIndex) {
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1]);
+                        } else {
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
+                        }
                     }
+                    //save the order of my containers in settings
+                    this.settings.containerOrder = Array.from(this.tabbar.children).map(i => i.dataset.containerid);
+                    this.settings.containerOrder.pop(); //remove button with undefined id
                 }
-                //save the order of my containers in settings
-                this.settings.containerOrder = Array.from(this.tabbar.children).map(i => i.dataset.containerid);
-                this.settings.containerOrder.pop(); //remove button with undefined id
                 this.pulledDiv = undefined;
             }
         })
@@ -4078,30 +4080,30 @@ if (!isPhone()) {
                 tabmenu.style.display = "none";
             })
             /*
-    tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-        let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-        tabmenu.style.display = "none";
-        polymorph_core.dialog.prompt(tta);
-        tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
-    })
+tabmenu.querySelector(".xpfr").addEventListener("click", () => {
+    let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+    tabmenu.style.display = "none";
+    polymorph_core.dialog.prompt(tta);
+    tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+})
  
-    tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-        let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-        polymorph_core.dialog.prompt(tta);
-        tta.querySelector("button").addEventListener("click", () => {
-            if (tta.querySelector("textarea").value) {
-                let importObject = JSON.parse(tta.querySelector("textarea").value);
-                this.containers[contextedOperatorIndex].fromSaveData(importObject);
-                this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-                polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                //force update all items to reload the view
-                for (let i in polymorph_core.items) {
-                    polymorph_core.fire('updateItem', { id: i });
-                }
+tabmenu.querySelector(".mpfr").addEventListener("click", () => {
+    let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+    polymorph_core.dialog.prompt(tta);
+    tta.querySelector("button").addEventListener("click", () => {
+        if (tta.querySelector("textarea").value) {
+            let importObject = JSON.parse(tta.querySelector("textarea").value);
+            this.containers[contextedOperatorIndex].fromSaveData(importObject);
+            this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+            polymorph_core.fire("updateItem", { id: rectID, sender: this });
+            //force update all items to reload the view
+            for (let i in polymorph_core.items) {
+                polymorph_core.fire('updateItem', { id: i });
             }
-        })
-        tabmenu.style.display = "none";
+        }
     })
+    tabmenu.style.display = "none";
+})
 */
             //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
