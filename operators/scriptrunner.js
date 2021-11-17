@@ -16,15 +16,44 @@ polymorph_core.registerOperator("scriptrunner", {
     //Add content-independent HTML here.
     this.rootdiv.style.color = "white";
     this.rootdiv.innerHTML = `
-        <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>
-        <p>Press 'Update' to execute this script.</p>
-        <textarea style="width: 100%; height: 50%; tab-size:4" placeholder="Enter script here:"></textarea>
-        <br>
-        <button class="updatebtn">Update</button>
-        <button class="stopbtn">Stop script</button>
-        <button class="clogs">Clear logs</button>
-        <div id="output" style="overflow-y: auto; height: 30%;"></div>
-    `;
+        <div style="display:flex" class="switchTabs">
+            <style>
+                .switchTabs p{
+                    padding: 10px;
+                    border:1px solid black;
+                    border-radius: 3px;
+                }
+            </style>
+            <p data-switchto="code">Code</p>
+            <p data-switchto="ui">UI</p>
+        </div>
+        <div>
+            <div data-switchto="code">
+                <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>
+                <p>Press 'Update' to execute this script.</p>
+                <textarea style="width: 100%; height: 50%; tab-size:4" placeholder="Enter script here:"></textarea>
+                <br>
+                <button class="updatebtn">Update</button>
+                <button class="stopbtn">Stop script</button>
+                <button class="clogs">Clear logs</button>
+                <div id="output" style="overflow-y: auto; height: 10%;"></div>
+            </div>
+            <div data-switchto="ui" style="display:none">
+            </div>
+        </div>
+        `;
+    let tabs = Array.from(this.rootdiv.querySelectorAll("div[data-switchto]")).reduce((p, i) => { p[i.dataset.switchto] = i; return p; }, {});
+    this.rootdiv.querySelector(".switchTabs").addEventListener("click", (e) => {
+        if (e.target.matches("[data-switchto]")) {
+            for (let t in tabs) {
+                if (t == e.target.dataset.switchto) {
+                    tabs[t].style.display = "block";
+                } else {
+                    tabs[t].style.display = "none";
+                }
+            }
+        }
+    })
 
     //Allow tab to work
     let textarea = this.rootdiv.querySelector('textarea');
@@ -110,11 +139,14 @@ polymorph_core.registerOperator("scriptrunner", {
     }
     this.execute = () => {
         this.currentInstance = new instance();
-        let wrapped = `(function factory(instance, setInterval, clearInterval){
+        let wrapped = `(function factory(instance, setInterval, clearInterval, uidiv){
             ${this.settings.script}
         })`;
         try {
-            eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval);
+            let uidiv = document.createElement("div");
+            Array.from(tabs["ui"].children).forEach(i => i.remove());
+            tabs["ui"].appendChild(uidiv);
+            eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, uidiv);
         } catch (e) {
             this.currentInstance.log(e.toString());
         }
