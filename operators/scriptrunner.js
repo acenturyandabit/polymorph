@@ -107,12 +107,22 @@ polymorph_core.registerOperator("scriptrunner", {
             this.log(String(data))
         }
         this.intervals = [];
+        this.timeouts = [];
         this.setInterval = (f, t) => {
             this.intervals.push({ f: f, t: t, t0: t });
             return this.intervals.length;
         }
         this.clearInterval = (n) => {
             if (this.intervals[n]) this.intervals[n].f = undefined;
+        }
+        this.setTimeout = (f, t) => {
+            if (this.currentInstance) {
+                // if setTimeout sets new timeout after instance destroyed (due to async await), 
+                // don't allow code to still setTimeout.
+                let to = setTimeout(f, t);
+                this.timeouts.push(to);
+                return to;
+            }
         }
         polymorph_core.addEventAPI(this, this.logEx);
         this._fire = this.fire;
@@ -135,18 +145,19 @@ polymorph_core.registerOperator("scriptrunner", {
         })
     }, 100)
     this.stop = () => {
+        this.currentInstance.timeouts.forEach(i => clearTimeout(i));
         delete this.currentInstance;
     }
     this.execute = () => {
         this.currentInstance = new instance();
-        let wrapped = `(function factory(instance, setInterval, clearInterval, uidiv){
+        let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv){
             ${this.settings.script}
         })`;
         try {
             let uidiv = document.createElement("div");
             Array.from(tabs["ui"].children).forEach(i => i.remove());
             tabs["ui"].appendChild(uidiv);
-            eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, uidiv);
+            eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, this.currentInstance.setTimeout, uidiv);
         } catch (e) {
             this.currentInstance.log(e.toString());
         }
@@ -180,7 +191,9 @@ polymorph_core.registerOperator("scriptrunner", {
             // consider updating the script
             // again very dangerous xss target :(((
             this.rootdiv.querySelector("textarea").value = this.settings.script;
-            this.execute();
+            textarea.style.background = "lightgreen";
+            // actually yes this is terrifying, DO NOT execute
+            //this.execute();
         }
     })
 
