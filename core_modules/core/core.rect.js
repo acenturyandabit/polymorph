@@ -570,28 +570,28 @@ if (!isPhone()) {
             })
             /*
 tabmenu.querySelector(".xpfr").addEventListener("click", () => {
-    let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-    tabmenu.style.display = "none";
-    polymorph_core.dialog.prompt(tta);
-    tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
+let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+tabmenu.style.display = "none";
+polymorph_core.dialog.prompt(tta);
+tta.querySelector("textarea").value = JSON.stringify(this.containers[contextedOperatorIndex].toSaveData());
 })
  
 tabmenu.querySelector(".mpfr").addEventListener("click", () => {
-    let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
-    polymorph_core.dialog.prompt(tta);
-    tta.querySelector("button").addEventListener("click", () => {
-        if (tta.querySelector("textarea").value) {
-            let importObject = JSON.parse(tta.querySelector("textarea").value);
-            this.containers[contextedOperatorIndex].fromSaveData(importObject);
-            this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-            polymorph_core.fire("updateItem", { id: rectID, sender: this });
-            //force update all items to reload the view
-            for (let i in polymorph_core.items) {
-                polymorph_core.fire('updateItem', { id: i });
-            }
+let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
+polymorph_core.dialog.prompt(tta);
+tta.querySelector("button").addEventListener("click", () => {
+    if (tta.querySelector("textarea").value) {
+        let importObject = JSON.parse(tta.querySelector("textarea").value);
+        this.containers[contextedOperatorIndex].fromSaveData(importObject);
+        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+        polymorph_core.fire("updateItem", { id: rectID, sender: this });
+        //force update all items to reload the view
+        for (let i in polymorph_core.items) {
+            polymorph_core.fire('updateItem', { id: i });
         }
-    })
-    tabmenu.style.display = "none";
+    }
+})
+tabmenu.style.display = "none";
 })
 */
             //And a delegated settings button handler
@@ -860,9 +860,10 @@ tabmenu.querySelector(".mpfr").addEventListener("click", () => {
                     ];
                     //instantiate the rects
                     newRectIDs.forEach((v) => {
-                            polymorph_core.rects[v] = new polymorph_core.rect(v);
-                        })
-                        //copy in operators
+                        polymorph_core.rects[v] = new polymorph_core.rect(v);
+                        polymorph_core.rects[v].attach();
+                    });
+                    //copy in operators
                     this.containers.forEach((v, i) => {
                         v.settings.p = newRectIDs[!_firstOrSecond * 1];
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
