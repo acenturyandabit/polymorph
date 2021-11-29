@@ -6021,7 +6021,6 @@ function __itemlist_searchsort() {
 };
 
 if (!isPhone()) {
-
     polymorph_core.registerOperator("itemList", {
         section: "Standard",
         description: "Arrange your items in a list.",
@@ -6325,7 +6324,7 @@ if (!isPhone()) {
             let id = d.id;
             if (!this.itemRelevant(id)) {
                 if (this.renderedItems[id]) {
-                    $.each(this.data_table, function(i) {
+                    $.each(this.data_table, (i) => {
                         if (this.data_table[i].id === id) {
                             this.data_table.splice(i, 1);
                             return false;
@@ -6648,6 +6647,8 @@ if (!isPhone()) {
             }
         }
 
+
+
         //settings dialog
         //#region
         //Handle the settings dialog click!
@@ -6669,7 +6670,7 @@ if (!isPhone()) {
     <option value="focus">Display focused list</option>
     <option value="iface">Link to another container...</option>
     </select>
-        
+    <br><br>
     <button class="savetable"> Save as table </button>
     
     <p>View items with the following property:</p> 
@@ -6978,7 +6979,7 @@ if (!isPhone()) {
         <table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
          style='border-collapse:collapse;border:none'>`;
 
-            $.each(this.data_table, function(i) {
+            $.each(this.data_table, (i) => {
                 data += `<tr>`;
                 if (typeof this.data_table[i].title !== "undefined") {
                     data += `
