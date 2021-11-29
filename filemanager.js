@@ -67,7 +67,10 @@ let fileList = [
 
 try {
     //we are working in the browser context
-    if (true) {
+    if (localStorage.getItem("__polymorph_debug_flag") == "true" || // Add a few more conditions to make editing accessible for newcomers
+        window.location.href.includes("localhost") ||
+        window.location.href.includes("file://")
+    ) {
         let f = 0;
         let loadNextFile = () => {
             let s = document.createElement("script");

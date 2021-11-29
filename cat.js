@@ -6021,6 +6021,7 @@ function __itemlist_searchsort() {
 };
 
 if (!isPhone()) {
+
     polymorph_core.registerOperator("itemList", {
         section: "Standard",
         description: "Arrange your items in a list.",
@@ -6214,11 +6215,14 @@ if (!isPhone()) {
             let it = {};
             //clone the template and parse it
             //get data and register item
+            var valueToPush = {};
             for (let i of this.settings.propOrder) {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
                         if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
+                        // Generalise to any value (not just title and importance)
+                        valueToPush[i] = this.template.querySelector("[data-role='" + i + "']").value;
                         break;
                     case "object":
                         try {
@@ -6230,11 +6234,13 @@ if (!isPhone()) {
                     case "date":
                         if (this.template.querySelector("[data-role='" + i + "']").value) {
                             if (!it[i]) it[i] = {};
+                            valueToPush.date = it[i];
                             if (typeof it[i] == "string") it[i] = {
                                 datestring: it[i]
                             };
                             it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
                         } else if (i == this.settings.filter) {
+                            valueToPush.date = "now";
                             it[i] = {
                                 datestring: "now" // is this useful to have as a default? sure
                             };
@@ -6248,6 +6254,8 @@ if (!isPhone()) {
             if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
             //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
             let id = polymorph_core.insertItem(it);
+            valueToPush.id = id;
+            this.data_table.push(valueToPush);
 
             if (this.shiftDown && this.settings.linkProperty) {
                 let fi = this.taskList.querySelector(".ffocus");
@@ -6315,6 +6323,19 @@ if (!isPhone()) {
 
         container.on("updateItem", (d) => {
             let id = d.id;
+            if (!this.itemRelevant(id)) {
+                if (this.renderedItems[id]) {
+                    $.each(this.data_table, function(i) {
+                        if (this.data_table[i].id === id) {
+                            this.data_table.splice(i, 1);
+                            return false;
+                        }
+                    });
+                    this.renderedItems[id].remove();
+                    delete this.renderedItems[id];
+                }
+                return;
+            }
             if (!this.itemRelevant(id)) {
                 if (this.renderedItems[id]) {
                     this.renderedItems[id].remove();
@@ -6627,8 +6648,6 @@ if (!isPhone()) {
             }
         }
 
-
-
         //settings dialog
         //#region
         //Handle the settings dialog click!
@@ -6650,6 +6669,9 @@ if (!isPhone()) {
     <option value="focus">Display focused list</option>
     <option value="iface">Link to another container...</option>
     </select>
+        
+    <button class="savetable"> Save as table </button>
+    
     <p>View items with the following property:</p> 
     <input data-role='filter' placeholder = 'Property name'></input>
     <p>container to focus on:</p> 
@@ -6777,6 +6799,26 @@ if (!isPhone()) {
             this.settings.filter = e.target.value;
         })
 
+        d.querySelector(".savetable").addEventListener("click", () => {
+            var data = this.loadTableData();
+            //var data = "ahoooj";
+            var file = new Blob([data], { type: 'text/plain' });
+            if (window.navigator.msSaveOrOpenBlob) // IE10+
+                window.navigator.msSaveOrOpenBlob(file, filename);
+            else { // Others
+                var a = document.createElement("a"),
+                    url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = 'myfilename.html';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
+        })
+
         //Handle select's in proplist
         this.proplist.addEventListener('change', (e) => {
             if (e.target.matches("select")) this.settings.properties[e.target.dataset.role] = e.target.value;
@@ -6880,6 +6922,115 @@ if (!isPhone()) {
         }
         container.div.addEventListener("mouseup", ddmouseExitHandler);
         container.div.addEventListener("mouseleave", ddmouseExitHandler);
+
+
+        //////////////////////
+        // Table functionality
+        //////////////////////
+        this.data_table = [];
+
+        this.loadTableData = () => {
+
+
+            var data = `
+          <html>
+        
+        <head>
+        <meta http-equiv=Content-Type content="text/html; charset=windows-1250">
+        <meta name=Generator content="Microsoft Word 15 (filtered)">
+        <style>
+        <!--
+         /* Font Definitions */
+         @font-face
+        \t{font-family:"Cambria Math";
+        \tpanose-1:2 4 5 3 5 4 6 3 2 4;}
+        @font-face
+        \t{font-family:Calibri;
+        \tpanose-1:2 15 5 2 2 2 4 3 2 4;}
+         /* Style Definitions */
+         p.MsoNormal, li.MsoNormal, div.MsoNormal
+        \t{margin-top:0in;
+        \tmargin-right:0in;
+        \tmargin-bottom:8.0pt;
+        \tmargin-left:0in;
+        \tline-height:107%;
+        \tfont-size:11.0pt;
+        \tfont-family:"Calibri",sans-serif;}
+        .MsoChpDefault
+        \t{font-family:"Calibri",sans-serif;}
+        .MsoPapDefault
+        \t{margin-bottom:8.0pt;
+        \tline-height:107%;}
+        @page WordSection1
+        \t{size:595.3pt 841.9pt;
+        \tmargin:70.85pt 70.85pt 70.85pt 70.85pt;}
+        div.WordSection1
+        \t{page:WordSection1;}
+        -->
+        </style>
+        
+        </head>
+        
+        <body lang=SK style='word-wrap:break-word'>
+        
+        <div class=WordSection1>
+        
+        <table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
+         style='border-collapse:collapse;border:none'>`;
+
+            $.each(this.data_table, function(i) {
+                data += `<tr>`;
+                if (typeof this.data_table[i].title !== "undefined") {
+                    data += `
+                    <td width=201 valign=top style='width:151.0pt;border:solid windowtext 1.0pt;
+                    padding:0in 5.4pt 0in 5.4pt'>
+                    <p class=MsoNormal style='margin-bottom:0in;line-height:normal'>`;
+                    data += (this.data_table[i].title);
+                    data += `</p>
+                    </td>`
+                }
+                if (typeof this.data_table[i].importance !== "undefined") {
+                    data += `
+                    <td width=201 valign=top style='width:151.0pt;border:solid windowtext 1.0pt;
+                    padding:0in 5.4pt 0in 5.4pt'>
+                    <p class=MsoNormal style='margin-bottom:0in;line-height:normal'>`;
+                    data += (this.data_table[i].importance);
+                    data += `</p>
+                    </td>`
+                }
+                if (typeof this.data_table[i].date !== "undefined") {
+                    data += `
+                    <td width=201 valign=top style='width:151.0pt;border:solid windowtext 1.0pt;
+                    padding:0in 5.4pt 0in 5.4pt'>
+                    <p class=MsoNormal style='margin-bottom:0in;line-height:normal'>`;
+                    data += (this.data_table[i].date);
+                    data += `</p>
+                    </td>`
+                };
+                `
+                
+                
+        data += </tr>`;
+            });
+
+            //data += \`\`;
+
+
+            data += `
+        </table>
+        
+        <p class=MsoNormal>&nbsp;</p>
+        
+        </div>
+        
+        </body>
+        
+        </html>
+        `;
+
+
+            return data;
+        }
     });
 };
 
