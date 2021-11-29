@@ -16590,6 +16590,7 @@ polymorph_core.registerOperator("scriptrunner", {
         this.logEx = (data) => {
             this.log(String(data))
         }
+        this.isAlive = true;
         this.intervals = [];
         this.timeouts = [];
         this.setInterval = (f, t) => {
@@ -16600,7 +16601,7 @@ polymorph_core.registerOperator("scriptrunner", {
             if (this.intervals[n]) this.intervals[n].f = undefined;
         }
         this.setTimeout = (f, t) => {
-            if (this.currentInstance) {
+            if (this.isAlive) {
                 // if setTimeout sets new timeout after instance destroyed (due to async await), 
                 // don't allow code to still setTimeout.
                 let to = setTimeout(f, t);
@@ -16630,6 +16631,7 @@ polymorph_core.registerOperator("scriptrunner", {
     }, 100)
     this.stop = () => {
         this.currentInstance.timeouts.forEach(i => clearTimeout(i));
+        this.currentInstance.isAlive = false;
         delete this.currentInstance;
     }
     this.execute = () => {
