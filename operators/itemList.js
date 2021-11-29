@@ -1,3 +1,4 @@
+var data_table = [];
 if (!isPhone()) {
     polymorph_core.registerOperator("itemList", {
         section: "Standard",
@@ -192,11 +193,15 @@ if (!isPhone()) {
             let it = {};
             //clone the template and parse it
             //get data and register item
+            var d = 0;
+            var valueToPush = { };
             for (let i of this.settings.propOrder) {
                 switch (this.settings.properties[i]) {
                     case "text":
                     case "number":
                         if (this.template.querySelector("[data-role='" + i + "']").value) it[i] = this.template.querySelector("[data-role='" + i + "']").value;
+                        if(d == 0) valueToPush.title = this.template.querySelector("[data-role='" + i + "']").value;
+                        else if (d == 1) valueToPush.importance = this.template.querySelector("[data-role='" + i + "']").value;
                         break;
                     case "object":
                         try {
@@ -208,11 +213,13 @@ if (!isPhone()) {
                     case "date":
                         if (this.template.querySelector("[data-role='" + i + "']").value) {
                             if (!it[i]) it[i] = {};
+                            valueToPush.date = it[i];
                             if (typeof it[i] == "string") it[i] = {
                                 datestring: it[i]
                             };
                             it[i].datestring = this.template.querySelector("[data-role='" + i + "']").value;
                         } else if (i == this.settings.filter) {
+                            valueToPush.date = "now";
                             it[i] = {
                                 datestring: "now" // is this useful to have as a default? sure
                             };
@@ -221,11 +228,14 @@ if (!isPhone()) {
                 }
                 //clear the template
                 this.template.querySelector("[data-role='" + i + "']").value = "";
+                d++;
             }
             //ensure the filter property exists
             if (this.settings.filter && !it[this.settings.filter]) it[this.settings.filter] = Date.now();
             //if (this.settings.implicitOrder) { it[this.settings.filter] = polymorph_core.items[this.taskList.children[this.taskList.children.length].datset.id][this.settings.filter] + 1 };
             let id = polymorph_core.insertItem(it);
+            valueToPush.id = id;
+            data_table.push(valueToPush);
 
             if (this.shiftDown && this.settings.linkProperty) {
                 let fi = this.taskList.querySelector(".ffocus");
@@ -293,6 +303,19 @@ if (!isPhone()) {
 
         container.on("updateItem", (d) => {
             let id = d.id;
+            if (!this.itemRelevant(id)) {
+                if (this.renderedItems[id]) {
+                    $.each(data_table, function(i){
+                        if(data_table[i].id === id) {
+                            data_table.splice(i,1);
+                            return false;
+                        }
+                    });
+                    this.renderedItems[id].remove();
+                    delete this.renderedItems[id];
+                }
+                return;
+            }
             if (!this.itemRelevant(id)) {
                 if (this.renderedItems[id]) {
                     this.renderedItems[id].remove();
@@ -859,4 +882,8 @@ if (!isPhone()) {
         container.div.addEventListener("mouseup", ddmouseExitHandler);
         container.div.addEventListener("mouseleave", ddmouseExitHandler);
     });
+}
+
+function get_table_data() {
+    return data_table;
 }
