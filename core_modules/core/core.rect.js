@@ -523,6 +523,8 @@ if (!isPhone()) {
             });
             let sf = (new polymorph_core.container(newContainerID));
             sf.loadOperator(); // dont lazy intitalise, we want it now
+            sf.operator.createAndAssignNewRect();
+
             this.tabbar.querySelector(`[data-containerid="${contextedOperatorIndex}"]`).remove();
             this.innerDivContainer.querySelector(`[data-containerid="${contextedOperatorIndex}"]`).remove();
             this.tieContainer(sf, contextedOperatorIndex);

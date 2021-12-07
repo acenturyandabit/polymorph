@@ -117,9 +117,12 @@ if (isPhone()) {
             <button>Create Rect Here</button>
         </div>`;
         let createRectButton = this.outerDiv.children[0].children[0];
-        createRectButton.addEventListener("click", () => {
+        this.createAndAssignNewRect = () => {
             let rectID = polymorph_core.newRect(container.id);
             this.tieRect(rectID);
+        }
+        createRectButton.addEventListener("click", () => {
+            this.createAndAssignNewRect();
         })
         this.outerDiv.style.cssText = `width:100%; height: 100%; position:relative`;
         container.div.appendChild(this.outerDiv);
@@ -127,7 +130,9 @@ if (isPhone()) {
         //////////////////Handle polymorph_core item updates//////////////////
 
         this.refresh = function() {
-            polymorph_core.rects[this.rectID].refresh();
+            if (this.rectID) {
+                polymorph_core.rects[this.rectID].refresh();
+            }
         }
 
         //////////////////Handling local changes to push to polymorph_core//////////////////
@@ -147,12 +152,12 @@ if (isPhone()) {
         }
 
         //Check if i have any rects waiting for pickup
+
         if (polymorph_core.rectLoadCallbacks[container.id]) {
             this.tieRect(polymorph_core.rectLoadCallbacks[container.id][0]);
             delete polymorph_core.rectLoadCallbacks[container.id];
         } else if (!this.settings.operatorClonedFrom && isCreating) {
-            let rectID = polymorph_core.newRect(container.id);
-            this.tieRect(rectID);
+            this.createAndAssignNewRect();
         }
 
         if (this.settings.operatorClonedFrom) {
