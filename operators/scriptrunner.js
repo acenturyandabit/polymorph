@@ -106,6 +106,7 @@ polymorph_core.registerOperator("scriptrunner", {
         this.logEx = (data) => {
             this.log(String(data))
         }
+        this.instanceID = Date.now();
         this.isAlive = true;
         this.intervals = [];
         this.timeouts = [];
@@ -118,6 +119,7 @@ polymorph_core.registerOperator("scriptrunner", {
         }
         this.setTimeout = (f, t) => {
             if (this.isAlive) {
+                //console.log("set new timeout for " + this.instanceID);
                 // if setTimeout sets new timeout after instance destroyed (due to async await), 
                 // don't allow code to still setTimeout.
                 let to = setTimeout(f, t);
@@ -133,24 +135,29 @@ polymorph_core.registerOperator("scriptrunner", {
         }
     }
     setInterval(() => {
-        if (this.currentInstance) this.currentInstance.intervals.forEach(i => {
-            if (i.f && i.t < 0) {
-                try {
-                    i.f();
-                } catch (e) {
-                    this.currentInstance.logEx(e);
+        if (this.currentInstance) {
+            this.currentInstance.intervals.forEach(i => {
+                if (i.f && i.t < 0) {
+                    try {
+                        i.f();
+                    } catch (e) {
+                        this.currentInstance.logEx(e);
+                    }
+                    i.t = i.t0;
                 }
-                i.t = i.t0;
-            }
-            i.t -= 100;
-        })
+                i.t -= 100;
+            })
+        }
     }, 100)
     this.stop = () => {
-        this.currentInstance.timeouts.forEach(i => clearTimeout(i));
-        this.currentInstance.isAlive = false;
-        delete this.currentInstance;
+        if (this.currentInstance) {
+            this.currentInstance.timeouts.forEach(i => clearTimeout(i));
+            this.currentInstance.isAlive = false;
+            delete this.currentInstance;
+        }
     }
     this.execute = () => {
+        this.stop();
         this.currentInstance = new instance();
         let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv){
             ${this.settings.script}

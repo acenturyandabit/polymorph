@@ -16845,7 +16845,7 @@ polymorph_core.registerOperator("scriptrunner", {
         }
         this.setTimeout = (f, t) => {
             if (this.isAlive) {
-                console.log("set new timeout for " + this.instanceID);
+                //console.log("set new timeout for " + this.instanceID);
                 // if setTimeout sets new timeout after instance destroyed (due to async await), 
                 // don't allow code to still setTimeout.
                 let to = setTimeout(f, t);
