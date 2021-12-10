@@ -3444,32 +3444,33 @@ if (isPhone()) {
                 document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
             }
         }
-
-        //connect to my parent
-        if (this.settings.p && polymorph_core.items[this.settings.p]) {
-            //there is or will be a rect / subframe for it.
-            if (polymorph_core.rects[this.settings.p]) {
-                polymorph_core.rects[this.settings.p].tieRect(rectID);
-            } else {
-                if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
-                polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+        this.attach = () => {
+            //connect to my parent
+            if (this.settings.p && polymorph_core.items[this.settings.p]) {
+                //there is or will be a rect / subframe for it.
+                if (polymorph_core.rects[this.settings.p]) {
+                    polymorph_core.rects[this.settings.p].tieRect(rectID);
+                } else {
+                    if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+                    polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+                }
             }
-        }
-        if (polymorph_core.items._meta.currentView == rectID) {
-            //attach myself to the rectlist
-            document.querySelector("#rectList").appendChild(this.listContainer);
+            if (polymorph_core.items._meta.currentView == rectID) {
+                //attach myself to the rectlist
+                document.querySelector("#rectList").appendChild(this.listContainer);
+            }
+            //Signal all children waiting for this that they can connect to this now.
+            if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
+                if (polymorph_core.items[v]._od) {
+                    //v is container
+                    this.tieContainer(v);
+                } else {
+                    //v is rect
+                    this.tieRect(v);
+                }
+            })
         }
 
-        //Signal all children waiting for this that they can connect to this now.
-        if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
-            if (polymorph_core.items[v]._od) {
-                //v is container
-                this.tieContainer(v);
-            } else {
-                //v is rect
-                this.tieRect(v);
-            }
-        })
 
         this.refresh = () => {
             let oneToFocus = Object.keys(polymorph_core.containers)[0];
@@ -9953,11 +9954,23 @@ polymorph_core.registerOperator("workflow_gf", {
     this.innerRoot = this.rootdiv.querySelector(".innerRoot");
     this.cursorSpan = this.rootdiv.querySelector(".cursorspan");
 
+    this.getChildrenDiv = (spanWithID) => {
+        if (!spanWithID.tagName) {
+            // This isn't actually a dom element, it's the root in renderitemcache
+            // called in l. 901 on initial refresh
+            return spanWithID.children[1];
+        }
+        let toExpand = spanWithID.children[1];
+        if (toExpand.tagName != "DIV") toExpand = toExpand.nextElementSibling;
+        return toExpand;
+    }
+
     this.holdExpanded = {};
     let cachedChildren = {}; // dict of id of children id
     let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
+        let childrenDiv = this.getChildrenDiv(spanWithID);
         if (toExpanded == undefined) { // toggle
-            if (spanWithID.children[1].style.display == "none") toExpanded = true;
+            if (childrenDiv.style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
         if (!cachedChildren[spanWithID.dataset.id] || !Object.keys(cachedChildren[spanWithID.dataset.id]).length) return;
@@ -9967,8 +9980,7 @@ polymorph_core.registerOperator("workflow_gf", {
         }
         this.renderItem(spanWithID.dataset.id, (temporary ? "p" : "") + (dontFocus ? "d" : "") + ((temporary && toExpanded) ? "e" : ""));
         //set all immediate child spans to display: block, to account for expanding an item during search
-
-        if (!temporary) Array.from(spanWithID.children[1].children).map(i => {
+        if (!temporary) Array.from(childrenDiv.children).map(i => {
             i.style.display = "block";
         });
     }
@@ -10031,8 +10043,10 @@ polymorph_core.registerOperator("workflow_gf", {
             toFocusOnSpan = etarget.parentElement.parentElement.parentElement.parentElement;
         } else {
             if (toFocusOnSpan.tagName == "STYLE" || toFocusOnSpan.matches(".cursorspan")) return false;
-            while (toFocusOnSpan.children[1].children.length && toFocusOnSpan.children[1].style.display != "none") {
-                toFocusOnSpan = toFocusOnSpan.children[1].children[toFocusOnSpan.children[1].children.length - 1];
+            let childrenDiv = this.getChildrenDiv(toFocusOnSpan);
+            while (childrenDiv.children.length && childrenDiv.style.display != "none") {
+                toFocusOnSpan = childrenDiv.children[childrenDiv.children.length - 1];
+                childrenDiv = this.getChildrenDiv(toFocusOnSpan);
             }
         }
         focusOnElement(toFocusOnSpan.children[0].children[1], -1);
@@ -10044,9 +10058,8 @@ polymorph_core.registerOperator("workflow_gf", {
         let toFocusOnSpan = toprow.parentElement.nextElementSibling;
 
         // check if we have a child to focus on
-        let childrenList = toprow.parentElement.children[1];
+        let childrenList = this.getChildrenDiv(toprow.parentElement);
         // in advanced entry mode the div is actually a span
-        if (childrenList.tagName != "DIV") childrenList = childrenList.nextElementSibling;
         if (childrenList.children.length && // div has children
             childrenList.style.display != "none") { // check if children not hidden
             toFocusOnSpan = childrenList.children[0];
@@ -10087,7 +10100,12 @@ polymorph_core.registerOperator("workflow_gf", {
                 result = result.join("");
                 let oldStart = selection.startOffset;
                 selection.commonAncestorContainer.textContent = result;
-                focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
+                // edge case where we start with a \ which causes commonancestor to actually be toprow
+                if (selection.commonAncestorContainer.tagName == "SPAN") {
+                    focusOnElement(selection.commonAncestorContainer, oldStart + 2);
+                } else {
+                    focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
+                }
                 e.preventDefault();
             }
         }
@@ -10256,11 +10274,11 @@ polymorph_core.registerOperator("workflow_gf", {
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
                 break;
             case "ArrowUp":
+                bumpWasTriggeredByUserEvent = true;
                 if (modifiers["alt"]) {
                     //move item up
                     if (spanWithID.previousElementSibling) {
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
-                        bumpWasTriggeredByUserEvent = true;
                         polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -10271,12 +10289,13 @@ polymorph_core.registerOperator("workflow_gf", {
                 } else {
                     focusOnPrev(spanWithID.children[0].children[1]);
                 }
+                bumpParentReorganise(polymorph_core.items[id][this.settings.parentProperty]);
                 break;
             case "ArrowDown":
+                bumpWasTriggeredByUserEvent = true;
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
-                        bumpWasTriggeredByUserEvent = true;
                         polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -10287,6 +10306,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 } else {
                     focusOnNext(spanWithID.children[0].children[1]);
                 }
+                bumpParentReorganise(polymorph_core.items[id][this.settings.parentProperty]);
                 break;
             case "Tab":
                 let cursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
@@ -10539,7 +10559,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     }
                     return obj;
                 }
-                Array.from(this.renderedItemCache[parent].el.children[1].children)
+                Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children)
                     .filter(i => !(i.classList.contains("cursorspan")))
                     .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id][this.settings.sortDateProp] : undefined])
                     .sort((a, b) => {
@@ -10556,20 +10576,20 @@ polymorph_core.registerOperator("workflow_gf", {
                         }
                     });
             } else {
-                Array.from(this.renderedItemCache[parent].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
+                Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
                     if (polymorph_core.items[v.dataset.id][this.settings.orderProperty] != i) {
                         polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
                         itemsToUpdate.push(v.dataset.id);
                     }
                 })
             }
+            let fobj = saveFocus();
             itemsToUpdate.forEach(i => {
                 polymorph_core.fire("updateItem", { id: i, sender: this });
+                this.renderItem(i, "d");
             })
+            restoreFocus(fobj);
         }
-        //if (i) this.renderItem(i, "d"); // don't render the root which is nothing
-        //don't do ^ above render, because it causes defocus, and why is it even here
-        // verry lazy, should check whether or not the parent actually needs rerendering first
     }
 
 
@@ -10724,7 +10744,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 } else {
                     // figure out where to place it among the children, to generate placeAfter
                     let placeAfter = -1;
-                    let existingSiblings = Array.from(this.renderedItemCache[parentID].el.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => [i, polymorph_core.items[i.dataset.id][this.settings.orderProperty]]);
+                    let existingSiblings = Array.from(this.getChildrenDiv(this.renderedItemCache[parentID].el).children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => [i, polymorph_core.items[i.dataset.id][this.settings.orderProperty]]);
                     existingSiblings.forEach((v) => {
                         if (polymorph_core.items[id][this.settings.orderProperty] >= v[1] && v[0] != thisIDSpan) {
                             // pick the last item that is larger than it for it to be put after
@@ -10735,14 +10755,14 @@ polymorph_core.registerOperator("workflow_gf", {
                     // From here, calculate a place before because we can only use insertBefore not insertAfter
                     let placeBefore;
                     if (placeAfter != -1) placeBefore = placeAfter.nextElementSibling;
-                    else if (this.renderedItemCache[parentID].el.children[1] != this.innerRoot) placeBefore = this.renderedItemCache[parentID].el.children[1].children[0];
+                    else if (this.renderedItemCache[parentID].el.children[1] != this.innerRoot) placeBefore = this.getChildrenDiv(this.renderedItemCache[parentID].el).children[0];
                     else placeBefore = this.innerRoot.children[1]; // special case because cursorspan exists in innerroot
 
-                    if ((thisIDSpan.parentElement != this.renderedItemCache[parentID].el.children[1] || // parent wrong
+                    if ((thisIDSpan.parentElement != this.getChildrenDiv(this.renderedItemCache[parentID].el) || // parent wrong
                             thisIDSpan.nextElementSibling != placeBefore) && // order wrong
                         thisIDSpan != placeBefore) { // not just a render-in-place
                         thisIDSpan.remove();
-                        this.renderedItemCache[parentID].el.children[1].insertBefore(thisIDSpan, placeBefore);
+                        this.getChildrenDiv(this.renderedItemCache[parentID].el).insertBefore(thisIDSpan, placeBefore);
                     }
                 }
 
@@ -10754,13 +10774,15 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
                     // I have children yay
                     let shouldBeCollapsedNow = !(id in this.holdExpanded) && polymorph_core.items[id][this.settings.collapseProperty];
+                    let collapseDiv = this.getChildrenDiv(thisIDSpan);
+                    if (collapseDiv.tagName != "DIV") collapseDiv = collapseDiv.nextElementSibling;
                     if (shouldBeCollapsedNow != this.renderedItemCache[id][this.settings.collapseProperty]) {
                         if (shouldBeCollapsedNow) {
-                            thisIDSpan.children[1].style.display = "none";
+                            collapseDiv.style.display = "none";
                             thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25B6;";
                             thisIDSpan.children[0].children[0].children[0].style.color = "white";
                         } else {
-                            thisIDSpan.children[1].style.display = "block";
+                            collapseDiv.style.display = "block";
                             thisIDSpan.children[0].children[0].children[0].innerHTML = "&#x25BC;";
                             if (id in this.holdExpanded) thisIDSpan.children[0].children[0].children[0].style.color = "orange";
                             else thisIDSpan.children[0].children[0].children[0].style.color = "white";
@@ -10769,7 +10791,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     }
                     // might be wise to rerender them if they dont exist yet
                     // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
-                    let renderedChildren = Array.from(thisIDSpan.children[1].children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
+                    let renderedChildren = Array.from(collapseDiv.children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
                     for (let i in cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
                             this.renderItem(i, "pd");
@@ -16810,6 +16832,7 @@ polymorph_core.registerOperator("scriptrunner", {
         this.logEx = (data) => {
             this.log(String(data))
         }
+        this.instanceID = Date.now();
         this.isAlive = true;
         this.intervals = [];
         this.timeouts = [];
@@ -16822,6 +16845,7 @@ polymorph_core.registerOperator("scriptrunner", {
         }
         this.setTimeout = (f, t) => {
             if (this.isAlive) {
+                console.log("set new timeout for " + this.instanceID);
                 // if setTimeout sets new timeout after instance destroyed (due to async await), 
                 // don't allow code to still setTimeout.
                 let to = setTimeout(f, t);
@@ -16837,24 +16861,29 @@ polymorph_core.registerOperator("scriptrunner", {
         }
     }
     setInterval(() => {
-        if (this.currentInstance) this.currentInstance.intervals.forEach(i => {
-            if (i.f && i.t < 0) {
-                try {
-                    i.f();
-                } catch (e) {
-                    this.currentInstance.logEx(e);
+        if (this.currentInstance) {
+            this.currentInstance.intervals.forEach(i => {
+                if (i.f && i.t < 0) {
+                    try {
+                        i.f();
+                    } catch (e) {
+                        this.currentInstance.logEx(e);
+                    }
+                    i.t = i.t0;
                 }
-                i.t = i.t0;
-            }
-            i.t -= 100;
-        })
+                i.t -= 100;
+            })
+        }
     }, 100)
     this.stop = () => {
-        this.currentInstance.timeouts.forEach(i => clearTimeout(i));
-        this.currentInstance.isAlive = false;
-        delete this.currentInstance;
+        if (this.currentInstance) {
+            this.currentInstance.timeouts.forEach(i => clearTimeout(i));
+            this.currentInstance.isAlive = false;
+            delete this.currentInstance;
+        }
     }
     this.execute = () => {
+        this.stop();
         this.currentInstance = new instance();
         let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv){
             ${this.settings.script}

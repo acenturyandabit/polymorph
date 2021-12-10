@@ -150,32 +150,33 @@ if (isPhone()) {
                 document.querySelector("#body").appendChild(polymorph_core.containers[id].outerDiv);
             }
         }
-
-        //connect to my parent
-        if (this.settings.p && polymorph_core.items[this.settings.p]) {
-            //there is or will be a rect / subframe for it.
-            if (polymorph_core.rects[this.settings.p]) {
-                polymorph_core.rects[this.settings.p].tieRect(rectID);
-            } else {
-                if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
-                polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+        this.attach = () => {
+            //connect to my parent
+            if (this.settings.p && polymorph_core.items[this.settings.p]) {
+                //there is or will be a rect / subframe for it.
+                if (polymorph_core.rects[this.settings.p]) {
+                    polymorph_core.rects[this.settings.p].tieRect(rectID);
+                } else {
+                    if (!polymorph_core.rectLoadCallbacks[this.settings.p]) polymorph_core.rectLoadCallbacks[this.settings.p] = [];
+                    polymorph_core.rectLoadCallbacks[this.settings.p].push(rectID);
+                }
             }
-        }
-        if (polymorph_core.items._meta.currentView == rectID) {
-            //attach myself to the rectlist
-            document.querySelector("#rectList").appendChild(this.listContainer);
+            if (polymorph_core.items._meta.currentView == rectID) {
+                //attach myself to the rectlist
+                document.querySelector("#rectList").appendChild(this.listContainer);
+            }
+            //Signal all children waiting for this that they can connect to this now.
+            if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
+                if (polymorph_core.items[v]._od) {
+                    //v is container
+                    this.tieContainer(v);
+                } else {
+                    //v is rect
+                    this.tieRect(v);
+                }
+            })
         }
 
-        //Signal all children waiting for this that they can connect to this now.
-        if (polymorph_core.rectLoadCallbacks[rectID]) polymorph_core.rectLoadCallbacks[rectID].forEach((v) => {
-            if (polymorph_core.items[v]._od) {
-                //v is container
-                this.tieContainer(v);
-            } else {
-                //v is rect
-                this.tieRect(v);
-            }
-        })
 
         this.refresh = () => {
             let oneToFocus = Object.keys(polymorph_core.containers)[0];
