@@ -16949,7 +16949,7 @@ polymorph_core.registerOperator("timer", {
 
 // core.static allows the polymorph to boot up loading a static file if configured to do so.
 _polymorph_core.prototype.isStaticMode = () => {
-    return window.polymorph_file_list;
+    return !(window.polymorph_file_list);
 }
 
 _polymorph_core.prototype.handleStaticData = () => {
@@ -16962,7 +16962,7 @@ _polymorph_core.prototype.handleStaticData = () => {
     }
 }
 
-if (!polymorph_core.isStaticMode()) {
+if (polymorph_core.isStaticMode()) {
     // We aren't being piloted by a fileManager
     // patch some save functions that shouldn't run
     polymorph_core.addCreationOption = () => {}; // do nothing
