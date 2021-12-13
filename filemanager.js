@@ -130,14 +130,6 @@
         "operators/litem.js",
         "operators/scriptrunner.js",
         "operators/timer.js",
-        "saveSources/outputToText.js",
-        "saveSources/localforage2.js",
-        "saveSources/permalink.js",
-        "saveSources/lobby.js",
-        "saveSources/server.js",
-        "saveSources/gitlite.js",
-        "saveSources/gitlite2.js",
-        "saveSources/broadcastsync.js",
         "core_modules/core/core.static.js",
     ];
 
