@@ -1,4 +1,7 @@
 // core.static allows the polymorph to boot up loading a static file if configured to do so.
+_polymorph_core.prototype.isStaticMode = () => {
+    return window.polymorph_file_list;
+}
 
 _polymorph_core.prototype.handleStaticData = () => {
     // check for static item
@@ -10,8 +13,8 @@ _polymorph_core.prototype.handleStaticData = () => {
     }
 }
 
-if (!window.polymorph_file_list) {
+if (!polymorph_core.isStaticMode()) {
     // We aren't being piloted by a fileManager
     // start the polymorph_core ourselves, in static mode (any editable deployment of polymorph_core should have a filemanager);
-    polymorph_core.start();
+    polymorph_core.start(true);
 }
