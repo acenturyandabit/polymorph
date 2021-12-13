@@ -15,6 +15,9 @@ _polymorph_core.prototype.handleStaticData = () => {
 
 if (!polymorph_core.isStaticMode()) {
     // We aren't being piloted by a fileManager
+    // patch some save functions that shouldn't run
+    polymorph_core.addCreationOption = () => {}; // do nothing
+
     // start the polymorph_core ourselves, in static mode (any editable deployment of polymorph_core should have a filemanager);
     polymorph_core.start(true);
 }

@@ -1329,8 +1329,7 @@ polymorph_core.on("titleButtonsReady", () => {
         polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
         //THIS IS A CROSSOVER WITH loadsavedialog.js. Please formalise
-        if (ops.createable) polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${ops.prettyName || id}</option>`));
-
+        if (ops.createable) polymorph_core.addCreationOption(id, ops.prettyName || id);
     }
 
     polymorph_core.switchView = function(view) {
@@ -1962,6 +1961,10 @@ polymorph_core.on("titleButtonsReady", () => {
         recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
         localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
+
+    polymorph_core.addCreationOption = (id, name) => {
+        polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${name}</option>`));
+    }
 
     document.body.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
@@ -18513,6 +18516,9 @@ _polymorph_core.prototype.handleStaticData = () => {
 
 if (!polymorph_core.isStaticMode()) {
     // We aren't being piloted by a fileManager
+    // patch some save functions that shouldn't run
+    polymorph_core.addCreationOption = () => {}; // do nothing
+
     // start the polymorph_core ourselves, in static mode (any editable deployment of polymorph_core should have a filemanager);
     polymorph_core.start(true);
 }

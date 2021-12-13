@@ -312,8 +312,7 @@
         polymorph_core.saveSourceOptions[id] = ops || {};
         //create a wrapper for it in the loading dialog
         //THIS IS A CROSSOVER WITH loadsavedialog.js. Please formalise
-        if (ops.createable) polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${ops.prettyName || id}</option>`));
-
+        if (ops.createable) polymorph_core.addCreationOption(id, ops.prettyName || id);
     }
 
     polymorph_core.switchView = function(view) {

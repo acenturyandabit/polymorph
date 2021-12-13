@@ -12,6 +12,10 @@
         localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
+    polymorph_core.addCreationOption = (id, name) => {
+        polymorph_core.loadInnerDialog.querySelector('.nss select').appendChild(htmlwrap(`<option value='${id}'>${name}</option>`));
+    }
+
     document.body.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key == "s") {
             e.preventDefault();
