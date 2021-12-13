@@ -39,7 +39,7 @@
 
         this.dialog.querySelector(".ssjs").addEventListener("click", () => {
             let contents = `
-        window.polymorph_static_data=JSON.parse("${JSON.stringify(polymorph_core.items)}")
+            window.polymorph_static_data=JSON.parse('${JSON.stringify(polymorph_core.items).replace(/'/g,"\\'")}');
         `;
             saveToFile(contents, polymorph_core.currentDoc.displayName + "_" + Date.now() + "_data.js");
         });

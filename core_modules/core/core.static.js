@@ -20,4 +20,9 @@ if (polymorph_core.isStaticMode()) {
 
     // start the polymorph_core ourselves, in static mode (any editable deployment of polymorph_core should have a filemanager);
     polymorph_core.start(true);
+
+    //unshow the wall
+    document.querySelector(".wall").style.display = "none";
+    //light shade of purple for the body :3
+    document.body.style.background = "purple";
 }

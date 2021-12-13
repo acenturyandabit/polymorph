@@ -171,22 +171,6 @@ if (!isPhone()) {
 
         this.createTabSpan = (containerid) => {
             let tabSpan = document.createElement("span");
-            let tabName = document.createElement("button");
-            let tabDelete = document.createElement("button");
-            let tabGear = document.createElement("img");
-            tabName.style.cssText = tabDelete.style.cssText = `
-        background: unset;
-        color:unset;
-        border:unset;
-        cursor:pointer;
-        padding: 5px;
-        `;
-            tabDelete.style.cssText += `color:red;font-weight:bold; font-style:normal`;
-            tabDelete.innerText = 'x';
-            tabDelete.style.display = "none";
-            tabGear.src = "assets/gear.png";
-            tabGear.style.cssText = "width: 1em; height:1em;"
-            tabGear.style.display = "none";
             tabSpan.classList.add("tab");
             tabSpan.style.cssText = `
         border: 1px solid black;
@@ -197,11 +181,31 @@ if (!isPhone()) {
         margin-right: 0.1em;
         border-radius: 3px;
         `;
-            tabSpan.appendChild(tabName);
-            tabSpan.appendChild(tabDelete);
-            tabSpan.appendChild(tabGear);
-            tabSpan.dataset.containerid = containerid;
 
+            let tabName = document.createElement("button");
+            tabName.style.cssText = tabDelete.style.cssText = `
+        background: unset;
+        color:unset;
+        border:unset;
+        cursor:pointer;
+        padding: 5px;
+        `;
+            tabSpan.appendChild(tabName);
+
+            if (!polymorph_core.isStaticMode()) {
+                let tabDelete = document.createElement("button");
+                tabDelete.style.cssText += `color:red;font-weight:bold; font-style:normal`;
+                tabDelete.innerText = 'x';
+                tabDelete.style.display = "none";
+                let tabGear = document.createElement("img");
+                tabGear.src = "assets/gear.png";
+                tabGear.style.cssText = "width: 1em; height:1em;"
+                tabGear.style.display = "none";
+                tabSpan.appendChild(tabDelete);
+                tabSpan.appendChild(tabGear);
+            }
+
+            tabSpan.dataset.containerid = containerid;
             return tabSpan;
         }
 
@@ -582,16 +586,16 @@ tabmenu.querySelector(".mpfr").addEventListener("click", () => {
 let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'></textarea><br><button>Import</button>");
 polymorph_core.dialog.prompt(tta);
 tta.querySelector("button").addEventListener("click", () => {
-    if (tta.querySelector("textarea").value) {
-        let importObject = JSON.parse(tta.querySelector("textarea").value);
-        this.containers[contextedOperatorIndex].fromSaveData(importObject);
-        this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-        polymorph_core.fire("updateItem", { id: rectID, sender: this });
-        //force update all items to reload the view
-        for (let i in polymorph_core.items) {
-            polymorph_core.fire('updateItem', { id: i });
-        }
+if (tta.querySelector("textarea").value) {
+    let importObject = JSON.parse(tta.querySelector("textarea").value);
+    this.containers[contextedOperatorIndex].fromSaveData(importObject);
+    this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+    polymorph_core.fire("updateItem", { id: rectID, sender: this });
+    //force update all items to reload the view
+    for (let i in polymorph_core.items) {
+        polymorph_core.fire('updateItem', { id: i });
     }
+}
 })
 tabmenu.style.display = "none";
 })
