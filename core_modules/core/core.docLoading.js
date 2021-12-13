@@ -1,57 +1,4 @@
 (() => {
-    const broadcast = new BroadcastChannel('channel1');
-    let instance_uuid = polymorph_core.guid();
-    let checkerPromiseResolve = undefined;
-    let nsent = 0;
-    broadcast.onmessage = (event) => {
-        if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
-            if (checkerPromiseResolve) {
-                checkerPromiseResolve(true);
-                checkerPromiseResolve = undefined;
-            } else if (!event.data.echo) {
-                broadcast.postMessage({
-                    url: window.location.href,
-                    uuid: instance_uuid,
-                    echo: true
-                });
-            }
-        }
-    };
-    let checkForURLConflict = async() => {
-        return new Promise((res) => {
-            checkerPromiseResolve = res;
-            broadcast.postMessage({
-                url: window.location.href,
-                uuid: instance_uuid
-            })
-            setTimeout(() => {
-                if (checkerPromiseResolve) {
-                    checkerPromiseResolve(false);
-                    checkerPromiseResolve = undefined;
-                }
-            }, 500);
-        });
-    }
-    let alt_alive_warning = document.createElement("div");
-    alt_alive_warning.innerHTML = `
-        <div style="padding:10vw">
-            <h1>Warning! This document is already open in another window. Please use the other window instead.</h1>
-        </div>
-    `;
-    alt_alive_warning.style.cssText = `
-    display:flex;
-    visibility:hidden;
-    place-items: center center;
-    position:absolute;
-    height:100%;
-    width:100%;
-    z-index:5;
-    background: rgba(0,0,0,0.8);
-    color:white;
-    text-align:center;
-    `;
-    document.body.appendChild(alt_alive_warning);
-
 
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
@@ -127,6 +74,8 @@
             history.pushState({}, "", loc);
             // this is somewhat useful as an emergency fallback.
         }
+
+
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
             polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
@@ -148,8 +97,7 @@
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
-            checkForURLConflict();
-
+            polymorph_core.blockIfURLConflict();
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
         } else {
@@ -198,9 +146,10 @@
                     window.location.href = window.location.origin + window.location.pathname + "?o";
                 }
             };
-            // check for multiple windows
-            let hasURLConflict = await checkForURLConflict();
 
+            let urlCanHandleMultipleWindows = false;
+
+            // Try each save source to see if it can be used to load the system.
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
@@ -229,7 +178,7 @@
                         let newInstance = new polymorph_core.saveSources[i.type](i);
                         polymorph_core.saveSourceInstances.push(newInstance);
                         if (i.RTactive && polymorph_core.saveSourceOptions[i.type].handleCrossWindow) {
-                            hasURLConflict = false;
+                            urlCanHandleMultipleWindows = true;
                         }
                         if (i.load) {
                             (async() => {
@@ -257,9 +206,8 @@
                     }
                 }
             }
-            if (hasURLConflict) {
-                alt_alive_warning.style.visibility = "visible";
-                return;
+            if (!urlCanHandleMultipleWindows) {
+                polymorph_core.blockIfURLConflict();
             }
             //try and catch when there is no data at all
             for (let i of polymorph_core.saveSourceInstances) {

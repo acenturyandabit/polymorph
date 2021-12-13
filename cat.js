@@ -89,7 +89,7 @@ function waitForFn(property) {
 
 // Items are just native objects now 
 function _polymorph_core() {
-    //Event API. pretty important, it turns out.
+    //Event API. Controls all underlying events.
 
     this.guid = (count = 6, priorkeys) => {
         let pool = "1234567890qwertyuiopasdfghjklzxcvbnm";
@@ -341,12 +341,16 @@ function _polymorph_core() {
 
     //we need to update userdata  to the latest version as necessary... 
 
-    // Starting function: this is only called once
-    this.start = () => {
+    // Starting function: this is only called once by filemanager.
+    this.start = (isStaticMode) => {
         this.fire("UIsetup");
         this.fire("UIstart");
         this.resetDocument();
-        this.handleURL();
+        if (isStaticMode) {
+            this.handleStaticData();
+        } else {
+            this.handleURL();
+        }
     }
 
     Object.defineProperty(this, "currentDoc", {
@@ -944,11 +948,11 @@ polymorph_core.on("titleButtonsReady", () => {
 })
 */;
 
-(() => {
+{
+    // Dedup detection
     const broadcast = new BroadcastChannel('channel1');
     let instance_uuid = polymorph_core.guid();
     let checkerPromiseResolve = undefined;
-    let nsent = 0;
     broadcast.onmessage = (event) => {
         if (event.data.url.replace("#", "") == window.location.href.replace("#", "") && event.data.uuid != instance_uuid) {
             if (checkerPromiseResolve) {
@@ -978,6 +982,15 @@ polymorph_core.on("titleButtonsReady", () => {
             }, 500);
         });
     }
+
+    polymorph_core.blockIfURLConflict = async() => {
+        let hasUrlConflict = await checkForURLConflict();
+        if (hasUrlConflict) {
+            alt_alive_warning.style.visibility = "visible";
+            return;
+        }
+    }
+
     let alt_alive_warning = document.createElement("div");
     alt_alive_warning.innerHTML = `
         <div style="padding:10vw">
@@ -998,6 +1011,9 @@ polymorph_core.on("titleButtonsReady", () => {
     `;
     document.body.appendChild(alt_alive_warning);
 
+};
+
+(() => {
 
     Object.defineProperty(polymorph_core, "saveSourceData", {
         get: () => {
@@ -1073,6 +1089,8 @@ polymorph_core.on("titleButtonsReady", () => {
             history.pushState({}, "", loc);
             // this is somewhat useful as an emergency fallback.
         }
+
+
         if (!polymorph_core.currentDocID) {
             //Looks like we're not trying to load any new documents [TODO: catch when we CANT load a document but are trying]
             polymorph_core.currentDocID = polymorph_core.guid(6, polymorph_core.userData.documents);
@@ -1094,8 +1112,7 @@ polymorph_core.on("titleButtonsReady", () => {
             polymorph_core.integrateData(polymorph_core.templates.blankNewDoc, "CORE_FAULT");
             //set the url to this document's url
             history.pushState({}, "", window.location.href + "?doc=" + polymorph_core.currentDocID);
-            checkForURLConflict();
-
+            polymorph_core.blockIfURLConflict();
             let newInstance = new polymorph_core.saveSources['lf'](polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[0]);
             polymorph_core.saveSourceInstances.push(newInstance);
         } else {
@@ -1144,9 +1161,10 @@ polymorph_core.on("titleButtonsReady", () => {
                     window.location.href = window.location.origin + window.location.pathname + "?o";
                 }
             };
-            // check for multiple windows
-            let hasURLConflict = await checkForURLConflict();
 
+            let urlCanHandleMultipleWindows = false;
+
+            // Try each save source to see if it can be used to load the system.
             let loadAttemptsRemaining = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length;
             for (let u = 0; u < polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources.length; u++) {
                 let i = polymorph_core.userData.documents[polymorph_core.currentDocID].saveSources[u];
@@ -1175,7 +1193,7 @@ polymorph_core.on("titleButtonsReady", () => {
                         let newInstance = new polymorph_core.saveSources[i.type](i);
                         polymorph_core.saveSourceInstances.push(newInstance);
                         if (i.RTactive && polymorph_core.saveSourceOptions[i.type].handleCrossWindow) {
-                            hasURLConflict = false;
+                            urlCanHandleMultipleWindows = true;
                         }
                         if (i.load) {
                             (async() => {
@@ -1203,9 +1221,8 @@ polymorph_core.on("titleButtonsReady", () => {
                     }
                 }
             }
-            if (hasURLConflict) {
-                alt_alive_warning.style.visibility = "visible";
-                return;
+            if (!urlCanHandleMultipleWindows) {
+                polymorph_core.blockIfURLConflict();
             }
             //try and catch when there is no data at all
             for (let i of polymorph_core.saveSourceInstances) {
@@ -10350,7 +10367,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             setParent(id, polymorph_core.items[spanWithID.parentElement.parentElement.dataset.id][this.settings.parentProperty]);
                             polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                             this.renderItem(id, "d");
-                            wasme.focus();
+                            focusOnElement(wasme);
                         } else {
                             // already a root node, do nothing
                         }
@@ -11045,7 +11062,7 @@ function workflowy_advanced_entry() {
         this.parse(e.target, plaintextOperatingOnID);
         polymorph_core.items[plaintextOperatingOnID][this.settings.titleProperty] = e.target.innerText; // polymorph_core.RTParseElement(e.target, id, this.settings.titleProperty);
         this.container.fire("updateItem", { id: plaintextOperatingOnID, sender: this });
-        this.renderItem(plaintextOperatingOnID);
+        this.renderItem(plaintextOperatingOnID, "d");
     });
 };
 
@@ -17131,95 +17148,103 @@ polymorph_core.registerOperator("timer", {
 
 });;
 
-//v0. works. full credits to Yair Levy on S/O.
+//v0. works. credits of file downloader to Yair Levy on S/O.
+(() => {
 
-function saveJSON(data, filename) {
-    if ((typeof data).toLowerCase() != "string") data = JSON.stringify(data);
-    let bl = new Blob([data], {
-        type: "text/html"
-    });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(bl);
-    a.download = filename;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-}
+    function saveToFile(data, filename) {
+        if ((typeof data).toLowerCase() != "string") data = JSON.stringify(data);
+        let bl = new Blob([data], {
+            type: "text/html"
+        });
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(bl);
+        a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+    }
 
-polymorph_core.registerSaveSource("toText", function (save_source_data) { // a sample save source, implementing a number of functions.
-    polymorph_core.saveSourceTemplate.call(this, save_source_data);
+    polymorph_core.registerSaveSource("toText", function(save_source_data) { // a sample save source, implementing a number of functions.
+        polymorph_core.saveSourceTemplate.call(this, save_source_data);
 
-    this.dialog = document.createElement("div");
-    this.dialog.innerHTML = `
-    <span>
-    <textarea placeholder="Output"></textarea>
-    <br>
-    <button class="sfile">Save text to file</button>
+        this.dialog = document.createElement("div");
+        this.dialog.innerHTML = `
+        <span>
+        <textarea placeholder="Output"></textarea>
+        <br>
+        <button class="sfile">Save text to file</button>
+        <button class="ssjs">Save text to static js for rendering</button>
     <button class="loitem">Load as item JSON array</button>
     <button class="lo_obj">Load as item JSON object</button>
     </span>
     `;
-    function saveToFile() {
-        saveJSON(polymorph_core.items, polymorph_core.currentDoc.displayName + "_" + Date.now() + ".json");
-    }
 
-    this.dialog.querySelector(".sfile").addEventListener("click", () => {
-        saveToFile();
-    });
+        function saveThisDocToJSON() {
+            saveToFile(polymorph_core.items, polymorph_core.currentDoc.displayName + "_" + Date.now() + ".json");
+        }
 
-    this.dialog.querySelector(".loitem").addEventListener("click", () => {
-        let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
-        newItems = newItems.map(i => polymorph_core.insertItem(i));
-        newItems.forEach(e => {
-            polymorph_core.fire('updateItem', { id: e });
+        this.dialog.querySelector(".sfile").addEventListener("click", () => {
+            saveThisDocToJSON();
         });
-    });
 
-    this.dialog.querySelector(".lo_obj").addEventListener("click", () => {
-        let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
-        for (let i in newItems){
-            polymorph_core.items[i]=newItems[i];
-            polymorph_core.fire('updateItem',{id:i});
+        this.dialog.querySelector(".ssjs").addEventListener("click", () => {
+            let contents = `
+        window.polymorph_static_data=JSON.parse("${JSON.stringify(polymorph_core.items)}")
+        `;
+            saveToFile(contents, polymorph_core.currentDoc.displayName + "_" + Date.now() + "_data.js");
+        });
+
+        this.dialog.querySelector(".loitem").addEventListener("click", () => {
+            let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
+            newItems = newItems.map(i => polymorph_core.insertItem(i));
+            newItems.forEach(e => {
+                polymorph_core.fire('updateItem', { id: e });
+            });
+        });
+
+        this.dialog.querySelector(".lo_obj").addEventListener("click", () => {
+            let newItems = JSON.parse(this.dialog.querySelector("textarea").value);
+            for (let i in newItems) {
+                polymorph_core.items[i] = newItems[i];
+                polymorph_core.fire('updateItem', { id: i });
+            }
+        });
+
+        this.pushAll = async function(data) {
+            this.dialog.querySelector("textarea").value = JSON.stringify(data);
         }
-    });
-
-    this.pushAll = async function (data) {
-        this.dialog.querySelector("textarea").value = JSON.stringify(data);
-    }
-    this.pullAll = async function () {
-        let obj = JSON.parse(this.dialog.querySelector("textarea").value);
-        obj = polymorph_core.datautils.decompress(obj);
-        return obj;
-    }
-    this.hook = async () => {
-        //hook to pull changes and push changes. 
-        //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
-        //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
-        this.toSave = true;
-    }
-
-    // Please remove or comment out this function if you can't subscribe to live updates.
-    this.unhook = async () => {
-        //unhook previous hooks.
-        this.toSave = false;
-    }
-    polymorph_core.on("userSave", (d) => {
-        if (this.toSave) {
-            saveToFile();
-            return true; //return true if we save
-        } else {
-            return false;
+        this.pullAll = async function() {
+            let obj = JSON.parse(this.dialog.querySelector("textarea").value);
+            obj = polymorph_core.datautils.decompress(obj);
+            return obj;
         }
+        this.hook = async() => {
+            //hook to pull changes and push changes. 
+            //To subscribe to live updates, you need to manually use polymorph_core.on("updateItem",handler) to listen to item updates.
+            //Otherwise, you can subscribe to the user save event, as per below, and set a flag to remind yourself to save
+            this.toSave = true;
+        }
+
+        // Please remove or comment out this function if you can't subscribe to live updates.
+        this.unhook = async() => {
+            //unhook previous hooks.
+            this.toSave = false;
+        }
+        polymorph_core.on("userSave", (d) => {
+            if (this.toSave) {
+                saveThisDocToJSON();
+                return true; //return true if we save
+            } else {
+                return false;
+            }
+        })
+
+        polymorph_core.addToSaveDialog(this);
+    }, {
+        createable: true,
+        prettyName: "Output to text"
     })
-
-    polymorph_core.addToSaveDialog(this);
-}, {
-    createable: true,
-    prettyName: "Output to text"
-})
-
-
-;
+})();;
 
 polymorph_core.registerSaveSource("lf", function(save_source_data) { // a sample save source, implementing a number of functions.
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
@@ -18467,4 +18492,22 @@ polymorph_core.registerSaveSource("broadcastsync", function(save_source_data) {
     prettyName: "Broadcast across browsers",
     createable: true,
     handleCrossWindow: true,
-})
+});
+
+// core.static allows the polymorph to boot up loading a static file if configured to do so.
+
+_polymorph_core.prototype.handleStaticData = () => {
+    // check for static item
+    if (window.polymorph_static_data) {
+        let data = window.polymorph_static_data;
+        // prevent alert errors downstream in integrateData
+        polymorph_core.currentDocID = data._meta.id;
+        polymorph_core.integrateData(data, "");
+    }
+}
+
+if (!window.polymorph_file_list) {
+    // We aren't being piloted by a fileManager
+    // start the polymorph_core ourselves, in static mode (any editable deployment of polymorph_core should have a filemanager);
+    polymorph_core.start();
+}

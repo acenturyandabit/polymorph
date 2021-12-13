@@ -1,6 +1,6 @@
 // Items are just native objects now 
 function _polymorph_core() {
-    //Event API. pretty important, it turns out.
+    //Event API. Controls all underlying events.
 
     this.guid = (count = 6, priorkeys) => {
         let pool = "1234567890qwertyuiopasdfghjklzxcvbnm";
@@ -252,12 +252,16 @@ function _polymorph_core() {
 
     //we need to update userdata  to the latest version as necessary... 
 
-    // Starting function: this is only called once
-    this.start = () => {
+    // Starting function: this is only called once by filemanager.
+    this.start = (isStaticMode) => {
         this.fire("UIsetup");
         this.fire("UIstart");
         this.resetDocument();
-        this.handleURL();
+        if (isStaticMode) {
+            this.handleStaticData();
+        } else {
+            this.handleURL();
+        }
     }
 
     Object.defineProperty(this, "currentDoc", {
