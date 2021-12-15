@@ -26,4 +26,6 @@ if (polymorph_core.isStaticMode()) {
     // light shade of purple for the body since purplestars are gone
     document.querySelector(".rectspace").style.background = "purple";
 
+    // Remove the top bar
+    document.querySelector(".banner").remove();
 }
