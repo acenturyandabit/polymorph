@@ -1977,6 +1977,21 @@ polymorph_core.on("titleButtonsReady", () => {
 .rectspace{
     background: url('assets/purplestars.jpeg');
 }
+
+h1 {
+    margin: 0;
+}
+
+body {
+    font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+input,
+button {
+    border-radius: 5px;
+}
     `,
         rt: `
 .tab.active{
@@ -3511,7 +3526,7 @@ if (!isPhone()) {
         `;
 
             let tabName = document.createElement("button");
-            tabName.style.cssText = tabDelete.style.cssText = `
+            tabName.style.cssText = `
         background: unset;
         color:unset;
         border:unset;
@@ -3522,6 +3537,7 @@ if (!isPhone()) {
 
             if (!polymorph_core.isStaticMode()) {
                 let tabDelete = document.createElement("button");
+                tabDelete.style.cssText = tabName.style.cssText;
                 tabDelete.style.cssText += `color:red;font-weight:bold; font-style:normal`;
                 tabDelete.innerText = 'x';
                 tabDelete.style.display = "none";
@@ -3615,14 +3631,18 @@ if (!isPhone()) {
             this.innerDivContainer.querySelector(`div[data-containerid="${containerid}"]`).style.display = "block";
             // hide buttons on previous operator
             for (let i = 0; i < this.tabbar.children.length - 1; i++) {
-                this.tabbar.children[i].children[1].style.display = "none";
-                this.tabbar.children[i].children[2].style.display = "none";
+                if (!polymorph_core.isStaticMode()) {
+                    this.tabbar.children[i].children[1].style.display = "none";
+                    this.tabbar.children[i].children[2].style.display = "none";
+                }
                 this.tabbar.children[i].classList.remove("active");
             }
             //show buttons on this operator
             let currentTab = this.tabbar.querySelector(`span[data-containerid="${containerid}"]`);
-            currentTab.children[1].style.display = "inline";
-            currentTab.children[2].style.display = "inline";
+            if (!polymorph_core.isStaticMode()) {
+                currentTab.children[1].style.display = "inline";
+                currentTab.children[2].style.display = "inline";
+            }
             currentTab.classList.add("active");
             polymorph_core.containers[containerid].refresh();
             //Overall refresh because borders are dodgy
@@ -3915,14 +3935,14 @@ let tta = htmlwrap("<h1>Operator import:</h1><br><textarea style='height:30vh'><
 polymorph_core.dialog.prompt(tta);
 tta.querySelector("button").addEventListener("click", () => {
 if (tta.querySelector("textarea").value) {
-    let importObject = JSON.parse(tta.querySelector("textarea").value);
-    this.containers[contextedOperatorIndex].fromSaveData(importObject);
-    this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
-    polymorph_core.fire("updateItem", { id: rectID, sender: this });
-    //force update all items to reload the view
-    for (let i in polymorph_core.items) {
-        polymorph_core.fire('updateItem', { id: i });
-    }
+let importObject = JSON.parse(tta.querySelector("textarea").value);
+this.containers[contextedOperatorIndex].fromSaveData(importObject);
+this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorIndex);
+polymorph_core.fire("updateItem", { id: rectID, sender: this });
+//force update all items to reload the view
+for (let i in polymorph_core.items) {
+    polymorph_core.fire('updateItem', { id: i });
+}
 }
 })
 tabmenu.style.display = "none";
@@ -16976,6 +16996,7 @@ if (polymorph_core.isStaticMode()) {
 
     //unshow the wall
     document.querySelector(".wall").style.display = "none";
-    //light shade of purple for the body :3
-    document.body.style.background = "purple";
+    // light shade of purple for the body since purplestars are gone
+    document.querySelector(".rectspace").style.background = "purple";
+
 }

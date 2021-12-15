@@ -27,6 +27,21 @@
 .rectspace{
     background: url('assets/purplestars.jpeg');
 }
+
+h1 {
+    margin: 0;
+}
+
+body {
+    font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+input,
+button {
+    border-radius: 5px;
+}
     `,
         rt: `
 .tab.active{

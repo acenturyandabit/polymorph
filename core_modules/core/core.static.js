@@ -23,6 +23,7 @@ if (polymorph_core.isStaticMode()) {
 
     //unshow the wall
     document.querySelector(".wall").style.display = "none";
-    //light shade of purple for the body :3
-    document.body.style.background = "purple";
+    // light shade of purple for the body since purplestars are gone
+    document.querySelector(".rectspace").style.background = "purple";
+
 }
