@@ -288,7 +288,9 @@ function _polymorph_core() {
     this.on("UIstart", () => {
         if (!this.documentTitleElement) {
             this.documentTitleElement = document.createElement("a");
-            this.documentTitleElement.contentEditable = true;
+            if (!this.isStaticMode()) {
+                this.documentTitleElement.contentEditable = true;
+            }
             this.topbar.add("titleElement", this.documentTitleElement);
         }
         this.documentTitleElement.addEventListener("keyup", () => {

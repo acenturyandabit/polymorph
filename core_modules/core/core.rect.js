@@ -216,7 +216,12 @@ if (!isPhone()) {
         this.plus = document.createElement("button");
         this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
         this.plus.innerHTML = "+";
-        this.tabbar.appendChild(this.plus);
+        this.addPlusIfNeeded = () => {
+            if (!polymorph_core.isStaticMode()) {
+                this.tabbar.appendChild(this.plus);
+            }
+        };
+        this.addPlusIfNeeded();
         this.outerDiv.appendChild(this.tabbar);
 
         // For handling operators. Each operator has its own innerDiv, and a tabSpan (with the name, and a cross) in the tabspan bar.
@@ -411,14 +416,18 @@ if (!isPhone()) {
                     let elementsAtPoint = this.tabbar.getRootNode().elementsFromPoint(e.clientX, rect.top);
                     this.pulledDiv.style.display = "inline-flex";
                     this.pulledDiv.style.position = "static";
-                    if (elementsAtPoint[1].tagName == "SPAN") {
+                    let droppedOnSpanIdx = 0;
+                    while (droppedOnSpanIdx < elementsAtPoint.length && !(!elementsAtPoint[droppedOnSpanIdx].classList.contains("active") && elementsAtPoint[droppedOnSpanIdx].tagName == "SPAN")) {
+                        droppedOnSpanIdx++;
+                    }
+                    if (elementsAtPoint[droppedOnSpanIdx] && elementsAtPoint[droppedOnSpanIdx].tagName == "SPAN") {
                         let childs = Array.from(this.tabbar.children)
                         let pulledIndex = childs.indexOf(this.pulledDiv);
-                        let otherIndex = childs.indexOf(elementsAtPoint[1])
+                        let otherIndex = childs.indexOf(elementsAtPoint[droppedOnSpanIdx])
                         if (otherIndex < pulledIndex) {
-                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1]);
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[droppedOnSpanIdx]);
                         } else {
-                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[droppedOnSpanIdx].nextElementSibling);
                         }
                     }
                     //save the order of my containers in settings
@@ -598,7 +607,7 @@ this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorInde
 polymorph_core.fire("updateItem", { id: rectID, sender: this });
 //force update all items to reload the view
 for (let i in polymorph_core.items) {
-    polymorph_core.fire('updateItem', { id: i });
+polymorph_core.fire('updateItem', { id: i });
 }
 }
 })
@@ -696,7 +705,7 @@ tabmenu.style.display = "none";
                             let currentTab = this.tabbar.querySelector(`[data-containerid='${i}']`);
                             if (currentTab) this.tabbar.appendChild(currentTab);
                         })
-                        this.tabbar.appendChild(this.plus);
+                        this.addPlusIfNeeded();
                     }
                 }
                 if (this.containers) this.containers.forEach((c) => {

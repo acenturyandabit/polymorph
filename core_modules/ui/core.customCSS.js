@@ -95,12 +95,12 @@ button {
         updateCSS();
     });
 
-    (() => {
-        polymorph_core.on("UIstart", () => {
+    polymorph_core.on("UIstart", () => {
+        if (!polymorph_core.isStaticMode()) {
             polymorph_core.topbar.add("File/Custom CSS").addEventListener("click", () => {
                 polymorph_core.dialog.prompt(customCSSInnerDialog);
             });
-        });
-    })();
+        }
+    });
 
 })();

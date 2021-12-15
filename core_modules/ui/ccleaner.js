@@ -204,10 +204,12 @@ polymorph_core.on("UIstart", () => {
 
         }
     })
-
-
-    polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-        populateAll();
-        loadDialog.style.display = "block";
-    })
+    polymorph_core.on("UIstart", () => {
+        if (!polymorph_core.isStaticMode()) {
+            polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+                populateAll();
+                loadDialog.style.display = "block";
+            })
+        }
+    });
 });

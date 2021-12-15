@@ -377,7 +377,9 @@ function _polymorph_core() {
     this.on("UIstart", () => {
         if (!this.documentTitleElement) {
             this.documentTitleElement = document.createElement("a");
-            this.documentTitleElement.contentEditable = true;
+            if (!this.isStaticMode()) {
+                this.documentTitleElement.contentEditable = true;
+            }
             this.topbar.add("titleElement", this.documentTitleElement);
         }
         this.documentTitleElement.addEventListener("keyup", () => {
@@ -2045,13 +2047,13 @@ button {
         updateCSS();
     });
 
-    (() => {
-        polymorph_core.on("UIstart", () => {
+    polymorph_core.on("UIstart", () => {
+        if (!polymorph_core.isStaticMode()) {
             polymorph_core.topbar.add("File/Custom CSS").addEventListener("click", () => {
                 polymorph_core.dialog.prompt(customCSSInnerDialog);
             });
-        });
-    })();
+        }
+    });
 
 })();;
 
@@ -2937,7 +2939,9 @@ polymorph_core.on("UIstart", () => {
     contextMenuDialog.querySelector("textarea").addEventListener("input", () => {
         polymorph_core.currentDoc.globalContextMenuOptions = contextMenuDialog.querySelector("textarea").value.split("\n");
     });
-    polymorph_core.topbar.add("File"); //add it so that it comes first before settings.
+    if (!polymorph_core.isStaticMode()) {
+        polymorph_core.topbar.add("File"); //add it so that it comes first before settings.
+    }
     /*polymorph_core.topbar.add("Settings/Context menu").addEventListener("click", () => {
         polymorph_core.dialog.prompt(contextMenuDialog);
     })*/
@@ -3559,7 +3563,12 @@ if (!isPhone()) {
         this.plus = document.createElement("button");
         this.plus.style.cssText = `color:blue;font-weight:bold; font-style:normal`;
         this.plus.innerHTML = "+";
-        this.tabbar.appendChild(this.plus);
+        this.addPlusIfNeeded = () => {
+            if (!polymorph_core.isStaticMode()) {
+                this.tabbar.appendChild(this.plus);
+            }
+        };
+        this.addPlusIfNeeded();
         this.outerDiv.appendChild(this.tabbar);
 
         // For handling operators. Each operator has its own innerDiv, and a tabSpan (with the name, and a cross) in the tabspan bar.
@@ -3754,14 +3763,18 @@ if (!isPhone()) {
                     let elementsAtPoint = this.tabbar.getRootNode().elementsFromPoint(e.clientX, rect.top);
                     this.pulledDiv.style.display = "inline-flex";
                     this.pulledDiv.style.position = "static";
-                    if (elementsAtPoint[1].tagName == "SPAN") {
+                    let droppedOnSpanIdx = 0;
+                    while (droppedOnSpanIdx < elementsAtPoint.length && !(!elementsAtPoint[droppedOnSpanIdx].classList.contains("active") && elementsAtPoint[droppedOnSpanIdx].tagName == "SPAN")) {
+                        droppedOnSpanIdx++;
+                    }
+                    if (elementsAtPoint[droppedOnSpanIdx] && elementsAtPoint[droppedOnSpanIdx].tagName == "SPAN") {
                         let childs = Array.from(this.tabbar.children)
                         let pulledIndex = childs.indexOf(this.pulledDiv);
-                        let otherIndex = childs.indexOf(elementsAtPoint[1])
+                        let otherIndex = childs.indexOf(elementsAtPoint[droppedOnSpanIdx])
                         if (otherIndex < pulledIndex) {
-                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1]);
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[droppedOnSpanIdx]);
                         } else {
-                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[1].nextElementSibling);
+                            this.tabbar.insertBefore(this.pulledDiv, elementsAtPoint[droppedOnSpanIdx].nextElementSibling);
                         }
                     }
                     //save the order of my containers in settings
@@ -3941,7 +3954,7 @@ this.tieContainer(this.containers[contextedOperatorIndex], contextedOperatorInde
 polymorph_core.fire("updateItem", { id: rectID, sender: this });
 //force update all items to reload the view
 for (let i in polymorph_core.items) {
-    polymorph_core.fire('updateItem', { id: i });
+polymorph_core.fire('updateItem', { id: i });
 }
 }
 })
@@ -4039,7 +4052,7 @@ tabmenu.style.display = "none";
                             let currentTab = this.tabbar.querySelector(`[data-containerid='${i}']`);
                             if (currentTab) this.tabbar.appendChild(currentTab);
                         })
-                        this.tabbar.appendChild(this.plus);
+                        this.addPlusIfNeeded();
                     }
                 }
                 if (this.containers) this.containers.forEach((c) => {
@@ -4752,53 +4765,55 @@ if (!isPhone()) {
     })
 
     polymorph_core.on("UIstart", () => {
-        polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
-            window.open(window.location.pathname + "?o", "_blank");
-        })
-        polymorph_core.topbar.add("File/New").addEventListener("click", () => {
-            window.open(window.location.pathname + "?o", "_blank");
-        })
-        polymorph_core.topbar.add("Help/Tutorial").addEventListener("click", () => {
-            polymorph_core.resetTutorial();
-        })
-        polymorph_core.topbar.add("Help/Date Syntax").addEventListener("click", () => {
-            polymorph_core.dialog.prompt(htmlwrap(`
-                <div>
-                    <h1>Date syntax</h1>
-                    <table>
-                        <tr>
-                            <td>(10:00)</td>
-                            <td>Every 10:00am (smart allocator assumes you'll probably mean the morning.).</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                ( start date || next date generator | number of repetitions OR end date)
-                            </td>
-                            <td> Repetition structure </td>
-                        </tr>
-                    </table>
-                </div>
-            `));
-        })
-        polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
-            let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
-            document.body.appendChild(emaila);
-            emaila.click();
-        });
-        let dbm = polymorph_core.topbar.add("File/Debug Mode");
+        if (!polymorph_core.isStaticMode()) {
+            polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
+                window.open(window.location.pathname + "?o", "_blank");
+            })
+            polymorph_core.topbar.add("File/New").addEventListener("click", () => {
+                window.open(window.location.pathname + "?o", "_blank");
+            })
+            polymorph_core.topbar.add("Help/Tutorial").addEventListener("click", () => {
+                polymorph_core.resetTutorial();
+            })
+            polymorph_core.topbar.add("Help/Date Syntax").addEventListener("click", () => {
+                polymorph_core.dialog.prompt(htmlwrap(`
+                    <div>
+                        <h1>Date syntax</h1>
+                        <table>
+                            <tr>
+                                <td>(10:00)</td>
+                                <td>Every 10:00am (smart allocator assumes you'll probably mean the morning.).</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    ( start date || next date generator | number of repetitions OR end date)
+                                </td>
+                                <td> Repetition structure </td>
+                            </tr>
+                        </table>
+                    </div>
+                `));
+            })
+            polymorph_core.topbar.add("Feedback").addEventListener("click", () => {
+                let emaila = htmlwrap(`<a target="_blank" href="mailto:steeven.liu2@gmail.com?body=Hey%20there,%20I'm%20using%20polymorph%20and..." style="display:none"></a>`);
+                document.body.appendChild(emaila);
+                emaila.click();
+            });
+            let dbm = polymorph_core.topbar.add("File/Debug Mode");
 
-        function updateDBM() {
-            if (localStorage.getItem("__polymorph_debug_flag") == "true") {
-                dbm.children[0].children[0].innerText = "Debug Mode (now ON)";
-            } else {
-                dbm.children[0].children[0].innerText = "Debug Mode";
+            function updateDBM() {
+                if (localStorage.getItem("__polymorph_debug_flag") == "true") {
+                    dbm.children[0].children[0].innerText = "Debug Mode (now ON)";
+                } else {
+                    dbm.children[0].children[0].innerText = "Debug Mode";
+                }
             }
-        }
-        updateDBM();
-        dbm.addEventListener("click", () => {
-            localStorage.setItem("__polymorph_debug_flag", !(localStorage.getItem("__polymorph_debug_flag") == "true"));
             updateDBM();
-        });
+            dbm.addEventListener("click", () => {
+                localStorage.setItem("__polymorph_debug_flag", !(localStorage.getItem("__polymorph_debug_flag") == "true"));
+                updateDBM();
+            });
+        }
         window.addEventListener("resize", () => {
             polymorph_core.baseRect.refresh();
         })
@@ -5071,12 +5086,14 @@ polymorph_core.on("UIstart", () => {
 
         }
     })
-
-
-    polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-        populateAll();
-        loadDialog.style.display = "block";
-    })
+    polymorph_core.on("UIstart", () => {
+        if (!polymorph_core.isStaticMode()) {
+            polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+                populateAll();
+                loadDialog.style.display = "block";
+            })
+        }
+    });
 });;
 
 (() => {
@@ -16999,6 +17016,4 @@ if (polymorph_core.isStaticMode()) {
     // light shade of purple for the body since purplestars are gone
     document.querySelector(".rectspace").style.background = "purple";
 
-    // Remove the top bar
-    document.querySelector(".banner").remove();
 }
