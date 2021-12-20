@@ -9,6 +9,7 @@ polymorph_core.registerOperator("scriptrunner", {
         autorun: false,
         reallyAutorun: false,
         forceCareAbout: "",
+        uiOnly: false,
         processDuringLoad: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
@@ -28,9 +29,10 @@ polymorph_core.registerOperator("scriptrunner", {
             <p data-switchto="ui">UI</p>
         </div>
         <div>
-            <div data-switchto="code">
+            <div class="lpanel" data-switchto="code">
                 <h1>WARNING: THIS SCRIPT IS POTENTIALLY INSECURE. ONLY RUN TRUSTED SCRIPTS.</h1>
                 <p>Press 'Update' to execute this script.</p>
+                <p>Press here for a <a class="showRef" href="#">reference</a>.</p>
                 <textarea style="width: 100%; height: 50%; tab-size:4" placeholder="Enter script here:"></textarea>
                 <br>
                 <button class="updatebtn">Update</button>
@@ -38,10 +40,19 @@ polymorph_core.registerOperator("scriptrunner", {
                 <button class="clogs">Clear logs</button>
                 <div id="output" style="overflow-y: auto; height: 10%;"></div>
             </div>
-            <div data-switchto="ui" style="display:none">
+            <div class="lpanel" data-switchto="ui" style="display:none">
             </div>
         </div>
         `;
+    let instructionsDiv = htmlwrap(`
+    <div>
+    <p>Your code will have two global variables: instance; and uidiv. uidiv is a div; instance is an object.</p>
+    <p>You can use instance to bind events from this operator; e.g. instance.on('event',()=>{});</p>
+    </div>`);
+    let showRefBtn = this.rootdiv.querySelector(".showRef");
+    showRefBtn.addEventListener("click", (e) => {
+        polymorph_core.dialog.prompt(instructionsDiv);
+    })
     let tabs = Array.from(this.rootdiv.querySelectorAll("div[data-switchto]")).reduce((p, i) => { p[i.dataset.switchto] = i; return p; }, {});
     this.rootdiv.querySelector(".switchTabs").addEventListener("click", (e) => {
         if (e.target.matches("[data-switchto]")) {
@@ -242,6 +253,13 @@ polymorph_core.registerOperator("scriptrunner", {
             object: this.settings,
             property: "forceCareAbout",
             label: "Items to keep safe from garbage collector (csv)"
+        }),
+        new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "bool",
+            object: this.settings,
+            property: "uiOnly",
+            label: "Only show the UI (use with autorun!)"
         })
     ];
 
@@ -250,8 +268,18 @@ polymorph_core.registerOperator("scriptrunner", {
     this.showDialog = function() {
         ops.forEach((op) => { op.load(); });
     }
-    this.dialogUpdateSettings = function() {
+    this.dialogUpdateSettings = () => {
+        if (this.settings.uiOnly) {
+            this.rootdiv.querySelector(".switchTabs").style.display = "none";
+            this.rootdiv.querySelector(".lpanel[data-switchto='code']").style.display = "none";
+            this.rootdiv.querySelector(".lpanel[data-switchto='ui']").style.display = "block";
+        } else {
+            this.rootdiv.querySelector(".switchTabs").style.display = "flex";
+            this.rootdiv.querySelector(".lpanel[data-switchto='code']").style.display = "block";
+            this.rootdiv.querySelector(".lpanel[data-switchto='ui']").style.display = "none";
+        }
         // pull settings and update when your dialog is closed.
     }
+    this.dialogUpdateSettings();
 
 });
