@@ -178,7 +178,7 @@ function _itemcluster_extend_contextmenu() {
         let levelWidths = [];
         let levelHeights = [];
         visibleItems.forEach(i => {
-            if (!levelWidths[i.level]) {
+            while (levelWidths[i.level] == undefined) {
                 levelWidths.push(0);
                 levelHeights.push(0);
             }
