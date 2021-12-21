@@ -10,14 +10,18 @@ function _itemcluster_extend_contextmenu() {
             return true; //only activate on clicks to the background.  
         }
     }
-    this.rootcontextMenu = contextMenuManager.registerContextMenu(`
+    this.rootContextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
+        <li> Arrange in hierarchy
+        <ul>
         <li class="hierarchy">Arrange in hierarchy</li>
         <li class="hierarchy squashed">Arrange in squashed hierarchy</li>
         <li class="hierarchy horizontal">Arrange in horizontal hierarchy</li>
         <li class="hierarchy radial">Arrange in radial hierarchy</li>
         <li class="hierarchy biradial">Arrange in biradial hierarchy</li>
+        </ul>
+        </li>
         <li class="search">Search
         <ul class="submenu">
         <li><input class="searchbox"></li>
@@ -26,7 +30,8 @@ function _itemcluster_extend_contextmenu() {
         </li>
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, this.rootdiv, undefined, chk);
-    this.rootcontextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
+    _itemcluster_extend_contextmenu_orbit.apply(this);
+    this.rootContextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
         if (polymorph_core.shared.itemclusterCopyElement) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
             polymorph_core.shared.itemclusterCopyElement.forEach((v) => {
@@ -45,10 +50,10 @@ function _itemcluster_extend_contextmenu() {
             for (let i in polymorph_core.items) {
                 this.arrangeItem(i);
             }
-            this.rootcontextMenu.style.display = "none";
+            this.rootContextMenu.style.display = "none";
         }
     })
-    this.rootcontextMenu.querySelector(".collect").addEventListener("click", (e) => {
+    this.rootContextMenu.querySelector(".collect").addEventListener("click", (e) => {
         let rect = this.itemSpace.getBoundingClientRect();
         for (let i in polymorph_core.items) {
             if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
@@ -594,7 +599,7 @@ function _itemcluster_extend_contextmenu() {
         }
     }
 
-    this.rootcontextMenu.addEventListener("click", (e) => {
+    this.rootContextMenu.addEventListener("click", (e) => {
         if (!e.target.classList.contains("hierarchy")) return;
         let visibleItems = generateHierarchy();
         //visible items looks like this:
@@ -632,9 +637,9 @@ function _itemcluster_extend_contextmenu() {
     let focusSearchItem = (index) => {
         let id = this.searchArray[index];
         if (!id) {
-            this.rootcontextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
+            this.rootContextMenu.querySelector(".searchNextResult").style.background = "palevioletred";
         } else {
-            this.rootcontextMenu.querySelector(".searchNextResult").style.background = "white";
+            this.rootContextMenu.querySelector(".searchNextResult").style.background = "white";
             let ic = polymorph_core.items[this.settings.currentViewName].itemcluster;
             ic.scale = 1;
             ic.cx = polymorph_core.items[id].itemcluster.viewData[this.settings.currentViewName].x * ic.XZoomFactor;
@@ -643,12 +648,12 @@ function _itemcluster_extend_contextmenu() {
             this.viewGrid();
         }
     }
-    this.rootcontextMenu.querySelector(".search input").addEventListener("input", () => {
+    this.rootContextMenu.querySelector(".search input").addEventListener("input", () => {
         //create the search array
         this.searchArray = [];
         for (let id in polymorph_core.items) {
             if (this.itemIsOurs(id)) {
-                if (polymorph_core.items[id][this.settings.textProp] && polymorph_core.items[id][this.settings.textProp].includes(this.rootcontextMenu.querySelector(".search input").value)) {
+                if (polymorph_core.items[id][this.settings.textProp] && polymorph_core.items[id][this.settings.textProp].includes(this.rootContextMenu.querySelector(".search input").value)) {
                     this.searchArray.push(id);
                 }
             }
@@ -656,7 +661,7 @@ function _itemcluster_extend_contextmenu() {
         if (searchArrayIndex > this.searchArray.length) searchArrayIndex = 0;
         focusSearchItem(searchArrayIndex);
     });
-    this.rootcontextMenu.querySelector(".searchNextResult").addEventListener("click", () => {
+    this.rootContextMenu.querySelector(".searchNextResult").addEventListener("click", () => {
         searchArrayIndex++;
         if (searchArrayIndex > this.searchArray.length) {
             searchArrayIndex = 0;

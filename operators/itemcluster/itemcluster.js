@@ -158,7 +158,6 @@ polymorph_core.registerOperator("itemcluster2", {
         }
     })
 
-
     ////////////////////////////////////////Handle polymorph_core item updates//////////////////
 
     this.itemRelevant = (id) => {
