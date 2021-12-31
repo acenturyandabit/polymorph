@@ -48,6 +48,6 @@ function workflowy_advanced_entry() {
         this.parse(e.target, plaintextOperatingOnID);
         polymorph_core.items[plaintextOperatingOnID][this.settings.titleProperty] = e.target.innerText; // polymorph_core.RTParseElement(e.target, id, this.settings.titleProperty);
         this.container.fire("updateItem", { id: plaintextOperatingOnID, sender: this });
-        this.renderItem(plaintextOperatingOnID);
+        this.renderItem(plaintextOperatingOnID, "d");
     });
 }

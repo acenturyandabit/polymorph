@@ -17,7 +17,9 @@ polymorph_core.registerOperator("workflow", {
         rootItemListItem: "",
         rootItemListItemProperty: "",
         linkProp: "to",
-        bracketPropertyPrefix: container.id
+        bracketPropertyPrefix: container.id,
+        sortBackwards: false,
+        unsortableBeforeSorted: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Can probably replace this with direct instantiation instead of a getter, if we're careful.
@@ -1014,6 +1016,20 @@ polymorph_core.registerOperator("workflow", {
             object: this.settings,
             property: "bracketPropertyPrefix",
             label: "Prefix for bracket properties"
+        }),
+        sortBackwards: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: this.settings,
+            property: "sortBackwards",
+            label: "Reverse item sort order"
+        }),
+        unsortableBeforeSorted: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: this.settings,
+            property: "unsortableBeforeSorted",
+            label: "Place unsortable items before sortable items in order"
         })
     }
     this.showDialog = function() {
@@ -1162,24 +1178,39 @@ polymorph_core.registerOperator("workflow", {
             return;
         }
 
+        // map items to item/date pairs
         let itemMapper = (a) => {
             let result;
             if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
                 result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
                 if (result) result = result.date;
             }
-            if (!result) result = Date.now() * 10000;
+            if (!result) {
+                // no date
+                if (this.settings.unsortableBeforeSorted) {
+                    result = -1;
+                } else {
+                    result = Date.now() * 10000;
+                }
+            }
             return [a, result];
         }
         property = `_${this.settings.bracketPropertyPrefix}_${property}`;
+        let objs;
         if (root && root.dataset.id) {
-            let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
+            objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
+        } else if (!root) {
+            objs = this.rootItems.map(itemMapper);
+        }
+        if (this.settings.sortBackwards) {
+            objs.sort((a, b) => b[1] - a[1]);
+        } else {
             objs.sort((a, b) => a[1] - b[1]);
+        }
+        if (root && root.dataset.id) {
             polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
             polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
         } else if (!root) {
-            let objs = this.rootItems.map(itemMapper);
-            objs.sort((a, b) => a[1] - b[1]);
             this.rootItems = objs.map(i => i[0]);
             polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
         }

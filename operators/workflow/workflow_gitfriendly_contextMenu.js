@@ -46,6 +46,7 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     contextmenu.addEventListener("input", (e) => {
         if (this.contextMenuActions[e.target.dataset.action]) this.contextMenuActions[e.target.dataset.action](e);
     });
+    this.contextmenu = contextmenu;
     //<li data-action="sortbydate">Copy subitems recursively as list</li>
     this.contextMenuActions = {};
     /*let savedStyle = undefined;

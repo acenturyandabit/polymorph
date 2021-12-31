@@ -20,7 +20,9 @@ polymorph_core.registerOperator("workflow_gf", {
         focusExclusionID: "",
         collapseProperty: "collapsed",
         advancedInputMode: false,
-        filterHides: false
+        filterHides: false,
+        sortBackwards: false,
+        unsortableBeforeSorted: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
@@ -144,6 +146,7 @@ polymorph_core.registerOperator("workflow_gf", {
             i.style.display = "block";
         });
     }
+    this.setExpandedState = setExpandedState;
 
     let restoreClickFlag = false;
     this.rootdiv.addEventListener("click", (e) => {
@@ -510,7 +513,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             setParent(id, polymorph_core.items[spanWithID.parentElement.parentElement.dataset.id][this.settings.parentProperty]);
                             polymorph_core.fire("updateItem", { id: id, sender: this }); // force rerender in other operators
                             this.renderItem(id, "d");
-                            wasme.focus();
+                            focusOnElement(wasme);
                         } else {
                             // already a root node, do nothing
                         }
@@ -725,10 +728,12 @@ polymorph_core.registerOperator("workflow_gf", {
                     .sort((a, b) => {
                         let a_date = getDate(a[1]);
                         let b_date = getDate(b[1]);
-                        if (a_date && !b_date) return -1;
-                        if (b_date && !a_date) return 1;
+                        let inversionFactor = (this.settings.unsortableBeforeSorted) ? -1 : 1;
+                        if (a_date && !b_date) return -1 * inversionFactor;
+                        if (b_date && !a_date) return 1 * inversionFactor;
                         if (!a_date && !b_date) return 0;
-                        return a_date - b_date;
+                        if (this.settings.sortBackwards) return a_date - b_date;
+                        else return b_date - a_date;
                     }).forEach((v, i) => {
                         if (polymorph_core.items[v[0]][this.settings.orderProperty] != i) {
                             polymorph_core.items[v[0]][this.settings.orderProperty] = i;
@@ -1089,6 +1094,20 @@ polymorph_core.registerOperator("workflow_gf", {
             object: () => this.settings,
             property: "filterHides",
             label: "Filter should hideitems"
+        }),
+        sortBackwards: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "sortBackwards",
+            label: "Reverse item sort order"
+        }),
+        unsortableBeforeSorted: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "unsortableBeforeSorted",
+            label: "Place unsortable items before sortable items in order"
         })
     }
 
@@ -1151,6 +1170,7 @@ polymorph_core.registerOperator("workflow_gf", {
     workflowy_gitfriendly_extend_contextMenu.apply(this);
     workflowy_gitfriendly_search.apply(this);
     workflowy_advanced_entry.apply(this);
+    workflowy_copy_paste.apply(this);
 
     oldFocus = 0; // ready to go
 });

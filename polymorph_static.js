@@ -8207,7 +8207,9 @@ polymorph_core.registerOperator("workflow", {
         rootItemListItem: "",
         rootItemListItemProperty: "",
         linkProp: "to",
-        bracketPropertyPrefix: container.id
+        bracketPropertyPrefix: container.id,
+        sortBackwards: false,
+        unsortableBeforeSorted: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     //Can probably replace this with direct instantiation instead of a getter, if we're careful.
@@ -9204,6 +9206,20 @@ polymorph_core.registerOperator("workflow", {
             object: this.settings,
             property: "bracketPropertyPrefix",
             label: "Prefix for bracket properties"
+        }),
+        sortBackwards: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: this.settings,
+            property: "sortBackwards",
+            label: "Reverse item sort order"
+        }),
+        unsortableBeforeSorted: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: this.settings,
+            property: "unsortableBeforeSorted",
+            label: "Place unsortable items before sortable items in order"
         })
     }
     this.showDialog = function() {
@@ -9352,24 +9368,39 @@ polymorph_core.registerOperator("workflow", {
             return;
         }
 
+        // map items to item/date pairs
         let itemMapper = (a) => {
             let result;
             if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
                 result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
                 if (result) result = result.date;
             }
-            if (!result) result = Date.now() * 10000;
+            if (!result) {
+                // no date
+                if (this.settings.unsortableBeforeSorted) {
+                    result = -1;
+                } else {
+                    result = Date.now() * 10000;
+                }
+            }
             return [a, result];
         }
         property = `_${this.settings.bracketPropertyPrefix}_${property}`;
+        let objs;
         if (root && root.dataset.id) {
-            let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
+            objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
+        } else if (!root) {
+            objs = this.rootItems.map(itemMapper);
+        }
+        if (this.settings.sortBackwards) {
+            objs.sort((a, b) => b[1] - a[1]);
+        } else {
             objs.sort((a, b) => a[1] - b[1]);
+        }
+        if (root && root.dataset.id) {
             polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
             polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
         } else if (!root) {
-            let objs = this.rootItems.map(itemMapper);
-            objs.sort((a, b) => a[1] - b[1]);
             this.rootItems = objs.map(i => i[0]);
             polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
         }
@@ -9431,7 +9462,7 @@ function workflowy_gitfriendly_search() {
             // Hide everything
             for (let i in this.renderedItemCache) {
                 if (i) {
-                    if (this.settings.filterHide) this.resolveSpan(i).el.style.display = "none";
+                    if (this.settings.filterHides) this.resolveSpan(i).el.style.display = "none";
                     this.resolveSpan(i).el.classList.remove("searchFocused");
                 }
             }
@@ -9457,7 +9488,7 @@ function workflowy_gitfriendly_search() {
                         }
                         if (i != ptree.length - 1 || this.holdExpanded[v]) {
                             this.holdExpanded[v] = true;
-                            setExpandedState(el, true, true, true);
+                            this.setExpandedState(el, true, true, true);
                         }
                         // set it to expanded
                         // unless it's the last one
@@ -9477,6 +9508,10 @@ function workflowy_gitfriendly_search() {
         //show selected items 
         //v comp expense! use cache if too hard  
     })
+};
+
+function workflowy_copy_paste() {
+    console.log(this.contextmenu.el);
 };
 
 let workflowy_gitfriendly_extend_contextMenu = function() {
@@ -9527,6 +9562,7 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     contextmenu.addEventListener("input", (e) => {
         if (this.contextMenuActions[e.target.dataset.action]) this.contextMenuActions[e.target.dataset.action](e);
     });
+    this.contextmenu = contextmenu;
     //<li data-action="sortbydate">Copy subitems recursively as list</li>
     this.contextMenuActions = {};
     /*let savedStyle = undefined;
@@ -9717,7 +9753,9 @@ polymorph_core.registerOperator("workflow_gf", {
         focusExclusionID: "",
         collapseProperty: "collapsed",
         advancedInputMode: false,
-        filterHides: false
+        filterHides: false,
+        sortBackwards: false,
+        unsortableBeforeSorted: false
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
@@ -9841,6 +9879,7 @@ polymorph_core.registerOperator("workflow_gf", {
             i.style.display = "block";
         });
     }
+    this.setExpandedState = setExpandedState;
 
     let restoreClickFlag = false;
     this.rootdiv.addEventListener("click", (e) => {
@@ -10422,10 +10461,12 @@ polymorph_core.registerOperator("workflow_gf", {
                     .sort((a, b) => {
                         let a_date = getDate(a[1]);
                         let b_date = getDate(b[1]);
-                        if (a_date && !b_date) return -1;
-                        if (b_date && !a_date) return 1;
+                        let inversionFactor = (this.settings.unsortableBeforeSorted) ? -1 : 1;
+                        if (a_date && !b_date) return -1 * inversionFactor;
+                        if (b_date && !a_date) return 1 * inversionFactor;
                         if (!a_date && !b_date) return 0;
-                        return a_date - b_date;
+                        if (this.settings.sortBackwards) return a_date - b_date;
+                        else return b_date - a_date;
                     }).forEach((v, i) => {
                         if (polymorph_core.items[v[0]][this.settings.orderProperty] != i) {
                             polymorph_core.items[v[0]][this.settings.orderProperty] = i;
@@ -10786,6 +10827,20 @@ polymorph_core.registerOperator("workflow_gf", {
             object: () => this.settings,
             property: "filterHides",
             label: "Filter should hideitems"
+        }),
+        sortBackwards: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "sortBackwards",
+            label: "Reverse item sort order"
+        }),
+        unsortableBeforeSorted: new polymorph_core._option({
+            div: this.dialogDiv,
+            type: "boolean",
+            object: () => this.settings,
+            property: "unsortableBeforeSorted",
+            label: "Place unsortable items before sortable items in order"
         })
     }
 
@@ -10848,6 +10903,7 @@ polymorph_core.registerOperator("workflow_gf", {
     workflowy_gitfriendly_extend_contextMenu.apply(this);
     workflowy_gitfriendly_search.apply(this);
     workflowy_advanced_entry.apply(this);
+    workflowy_copy_paste.apply(this);
 
     oldFocus = 0; // ready to go
 });;
@@ -13128,30 +13184,115 @@ function _itemcluster_extend_svg(me) { // very polymorph_core functions!
     }
 };
 
-function _itemcluster_extend_contextmenu_orbit() {
-    let orbitBtn = htmlwrap(`<li class="orbit">Toggle orbit around point</li>`);
-    this.rootContextMenu.appendChild(orbitBtn);
-    let orbiterParams;
-    orbitBtn.addEventListener("click", (e) => {
-        if (orbiterParams) {
-            // stop orbiting
-            clearInterval(orbiterParams.interval);
-            orbiterParams = undefined;
-        } else {
-            orbiterParams = {};
+function _itemcluster_extend_contextmenu_entropic_hierarchy() {
+    let entHierBtn = htmlwrap(`<li>Arrange in Entropic Hierarchy (100)</li>`);
+    let entHierBtn1 = htmlwrap(`<li>Arrange in Entropic Hierarchy (1)</li>`);
+    this.rootContextMenu.querySelector(".hierarchy_ctr ul").appendChild(entHierBtn);
+    this.rootContextMenu.querySelector(".hierarchy_ctr ul").appendChild(entHierBtn1);
 
-            // Find the centre to orbit around 
-            let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
-            orbiterParams.cx = coords.x;
-            orbiterParams.cy = coords.y;
-            // start orbiting
-            orbiterParams.interval = setInterval(() => {
-                if (this.container.visible()) {
-                    for (let i in )
-                }
-            }, 500);
+    let doEntropicHierarchyIterations = (nIters) => {
+        let visibleItems = this.contextmenuUtils.generateHierarchy();
+        //this.rootContextMenu.style.display = "none";
+        // end result:
+        // -> no items are in each others' personal radii.
+        // --> two items repel each other if within personal radii
+        // -> if an item is not in another item's subtree, it is not in its level-radius.
+        // --> two items repel each other if one is not part of another's subtree but within each others' level-radius. 
+        // --> if both not part of each others subtree, strong repulsion. if parent/child; only one sided repulsion.
+        // -> level-radii are minimised.
+        // --> if an item is part of another item's subtree, there is an attraction
+
+        // cache: is item in another item's subtree (idx0 to idx0)
+        let inSubtreeQuery = visibleItems.map(i => []); // start with empty storage
+        visibleItems.forEach((v, i) => v.idx0 = i);
+
+        // children are in id-space, transpose to idx-space
+        let ididxmap = {};
+        visibleItems.forEach(i => ididxmap[i.id] = i.idx0);
+        visibleItems.forEach(i => i.children = i.children.map(c => ididxmap[c]));
+
+        visibleItems.sort((a, b) => b.level - a.level);
+
+        let idxMap = visibleItems.map(i => 0);
+        visibleItems.forEach((v, i) => idxMap[v.idx0] = i);
+
+
+        visibleItems.forEach(v => {
+            inSubtreeQuery[v.idx0].push(...v.children);
+            v.children.forEach(c => inSubtreeQuery[v.idx0].push(...inSubtreeQuery[c]));
+        })
+        let dist = (i1, i2) => {
+            return Math.sqrt(
+                (visibleItems[i1].x - visibleItems[i2].x) ** 2 + (visibleItems[i1].y - visibleItems[i2].y) ** 2
+            )
         }
-        this.rootContextMenu.style.display = "none";
+        let personalRadius = 200;
+        let tempFactor = 3;
+        for (let iteration = 0; iteration < nIters; iteration++) {
+            console.log("===== it =====");
+            // calculate proto-(level-radii) for all items
+            visibleItems.forEach((v, i) => {
+                let distances_to_subtree = inSubtreeQuery[v.idx0].map(other => dist(i, idxMap[other]));
+                v.level_radius = Math.max(...distances_to_subtree, personalRadius);
+            });
+            // jiggle things by the temperature
+            let currentTemp = tempFactor * (nIters - iteration - 1);
+            visibleItems.forEach((i, ii) => {
+                if (ii == visibleItems.length - 1) return;
+                i.x += Math.random() * currentTemp - currentTemp / 2;
+                i.y += Math.random() * currentTemp - currentTemp / 2;
+            });
+            for (let i1 = 0; i1 < visibleItems.length; i1++) {
+                for (let i2 = 0; i2 < visibleItems.length; i2++) {
+                    if (i1 == i2) continue;
+                    let pairDist = dist(i1, i2);
+                    let dPairDist = 0;
+                    // repel if in personal radius
+                    if (pairDist < personalRadius) {
+                        dPairDist += (personalRadius - pairDist) / 20; // repel a bit
+                        //console.log(`too close, repelling ${i1} and ${i2} by ${personalRadius} - ${pairDist} = ${personalRadius - pairDist} `);
+                    }
+                    // repel if not in subtree and in subtree radis
+                    if (inSubtreeQuery[visibleItems[i1].idx0].indexOf(visibleItems[i2].idx0) == -1) {
+                        if (inSubtreeQuery[visibleItems[i2].idx0].indexOf(visibleItems[i1].idx0) == -1) {
+                            if (visibleItems[i1].level_radius - pairDist > 0) {
+                                //console.log(`Repelling ${i1} and ${i2} by ${visibleItems[i1].level_radius} - ${pairDist} = ${visibleItems[i1].level_radius - pairDist} `);
+                                dPairDist += (visibleItems[i1].level_radius - pairDist) / 200; // repel a bit
+                            }
+                        }
+                    } else {
+                        // attract if in subtree, weaker if further tier away
+                        dPairDist -= 40 / (visibleItems[i2].level - visibleItems[i1].level); // arbitrary number umm hope it works
+                        // todo: attract _whole_ subtree!??
+                    }
+                    dPairDist /= 100;
+                    // move both i2 relative to i1, but dont move last (root) item
+                    let dt = Math.atan2((visibleItems[i2].y - visibleItems[i1].y), (visibleItems[i2].x - visibleItems[i1].x));
+                    if (i2 != visibleItems.length - 1) {
+                        visibleItems[i2].x = visibleItems[i1].x + (pairDist + dPairDist) * Math.cos(dt);
+                        visibleItems[i2].y = visibleItems[i1].y + (pairDist + dPairDist) * Math.sin(dt);
+                    }
+                    dt = Math.atan2((visibleItems[i1].y - visibleItems[i2].y), (visibleItems[i1].x - visibleItems[i2].x));
+                    if (i1 != visibleItems.length - 1) {
+                        visibleItems[i1].x = visibleItems[i2].x + (pairDist + dPairDist) * Math.cos(dt);
+                        visibleItems[i1].y = visibleItems[i2].y + (pairDist + dPairDist) * Math.sin(dt);
+                    }
+                }
+            }
+        }
+        visibleItems.map((i, ii) => {
+            polymorph_core.items[i.id].itemcluster.viewData[this.settings.currentViewName].x = i.x;
+            polymorph_core.items[i.id].itemcluster.viewData[this.settings.currentViewName].y = i.y;
+            //polymorph_core.items[i.id].title = ii; // useful for debugging
+            this.container.fire("updateItem", { id: i.id, sender: this });
+            this.arrangeItem(i.id);
+        });
+    }
+    entHierBtn.addEventListener("click", (e) => {
+        doEntropicHierarchyIterations(100);
+    });
+    entHierBtn1.addEventListener("click", (e) => {
+        doEntropicHierarchyIterations(1);
     });
 
 
@@ -13172,7 +13313,7 @@ function _itemcluster_extend_contextmenu() {
     this.rootContextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
-        <li> Arrange in hierarchy
+        <li class="hierarchy_ctr"> Arrange in hierarchy
         <ul>
         <li class="hierarchy">Arrange in hierarchy</li>
         <li class="hierarchy squashed">Arrange in squashed hierarchy</li>
@@ -13189,7 +13330,8 @@ function _itemcluster_extend_contextmenu() {
         </li>
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, this.rootdiv, undefined, chk);
-    _itemcluster_extend_contextmenu_orbit.apply(this);
+    //_itemcluster_extend_contextmenu_orbit.apply(this);
+    _itemcluster_extend_contextmenu_entropic_hierarchy.apply(this);
     this.rootContextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
         if (polymorph_core.shared.itemclusterCopyElement) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -13232,18 +13374,7 @@ function _itemcluster_extend_contextmenu() {
     //hierarchy buttons
     let generateHierarchy = () => {
         //get position of items, and the links to other items
-        let visibleItems = [];
-        for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                visibleItems.push({
-                    id: i,
-                    x: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x,
-                    y: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y,
-                    children: Object.keys(polymorph_core.items[i].to || {}),
-                    parents: []
-                });
-            }
-        }
+        let visibleItems = this.getVisibleItems();
 
         let visibleItemIds = visibleItems.map((v) => v.id);
 
@@ -13322,6 +13453,22 @@ function _itemcluster_extend_contextmenu() {
         //visibleItems = visibleItems.filter(i => cycleNodes.indexOf(i.id) == -1);
         return visibleItems;
     }
+
+    this.contextmenuUtils = {
+        generateHierarchy: generateHierarchy
+    };
+
+    /*
+    [{
+        children: []
+        id: "sxtrqa6_NtSW+0/_634"
+        level: 3
+        parent: "sxtrqa6_NtSdSvO_635"
+        parents: [4]
+        x: 1089
+        y: 724.828125
+    }]
+    */
 
     let squashedHierarchy = (e, visibleItems) => {
         //sort for rendering
@@ -14706,8 +14853,30 @@ polymorph_core.registerOperator("itemcluster2", {
             }
         }
         return (hasView || this.settings.tray) && (!(this.settings.filter) || isFiltered);
-
     }
+
+    this.itemIsVisible = (i) => {
+        if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+            return true;
+        }
+    }
+
+    this.getVisibleItems = () => {
+        let visibleItems = [];
+        for (let i in polymorph_core.items) {
+            if (this.itemIsVisible(i)) {
+                visibleItems.push({
+                    id: i,
+                    x: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x,
+                    y: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y,
+                    children: Object.keys(polymorph_core.items[i].to || {}),
+                    parents: []
+                });
+            }
+        }
+        return visibleItems;
+    }
+
     container.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;

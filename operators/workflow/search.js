@@ -7,7 +7,7 @@ function workflowy_gitfriendly_search() {
             // Hide everything
             for (let i in this.renderedItemCache) {
                 if (i) {
-                    if (this.settings.filterHide) this.resolveSpan(i).el.style.display = "none";
+                    if (this.settings.filterHides) this.resolveSpan(i).el.style.display = "none";
                     this.resolveSpan(i).el.classList.remove("searchFocused");
                 }
             }
@@ -33,7 +33,7 @@ function workflowy_gitfriendly_search() {
                         }
                         if (i != ptree.length - 1 || this.holdExpanded[v]) {
                             this.holdExpanded[v] = true;
-                            setExpandedState(el, true, true, true);
+                            this.setExpandedState(el, true, true, true);
                         }
                         // set it to expanded
                         // unless it's the last one
