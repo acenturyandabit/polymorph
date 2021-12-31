@@ -35,7 +35,6 @@
         "operators/workflow/workflow.js",
         "operators/workflow/focusMode.js",
         "operators/workflow/search.js",
-        "operators/workflow/copypaste.js",
         "operators/workflow/workflow_gitfriendly_contextmenu.js",
         "operators/workflow/workflow_gitfriendly.js",
         "operators/workflow/advancedentry.js",

@@ -5350,7 +5350,7 @@ function addpolymorph_coreClipboard(polymorph_core) {
     // Clipboard is a rotary buffer
     polymorph_core.clipboard = [];
     polymorph_core.toClip = function(itm) {
-        polymorph_core.clipboard.push(itm);
+        polymorph_core.clipboard.unshift(itm);
         if (polymorph_core.clipboard.length > 10) {
             polymorph_core.clipboard.pop();
         }
@@ -9716,20 +9716,16 @@ function workflowy_gitfriendly_search() {
     })
 };
 
-function workflowy_copy_paste() {
-    console.log(this.contextmenu.el);
-};
-
 let workflowy_gitfriendly_extend_contextMenu = function() {
-    let contextTarget;
+    this.contextTarget = undefined;
     let contextmenu;
     let recordContexted = (e) => {
-        contextTarget = e.target;
+        this.contextTarget = e.target;
         /*
-        while (!contextTarget.matches(".floatingItem")) contextTarget = contextTarget.parentElement;
-        if (polymorph_core.items[contextTarget.dataset.id].style) {
-            contextmenu.querySelector(".background").value = polymorph_core.items[contextTarget.dataset.id].style.background || "";
-            contextmenu.querySelector(".color").value = polymorph_core.items[contextTarget.dataset.id].style.color || "";
+        while (!this.contextTarget.matches(".floatingItem")) this.contextTarget = this.contextTarget.parentElement;
+        if (polymorph_core.items[this.contextTarget.dataset.id].style) {
+            contextmenu.querySelector(".background").value = polymorph_core.items[this.contextTarget.dataset.id].style.background || "";
+            contextmenu.querySelector(".color").value = polymorph_core.items[this.contextTarget.dataset.id].style.color || "";
         } else {
             contextmenu.querySelector(".background").value = "";
             contextmenu.querySelector(".color").value = "";
@@ -9773,36 +9769,36 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
     this.contextMenuActions = {};
     /*let savedStyle = undefined;
     this.contextMenuActions["cstyl"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
+        let spanWithID = this.contextTarget.parentElement.parentElement;
         let id = spanWithID.dataset.id;
         savedStyle = polymorph_core.items[id].style;
     }
 
     this.contextMenuActions["pstyl"] = (e) => {
         if (savedStyle) {
-            let spanWithID = contextTarget.parentElement.parentElement;
+            let spanWithID = this.contextTarget.parentElement.parentElement;
             let id = spanWithID.dataset.id;
             polymorph_core.items[id].style = savedStyle;
-            contextTarget.style.background = savedStyle.background;
-            contextTarget.style.color = savedStyle.color;
+            this.contextTarget.style.background = savedStyle.background;
+            this.contextTarget.style.color = savedStyle.color;
         }
     }
 
     this.contextMenuActions["color"] = (e) => {
         spanWithID = e.target.value;
-        let spanWithID = contextTarget.parentElement.parentElement;
+        let spanWithID = this.contextTarget.parentElement.parentElement;
         let id = spanWithID.dataset.id;
         savedStyle = polymorph_core.items[id].style;
     }
 
     this.contextMenuActions["background"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
+        let spanWithID = this.contextTarget.parentElement.parentElement;
         let id = spanWithID.dataset.id;
         savedStyle = polymorph_core.items[id].style;
     }*/
 
     this.contextMenuActions["copylistinternal"] = (e) => {
-        let itmID = this.resolveSpan(contextTarget).id;
+        let itmID = this.resolveSpan(this.contextTarget).id;
         let itemsStack = [itmID];
         let itemsSeen = {};
         itemsSeen[itmID] = true;
@@ -9821,6 +9817,7 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
             type: "itemListParent",
             linkType: "parent",
             linkProp: this.settings.parentProperty,
+            orderProp: this.settings.orderProperty,
             items: itemsAll
         });
     }
@@ -9830,19 +9827,23 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
             let clip0 = polymorph_core.clipboard[0];
             switch (clip0.type) {
                 case "itemListParent":
-                    for (let i of clip0.itemsAll) {
+                    for (let i of clip0.items) {
                         polymorph_core.items[i][this.settings.filter] = true;
                         polymorph_core.items[i][this.settings.parentProperty] = polymorph_core.items[i][clip0.linkProp];
+                        polymorph_core.items[i][this.settings.orderProperty] = polymorph_core.items[i][clip0.orderProp];
                         polymorph_core.fire("updateItem", { id: i });
                     }
+                    polymorph_core.items[clip0.items[0]][this.settings.parentProperty] = this.resolveSpan(this.contextTarget).id;
+                    polymorph_core.fire("updateItem", { id: clip0.items[0] });
+
             }
         }
     }
 
 
-    this.contextMenuActions["copylist"] = function(e) {
-        console.log(contextTarget);
-        let text = contextTarget.parentElement.parentElement.innerText;
+    this.contextMenuActions["copylist"] = (e) => {
+        console.log(this.contextTarget);
+        let text = this.contextTarget.parentElement.parentElement.innerText;
 
         // Format the text for a bit
 
@@ -9872,7 +9873,7 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
         }
     }
     this.contextMenuActions["delitm"] = (e) => {
-        let spanWithID = contextTarget.parentElement.parentElement;
+        let spanWithID = this.contextTarget.parentElement.parentElement;
         let id = spanWithID.dataset.id;
         delete polymorph_core.items[id][this.settings.filter];
         if (focusOnPrev(spanWithID.children[0].children[1]) == false) focusOnNext(spanWithID.children[0].children[1]);
