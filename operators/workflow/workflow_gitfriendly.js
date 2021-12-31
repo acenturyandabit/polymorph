@@ -1170,7 +1170,6 @@ polymorph_core.registerOperator("workflow_gf", {
     workflowy_gitfriendly_extend_contextMenu.apply(this);
     workflowy_gitfriendly_search.apply(this);
     workflowy_advanced_entry.apply(this);
-    workflowy_copy_paste.apply(this);
 
     oldFocus = 0; // ready to go
 });
