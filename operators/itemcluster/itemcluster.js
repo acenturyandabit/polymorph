@@ -172,8 +172,30 @@ polymorph_core.registerOperator("itemcluster2", {
             }
         }
         return (hasView || this.settings.tray) && (!(this.settings.filter) || isFiltered);
-
     }
+
+    this.itemIsVisible = (i) => {
+        if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+            return true;
+        }
+    }
+
+    this.getVisibleItems = () => {
+        let visibleItems = [];
+        for (let i in polymorph_core.items) {
+            if (this.itemIsVisible(i)) {
+                visibleItems.push({
+                    id: i,
+                    x: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x,
+                    y: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y,
+                    children: Object.keys(polymorph_core.items[i].to || {}),
+                    parents: []
+                });
+            }
+        }
+        return visibleItems;
+    }
+
     container.on("updateItem", (d) => {
         let id = d.id;
         let sender = d.sender;

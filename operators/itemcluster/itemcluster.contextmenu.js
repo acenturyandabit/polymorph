@@ -13,7 +13,7 @@ function _itemcluster_extend_contextmenu() {
     this.rootContextMenu = contextMenuManager.registerContextMenu(`
         <li class="pastebtn">Paste</li>
         <li class="collect">Collect items here</li>
-        <li> Arrange in hierarchy
+        <li class="hierarchy_ctr"> Arrange in hierarchy
         <ul>
         <li class="hierarchy">Arrange in hierarchy</li>
         <li class="hierarchy squashed">Arrange in squashed hierarchy</li>
@@ -30,7 +30,8 @@ function _itemcluster_extend_contextmenu() {
         </li>
         <!--<li class="hierarchy radial stepped">Stepped radial hierarchy</li>-->
         `, this.rootdiv, undefined, chk);
-    _itemcluster_extend_contextmenu_orbit.apply(this);
+    //_itemcluster_extend_contextmenu_orbit.apply(this);
+    _itemcluster_extend_contextmenu_entropic_hierarchy.apply(this);
     this.rootContextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
         if (polymorph_core.shared.itemclusterCopyElement) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -73,18 +74,7 @@ function _itemcluster_extend_contextmenu() {
     //hierarchy buttons
     let generateHierarchy = () => {
         //get position of items, and the links to other items
-        let visibleItems = [];
-        for (let i in polymorph_core.items) {
-            if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
-                visibleItems.push({
-                    id: i,
-                    x: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].x,
-                    y: polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName].y,
-                    children: Object.keys(polymorph_core.items[i].to || {}),
-                    parents: []
-                });
-            }
-        }
+        let visibleItems = this.getVisibleItems();
 
         let visibleItemIds = visibleItems.map((v) => v.id);
 
@@ -163,6 +153,22 @@ function _itemcluster_extend_contextmenu() {
         //visibleItems = visibleItems.filter(i => cycleNodes.indexOf(i.id) == -1);
         return visibleItems;
     }
+
+    this.contextmenuUtils = {
+        generateHierarchy: generateHierarchy
+    };
+
+    /*
+    [{
+        children: []
+        id: "sxtrqa6_NtSW+0/_634"
+        level: 3
+        parent: "sxtrqa6_NtSdSvO_635"
+        parents: [4]
+        x: 1089
+        y: 724.828125
+    }]
+    */
 
     let squashedHierarchy = (e, visibleItems) => {
         //sort for rendering
