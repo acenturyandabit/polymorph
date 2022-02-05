@@ -85,9 +85,16 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
         let itemsSeen = {};
         itemsSeen[itmID] = true;
         let itemsAll = [itmID];
+        let itemsWithParents = Object.entries(polymorph_core.items)
+            .filter(i => this.itemRelevant(i[0]))
+            .map(i => [i[0], i[1][this.settings.parentProperty]])
+            .reduce((p, i) => {
+                p[i[0]] = i[1];
+                return p;
+            }, {});
         while (itemsStack.length) {
-            for (let i in this.renderedItemCache) {
-                if (polymorph_core.items[i] && polymorph_core.items[i][this.settings.parentProperty] == itemsStack[0] && !itemsSeen[i]) {
+            for (let i in itemsWithParents) {
+                if (itemsWithParents[i] == itemsStack[0] && !itemsSeen[i]) {
                     itemsSeen[i] = true;
                     itemsAll.push(i);
                     itemsStack.push(i);

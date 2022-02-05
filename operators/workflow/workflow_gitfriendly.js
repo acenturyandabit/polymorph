@@ -1121,9 +1121,8 @@ polymorph_core.registerOperator("workflow_gf", {
     `);
     let importContainerIDInput = importFacilities.children[2];
     let importButton = importFacilities.children[3];
-
-    importButton.addEventListener("click", (e) => {
-        let importContainer = polymorph_core.items[importContainerIDInput.value]._od.data;
+    this.doImport = (operatorID) => {
+        let importContainer = polymorph_core.items[operatorID]._od.data;
         let rootList = [];
 
         if (importContainer.rootItemListItem) {
@@ -1153,6 +1152,9 @@ polymorph_core.registerOperator("workflow_gf", {
                 this.renderItem(topID[0], "d");
             }
         }
+    }
+    importButton.addEventListener("click", (e) => {
+        this.doImport(importContainerIDInput.value);
     });
 
     this.dialogDiv.appendChild(importFacilities);
