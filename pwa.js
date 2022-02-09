@@ -284,11 +284,15 @@ var _pwaManager = (() => {
                             return 404;
                         }
                     }
-
                     break;
                 case "networkOnly":
                     //cache only speed test
-                    event.respondWith(fetch(event.request));
+                    try {
+                        event.respondWith(fetch(event.request));
+                    } catch (e) {
+                        // this gets hit a lot
+                        // unlucky, didn't make it
+                    }
                     break;
             }
         });

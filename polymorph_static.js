@@ -5335,13 +5335,13 @@ function _dateParser() {
     let resolveToDate = (TDateInput) => {
         if (!TDateInput) return new Date();
         if (TDateInput.constructor.name == "Date") return TDateInput;
-        if (typeof(TDateInput) == "number") {
+        if (typeof (TDateInput) == "number") {
             return new Date(TDateInput);
         }
-        if (typeof(TDateInput) == "string") {
+        if (typeof (TDateInput) == "string") {
             return new Date(TDateInput);
         }
-        if (TDateInput.toDate) return TDateInput.toDate();
+        if (TDateInput.toDate) return new Date(TDateInput.toISOString()); // This resolves timezones properly when converting from Moment's
         return new Date("Invalid Date");
     }
 
@@ -5392,7 +5392,7 @@ function _dateParser() {
      * @returns {Occurrence} 
      */
 
-    let extractOneOccurrence = function(str, refdate) {
+    let extractOneOccurrence = function (str, refdate) {
         let result = {};
         parts = str.split(">");
 
@@ -5474,14 +5474,16 @@ function _dateParser() {
                 }
                 // Generate repetitions until we either pass the endDate or hit the occurence count
                 while (!(
-                        (options.endDate != -1 && repetitionRefDate > options.endDate) ||
-                        (repetitionEndDate != -1 && repetitionRefDate > repetitionEndDate) ||
-                        (repetitionOccurrenceCount == 0)
-                    )) {
+                    (options.endDate != -1 && repetitionRefDate > options.endDate) ||
+                    (repetitionEndDate != -1 && repetitionRefDate > repetitionEndDate) ||
+                    (repetitionOccurrenceCount == 0)
+                )) {
+                    let originalRepetitionRefDate = repetitionRefDate;
                     repetitionRefDate = extractOneOccurrence(reptRegexResult[2], repetitionRefDate);
                     // Pop them into the array
                     possibleDates.push(repetitionRefDate);
                     repetitionRefDate = new Date(repetitionRefDate.endDate);
+                    if (repetitionRefDate.getTime() == originalRepetitionRefDate.getTime()) break; // Prevent infinite loops
                     repetitionOccurrenceCount--;
                 }
             } else {
@@ -5519,7 +5521,7 @@ function _dateParser() {
      * @param {Date} [refdate] - reference date. if not included, this is the reference.
      * @returns {Occurrence}
      */
-    this.getCalendarTimes = function(input, start, end) {
+    this.getCalendarTimes = function (input, start, end) {
         return this.getOccurrences(input, { startDate: start, endDate: end });
     }
 
@@ -5548,150 +5550,150 @@ function _dateParser() {
 
 
     this.dateParserRegexes = [{
-            name: "pmtime",
-            regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
-            operate: function(regres, data) {
-                data.d.setMinutes(0);
-                data.d.setSeconds(0);
-                data.d.setHours(Number(regres[1]));
-                if (regres[2] == 'pm') data.d.setHours(Number(regres[1]) + 12);
-            }
-        },
-        {
-            name: "time",
-            regex: /(?:(?:(\d+)\/(\d+)(?:\/(\d+))?)|(?:(\d+):(\d+)(?::(\d+))?))/g,
-            operate: function(regres, data) {
-                data.d.setMinutes(0);
-                data.d.setSeconds(0);
-                //data.noDateSpecific = true;
-                if (regres[2]) data.d.setMonth(Number(regres[2]) - 1); // do month first otherwise e.g. 31st in feb will cause an overflow
-                if (regres[1]) {
-                    data.d.setDate(Number(regres[1]))
-                    data.noDateSpecific = false;
-                }
-                if (regres[3]) {
-                    data.yr = Number(regres[3]);
-                    if (data.yr < 100) data.yr += 2000;
-                    data.d.setFullYear(data.yr)
-                }
-                if (regres[4]) {
-                    data.hr = Number(regres[4]);
-                    if (data.hr < 6) data.hr += 12;
-                }
-                data.d.setHours(data.hr);
-                if (regres[5]) data.d.setMinutes(Number(regres[5]))
-                if (regres[6]) data.d.setSeconds(Number(regres[6]))
-            }
-        },
-        {
-            name: "ampm",
-            regex: /(am|pm)/gi,
-            operate: function(regres, data) {
-                if (regres[1] == "am") {
-                    if (data.d.getHours() > 12) {
-                        data.d.setHours(data.d.getHours() - 12);
-                    }
-                } else {
-                    if (data.d.getHours() < 12) {
-                        data.d.setHours(data.d.getHours() + 12);
-                    }
-                }
-            }
-        },
-        {
-            name: "dayofweek",
-            regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
-            operate: function(regres, data, refdate) {
-                data.nextDay = 0;
-                for (i = 0; i < regres.length; i++) {
-                    if (regres[i] != undefined) {
-                        data.nextDay = i;
-                    }
-                }
-                if (data.d.getDay() == data.nextDay % 7 && refdate.getTime() - data.d.getTime() > 0) {
-                    data.d.setDate(data.d.getDate() + 7);
-                } else {
-                    data.d.setDate(data.d.getDate() + (data.nextDay + 7 - data.d.getDay()) % 7);
-                }
-            }
-        },
-        {
-            name: "weekday",
-            regex: /weekday/ig,
-            operate: function(regres, data, refdate) {
-                data.nextDay = 0;
-                let tomorrow = data.d.getDay();
-                if (refdate.getTime() - data.d.getTime() <= 0) tomorrow++; //respect past pure days.
-                if (!(tomorrow > 0 && tomorrow < 5)) {
-                    data.d.setDate(data.d.getDate() + (8 - data.d.getDay()) % 7);
-                }
-            }
-        },
-        {
-            name: "auto",
-            regex: /auto/ig,
-            operate: function(regres, data) {
-                data.auto = true;
-            }
-        },
-        //setters
-        {
-            name: "today",
-            regex: /today/g,
-            operate: function(regres, data) {
-                today = new Date();
-                data.d.setDate(today.getDate());
-                data.d.setMonth(today.getMonth());
+        name: "pmtime",
+        regex: /(?:^|\s)(?!:)(\d+)(am|pm)/g,
+        operate: function (regres, data) {
+            data.d.setMinutes(0);
+            data.d.setSeconds(0);
+            data.d.setHours(Number(regres[1]));
+            if (regres[2] == 'pm') data.d.setHours(Number(regres[1]) + 12);
+        }
+    },
+    {
+        name: "time",
+        regex: /(?:(?:(\d+)\/(\d+)(?:\/(\d+))?)|(?:(\d+):(\d+)(?::(\d+))?))/g,
+        operate: function (regres, data) {
+            data.d.setMinutes(0);
+            data.d.setSeconds(0);
+            //data.noDateSpecific = true;
+            if (regres[2]) data.d.setMonth(Number(regres[2]) - 1); // do month first otherwise e.g. 31st in feb will cause an overflow
+            if (regres[1]) {
+                data.d.setDate(Number(regres[1]))
                 data.noDateSpecific = false;
             }
-        },
-        {
-            name: "now",
-            regex: /now/g,
-            operate: function(regres, data, refdate) {
-                if (refdate) data.d = refdate;
-                else data.d = new Date();
-                data.noDateSpecific = false;
+            if (regres[3]) {
+                data.yr = Number(regres[3]);
+                if (data.yr < 100) data.yr += 2000;
+                data.d.setFullYear(data.yr)
             }
-        },
-        {
-            name: "delTime",
-            regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
-            operate: function(regres, data) {
-                data.freeamt = 1;
-                for (i = 3; i < regres.length; i++) {
-                    if (regres[i] != undefined) {
-                        factor = i;
-                    }
+            if (regres[4]) {
+                data.hr = Number(regres[4]);
+                if (data.hr < 6) data.hr += 12;
+            }
+            data.d.setHours(data.hr);
+            if (regres[5]) data.d.setMinutes(Number(regres[5]))
+            if (regres[6]) data.d.setSeconds(Number(regres[6]))
+        }
+    },
+    {
+        name: "ampm",
+        regex: /(am|pm)/gi,
+        operate: function (regres, data) {
+            if (regres[1] == "am") {
+                if (data.d.getHours() > 12) {
+                    data.d.setHours(data.d.getHours() - 12);
                 }
-                switch (factor) { /// this can be improved.
-                    case 3:
-                        data.freeamt = 1000 * 60;
-                        break;
-                    case 4:
-                        data.freeamt = 1000 * 60 * 60;
-                        break;
-                    case 5:
-                        data.freeamt = 1000 * 60 * 60 * 24;
-                        break;
-                    case 6:
-                        data.freeamt = 1000 * 60 * 60 * 24 * 7;
-                        break;
-                    case 7:
-                        data.freeamt = 1000 * 60 * 60 * 24 * 30;
-                        break;
-                    case 8:
-                        data.freeamt = 1000 * 60 * 60 * 24 * 365;
-                        break;
+            } else {
+                if (data.d.getHours() < 12) {
+                    data.d.setHours(data.d.getHours() + 12);
                 }
-                data.freeamt *= Number(regres[2]);
-                if (regres[1] == "-") {
-                    data.freeamt *= -1;
-                    data.noDateSpecific = false;
-                }
-                data.d.setTime(data.d.getTime() + data.freeamt);
             }
         }
+    },
+    {
+        name: "dayofweek",
+        regex: /(?:(mon)|(tue)s*|(?:(wed)(?:nes)*)|(?:(thu)r*s*)|(fri)|(sat)(?:ur)*|(sun))(?:day)*/ig,
+        operate: function (regres, data, refdate) {
+            data.nextDay = 0;
+            for (i = 0; i < regres.length; i++) {
+                if (regres[i] != undefined) {
+                    data.nextDay = i;
+                }
+            }
+            if (data.d.getDay() == data.nextDay % 7 && refdate.getTime() - data.d.getTime() > 0) {
+                data.d.setDate(data.d.getDate() + 7);
+            } else {
+                data.d.setDate(data.d.getDate() + (data.nextDay + 7 - data.d.getDay()) % 7);
+            }
+        }
+    },
+    {
+        name: "weekday",
+        regex: /weekday/ig,
+        operate: function (regres, data, refdate) {
+            data.nextDay = 0;
+            let tomorrow = data.d.getDay();
+            if (refdate.getTime() - data.d.getTime() <= 0) tomorrow++; //respect past pure days.
+            if (!(tomorrow > 0 && tomorrow < 5)) {
+                data.d.setDate(data.d.getDate() + (8 - data.d.getDay()) % 7);
+            }
+        }
+    },
+    {
+        name: "auto",
+        regex: /auto/ig,
+        operate: function (regres, data) {
+            data.auto = true;
+        }
+    },
+    //setters
+    {
+        name: "today",
+        regex: /today/g,
+        operate: function (regres, data) {
+            today = new Date();
+            data.d.setDate(today.getDate());
+            data.d.setMonth(today.getMonth());
+            data.noDateSpecific = false;
+        }
+    },
+    {
+        name: "now",
+        regex: /now/g,
+        operate: function (regres, data, refdate) {
+            if (refdate) data.d = refdate;
+            else data.d = new Date();
+            data.noDateSpecific = false;
+        }
+    },
+    {
+        name: "delTime",
+        regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
+        operate: function (regres, data) {
+            data.freeamt = 1;
+            for (i = 3; i < regres.length; i++) {
+                if (regres[i] != undefined) {
+                    factor = i;
+                }
+            }
+            switch (factor) { /// this can be improved.
+                case 3:
+                    data.freeamt = 1000 * 60;
+                    break;
+                case 4:
+                    data.freeamt = 1000 * 60 * 60;
+                    break;
+                case 5:
+                    data.freeamt = 1000 * 60 * 60 * 24;
+                    break;
+                case 6:
+                    data.freeamt = 1000 * 60 * 60 * 24 * 7;
+                    break;
+                case 7:
+                    data.freeamt = 1000 * 60 * 60 * 24 * 30;
+                    break;
+                case 8:
+                    data.freeamt = 1000 * 60 * 60 * 24 * 365;
+                    break;
+            }
+            data.freeamt *= Number(regres[2]);
+            if (regres[1] == "-") {
+                data.freeamt *= -1;
+                data.noDateSpecific = false;
+            }
+            data.d.setTime(data.d.getTime() + data.freeamt);
+        }
+    }
     ];
 }
 
@@ -8299,7 +8301,7 @@ function workflowy_gitfriendly_search() {
     })
 };
 
-let workflowy_gitfriendly_extend_contextMenu = function() {
+let workflowy_gitfriendly_extend_contextMenu = function () {
     this.contextTarget = undefined;
     let contextmenu;
     let recordContexted = (e) => {
@@ -8433,34 +8435,51 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
-        let text = this.contextTarget.parentElement.parentElement.innerText;
+        let rootElementPair = [this.contextTarget.parentElement.parentElement,0];
+        let runStack = [rootElementPair];
+        let resultStack = [];
+        while (runStack.length){
+            let top = runStack.pop();
+            resultStack.push([top[0].children[0].children[1].innerText, top[1]])
+            let childItemDiv = top[0].children[top[0].children.length-1]; // not just 1, becuase of the rich edit mode. but always last
+            for (let i=childItemDiv.children.length-1;i>=0;i--){
+                runStack.push([
+                    childItemDiv.children[i],
+                    top[1]+1
+                ]);
+            }
+        }
+        //convert to indented list
+        let text = resultStack.map(pair=>Array(pair[1]*4).fill(" ").join("") + "- " + pair[0]).join("\n");
 
-        // Format the text for a bit
 
-        // Replace > with *
-
-        // Remove extra newlines
-
+        /* old method
+            let text = this.contextTarget.parentElement.parentElement.innerText;
+            // Format the text for a bit
+            text = text.replace("▼", "-").replace("●", "-");
+            // Replace extra newlines
+            text = text.replace("-\n", "-");
+        */
         // Copies a string to the clipboard. 
         if (window.clipboardData && window.clipboardData.setData) {
             // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
             return window.clipboardData.setData("Text", text);
         } else
-        if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-            let textarea = document.createElement("textarea");
-            textarea.textContent = text;
-            textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                return document.execCommand("copy"); // Security exception may be thrown by some browsers.
-            } catch (ex) {
-                console.warn("Copy to clipboard failed.", ex);
-                return false;
-            } finally {
-                document.body.removeChild(textarea);
+            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+                let textarea = document.createElement("textarea");
+                textarea.textContent = text;
+                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+                } catch (ex) {
+                    console.warn("Copy to clipboard failed.", ex);
+                    return false;
+                } finally {
+                    document.body.removeChild(textarea);
+                }
             }
-        }
     }
     this.contextMenuActions["delitm"] = (e) => {
         let spanWithID = this.contextTarget.parentElement.parentElement;
@@ -8925,9 +8944,16 @@ polymorph_core.registerOperator("workflow_gf", {
                 let newID = this.createItem();
                 // console.log the two parts
                 if (modifiers["alt"]) {
-                    let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
-                    let partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
-                    let partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                    let partA, partB;
+                    if (this.settings.advancedInputMode){
+                        let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
+                        partB = this.plaintextContenteditableRender.children[1].innerText.slice(range.startOffset);
+                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);                        
+                    }else{
+                        let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
+                        partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
+                        partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                    }
                     if (partB.length) {
                         polymorph_core.items[id][this.settings.titleProperty] = partA;
                         this.renderItem(id);
@@ -9410,7 +9436,7 @@ polymorph_core.registerOperator("workflow_gf", {
                                 let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
                                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                                     try {
-                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toString()}}`;
+                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined,{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric' })}}`;
                                     } catch (e) {
                                         return `\\{${ltrkey}:${"Invalid Date"}}`;
                                     }
@@ -9723,6 +9749,7 @@ function workflowy_advanced_entry() {
     </style>
 </span>
     `);
+    this.plaintextContenteditableRender=plaintextContenteditableRender;
     let plaintextOperatingOnID;
     this.setShowPlaintext = (focusOnElement, event) => {
         if (this.settings.advancedInputMode && this.settings.isEditable) {

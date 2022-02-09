@@ -1,4 +1,4 @@
-let workflowy_gitfriendly_extend_contextMenu = function() {
+let workflowy_gitfriendly_extend_contextMenu = function () {
     this.contextTarget = undefined;
     let contextmenu;
     let recordContexted = (e) => {
@@ -132,34 +132,51 @@ let workflowy_gitfriendly_extend_contextMenu = function() {
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
-        let text = this.contextTarget.parentElement.parentElement.innerText;
+        let rootElementPair = [this.contextTarget.parentElement.parentElement,0];
+        let runStack = [rootElementPair];
+        let resultStack = [];
+        while (runStack.length){
+            let top = runStack.pop();
+            resultStack.push([top[0].children[0].children[1].innerText, top[1]])
+            let childItemDiv = top[0].children[top[0].children.length-1]; // not just 1, becuase of the rich edit mode. but always last
+            for (let i=childItemDiv.children.length-1;i>=0;i--){
+                runStack.push([
+                    childItemDiv.children[i],
+                    top[1]+1
+                ]);
+            }
+        }
+        //convert to indented list
+        let text = resultStack.map(pair=>Array(pair[1]*4).fill(" ").join("") + "- " + pair[0]).join("\n");
 
-        // Format the text for a bit
 
-        // Replace > with *
-
-        // Remove extra newlines
-
+        /* old method
+            let text = this.contextTarget.parentElement.parentElement.innerText;
+            // Format the text for a bit
+            text = text.replace("▼", "-").replace("●", "-");
+            // Replace extra newlines
+            text = text.replace("-\n", "-");
+        */
         // Copies a string to the clipboard. 
         if (window.clipboardData && window.clipboardData.setData) {
             // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
             return window.clipboardData.setData("Text", text);
         } else
-        if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-            let textarea = document.createElement("textarea");
-            textarea.textContent = text;
-            textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                return document.execCommand("copy"); // Security exception may be thrown by some browsers.
-            } catch (ex) {
-                console.warn("Copy to clipboard failed.", ex);
-                return false;
-            } finally {
-                document.body.removeChild(textarea);
+            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+                let textarea = document.createElement("textarea");
+                textarea.textContent = text;
+                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+                } catch (ex) {
+                    console.warn("Copy to clipboard failed.", ex);
+                    return false;
+                } finally {
+                    document.body.removeChild(textarea);
+                }
             }
-        }
     }
     this.contextMenuActions["delitm"] = (e) => {
         let spanWithID = this.contextTarget.parentElement.parentElement;

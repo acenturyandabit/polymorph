@@ -70,20 +70,37 @@ polymorph_core.on("UIstart", () => {
     loadDialog.querySelector(".innerDialog>div:first-child").appendChild(loadInnerDialog);
     document.body.appendChild(loadDialog);
 
+    let checkIfRootedAtParent = (p) => {
+        //chase up the parent
+        let toInsert = true;
+        if (p == polymorph_core.items._meta.currentView) toInsert = false;
+        while (polymorph_core.items[p] && (polymorph_core.items[p]._od || polymorph_core.items[p]._rd)) {
+            let new_p = -1;
+            p = polymorph_core.items[p]._rd || polymorph_core.items[p]._od;
+            // prevent cycles when an _rd points to itself as _od (as in when a subframe creates itself as a rect on startup)
+            if (p == p.p) {
+                if (polymorph_core.items[p]._od) {
+                    if (p != polymorph_core.items[p]._od.p) {
+                        new_p = polymorph_core.items[p]._od.p;
+                    }
+                }
+            } else {
+                new_p = p.p;
+            }
+            if (new_p == -1) break;
+            p = new_p;
+            if (p == polymorph_core.items._meta.currentView) toInsert = false;
+        }
+        return toInsert;
+    }
+
     let cleaners = {
         orphop: {
             populate: () => {
                 let junklist = [];
                 for (let i in polymorph_core.items) {
                     if (polymorph_core.items[i]._od) {
-                        //chase up the parent
-                        let p = i;
-                        let toInsert = true;
-                        while (polymorph_core.items[p] && (polymorph_core.items[p]._od || polymorph_core.items[p]._rd)) {
-                            p = polymorph_core.items[p]._rd || polymorph_core.items[p]._od;
-                            p = p.p;
-                            if (p == polymorph_core.items._meta.currentView) toInsert = false;
-                        }
+                        let toInsert = checkIfRootedAtParent(i);
                         if (toInsert) {
                             junklist.push(i);
                         }
@@ -93,9 +110,11 @@ polymorph_core.on("UIstart", () => {
             },
             clean: (toClean) => {
                 delete polymorph_core.items[toClean]._od;
-                if ((Object.keys(polymorph_core.items[toClean]).length == 1 && polymorph_core.items[toClean]._lu_) || (Object.keys(polymorph_core.items[toClean]).length == 0)) {
+                polymorph_core.fire("updateItem", { id: toClean });
+                // don't actually delete the item cos that causes trouble with savesources and things
+                /*if ((Object.keys(polymorph_core.items[toClean]).length == 1 && polymorph_core.items[toClean]._lu_) || (Object.keys(polymorph_core.items[toClean]).length == 0)) {
                     delete polymorph_core.items[toClean];
-                }
+                }*/
             }
         },
         orphrect: {
@@ -103,16 +122,7 @@ polymorph_core.on("UIstart", () => {
                 let junklist = [];
                 for (let i in polymorph_core.items) {
                     if (polymorph_core.items[i]._rd) {
-                        //chase up the parent
-                        let p = i;
-                        let toInsert = true;
-                        if (p == polymorph_core.items._meta.currentView) toInsert = false;
-                        while (polymorph_core.items[p] && (polymorph_core.items[p]._od || polymorph_core.items[p]._rd)) {
-                            p = polymorph_core.items[p]._rd || polymorph_core.items[p]._od;
-                            p = p.p;
-                            if (p == polymorph_core.items._meta.currentView) toInsert = false;
-
-                        }
+                        let toInsert = checkIfRootedAtParent(i);
                         if (toInsert) {
                             junklist.push(i);
                         }
@@ -122,9 +132,12 @@ polymorph_core.on("UIstart", () => {
             },
             clean: (toClean) => {
                 delete polymorph_core.items[toClean]._rd;
+                polymorph_core.fire("updateItem", { id: toClean });
+                // don't actually delete the item cos that causes trouble with savesources and things
+                /*
                 if ((Object.keys(polymorph_core.items[toClean]).length == 1 && polymorph_core.items[toClean]._lu_) || (Object.keys(polymorph_core.items[toClean]).length == 0)) {
                     delete polymorph_core.items[toClean];
-                }
+                }*/
             }
         },
         orphit: {
@@ -204,12 +217,10 @@ polymorph_core.on("UIstart", () => {
 
         }
     })
-    polymorph_core.on("UIstart", () => {
-        if (!polymorph_core.isStaticMode()) {
-            polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
-                populateAll();
-                loadDialog.style.display = "block";
-            })
-        }
-    });
+    if (!polymorph_core.isStaticMode()) {
+        polymorph_core.topbar.add("File/Clean up").addEventListener("click", () => {
+            populateAll();
+            loadDialog.style.display = "block";
+        })
+    }
 });

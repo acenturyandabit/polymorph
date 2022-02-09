@@ -395,9 +395,16 @@ polymorph_core.registerOperator("workflow_gf", {
                 let newID = this.createItem();
                 // console.log the two parts
                 if (modifiers["alt"]) {
-                    let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
-                    let partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
-                    let partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                    let partA, partB;
+                    if (this.settings.advancedInputMode){
+                        let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
+                        partB = this.plaintextContenteditableRender.children[1].innerText.slice(range.startOffset);
+                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);                        
+                    }else{
+                        let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
+                        partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
+                        partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                    }
                     if (partB.length) {
                         polymorph_core.items[id][this.settings.titleProperty] = partA;
                         this.renderItem(id);
@@ -880,7 +887,7 @@ polymorph_core.registerOperator("workflow_gf", {
                                 let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
                                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                                     try {
-                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toString()}}`;
+                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined,{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric' })}}`;
                                     } catch (e) {
                                         return `\\{${ltrkey}:${"Invalid Date"}}`;
                                     }

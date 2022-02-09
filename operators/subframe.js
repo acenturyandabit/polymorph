@@ -161,28 +161,49 @@ if (isPhone()) {
         }
 
         if (this.settings.operatorClonedFrom) {
+            let rectsToClone = [];
             for (let ri in polymorph_core.rects) {
                 if (polymorph_core.rects[ri].settings.p == this.settings.operatorClonedFrom) {
-                    //make a clone of it
-                    let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[ri]));
-                    copyRect._rd.p = container.id;
-                    let newRectID = polymorph_core.insertItem(copyRect);
-                    polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
-                    this.tieRect(newRectID);
-                    //also make a clone of all its operators
-                    for (let i in polymorph_core.containers) {
-                        if (polymorph_core.containers[i].settings.p == ri) {
-                            //clone it
-                            let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
-                            copyOp._od.p = newRectID;
-                            copyOp._od.data.operatorClonedFrom = i;
-                            let newContainerID = polymorph_core.insertItem(copyOp);
-                            polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
-                        }
+                    rectsToClone.push([ri, container.id])
+                }
+            }
+            // recursively clone all rects, so that subframe divisions work
+            while (rectsToClone.length) {
+                let rectAndParent = rectsToClone.shift();
+                let rectToCloneID = rectAndParent[0];
+                //make a clone of it
+                let copyRect = JSON.parse(JSON.stringify(polymorph_core.items[rectToCloneID]));
+                copyRect._rd.p = rectAndParent[1];
+                let newRectID = polymorph_core.insertItem(copyRect);
+                polymorph_core.rects[newRectID] = new polymorph_core.rect(newRectID);
+
+                let tie_er;
+                if (rectAndParent[1] == container.id) {
+                    tie_er = this;
+                } else {
+                    tie_er = polymorph_core.rects[rectAndParent[1]];
+                }
+                tie_er.tieRect(newRectID);
+
+                //also make a clone of all its operators
+                for (let i in polymorph_core.containers) {
+                    if (polymorph_core.containers[i].settings.p == rectToCloneID) {
+                        //clone it
+                        let copyOp = JSON.parse(JSON.stringify(polymorph_core.items[i]));
+                        copyOp._od.p = newRectID;
+                        copyOp._od.data.operatorClonedFrom = i;
+                        let newContainerID = polymorph_core.insertItem(copyOp);
+                        polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
+                    }
+                }
+                // if it has child rects, clone those too
+                for (let i in polymorph_core.rects) {
+                    if (polymorph_core.rects[i].settings.p == rectToCloneID) {
+                        //clone it
+                        rectsToClone.push([i, newRectID]);
                     }
                 }
             }
-            polymorph_core.items[this.settings.operatorClonedFrom]
             delete this.settings.operatorClonedFrom;
         }
 
@@ -197,7 +218,7 @@ if (isPhone()) {
         }
 
         this.remove = () => {
-            polymorph_core.rects[this.rectID].remove();
+            if (polymorph_core.rects[this.rectID]) polymorph_core.rects[this.rectID].remove();
         }
     });
 }

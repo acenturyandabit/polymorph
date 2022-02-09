@@ -15,6 +15,7 @@ function workflowy_advanced_entry() {
     </style>
 </span>
     `);
+    this.plaintextContenteditableRender=plaintextContenteditableRender;
     let plaintextOperatingOnID;
     this.setShowPlaintext = (focusOnElement, event) => {
         if (this.settings.advancedInputMode && this.settings.isEditable) {

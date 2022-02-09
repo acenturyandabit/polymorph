@@ -32,6 +32,9 @@ function _itemcluster_extend_contextmenu() {
         `, this.rootdiv, undefined, chk);
     //_itemcluster_extend_contextmenu_orbit.apply(this);
     _itemcluster_extend_contextmenu_entropic_hierarchy.apply(this);
+    _itemcluster_extend_contextmenu_condensed_hierarchy.apply(this);
+    _itemcluster_extend_contextmenu_condensed_radial_hierarchy.apply(this);
+    _itemcluster_extend_contextmenu_entropy.apply(this);
     this.rootContextMenu.querySelector(".pastebtn").addEventListener("click", (e) => {
         if (polymorph_core.shared.itemclusterCopyElement) {
             let coords = this.mapPageToSvgCoords(e.pageX, e.pageY);
@@ -80,23 +83,23 @@ function _itemcluster_extend_contextmenu() {
 
         //make sure links are relevant (point to items we care about) and directed (not bidirectional)
         visibleItems.forEach((v, _i) => {
-                if (v.children) {
-                    for (let i = 0; i < v.children.length; i++) {
-                        let pos = visibleItemIds.indexOf(v.children[i]);
-                        if (pos == -1) {
-                            v.children.splice(i, 1);
-                            i--;
-                        } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) { //bidirectional links
-                            v.children.splice(i, 1);
-                            i--;
-                        } else {
-                            //assign the to item a parent
-                            visibleItems[pos].parents.push(_i);
-                        }
+            if (v.children) {
+                for (let i = 0; i < v.children.length; i++) {
+                    let pos = visibleItemIds.indexOf(v.children[i]);
+                    if (pos == -1) {
+                        v.children.splice(i, 1);
+                        i--;
+                    } else if (polymorph_core.items[visibleItems[pos].id].to && Object.keys(polymorph_core.items[visibleItems[pos].id].to).indexOf(v.id) != -1) { //bidirectional links
+                        v.children.splice(i, 1);
+                        i--;
+                    } else {
+                        //assign this item as its childrens' parent candidate
+                        visibleItems[pos].parents.push(_i);
                     }
                 }
-            })
-            //figure out the level of the item (its level in the hierarchy)
+            }
+        });
+        //figure out the level of the item (its level in the hierarchy)
         let queue = [];
         let roots = [];
         for (let i = 0; i < visibleItems.length; i++) {
@@ -160,14 +163,14 @@ function _itemcluster_extend_contextmenu() {
 
     /*
     [{
-        children: []
+        children: ["sxtrqa6_NtEIRq_324"]
         id: "sxtrqa6_NtSW+0/_634"
         level: 3
         parent: "sxtrqa6_NtSdSvO_635"
         parents: [4]
         x: 1089
         y: 724.828125
-    }]
+    }] // no sort guarantee :/
     */
 
     let squashedHierarchy = (e, visibleItems) => {
