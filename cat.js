@@ -8948,6 +8948,8 @@ polymorph_core.registerOperator("workflow_gf", {
             range.setStart(newP, index);
             sel.removeAllRanges();
             sel.addRange(range);
+            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
+            el.classList.add("tmpFocused");
             el.focus();
             el.click(); // for phones
             restoreClickFlag = false;
@@ -9103,8 +9105,10 @@ polymorph_core.registerOperator("workflow_gf", {
         ctrl: false, // also command on mac, eventually
         alt: false
     };
+    let disableSortOnShuffle=false;
     let handleKeyEvent = (key, id) => {
         let spanWithID = this.renderedItemCache[id].el;
+        disableSortOnShuffle=false;
         switch (key) {
             case "Backspace":
                 let bcursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
@@ -9203,6 +9207,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (modifiers["alt"]) {
                     //move item up
                     if (spanWithID.previousElementSibling) {
+                        disableSortOnShuffle=true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
                         polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
@@ -9220,6 +9225,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 bumpWasTriggeredByUserEvent = true;
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
+                        disableSortOnShuffle=true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
                         polymorph_core.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
@@ -9408,7 +9414,6 @@ polymorph_core.registerOperator("workflow_gf", {
 
         el = this.renderedItemCache[d.id].el;
         if (el) {
-            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             let p = el.parentElement.parentElement;
             while (p.dataset.id) {
                 setExpandedState(p, true);
@@ -9417,6 +9422,7 @@ polymorph_core.registerOperator("workflow_gf", {
             }
             if (container.visible()) el.scrollIntoViewIfNeeded();
             //focusOnElement(el, 0);
+            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             el.classList.add("tmpFocused");
         }
     })
@@ -9527,6 +9533,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     let bumpParentReorganise = (parentID) => {
         if (!bumpWasTriggeredByUserEvent) return;
+        if (disableSortOnShuffle) return;
         bumpWasTriggeredByUserEvent = false;
         parentsToReorganise[parentID] = true;
         clearTimeout(parentReorganiseTimeout);
