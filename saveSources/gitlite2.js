@@ -3,7 +3,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
     //initialise here
 
     this.internalCache = {};
-    let updateCache = (id, newLU, canClear) => {
+    let updateCache = (id, newLU, forceUnchanged) => {
         if (!this.internalCache[id]) this.internalCache[id] = {
             _lu_: 0,
             c: false
@@ -11,10 +11,10 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         if (this.internalCache[id]._lu_ < newLU) {
             this.internalCache[id]._lu_ = newLU;
             this.internalCache[id].c = true;
-        } else if (canClear) {
+        } 
+        if (forceUnchanged) {
             this.internalCache[id].c = false;
         }
-
     }
     this.lastRecvCommit = 0;
 
@@ -32,24 +32,36 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
                 if (this.internalCache[i].c) {
                     // item has changed
                     toSend.items[i] = polymorph_core.items[i];
-                    this.internalCache[i].c = false;
+                    // this.internalCache[i].c = false; <-- flag clear only if remote has it
                 }
             }
         }
         if (Object.keys(toSend.items).length > 0) {
-            let recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
-            if (recvdata.ok) {
-                let datajson = await recvdata.json();
-                this.lastRecvCommit = datajson.commit;
-                for (let i in datajson.items) {
-                    if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
-                        polymorph_core.items[i] = datajson.items[i];
-                        updateCache(i, datajson.items[i]._lu_);
-                        polymorph_core.fire("updateItem", { id: i, sender: this });
-                        this.internalCache[i].c = false; // remote has it, no need to flag it
+            let recvdata;
+            try{
+                recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
+                if (recvdata.ok) {
+                    // Handle incoming new items
+                    let datajson = await recvdata.json();
+                    this.lastRecvCommit = datajson.commit;
+                    for (let i in datajson.items) {
+                        if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
+                            polymorph_core.items[i] = datajson.items[i];
+                            updateCache(i, datajson.items[i]._lu_);
+                            polymorph_core.fire("updateItem", { id: i, sender: this });
+                            this.internalCache[i].c = false; // remote has it, no need to flag it
+                        }
                     }
+
+                    // Unflag sent items
+                    for (let i in toSend.items){
+                        this.internalCache[i].c = false;
+                    }
+                } else {
+                    throw "400"
                 }
-            } else {
+            }catch(e){
+                console.log(e);
                 alert("Warning: error with gitlite source.");
                 return;
             }
