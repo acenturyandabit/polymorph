@@ -9,14 +9,14 @@ function _polymorph_core() {
             newGuid = "";
             for (i = 0; i < count; i++) newGuid += pool[Math.floor(Math.random() * pool.length)];
         } while (priorkeys && (priorkeys[i] ||
-                (priorkeys.length != undefined && priorkeys.includes(i))
-            ));
+            (priorkeys.length != undefined && priorkeys.includes(i))
+        ));
         return newGuid;
     }
 
     this.addEventAPI = (itm, errf = console.error) => {
         itm.events = {};
-        itm.fire = function(e, args) {
+        itm.fire = function (e, args) {
             let _e = e.split(",");
             let _oe = e.split(","); //original elevents
             _e.push("*"); // a wildcard event listener
@@ -45,7 +45,7 @@ function _polymorph_core() {
                 if (itm.events[i].cetches) itm.events[i].cetches.forEach((f) => (f(args, false, e)));
             })
         };
-        itm.on = function(e, f) {
+        itm.on = function (e, f) {
             let _e = e.split(',');
             _e.forEach((i) => {
                 if (!itm.events[i]) itm.events[i] = {};
@@ -53,7 +53,7 @@ function _polymorph_core() {
                 itm.events[i].events.push(f);
             })
         };
-        itm.cetch = function(i, f) {
+        itm.cetch = function (i, f) {
             if (!itm.events[i]) itm.events[i] = {};
             if (!itm.events[i].cetches) itm.events[i].cetches = [];
             itm.events[i].cetches.push(f);
@@ -62,7 +62,7 @@ function _polymorph_core() {
 
     this.addEventAPI(this);
 
-    this._option = (function() {
+    this._option = (function () {
         //snippet that pre-evaluates functions, so that we can quickly load dynmaics
         function iff(it) {
             if (typeof it == "function") {
@@ -173,7 +173,7 @@ function _polymorph_core() {
                 settings.div.appendChild(lb);
             }
             //initially load the property value.
-            this.load = function() {
+            this.load = function () {
                 let actualObject = iff(settings.object);
                 if (!actualObject) console.log("Warning: attempt to reference an undefined object");
                 else {
@@ -281,10 +281,13 @@ function _polymorph_core() {
         this.fire("updateSettings");
     };
 
+    this.on("updateSettings", () => {
+        this.fire("updateItem", { id: "_meta" });
+    })
     let tc = new capacitor(1000, 10, () => {
-            polymorph_core.fire("updateDoc");
-        })
-        //title updates
+        polymorph_core.fire("updateSettings");
+    });
+    //title updates
     this.on("UIstart", () => {
         if (!this.documentTitleElement) {
             this.documentTitleElement = document.createElement("a");
@@ -366,12 +369,12 @@ function _polymorph_core() {
 
     //insert an item.
     this.insertItem = (itm) => {
-            let UID = `${this.userData.uniqueID}_${b64(Date.now())}_${this.userData.itemsCreatedCount}`;
-            this.userData.itemsCreatedCount++;
-            this.items[UID] = itm;
-            return UID;
-        }
-        //#endregion
+        let UID = `${this.userData.uniqueID}_${b64(Date.now())}_${this.userData.itemsCreatedCount}`;
+        this.userData.itemsCreatedCount++;
+        this.items[UID] = itm;
+        return UID;
+    }
+    //#endregion
 
     this.operatorLoadCallbacks = {};
     this.rectLoadCallbacks = {};
