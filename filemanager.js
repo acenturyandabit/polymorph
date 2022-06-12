@@ -2,6 +2,7 @@
 
     let fileList = [
         "3pt/localforage.min.js",
+        "3pt/chart.js",
         "utils.js",
         "core.js",
         "core_modules/ui/core.tutorial.js",
