@@ -9,6 +9,8 @@ I like to rehash my task management tools as things come up - if I decide that t
 ## Solution
 Polymorph provides you with elements such as lists, drilldowns, and graphs, in a highly space-efficient organisation framework where the screen is split into functional rectangular areas. Tabs are used to provide quick configuration options and provide flexibility. A script runner element allows you to automate parts of your workflow such as time logging and organisation.
 
+At the same time, we know you won't be rebuilding your task management system everyday, so modification elements are out-of-the-way until you summon them with a Ctrl-Shift.
+
 This highly modular approach allows you to take charge of your task organisation in a way that no other platform will allow (apart from building up a task management app yourself from scratch, that is.)
 
 ## Keeping it straight
@@ -21,5 +23,8 @@ Polymorph doesn't need to run on a server, just a browser; and Polymorph will be
 ## Contributing
 See the issues list! I fix most of my own issues because Polymorph is my day-to-day, but there's always nice-to-haves.
 
+## TODO
+- Make filemanager.js automatically update pwa.js
+
 ### Apps I admire and have copied
-- Workflowy: [https://workflowy.com/] - use the workflowish operator in Polymorph for this; I think the keybindings are the same. 
+- Workflowy: [https://workflowy.com/] - use the workflowish operator in Polymorph for this.

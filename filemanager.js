@@ -1,92 +1,92 @@
 (() => {
 
     let fileList = [
-        "3pt/localforage.min.js",
-        "3pt/chart.js",
-        "utils.js",
-        "core.js",
-        "core_modules/ui/core.tutorial.js",
-        "core_modules/core/core.dedup.js",
-        "core_modules/core/core.docLoading.js",
-        "core_modules/ui/core.dialog.js",
-        "core_modules/ui/core.tutorial.js",
-        "core_modules/ui/core.loadSaveUI.js",
-        "core_modules/ui/core.customCSS.js",
-        "core_modules/core/core.dataUtils.js",
-        "core_modules/core/core.container.js",
-        "core_modules/ui/core.contextMenu.js",
-        "core_modules/core/core.itemfx.js",
-        "core_modules/core/core.operator.js",
-        "core_modules/ui/core.dragdrop.js",
-        "core_modules/core/core.phone.rect.js",
-        "core_modules/core/core.rect.js",
-        "core_modules/ui/core.phone.main.js",
-        "core_modules/ui/core.main.js",
-        "core_modules/ui/ccleaner.js",
-        "core_modules/ui/richText.js",
-        "core_modules/core/core.clip.js",
-        "operators/opSelect.js",
-        "genui/dateparser.js",
-        "operators/itemList.searchsort.js",
-        "operators/itemList.js",
-        "operators/itemList.phone.js",
-        "operators/descbox.js",
-        "genui/intervalParser.js",
-        "operators/terminal.js",
-        "operators/workflow/workflow_shim.js",
-        "operators/workflow/focusMode.js",
-        "operators/workflow/search.js",
-        "operators/workflow/workflow_gitfriendly_contextmenu.js",
-        "operators/workflow/workflow_gitfriendly.js",
-        "operators/workflow/advancedentry.js",
-        //"operators/textflow.js",
-        "operators/inspector.js",
-        "operators/json_inspector.js",
-        "operators/inspectolist.js",
-        "operators/subframe.js",
-        "operators/deltaLogger.js",
-        "3pt/jquery.min.js",
-        "3pt/moment.min.js",
-        "3pt/fullcalendar.min.js",
-        "genui/quickNotify.js",
-        "operators/calendar.js",
-        "3pt/svg.min.js",
-        "3pt/svg.foreignobject.js",
-        "operators/itemcluster/itemcluster.svg.js",
-        "operators/itemcluster/contextmenu/entropic_hierarchy.js",
-        "operators/itemcluster/contextmenu/condensed_hierarchy.js",
-        "operators/itemcluster/contextmenu/condensed_radial_hierarchy.js",
-        "operators/itemcluster/contextmenu/entropy.js",
-        "operators/itemcluster/itemcluster.contextmenu.js",
-        "operators/itemcluster/itemcluster.scalegrid.js",
-        "operators/itemcluster/itemcluster.rapidentry.js",
-        "operators/itemcluster/itemcluster.js",
-        "operators/welcome.js",
-        "operators/litem.js",
-        "operators/scriptrunner.js",
-        "operators/timer.js",
-        "saveSources/outputToText.js",
-        "saveSources/localforage2.js",
-        "saveSources/permalink.js",
-        "saveSources/lobby.js",
-        "saveSources/server.js",
-        "saveSources/gitlite.js",
-        "saveSources/gitlite2.js",
-        "saveSources/broadcastsync.js",
-        "core_modules/core/core.static.js",
+        "src/3pt/localforage.min.js",
+        "src/3pt/chart.js",
+        "src/utils.js",
+        "src/core.js",
+        "src/core_modules/ui/core.tutorial.js",
+        "src/core_modules/core/core.dedup.js",
+        "src/core_modules/core/core.docLoading.js",
+        "src/core_modules/ui/core.dialog.js",
+        "src/core_modules/ui/core.tutorial.js",
+        "src/core_modules/ui/core.loadSaveUI.js",
+        "src/core_modules/ui/core.customCSS.js",
+        "src/core_modules/core/core.dataUtils.js",
+        "src/core_modules/core/core.container.js",
+        "src/core_modules/ui/core.contextMenu.js",
+        "src/core_modules/core/core.itemfx.js",
+        "src/core_modules/core/core.operator.js",
+        "src/core_modules/ui/core.dragdrop.js",
+        "src/core_modules/core/core.phone.rect.js",
+        "src/core_modules/core/core.rect.js",
+        "src/core_modules/ui/core.phone.main.js",
+        "src/core_modules/ui/core.main.js",
+        "src/core_modules/ui/ccleaner.js",
+        "src/core_modules/ui/richText.js",
+        "src/core_modules/core/core.clip.js",
+        "src/operators/opSelect.js",
+        "src/genui/dateparser.js",
+        "src/operators/itemList.searchsort.js",
+        "src/operators/itemList.js",
+        "src/operators/itemList.phone.js",
+        "src/operators/descbox.js",
+        "src/genui/intervalParser.js",
+        "src/operators/terminal.js",
+        "src/operators/workflow/workflow_shim.js",
+        "src/operators/workflow/focusMode.js",
+        "src/operators/workflow/search.js",
+        "src/operators/workflow/workflow_gitfriendly_contextmenu.js",
+        "src/operators/workflow/workflow_gitfriendly.js",
+        "src/operators/workflow/advancedentry.js",
+        //"src/operators/textflow.js",
+        "src/operators/inspector.js",
+        "src/operators/json_inspector.js",
+        "src/operators/inspectolist.js",
+        "src/operators/subframe.js",
+        "src/operators/deltaLogger.js",
+        "src/3pt/jquery.min.js",
+        "src/3pt/moment.min.js",
+        "src/3pt/fullcalendar.min.js",
+        "src/genui/quickNotify.js",
+        "src/operators/calendar.js",
+        "src/3pt/svg.min.js",
+        "src/3pt/svg.foreignobject.js",
+        "src/operators/itemcluster/itemcluster.svg.js",
+        "src/operators/itemcluster/contextmenu/entropic_hierarchy.js",
+        "src/operators/itemcluster/contextmenu/condensed_hierarchy.js",
+        "src/operators/itemcluster/contextmenu/condensed_radial_hierarchy.js",
+        "src/operators/itemcluster/contextmenu/entropy.js",
+        "src/operators/itemcluster/itemcluster.contextmenu.js",
+        "src/operators/itemcluster/itemcluster.scalegrid.js",
+        "src/operators/itemcluster/itemcluster.rapidentry.js",
+        "src/operators/itemcluster/itemcluster.js",
+        "src/operators/welcome.js",
+        "src/operators/litem.js",
+        "src/operators/scriptrunner.js",
+        "src/operators/timer.js",
+        "src/saveSources/outputToText.js",
+        "src/saveSources/localforage2.js",
+        "src/saveSources/permalink.js",
+        "src/saveSources/lobby.js",
+        "src/saveSources/server.js",
+        "src/saveSources/gitlite.js",
+        "src/saveSources/gitlite2.js",
+        "src/saveSources/broadcastsync.js",
+        "src/core_modules/core/core.static.js",
     ];
 
     let staticFileList = fileList.map(i => i);
     let filesToRemoveInStatic = [
-        "core_modules/ui/core.loadSaveUI.js",
-        "saveSources/outputToText.js",
-        "saveSources/localforage2.js",
-        "saveSources/permalink.js",
-        "saveSources/lobby.js",
-        "saveSources/server.js",
-        "saveSources/gitlite.js",
-        "saveSources/gitlite2.js",
-        "saveSources/broadcastsync.js"
+        "src/core_modules/ui/core.loadSaveUI.js",
+        "src/saveSources/outputToText.js",
+        "src/saveSources/localforage2.js",
+        "src/saveSources/permalink.js",
+        "src/saveSources/lobby.js",
+        "src/saveSources/server.js",
+        "src/saveSources/gitlite.js",
+        "src/saveSources/gitlite2.js",
+        "src/saveSources/broadcastsync.js"
     ];
     filesToRemoveInStatic.forEach(i => {
         staticFileList.splice(staticFileList.indexOf(i), 1);
@@ -115,7 +115,7 @@
             loadNextFile();
         } else {
             let s = document.createElement("script");
-            s.src = "cat.js";
+            s.src = "build/cat.js";
             document.body.appendChild(s);
             // This _needs_ to have a blank argument because if you just set the onload to be start, you will get that the 
             // first argument which is the event handler is truthy, and polymorph will run in static mode.
@@ -126,18 +126,18 @@
         console.log(e); // in case it's actually a browser error.
         let fs = require("fs");
         //this is a compilation script
-        fs.writeFileSync("cat.js", fs.readFileSync(fileList[0]));
+        fs.writeFileSync("build/cat.js", fs.readFileSync(fileList[0]));
         for (let i = 1; i < fileList.length; i++) {
-            fs.appendFileSync("cat.js", ";\n\n"); // #safe
-            fs.appendFileSync("cat.js", fs.readFileSync(fileList[i]));
+            fs.appendFileSync("build/cat.js", ";\n\n"); // #safe
+            fs.appendFileSync("build/cat.js", fs.readFileSync(fileList[i]));
             console.log("adding file " + fileList[i] + "...");
         }
 
         //Also build static polymorph
-        fs.writeFileSync("polymorph_static.js", fs.readFileSync(staticFileList[0]));
+        fs.writeFileSync("build/polymorph_static.js", fs.readFileSync(staticFileList[0]));
         for (let i = 1; i < staticFileList.length; i++) {
-            fs.appendFileSync("polymorph_static.js", ";\n\n"); // #safe
-            fs.appendFileSync("polymorph_static.js", fs.readFileSync(staticFileList[i]));
+            fs.appendFileSync("build/polymorph_static.js", ";\n\n"); // #safe
+            fs.appendFileSync("build/polymorph_static.js", fs.readFileSync(staticFileList[i]));
             console.log("adding file " + staticFileList[i] + "...");
         }
     }
