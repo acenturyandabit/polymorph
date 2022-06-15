@@ -3,16 +3,20 @@
 
 ![](https://raw.githubusercontent.com/acenturyandabit/polymorph/largeAssets/assets/readme2.gif)
 
-## Problem
-I like to rehash my task management tools as things come up - if I decide that there's a better way of managing my tasks that works for ME, then I want to be able to rebuild it. Sound familiar? I bet every developer or aspiring developer has a task management system that they've built or contributed to before because it just 'isn't quite right for them'.
+Polymorph is a very fancy to-do-list that puts you in charge of what it does. With a bit of creativity, you can turn Polymorph into a Knowledge Base, Contact Management System, or automate your entire workflow, without getting into all the code.
 
-## Solution
-Polymorph provides you with elements such as lists, drilldowns, and graphs, in a highly space-efficient organisation framework where the screen is split into functional rectangular areas. Tabs are used to provide quick configuration options and provide flexibility. A script runner element allows you to automate parts of your workflow such as time logging and organisation.
+Polymorph runs in your browser; out of the box, polymorph has:
+- A Workflowy Emulator (workflowish);
+- A Mind map generator (itemcluster);
+- A To-do list (itemList);
+- A scripting interface (scriptRunner)
+and a few other odds and ends.
 
-At the same time, we know you won't be rebuilding your task management system everyday, so modification elements are out-of-the-way until you summon them with a Ctrl-Shift.
+## Polymorph's secret weapon
+Sure, polymorph provides you with elements such as lists, drilldowns, and graphs, but its real superpower is its incredibly space-efficient organisation framework. In Polymoprh, you can subdivide your window into functional rectangular areas, and imbue those areas with the elements above. Maybe you want a list next to a graph, or two lists for separate things; Polymorph can do it all. Tabs are used to provide quick configuration options and provide flexibility. A script runner element allows you to automate parts of your workflow such as time logging and organisation. This highly modular approach allows you to take charge of your task organisation in a way that no other platform will allow (apart from building up a task management app yourself from scratch, that is.) At the same time, we know you won't be rebuilding your task management system everyday, so modification elements are out-of-the-way until you summon them with a press of a button.
 
-This highly modular approach allows you to take charge of your task organisation in a way that no other platform will allow (apart from building up a task management app yourself from scratch, that is.)
 
+If you'd like to run polymorph with a server backing it, check out the self-hostable `polymorph_backend` project here: [https://github.com/acenturyandabit/polymorph_backend]
 ## Keeping it straight
 Polymorph doesn't use React or Angular or Vue. This means that anyone who knows javascript can contribute; there are no dependencies to install; and code isn't obfuscated*, meaning you can edit it during runtime from the browser.
 
@@ -21,7 +25,7 @@ Polymorph doesn't need to run on a server, just a browser; and Polymorph will be
 *: Code is concatenated instead of compiled for deployment, which prevents multiple source downloads, often a bigger load-time-killer than download. 
 
 ## Contributing
-See the issues list! I fix most of my own issues because Polymorph is my day-to-day, but there's always nice-to-haves.
+Check out the developer readme in `/devel`, then see the issues list! I fix most of my own issues because Polymorph is my day-to-day, but there's always nice-to-haves.
 
 ## TODO
 - Make filemanager.js automatically update pwa.js
