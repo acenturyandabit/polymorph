@@ -1,23 +1,25 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-    <script src="../3pt/showdown.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <script>
         let converter = new showdown.Converter();
-        document.addEventListener("DOMContentLoaded", async() => {
-            let file = localStorage.getItem("__docs_last_file_loaded") || "README.md";
-            let response = await fetch(file);
+        document.addEventListener("DOMContentLoaded", async () => {
+            let usp = new URLSearchParams(window.location.search);
+            let file = usp.get("page") || "README.md";
+            file = file.replace(/\|/g, "/");
+            let response = await fetch(file + "?t=" + Date.now());
             let text = await response.text();
             document.querySelector("._docs_container").innerHTML = converter.makeHtml(text);
         })
-        document.addEventListener("click", async(e) => {
+        document.addEventListener("click", async (e) => {
             if (e.target.tagName == "A") {
                 e.preventDefault();
-                localStorage.setItem("__docs_last_file_loaded", e.target.href);
-                let response = await fetch(e.target.href);
-                let text = await response.text();
-                document.querySelector("._docs_container").innerHTML = converter.makeHtml(text);
+                let fileTarget = e.target.href;
+                fileTarget = fileTarget.replace(window.location.origin + window.location.pathname, "");
+                window.location.href = "/?page=" + fileTarget.replace(/\//g, "|");
             }
         })
     </script>

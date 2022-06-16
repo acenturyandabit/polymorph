@@ -1,13 +1,9 @@
 # Documentation
-Polymorph is a open, heavily-customizable all-in-one knowledge management system. (This is explained in further detail in the Why Polymorph? article below.)
-## Overview
-These articles outline how polymorph works in terms of its modules and information flows:
-- [Why Polymorph?](keyfeats.md)
-- [Structural overview of Polymorph](overview.md)
-- [UI: Operators, containers, rects](uimodel.md)
-- [Data model](datamodel.md)
-- Messaging: event API, on/fire, remapping: TODO
+Polymorph is an all-in-one task and knowledge management system. This page serves as the index for the user documentation for Polymorph, i.e. how you can use the various panels, save sources, and overall program, to create your task and knowledge management workflow.
 
-## Operator specific
-These articles outline the features of some of the existing operators. 
-- TODO
+For developer documentation, please see [the developer docs](dev/README.md).
+
+- Operator reference
+    - [workflowish operator](operators/workflowish.md)
+- Save source reference
+    - [gitlite save source](savesources/gitlite.md)
