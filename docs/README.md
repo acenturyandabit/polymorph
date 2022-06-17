@@ -7,3 +7,5 @@ For developer documentation, please see [the developer docs](dev/README.md).
     - [workflowish operator](operators/workflowish.md)
 - Save source reference
     - [gitlite save source](savesources/gitlite.md)
+- Standalone operation
+    - [Unit Core](versions/unit_core.md)

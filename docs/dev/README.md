@@ -1,6 +1,13 @@
 # Polymorph developer documentation
 Welcome to the developer documentation for Polymorph. 
 
+## Getting started
+Polymorph doesn't use React or Angular or Vue. This means that anyone who knows javascript can contribute; there are no dependencies to install; and code isn't obfuscated, meaning you can edit it during runtime from the browser.
+
+Polymorph doesn't need to run on a server, just a browser; and Polymorph will be always open source. This means anyone can fork, clone and edit, and mod to their heart's content. 
+
+Source code is in `/src`, and is divided by functionality.
+
 ## Core concepts
 ### Event system
 Polymorph uses an event system to facilitate item updates and allow procedure calls between different parts of the system. A code module can register a function to be run on a given event using the `polymorph_core.on` function; and can raise an event using the `polymorph_core.fire` function. The most common event to be fired is the `updateItem` event, which is fired whenever any module updates an item. Reigstered functions will respond to the updateItem event by rerendering parts of the UI, or storing changes to be saved later.
@@ -23,4 +30,4 @@ To keep Polymorph's build system simple (i.e. just concatenating all the files i
 ## Porting
 Various porting options are provided if an application which does not require polymorph's core UI elements (the rect, tab, container and title bar) is desired.
 - If a static document is required (one which does not allow the user to save their changes), the `build/polymorph_static.js` version can be used to render a single static .json file, with all of Polymorph's features.
-- [TODO] A slimmed-down version of the polymorph core supporting a single desired operator and savesource can be constructed using `build/unit_core.js`.
+- A slimmed-down version of the polymorph core supporting a single desired operator and savesource can be constructed using `build/unit_core.js`. See the documentation on (unit core)[versions/unit_core.md] to learn more.
