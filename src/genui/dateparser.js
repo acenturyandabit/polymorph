@@ -143,6 +143,12 @@ function _dateParser() {
         if (options.startDate) options.startDate = resolveToDate(options.startDate);
         if (!options.endDate) options.endDate = -1;
         else { options.endDate = resolveToDate(options.endDate); }
+
+        // If the event is 'auto', then reset the startDate to now().
+        if (event.datestring.includes("auto")){
+            event.reference = new Date();
+        }
+
         let possibleDates = [];
         // split date into parts
         let dateParts = event.datestring.split("&");
@@ -364,10 +370,17 @@ function _dateParser() {
         }
     },
     {
+        name: "relMonth",
+        regex: /\+Rm/g,
+        operate: function (regres, data) {
+
+        }
+    },
+    {
         name: "delTime",
         regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
         operate: function (regres, data) {
-            data.freeamt = 1;
+            let freeamt = 1;
             for (i = 3; i < regres.length; i++) {
                 if (regres[i] != undefined) {
                     factor = i;
@@ -375,30 +388,30 @@ function _dateParser() {
             }
             switch (factor) { /// this can be improved.
                 case 3:
-                    data.freeamt = 1000 * 60;
+                    freeamt = 1000 * 60;
                     break;
                 case 4:
-                    data.freeamt = 1000 * 60 * 60;
+                    freeamt = 1000 * 60 * 60;
                     break;
                 case 5:
-                    data.freeamt = 1000 * 60 * 60 * 24;
+                    freeamt = 1000 * 60 * 60 * 24;
                     break;
                 case 6:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 7;
+                    freeamt = 1000 * 60 * 60 * 24 * 7;
                     break;
                 case 7:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 30;
+                    freeamt = 1000 * 60 * 60 * 24 * 30;
                     break;
                 case 8:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 365;
+                    freeamt = 1000 * 60 * 60 * 24 * 365;
                     break;
             }
-            data.freeamt *= Number(regres[2]);
+            freeamt *= Number(regres[2]);
             if (regres[1] == "-") {
-                data.freeamt *= -1;
-                data.noDateSpecific = false;
+                freeamt *= -1;
+                noDateSpecific = false;
             }
-            data.d.setTime(data.d.getTime() + data.freeamt);
+            data.d.setTime(data.d.getTime() + freeamt);
         }
     }
     ];
