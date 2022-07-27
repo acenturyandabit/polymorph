@@ -874,10 +874,10 @@ polymorph_core.registerOperator("workflow_gf", {
 
             //let my parent know it has children either when it renders or if it has already rendered, now.
 
-            if ((!parentID && !this.settings.focusExclusionMode) || // root item
+            if ((!parentID && !this.settings.focusExclusionMode) || // root item, so we can render
                 id == this.settings.focusExclusionID || // we're focusing on this element
                 (this.renderedItemCache[parentID] && parentID != "" && !(!(parentID in this.holdExpanded) && polymorph_core.items[parentID][this.settings.collapseProperty])) || // The parent is rendered and should be expanded
-                flags.includes("f") // forced
+                (flags.includes("f") && this.renderedItemCache[parentID]) // forced and parent exists
             ) {
                 // only render if parent visible and not collapsed, or this is a root item
                 if (!this.renderedItemCache[id]) {
@@ -903,7 +903,9 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 //cache and update the text
                 let notNullItemTitle = (polymorph_core.items[id][this.settings.titleProperty] || " ");
-                if (this.renderedItemCache[id].renderedText != notNullItemTitle) {
+                
+                // Special case for dates with 'auto'; anything with auto will be invalidated. (Icky! Might be a better way to do this.)
+                if (this.renderedItemCache[id].renderedText != notNullItemTitle || notNullItemTitle.includes("auto")) {
                     this.renderedItemCache[id].renderedText = notNullItemTitle;
                     if (this.settings.advancedInputMode) {
                         // just do a replace of datestrings to actual dates
