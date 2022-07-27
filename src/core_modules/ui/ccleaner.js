@@ -1,15 +1,20 @@
 polymorph_core.on("UIstart", () => {
     //garbage collection
-    polymorph_core.tryGarbageCollect = (id) => {
-        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return; //never delete rects and operators? this wont end well
-        if (id == "_meta") return; //dont delete the metaitem
+
+    polymorph_core.isItemRelevant = (id) => {
+        if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return true; //never delete rects and operators? this wont end well
+        if (id == "_meta") return true; //dont delete the metaitem
         let toDelete = true;
         for (let i in this.containers) {
             if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
                 toDelete = false;
             }
         }
-        if (toDelete) {
+        return !toDelete;
+    }
+
+    polymorph_core.tryGarbageCollect = (id) => {
+        if (!(polymorph_core.isItemRelevant(id))) {
             delete polymorph_core.items[id];
         }
     }
