@@ -14,6 +14,15 @@
         a.click();
     }
 
+    let getRelevantItems = (data)=>{
+        data=JSON.parse(JSON.stringify(data));
+        for (let i in data) {
+            if (!polymorph_core.isItemRelevant(i)){
+                delete data[i];
+            }
+        }
+    }
+
     polymorph_core.registerSaveSource("toText", function(save_source_data) { // a sample save source, implementing a number of functions.
         polymorph_core.saveSourceTemplate.call(this, save_source_data);
 
@@ -22,15 +31,21 @@
         <span>
         <textarea placeholder="Output"></textarea>
         <br>
+        <label>Filter only active items <input class="onlyActiveItems" type="checkbox"></label>
         <button class="sfile">Save text to file</button>
         <button class="ssjs">Save text to static js for rendering</button>
     <button class="loitem">Load as item JSON array</button>
     <button class="lo_obj">Load as item JSON object</button>
     </span>
     `;
+        let onlyActives = this.dialog.querySelector(".onlyActiveItems");
 
         function saveThisDocToJSON() {
-            saveToFile(polymorph_core.items, polymorph_core.currentDoc.displayName + "_" + Date.now() + ".json");
+            let data = polymorph_core.items;
+            if (onlyActives.checked){
+                data=getRelevantItems(data);
+            }
+            saveToFile(data, polymorph_core.currentDoc.displayName + "_" + Date.now() + ".json");
         }
 
         this.dialog.querySelector(".sfile").addEventListener("click", () => {
@@ -61,6 +76,11 @@
         });
 
         this.pushAll = async function(data) {
+            // Perform filtering if needed
+            if (onlyActives.checked){
+                data=getRelevantItems(data);
+            }
+
             this.dialog.querySelector("textarea").value = JSON.stringify(data);
         }
         this.pullAll = async function() {
