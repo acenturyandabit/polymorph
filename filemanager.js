@@ -3,6 +3,7 @@
     let fileList = [
         "src/3pt/localforage.min.js",
         "src/3pt/chart.js",
+        "src/3pt/showdown.js",
         "src/utils.js",
         "src/core.js",
         "src/core_modules/ui/core.tutorial.js",
@@ -62,7 +63,6 @@
         "src/operators/itemcluster/itemcluster.rapidentry.js",
         "src/operators/itemcluster/itemcluster.js",
         "src/operators/welcome.js",
-        "src/operators/litem.js",
         "src/operators/scriptrunner.js",
         "src/operators/timer.js",
         "src/saveSources/outputToText.js",
@@ -76,6 +76,8 @@
         "src/core_modules/core/core.static.js",
     ];
 
+
+    // Polymorph static
     let staticFileList = fileList.map(i => i);
     let filesToRemoveInStatic = [
         "src/core_modules/ui/core.loadSaveUI.js",
@@ -93,9 +95,43 @@
     });
     //staticFileList = [...staticFileList, ""];
 
+    // Polymorph unit_core
+    let unitCoreFileList = fileList.map(i => i);
+    let filesToRemoveInUnitCore = [
+        "src/core_modules/ui/core.loadSaveUI.js",
+        "src/saveSources/outputToText.js",
+        "src/saveSources/localforage2.js",
+        "src/saveSources/permalink.js",
+        "src/saveSources/lobby.js",
+        "src/saveSources/server.js",
+        "src/saveSources/gitlite.js",
+        "src/saveSources/gitlite2.js",
+        "src/saveSources/broadcastsync.js"
+    ];
+    filesToRemoveInUnitCore.forEach(i => {
+        unitCoreFileList.splice(unitCoreFileList.indexOf(i), 1);
+    });
+    filesToRemoveInUnitCore=filesToRemoveInUnitCore.filter(i=>!(i.startsWith("src/operators")));
+    unitCoreFileList.splice(unitCoreFileList.indexOf("src/core.js")+1, 0, "src/unit_core.js");
+
     try {
         //we are working in the browser context
+
+        // Indicate to static that it is not in static mode
+        // Also causes failure in node.js since window doesn't exist, which will lead to catch
         window.polymorph_file_list = fileList;
+
+        // For unit_core mode
+        let debug_mode = false;
+        // Use the unit_core file list instead
+        if (localStorage.getItem("__unitcore_debug_from")) {
+            fileList = unitCoreFileList;
+            // also add a ../ in front of the src to escape from the versions folder
+            fileList = fileList.map(i => "../" + i);
+            debug_mode = true;
+        }
+
+        // General modes
         if (localStorage.getItem("__polymorph_debug_flag") == "true" || // Add a few more conditions to make editing accessible for newcomers
             window.location.href.includes("localhost") ||
             window.location.href.includes("file://")
@@ -113,14 +149,16 @@
                 document.body.appendChild(s);
             }
             loadNextFile();
-        } else {
+            debug_mode = true;
+        }
+
+        if (!debug_mode){
             let s = document.createElement("script");
             s.src = "build/cat.js";
             document.body.appendChild(s);
             // This _needs_ to have a blank argument because if you just set the onload to be start, you will get that the 
             // first argument which is the event handler is truthy, and polymorph will run in static mode.
             s.onload = () => polymorph_core.start();
-
         }
     } catch (e) {
         console.log(e); // in case it's actually a browser error.
@@ -139,6 +177,14 @@
             fs.appendFileSync("build/polymorph_static.js", ";\n\n"); // #safe
             fs.appendFileSync("build/polymorph_static.js", fs.readFileSync(staticFileList[i]));
             console.log("adding file " + staticFileList[i] + "...");
+        }
+
+        //Also build unit core
+        fs.writeFileSync("build/unit_core.js", fs.readFileSync(unitCoreFileList[0]));
+        for (let i = 1; i < unitCoreFileList.length; i++) {
+            fs.appendFileSync("build/unit_core.js", ";\n\n"); // #safe
+            fs.appendFileSync("build/unit_core.js", fs.readFileSync(unitCoreFileList[i]));
+            console.log("adding file " + unitCoreFileList[i] + "...");
         }
     }
 })();

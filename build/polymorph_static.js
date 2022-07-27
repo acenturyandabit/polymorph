@@ -3740,6 +3740,7 @@ if (!isPhone()) {
                 polymorph_core.containers[containerid].remove();
                 delete polymorph_core.containers[containerid];
                 delete polymorph_core.items[containerid]._od;
+                polymorph_core.fire("updateItem",{id: containerid});
             }
         })
 
@@ -4007,6 +4008,7 @@ tabmenu.style.display = "none";
                         if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                         polymorph_core.containers[this.settings.s].processRemappingDiv();
                         polymorph_core.fire("updateItem", { id: rectID });
+                        polymorph_core.fire("updateItem", { id: this.settings.s });
                     })
                 } else {
                     //old version
@@ -5689,10 +5691,17 @@ function _dateParser() {
         }
     },
     {
+        name: "relMonth",
+        regex: /\+Rm/g,
+        operate: function (regres, data) {
+
+        }
+    },
+    {
         name: "delTime",
         regex: /(\+|-)(\d+)(?:(m)(?:in)*|(h)(?:ou)*(?:r)*|(d)(?:ay)*|(w)(?:ee)*(?:k)*|(M)(?:o)*(?:nth)*|(y(?:ea)*(?:r)*))/g,
         operate: function (regres, data) {
-            data.freeamt = 1;
+            let freeamt = 1;
             for (i = 3; i < regres.length; i++) {
                 if (regres[i] != undefined) {
                     factor = i;
@@ -5700,30 +5709,30 @@ function _dateParser() {
             }
             switch (factor) { /// this can be improved.
                 case 3:
-                    data.freeamt = 1000 * 60;
+                    freeamt = 1000 * 60;
                     break;
                 case 4:
-                    data.freeamt = 1000 * 60 * 60;
+                    freeamt = 1000 * 60 * 60;
                     break;
                 case 5:
-                    data.freeamt = 1000 * 60 * 60 * 24;
+                    freeamt = 1000 * 60 * 60 * 24;
                     break;
                 case 6:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 7;
+                    freeamt = 1000 * 60 * 60 * 24 * 7;
                     break;
                 case 7:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 30;
+                    freeamt = 1000 * 60 * 60 * 24 * 30;
                     break;
                 case 8:
-                    data.freeamt = 1000 * 60 * 60 * 24 * 365;
+                    freeamt = 1000 * 60 * 60 * 24 * 365;
                     break;
             }
-            data.freeamt *= Number(regres[2]);
+            freeamt *= Number(regres[2]);
             if (regres[1] == "-") {
-                data.freeamt *= -1;
-                data.noDateSpecific = false;
+                freeamt *= -1;
+                noDateSpecific = false;
             }
-            data.d.setTime(data.d.getTime() + data.freeamt);
+            data.d.setTime(data.d.getTime() + freeamt);
         }
     }
     ];
@@ -15342,7 +15351,7 @@ polymorph_core.registerOperator("welcome", {
     displayName: "Welcome",
     description: "The Welcome Operator. If you're reading this, thanks for messing around with my code, adventurer.",
     hidden: true
-}, function(container) {
+}, function (container) {
     let templates = {
         brainstorming: `{"default_operator":{"_od":{"t":"itemcluster2","data":{"itemcluster":{"cx":0,"cy":0,"scale":1},"filter":"ltkar5","tray":false,"createAcrossViews":true,"showNewViewButton":false,"textProp":"title","focusExtendProp":"description","currentViewName":"1l3u"},"inputRemaps":{},"outputRemaps":{},"tabbarName":"Itemcluster 2","p":"default_container"}},"1l3u":{"itemcluster":{"viewName":"New View","cx":1030,"cy":961,"scale":1,"XZoomFactor":1,"grid":0},"ltkar5":true},"drbeqvh_N6l6l1x_0":{"title":"Double click to add new items!","itemcluster":{"viewData":{"1l3u":{"x":943,"y":556}}},"ltkar5":true,"to":{"drbeqvh_N6l6nBA_1":true,"drbeqvh_N6l6uOp_3":true}},"drbeqvh_N6l6nBA_1":{"title":"Shift-click on an item and drag to connect items.","itemcluster":{"viewData":{"1l3u":{"x":1416.6589578662847,"y":671.7387220367473}}},"ltkar5":true,"to":{"drbeqvh_N6l6xv3_4":true}},"drbeqvh_N6l6qP3_2":{"title":"Right-click on an item to remove it. ","itemcluster":{"viewData":{"1l3u":{"x":520.1611849165822,"y":981.2783833785711}}},"ltkar5":true,"to":{"drbeqvh_N6l79/f_5":true}},"drbeqvh_N6l6uOp_3":{"title":"Click and drag the background to pan around.","itemcluster":{"viewData":{"1l3u":{"x":516.7613141248236,"y":729.517884079592}}},"ltkar5":true,"to":{"drbeqvh_N6l6qP3_2":true}},"drbeqvh_N6l6xv3_4":{"title":"Click an item and drag to move it around. ","itemcluster":{"viewData":{"1l3u":{"x":1426.8761410281654,"y":981.278383432773}}},"ltkar5":true,"to":{"drbeqvh_N6l79/f_5":true}},"drbeqvh_N6l79/f_5":{"title":"To edit an item, click and type.","itemcluster":{"viewData":{"1l3u":{"x":953.0792405689535,"y":1153.2980189590594}}},"ltkar5":true,"to":{"drbeqvh_N6l7Gaq_6":true,"drbeqvh_N6l7UWI_7":true,"drbeqvh_N6l7b4h_8":true,"drbeqvh_N6l7eg+_9":true}},"drbeqvh_N6l7Gaq_6":{"title":"Right click on the background for auto-arrangement options.","itemcluster":{"viewData":{"1l3u":{"x":763.4382906893444,"y":871.9076775296288}}},"ltkar5":true},"drbeqvh_N6l7UWI_7":{"title":"Control click-and-drag to select multiple items.","itemcluster":{"viewData":{"1l3u":{"x":1060.8296831010819,"y":903.4111007452011}}},"ltkar5":true},"drbeqvh_N6l7b4h_8":{"title":"Scroll to zoom in and out.","itemcluster":{"viewData":{"1l3u":{"x":612.4554171500922,"y":1256.4920671495831}}},"ltkar5":true},"drbeqvh_N6l7eg+_9":{"title":"Press G and scroll to activate a grid to snap to. ","itemcluster":{"viewData":{"1l3u":{"x":1242.7876903306637,"y":1254.9513507410031}}},"ltkar5":true}}`,
         tasklist: `{"_meta":{"displayName":"New Polymorph Document","id":"fmufz3","contextMenuItems":["Delete::polymorph_core.deleteItem","Background::item.edit(style.background)","Foreground::item.edit(style.color)"],"currentView":"default_container","globalContextMenuOptions":["Style::Item Background::item.edit(item.style.background)","Style::Text color::item.edit(item.style.color)"]},"default_operator":{"_od":{"t":"itemList","data":{"properties":{"title":"text","Importance":"text","date":"date"},"propertyWidths":{"title":263,"Importance":160},"filter":"ecacp4","enableEntry":true,"implicitOrder":false,"linkProperty":"to","currentID":"drbeqvh_N6lhZeN_5","sortby":"date"},"inputRemaps":{},"outputRemaps":{"focusItem":["listFocusItem"]},"tabbarName":"itemList","p":"drbeqvh_N6lhYyb_3"}},"drbeqvh_N6lhAQx_0":{"title":"Adding new items","ecacp4":1587790259898,"description":"Type the things you want to do in the first row to the left; then press Enter to add.","Importance":"Very","date":{"datestring":"+1d","date":[{"date":1587877251008,"part":"+1d","opart":"+1d","refdate":1587790851008,"endDate":1587880851008}],"prettyDateString":"26/04/2020"}},"drbeqvh_N6lhFfL_1":{"title":"Adding more columns","ecacp4":1587790281301,"description":"You can change the columns that are displayed using the cog next to 'Itemlist'.","Importance":"Moderate","date":{"datestring":"now","date":[{"date":1587790892068,"part":"now","opart":"now","refdate":1587790892068,"endDate":1587794492068}],"prettyDateString":"15:01:32"}},"drbeqvh_N6lhX4+_2":{"title":"Searching","ecacp4":1587790352702,"description":"You can also search for items using the box with the little magnifying glass.","date":{"datestring":"+2h","date":[{"date":1587798097727,"part":"+2h","opart":"+2h","refdate":1587790897727,"endDate":1587801697727}],"prettyDateString":"17:01:37"}},"drbeqvh_N6lhYyb_3":{"_rd":{"p":"default_container","x":0,"f":0,"ps":0.4276351720371382,"s":"default_operator","containerOrder":["default_operator"]}},"drbeqvh_N6lhYyb_4":{"_rd":{"p":"default_container","x":0,"f":1,"ps":0.4276351720371382,"s":"drbeqvh_N6lhZeN_5","containerOrder":["drbeqvh_N6lhZeN_5"]}},"drbeqvh_N6lhZeN_5":{"_od":{"t":"descbox","data":{"property":"description","operationMode":"focus","staticItem":"","auxProperty":"title","showTags":false,"currentID":"drbeqvh_N6li9SN_7"},"inputRemaps":{"listFocusItem":"focusItem"},"outputRemaps":{"createItem":["createItem_drbeqvh_N6lhZeN_5"],"deleteItem":["deleteItem_drbeqvh_N6lhZeN_5"],"focusItem":["focusItem_drbeqvh_N6lhZeN_5"]},"tabbarName":"descbox","p":"drbeqvh_N6ljJEG_0"}},"drbeqvh_N6lhsLS_6":{"title":"Resizing the UI","ecacp4":1587790439772,"description":"You can resize the UI by dragging on the borders of the UI.\\n\\nIf you want more lists, descriptions or otherwise, hold Shift and drag the borders "},"drbeqvh_N6li9SN_7":{"title":"Saving","Importance":"","ecacp4":1587790518039,"description":"Press CTRL-S to save."},"drbeqvh_N6ljJEG_0":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":0,"ps":0.3828207847295864,"s":"drbeqvh_N6lhZeN_5"}},"drbeqvh_N6ljJEG_1":{"_rd":{"p":"drbeqvh_N6lhYyb_4","x":1,"f":1,"ps":0.3828207847295864,"s":"drbeqvh_N6ljK08_2","containerOrder":["drbeqvh_N6ljK08_2"]}},"drbeqvh_N6ljK08_2":{"_od":{"t":"calendar","data":{"dateproperties":["date"],"titleproperty":"title","defaultView":"agendaWeek"},"inputRemaps":{},"outputRemaps":{"createItem":["createItem_drbeqvh_N6ljK08_2"],"deleteItem":["deleteItem_drbeqvh_N6ljK08_2"],"focusItem":["focusItem_drbeqvh_N6ljK08_2"]},"tabbarName":"Calendar","p":"drbeqvh_N6ljJEG_1"}}}`,
@@ -15353,6 +15362,14 @@ polymorph_core.registerOperator("welcome", {
 
     //this.rootdiv, this.settings, this.container instantiated here.
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
+
+    let hour_of_day = (new Date().getHours());
+    let time_of_day = "Morning";
+    if (hour_of_day > 12) {
+        time_of_day = "Afternoon"
+    } else if (hour_of_day > 7) {
+        time_of_day = "Evening"
+    }
 
     //Add content-independent HTML here.
     this.rootdiv.innerHTML = `
@@ -15394,27 +15411,46 @@ polymorph_core.registerOperator("welcome", {
         }
     </style>
     <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
+        <!--Modal thingy-->
         <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
+            <!--All but bottom-->
             <div style="display: flex; flex-direction: row; padding: 30px; height: calc(100% - 60px);">
                 <div style="display: flex; flex-direction:column; flex: 1 1 50%">
-                    <div style="height:100%;display:flex; flex-direction: column;">
-                        <h2>Polymorph</h2>
-                        <!--<a class="newDocIDButton" href="#">New document with specified id...</a>-->
-                        <br>
-                        <h3>Open existing document:</h3>
-                        <div style="overflow-y: auto; flex: 0 1 500px;">
-                        <h4>Recent documents:</h4>
-                        <div class="recentDocuments">
+                <h2>Good ${time_of_day}</h2>
+                <h3>New</h3>
+                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
+                    <a class="newDocButton" href="#">
+                        <div>
+                            <span>New document from scratch</span>
+                        </div>
+                    </a>
+                    <a data-template="brainstorming" href="#">
+                        <div>
+                            <span>Brainstorming tool</span>
+                        </div>
+                    </a>
+                    <a data-template="tasklist" href="#">
+                        <div>
+                            <span>Workflowy + Calendar</span>
+                        </div>
+                    </a>
+                    <!--<li><a>A quick websocket front-end</a></li>
+                    <li><a>A personal knowledge base</a></li>
+                    <li><a>A reconfigurable UI</a></li>
+                    <li><a>A collaboration tool</a></li>-->
+                </div>
+                <h3>Open an existing document</h3>
+                <div>
+                    <div class="recentDocuments">
+                        </div>
+                        <div class="lobbydocs" style="display:none">
+                            <h4>Local lobby documents:</h4>
+                            <div>
                             </div>
-                            <div class="lobbydocs" style="display:none">
-                                <h4>Local lobby documents:</h4>
-                                <div>
-                                </div>
-                            </div>
-                            <div class="globbydocs" style="display:none">
-                                <h4>Local git lobby documents:</h4>
-                                <div>
-                                </div>
+                        </div>
+                        <div class="globbydocs" style="display:none">
+                            <h4>Local git lobby documents:</h4>
+                            <div>
                             </div>
                         </div>
                     </div>
@@ -15422,38 +15458,7 @@ polymorph_core.registerOperator("welcome", {
                 <div style="flex: 1 1 50%">
                     <div style="display:flex; flex-direction: column; height: 100%">
                         <div style="flex: 3 3 75%">
-                            <h2>Create new document from template</h2>
-                                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
-                                    <a data-template="brainstorming" href="#">
-                                        <div>
-                                            <span>Brainstorming tool</span>
-                                        </div>
-                                    </a>
-                                    <a data-template="tasklist" href="#">
-                                        <div>
-                                            <span>Workflowy + Calendar</span>
-                                        </div>
-                                    </a>
-                                    <!--<li><a>A quick websocket front-end</a></li>
-                                    <li><a>A personal knowledge base</a></li>
-                                    <li><a>A reconfigurable UI</a></li>
-                                    <li><a>A collaboration tool</a></li>-->
-                                </div>
-                                <!--
-                                <h2>Examples</h2>
-                                <span>Want to see what polymorph is capable of? Check out some examples:</span>
-                                <ul class="templateList">
-                                <li><a href="permalink/techtree">A technology tree of the human race</a></li>
-                                <li><a href="permalink/thesell">A comparison of polymorph against a bunch of other productivity and note taking tools</a></li>
-                                </ul>
-                                -->
-                        </div>
                         <div style="display: flex; flex: 1 1 25%;" class="minibuttons">
-                            <a class="newDocButton" href="#">
-                                <div>
-                                    <span>New document from scratch</span>
-                                </div>
-                            </a>
                                     <a href="docs">Documentation</a>
                             <a href="https://github.com/acenturyandabit/polymorph">View on Github</a>
                         </div>
@@ -15466,34 +15471,34 @@ polymorph_core.registerOperator("welcome", {
     this.rootdiv.style.color = "white";
 
     this.rootdiv.querySelector(".templateList").addEventListener("click", (e) => {
-            if (e.target.matches("[data-template] *")) {
-                // load a template, by loading in all of the data
-                let t = e.target;
-                while (t && !t.dataset.template) {
-                    t = t.parentElement;
-                }
-                if (!t) return;
-                let RTP = JSON.parse(templates[t.dataset.template]);
-                RTP._meta = polymorph_core.items._meta;
-                RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
-                for (let i in RTP) {
-                    RTP[i]._lu_ = Date.now();
-                }
-                delete polymorph_core.items.default_operator;
-                delete polymorph_core.containers.default_operator;
-                // remove this operator
-                polymorph_core.integrateData(RTP, "TEMPLATER");
-                polymorph_core.switchView("default_container");
+        if (e.target.matches("[data-template] *")) {
+            // load a template, by loading in all of the data
+            let t = e.target;
+            while (t && !t.dataset.template) {
+                t = t.parentElement;
             }
-        })
-        /*
-        this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
-            let newID = window.prompt("Enter the new document ID below.");
-            if (newID) {
-                window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
+            if (!t) return;
+            let RTP = JSON.parse(templates[t.dataset.template]);
+            RTP._meta = polymorph_core.items._meta;
+            RTP.default_container = polymorph_core.items.default_container; // this probably hasn't changed
+            for (let i in RTP) {
+                RTP[i]._lu_ = Date.now();
             }
-        })
-        */
+            delete polymorph_core.items.default_operator;
+            delete polymorph_core.containers.default_operator;
+            // remove this operator
+            polymorph_core.integrateData(RTP, "TEMPLATER");
+            polymorph_core.switchView("default_container");
+        }
+    })
+    /*
+    this.rootdiv.querySelector(".newDocIDButton").addEventListener("click", () => {
+        let newID = window.prompt("Enter the new document ID below.");
+        if (newID) {
+            window.location.href = window.location.origin + window.location.pathname + "?doc=" + newID;
+        }
+    })
+    */
     this.rootdiv.querySelector(".newDocButton").addEventListener("click", () => {
         //get out of the way
         while (container.div.children.length) container.div.children[0].remove();
@@ -15620,513 +15625,6 @@ polymorph_core.registerOperator("welcome", {
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
     this.dialogDiv.innerHTML = `Nothing to see here!`;
-    this.showDialog = function() {
-        // update your dialog elements with your settings
-    }
-    this.dialogUpdateSettings = function() {
-        // This is called when your dialog is closed. Use it to update your container!
-    }
-
-});;
-
-//line as item operator
-// it has a focused state and a defocus state. focusability?
-// gotta deal with the cursor too great
-// um use a bunch of spans. constant width font, get up and down arrows working (hmm, sounds familiar)
-
-
-polymorph_core.registerOperator("lynerlist", {
-    displayName: "Lynerlist",
-    description: "An advanced item listing tool.",
-    hidden:true
-}, function (container) {
-    //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
-    let defaultSettings = {
-        filter: polymorph_core.guid(),
-        rowsOrder: ["----"]
-    };
-
-    //this.rootdiv, this.settings, this.container instantiated here.
-    polymorph_core.operatorTemplate.call(this, container, defaultSettings);
-    this.itemRelevant = (id) => this.settings.rowsOrder.indexOf(id) != -1;
-    //Add content-independent HTML here.
-    this.rootdiv.innerHTML = `<style>
-    span{
-        font-family:monospace;
-        color:white;
-    }
-    [data-id]{
-        width:100%;
-        display:inline-flex;
-    }
-    [contenteditable]{
-        flex: 1 0 10%;
-    }
-    </style>
-    <span data-id="----"><span>----</span>&nbsp;&nbsp;<span contenteditable></span></span> <!--this is always final line-->
-    `;
-    Object.defineProperty(this, 'currentFocusedLine', {
-        get: () => {
-            let r = this.rootdiv.getRootNode();
-            if (!r.activeElement) return undefined;
-            else {
-                //construct an object
-                let obj = {};
-                obj.id = r.activeElement.parentElement.dataset.id;
-                obj.contents = r.activeElement.innerText;
-                obj.editableSpan = r.activeElement;
-                obj.backTag = r.activeElement.parentElement.children[0];
-                obj.root = r.activeElement.parentElement;
-                return obj;
-            }
-        }
-    }
-    )
-
-    this.updateRowsOrder = () => {
-        this.settings.rowsOrder = [];
-        Array.from(this.rootdiv.children).forEach(i => {
-            if (i.dataset.id) this.settings.rowsOrder.push(i.dataset.id);
-        })
-        if (this.settings.rowsOrder.length == 0) this.settings.rowsOrder = ["----"];
-    }
-
-    let renderise = (id, prevItem) => {
-        let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
-        if (typeof (id) != 'string') {
-            copydiv = id;
-            id = id.dataset.id;
-        }
-        else if (id != "----") {
-            if (this.rootdiv.querySelector(`[data-id="${id}"]`)) {
-                copydiv = this.rootdiv.querySelector(`[data-id="${id}"]`);
-            }
-            copydiv.children[0].innerText = " " + id.slice(id.length - 4);
-            copydiv.dataset.id = id;
-            copydiv.children[1].innerText = polymorph_core.items[id].contents;
-        }
-        this.rootdiv.insertBefore(copydiv, prevItem);
-        if (id != "----" && polymorph_core.items[id].to) {
-            for (let i in polymorph_core.items[id].to) {
-                if (this.settings.rowsOrder.indexOf(i) != -1) {
-                    copydiv = renderise(i, copydiv.nextElementSibling);
-                }
-            }
-        }
-        return copydiv;
-    }
-
-    //initial render
-    let baseItem = this.rootdiv.querySelector(`[data-id="----"]`);
-    this.settings.rowsOrder.forEach(i => {
-        baseItem = renderise(i, baseItem.nextElementSibling);
-        this.rootdiv.appendChild(baseItem);
-    })
-    //there may be an extra ---- so we can just remove it.
-    if (this.rootdiv.querySelector(`[data-id="----"]:last-child`)) {
-        this.rootdiv.children[1].remove();
-    } else {
-        this.rootdiv.appendChild(this.rootdiv.children[1]);
-    }
-
-
-    let processCommands = (c) => {
-        c = c.split("\\")[1];
-        c = c.split(" ");
-        switch (c[0]) {
-            case "sort":
-                let sortables = [];
-                if (!c[1]) c[1] = 'contents';
-                this.updateRowsOrder();
-                for (let i of this.settings.rowsOrder) {
-                    if (i == "----") continue;
-                    if (polymorph_core.items[i].contents[0] != " " && polymorph_core.items[i][c[1]]) {
-                        sortables.push({
-                            id: i,
-                            d: polymorph_core.items[i][c[1]]
-                        });
-                    }
-                }
-                if (c[2] == "date") {
-                    sortables.forEach(i => {
-                        let dt = dateParser.extractTime(i.d, new Date());
-                        if (dt) i.d = dt.getTime();
-                        else i.d = 0;
-                    })
-                }
-                if (c.includes("reverse")) {
-                    sortables.sort((a, b) => (a.d > b.d) ? 1 : -1);
-                } else {
-                    sortables.sort((a, b) => (a.d > b.d) ? -1 : 1);
-                }
-                let cd = this.rootdiv.children[2];
-                for (let i of sortables) {
-                    renderise(i.id, cd);
-                    //arrange
-                }
-                break;
-            case "depsort":
-                //sort based on some abstract dependency chain. deps and id property. \depsort [dependency prop] [id prop]\
-                let allItems = this.settings.rowsOrder.map(i => i);
-                let toSort = {};
-                let nextToAnchor = undefined;
-                allItems.forEach(i => {
-                    if (i == "----") return;
-                    if (polymorph_core.items[i][c[2]]) {
-                        toSort[polymorph_core.items[i][c[2]]] = {
-                            id: i
-                        }
-                        if (polymorph_core.items[i][c[1]]) {
-                            toSort[polymorph_core.items[i][c[2]]].deps = polymorph_core.items[i][c[1]].split(",");
-                        } else {
-                            toSort[polymorph_core.items[i][c[2]]].deps = [];
-                        }
-                    } else {
-                        nextToAnchor = renderise(i, nextToAnchor).nextElementSibling;
-                    }
-                })
-                let tsk = Object.keys(toSort);
-                let emplaced = {};
-                while (tsk.length) {
-                    console.log(tsk);
-                    let top = tsk.shift();
-                    if (toSort[top]) {
-                        //items will be deleted once they have been seen
-                        if (emplaced[top]) {
-                            //there is a loop, abort
-                            //render now
-                            nextToAnchor = renderise(toSort[top].id, nextToAnchor).nextElementSibling;
-                            console.log("got " + top);
-                            delete toSort[top];
-                        } else {
-                            emplaced[top] = true;
-                            toSort[top].deps = toSort[top].deps.filter(i => !emplaced[i]);
-                            toSort[top].deps.forEach(i => tsk.push(i));
-                            tsk.push(top);
-                        }
-                    }
-                }
-                Array.from(this.rootdiv.querySelectorAll("[data-id='----']")).forEach(i => this.rootdiv.appendChild(i));
-                //move all newlines to bottom
-                break;
-            case 'nowtd':
-                //literally spew a current formatted datestring here.
-                return (new Date()).toLocaleTimeString() + " " + (new Date()).toLocaleDateString();
-            case 'nowdt':
-                //literally spew a current formatted datestring here.
-                return (new Date()).toLocaleDateString() + " " + (new Date()).toLocaleTimeString();
-        }
-    }
-
-    this.parseLine = (id) => {
-        if (id == "----") return;
-        let itm = this.rootdiv.querySelector(`[data-id="${id}"]`);
-        let itmt = itm.children[1].innerText;
-
-        let precedingSpaceCount = 0;
-        while (/\s/.exec(itmt[precedingSpaceCount])) precedingSpaceCount++;
-        if (precedingSpaceCount > 0) {
-            let prepointer = itm.previousElementSibling;
-            while (prepointer.tagName == "SPAN" && prepointer.dataset.id != "----") {
-                let pre_precedingSpaceCount = 0;
-                let itmpt = prepointer.children[1].innerText;
-                while (/\s/.exec(itmpt[pre_precedingSpaceCount])) pre_precedingSpaceCount++;
-                if (pre_precedingSpaceCount < precedingSpaceCount) {
-                    //anchor the to
-                    if (!polymorph_core.items[prepointer.dataset.id].to) polymorph_core.items[prepointer.dataset.id].to = {};
-                    polymorph_core.items[prepointer.dataset.id].to[id] = true;
-                    break;
-                } else {
-                    prepointer = prepointer.previousElementSibling;
-                }
-            }
-        }
-        polymorph_core.items[id].contents = itmt;
-        let str = itmt;
-        let parser = /\[(.+?):(.+?)\]/g;
-        let res;
-        while (res = parser.exec(str)) {
-            polymorph_core.items[id][res[1]] = res[2];
-        }
-        container.fire('updateItem', { id: id, sender: this });
-    }
-
-    this.hardReparseAll = () => { //debugging function. not called by user, unless in devtools.
-        for (let i of this.settings.rowsOrder) {
-            this.parseLine(i);
-        }
-    }
-
-    let candidateDie = false;
-
-    let smartfocus = (root, range, offset) => {
-        if (root.children[1].firstChild) {
-            if (offset > root.children[1].firstChild.length) offset = root.children[1].firstChild.length;
-            range.setStart(root.children[1].firstChild, offset);
-        } else {
-            range.setStart(root.children[1], 0);
-        }
-    }
-
-    this.rootdiv.addEventListener('keydown', (e) => {
-        if (e.key == 'Alt') {
-            e.preventDefault();
-        }
-        if (e.key == "Enter") {
-            e.preventDefault();
-            //create a new line
-            let prevstr = this.currentFocusedLine.contents;
-            let pretab = /^(\s+)/.exec(prevstr);
-            if (!pretab) pretab = "";
-            else pretab = pretab[0];
-            pretab = Array.from(pretab).map(i => "&nbsp;").join("");
-            let copydiv = this.rootdiv.querySelector(`[data-id="----"]`).cloneNode(true);
-            copydiv.children[1].innerHTML = pretab;
-            this.rootdiv.insertBefore(copydiv, this.currentFocusedLine.root.nextElementSibling);
-            //go up a line
-            var selection = this.rootdiv.getRootNode().getSelection();
-            var range = document.createRange();
-            if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length);
-            else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
-            //range.setEnd(copydiv.children[1].firstChild, 0);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            e.preventDefault();
-            //check the tab state of the previous line and match it.
-            this.updateRowsOrder();
-        } else if (e.key == "ArrowUp") {
-            if (this.currentFocusedLine && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName == "SPAN") {
-                if (e.getModifierState("Alt")) {
-                    //move up
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    let oldRange = selection.getRangeAt(0);
-                    var range = document.createRange();
-                    let oldso = oldRange.startOffset;
-                    let newroot = renderise(this.currentFocusedLine.root, this.currentFocusedLine.root.previousElementSibling);
-                    this.updateRowsOrder();
-                    smartfocus(newroot, range, oldso);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    e.preventDefault();
-                } else {
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    let oldRange = selection.getRangeAt(0);
-                    var range = document.createRange();
-                    let newStartOffset = oldRange.startOffset;
-                    if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) {
-                        if (newStartOffset > this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length;
-                        range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, newStartOffset);
-                    } else {
-                        range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
-                    }
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    e.preventDefault();
-                }
-            }
-        } else if (e.key == "ArrowDown") {
-            if (this.currentFocusedLine && this.currentFocusedLine.root.nextElementSibling) {
-                if (e.getModifierState("Alt")) {
-                    //move down
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    let oldRange = selection.getRangeAt(0);
-                    var range = document.createRange();
-                    let oldso = oldRange.startOffset;
-                    let newroot = renderise(this.currentFocusedLine.root, this.currentFocusedLine.root.nextElementSibling.nextElementSibling);
-                    this.updateRowsOrder();
-                    smartfocus(newroot, range, oldso);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    e.preventDefault();
-                } else {
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    let oldRange = selection.getRangeAt(0);
-                    var range = document.createRange();
-                    let newStartOffset = oldRange.startOffset;
-                    if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) {
-                        if (newStartOffset > this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length) newStartOffset = this.currentFocusedLine.root.nextElementSibling.children[1].firstChild.length;
-                        range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, newStartOffset);
-                    } else {
-                        range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
-                    }
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    e.preventDefault();
-                }
-            }
-        } else if (e.key == "ArrowLeft") {
-            var selection = this.rootdiv.getRootNode().getSelection();
-            let oldRange = selection.getRangeAt(0);
-            if (oldRange.startOffset == 0 && this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName == "SPAN") {
-                //go up a line
-                var selection = this.rootdiv.getRootNode().getSelection();
-                var range = document.createRange();
-                if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length);
-                else range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
-                //range.setEnd(copydiv.children[1].firstChild, 0);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                e.preventDefault();
-            }
-        } else if (e.key == "ArrowRight") {
-            var selection = this.rootdiv.getRootNode().getSelection();
-            let oldRange = selection.getRangeAt(0);
-            if ((!(oldRange.startContainer.length) || oldRange.startOffset == oldRange.startContainer.length) && this.currentFocusedLine.root.nextElementSibling) {
-                //go up a line
-                var selection = this.rootdiv.getRootNode().getSelection();
-                var range = document.createRange();
-                if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, 0);
-                else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
-                //range.setEnd(copydiv.children[1].firstChild, 0);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                e.preventDefault();
-            }
-        } else if (e.key == "Backspace") {
-            if (this.currentFocusedLine && this.currentFocusedLine.contents.length == 0) {
-                candidateDie = true;
-            }
-        } else if (e.key == "Tab") {
-            e.preventDefault();
-            e.stopPropagation();
-            document.execCommand('insertText', false /*no UI*/, "    ");
-        }
-    });
-    this.rootdiv.addEventListener('keyup', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key == "s") {
-            return; //so that saving works
-        }
-        //create new items when a --- line is touched
-        if (this.currentFocusedLine) {
-            if (this.currentFocusedLine.id == "----") {
-                if (/\S/.exec(this.currentFocusedLine.contents)) {
-                    //create a new item
-                    let oldContents = this.currentFocusedLine.contents;
-                    let newID = polymorph_core.insertItem({ contents: oldContents });
-                    let copydiv = renderise(newID, this.currentFocusedLine.root);
-
-                    this.currentFocusedLine.editableSpan.innerText = "";
-
-                    if (this.currentFocusedLine.root.nextElementSibling) {
-                        this.currentFocusedLine.root.remove();
-                    }
-                    this.updateRowsOrder();
-                    copydiv.children[1].focus();
-                    var selection = window.getSelection();
-                    var range = document.createRange();
-                    range.setStart(copydiv.children[1].firstChild, copydiv.children[1].firstChild.length);
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    container.fire('updateItem', { id: this.currentFocusedLine.id, sender: this });
-                }
-            } else {
-                let cid = this.currentFocusedLine.id;
-                this.parseLine(cid);
-                //also parse commands
-                let str = this.currentFocusedLine.contents;
-                parser = /\\.+\\/g;
-                if (res = parser.exec(str)) {
-                    let bits = str.split(res[0]);
-                    let cojoin = processCommands(res[0]);
-                    if (cojoin) bits.splice(1, 0, cojoin);
-                    else cojoin = "";//for length calcs laters
-                    bits = bits.join("");
-
-
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    var crange = selection.getRangeAt(0).startOffset;
-                    this.currentFocusedLine.root.children[1].innerText = bits || " ";
-
-
-                    var range = document.createRange();
-                    range.setStart(this.currentFocusedLine.root.children[1].firstChild, crange - res[0].length + cojoin.length);
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-
-                    polymorph_core.items[cid].contents = bits;
-
-                    //process last, as processing may reshuffle rows                    
-                    container.fire('updateItem', { id: cid, sender: this });
-                }
-
-            }
-        }
-        //catch enter keys
-        if (e.key == "Backspace") {
-            if (candidateDie) {
-                // go up a line
-                let prevLine = { id: this.currentFocusedLine.id, root: this.currentFocusedLine.root };
-                if (this.currentFocusedLine.root.previousElementSibling && this.currentFocusedLine.root.previousElementSibling.tagName != "STYLE") {
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    var range = document.createRange();
-                    if (this.currentFocusedLine.root.previousElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1].firstChild, this.currentFocusedLine.root.previousElementSibling.children[1].firstChild.length);
-                    else range.setStart(this.currentFocusedLine.root.previousElementSibling.children[1], 0);
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                } else if (this.currentFocusedLine.root.nextElementSibling) {
-                    var selection = this.rootdiv.getRootNode().getSelection();
-                    var range = document.createRange();
-                    if (this.currentFocusedLine.root.nextElementSibling.children[1].firstChild) range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1].firstChild, 0);
-                    else range.setStart(this.currentFocusedLine.root.nextElementSibling.children[1], 0);
-                    //range.setEnd(copydiv.children[1].firstChild, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    e.preventDefault();
-                } else {
-                    //no spare lines; return
-                    return;
-                }
-
-
-                if (prevLine.id == "----") {
-
-                } else {
-                    polymorph_core.items[prevLine.id] = {};
-                    container.fire('updateItem', { id: prevLine.id, sender: this });
-                }
-                prevLine.root.remove();
-                this.updateRowsOrder();
-                candidateDie = false;
-            }
-        }
-    })
-    // for each line, you can define a linestructure. You can change the linestructure by using hyper>changeLineStructure.
-    // There is also the default LHS, which unobtrusively shows item id's (just cos).
-    //for each line: there is the LHS, which is unobtrusive item ids(used for debugging); the tabspace [literally used for tabs]; the middlespace (used for anything); the orgspac
-
-    //return true if we care about an item and dont want it garbage-cleaned :(
-
-
-    container.on("createItem", (d) => {
-        this.settings.rowsOrder.push(d.id);
-        renderise(d.id, this.rootdiv.querySelector(`[data-id="----"]`));
-    })
-
-    container.on("deleteItem", (id) => {
-
-    })
-
-    //this is called when an item is updated (e.g. by another container)
-    container.on("updateItem", (d) => {
-        let id = d.id;
-        if (this.itemRelevant(id)) {
-            //render the item, if we care about it.
-        }
-        //do stuff with the item.
-    });
-
-    this.refresh = function () {
-        // This is called when the parent container is resized.
-    }
-
-    //Handle the settings dialog click!
-    this.dialogDiv = document.createElement("div");
-    this.dialogDiv.innerHTML = ``;
     this.showDialog = function () {
         // update your dialog elements with your settings
     }
@@ -16172,7 +15670,8 @@ polymorph_core.registerOperator("lynerlist", {
             reallyAutorun: false,
             forceCareAbout: "",
             uiOnly: false,
-            processDuringLoad: false
+            processDuringLoad: false,
+            persistence:{}
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -16319,7 +15818,7 @@ polymorph_core.registerOperator("lynerlist", {
             }
         }
 
-
+        // Background timer subsystem.
         scriptRunnerTimers.push(() => {
             if (this.currentInstance) {
                 this.currentInstance.intervals.forEach(i => {
@@ -16341,23 +15840,35 @@ polymorph_core.registerOperator("lynerlist", {
                 }
             }
         })
+
         this.stop = () => {
             if (this.currentInstance) {
                 this.currentInstance.isAlive = false;
                 delete this.currentInstance;
             }
         }
+
+        let persistence = new Proxy({},{
+            get:(target, prop, recv)=>{
+                return this.settings.persistence[prop];
+            },
+            set: (obj, prop, value)=>{
+                this.settings.persistence[prop]=value;
+                polymorph_core.fire("updateItem",{id: container.id, sender:this});
+            }
+        })
+
         this.execute = () => {
             this.stop();
             this.currentInstance = new instance();
-            let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv){
+            let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv, persistence){
             ${this.settings.script}
         })`;
             try {
                 let uidiv = document.createElement("div");
                 Array.from(tabs["ui"].children).forEach(i => i.remove());
                 tabs["ui"].appendChild(uidiv);
-                eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, this.currentInstance.setTimeout, uidiv);
+                eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, this.currentInstance.setTimeout, uidiv, persistence);
             } catch (e) {
                 this.currentInstance.log(e.toString());
             }

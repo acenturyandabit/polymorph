@@ -12,7 +12,16 @@ To use unit-core, here's what you need to do:
 
 The usersave should allow the savesource to retrieve a well-formed polymorph document.
 
-## Developing for unit_core
+## Developing unit_core
+To debug unit_core, use a server to host the root directory of this repository, and then nagivate to `/build/unit_core.html`. Then, open a developer console, then set your unit_core to debug mode using the following commands:
+```js
+localStorage.setItem("__unitcore_debug_operator","../src/operators/itemList.js");
+localStorage.setItem("__unitcore_debug_savesource","../src/saveSources/localforage2.js");
+localStorage.setItem("__unitcore_debug_from",'{"id": "unitcore_dev"}');
+```
+Upon reload, this will use the files from `fileManager.js`.
+
+## Developing operators for unit_core
 Checking your save source and operator core may be difficult with unit_core since you would be moving files around a lot. To assist with this, unit_core has a debug feature, where you can point unit_core at a particular save source and operator in this repository. To do this, open unit_core in your browser, and run the following lines in the console:
 ```js
 localStorage.setItem("__unitcore_debug_operator","../src/operators/<your-operator>.js");
@@ -20,9 +29,3 @@ localStorage.setItem("__unitcore_debug_savesource","../src/saveSources/<your-sav
 ```
 Upon reload, this will load the scripts from these locations rather than from the default path of `operator.js` and `savesource.js`.
 
-## Developing unit_core
-Actually developing unit_core may be difficult also. Fortunately, there is another debug flag in unit_core that can be set to put unit_core in development mode, where it will use fileManager to load its fileset, instead of taking the concatenated `unit_core.js`:
-```js
-localStorage.setItem("__unitcore_debug_from","{<usersave>}");
-```
-Upon reload, this will use the files from `fileManager.js`, and use the provided usersave. Make sure you run `fileManager.js` using Node.js once you're done to save your changes!

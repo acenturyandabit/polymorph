@@ -11,7 +11,7 @@ A global-to-your-code variable `instance` is defined. Use `instance.log(string)`
 ## Persistent storage
 All scripts are transient in that they are run on startup and do not save data. To save persistent data, you can use the global variable `persistence`. 
 
-Persistence will be stored as `polymorph_core.items[<operator_id>].persistence`.
+Persistence will be stored as `polymorph_core.items[<operator_id>]._od.persistence`.
 
 ### Example scripts
 Log the name of an item whenever it changes:
