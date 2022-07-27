@@ -34,7 +34,8 @@
             reallyAutorun: false,
             forceCareAbout: "",
             uiOnly: false,
-            processDuringLoad: false
+            processDuringLoad: false,
+            persistence:{}
         };
         polymorph_core.operatorTemplate.call(this, container, defaultSettings);
 
@@ -181,7 +182,7 @@
             }
         }
 
-
+        // Background timer subsystem.
         scriptRunnerTimers.push(() => {
             if (this.currentInstance) {
                 this.currentInstance.intervals.forEach(i => {
@@ -203,23 +204,35 @@
                 }
             }
         })
+
         this.stop = () => {
             if (this.currentInstance) {
                 this.currentInstance.isAlive = false;
                 delete this.currentInstance;
             }
         }
+
+        let persistence = new Proxy({},{
+            get:(target, prop, recv)=>{
+                return this.settings.persistence[prop];
+            },
+            set: (obj, prop, value)=>{
+                this.settings.persistence[prop]=value;
+                polymorph_core.fire("updateItem",{id: container.id, sender:this});
+            }
+        })
+
         this.execute = () => {
             this.stop();
             this.currentInstance = new instance();
-            let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv){
+            let wrapped = `(function factory(instance, setInterval, clearInterval,setTimeout, uidiv, persistence){
             ${this.settings.script}
         })`;
             try {
                 let uidiv = document.createElement("div");
                 Array.from(tabs["ui"].children).forEach(i => i.remove());
                 tabs["ui"].appendChild(uidiv);
-                eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, this.currentInstance.setTimeout, uidiv);
+                eval(wrapped)(this.currentInstance, this.currentInstance.setInterval, this.currentInstance.clearInterval, this.currentInstance.setTimeout, uidiv, persistence);
             } catch (e) {
                 this.currentInstance.log(e.toString());
             }
