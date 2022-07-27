@@ -372,6 +372,7 @@ if (!isPhone()) {
                 polymorph_core.containers[containerid].remove();
                 delete polymorph_core.containers[containerid];
                 delete polymorph_core.items[containerid]._od;
+                polymorph_core.fire("updateItem",{id: containerid});
             }
         })
 
@@ -639,6 +640,7 @@ tabmenu.style.display = "none";
                         if (this.settingsOperator.dialogUpdateSettings) this.settingsOperator.dialogUpdateSettings();
                         polymorph_core.containers[this.settings.s].processRemappingDiv();
                         polymorph_core.fire("updateItem", { id: rectID });
+                        polymorph_core.fire("updateItem", { id: this.settings.s });
                     })
                 } else {
                     //old version
