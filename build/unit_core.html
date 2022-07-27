@@ -1,0 +1,21 @@
+<html style='height:100%'>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymorph Unit-Core (Your Operator) / (Your Savesource)</title>
+</head>
+
+<body>
+    <script>
+        //Check for debug flags
+        let appendScript = (path) => { let s = document.createElement("script"); s.src = path; document.body.appendChild(s) };
+        if (localStorage.getItem("__unitcore_debug_files")) {
+            appendScript("../filemanager.js");
+        } else {
+            appendScript("unit_core.js");
+            // unit_core will append the operator and savesource
+        }
+    </script>
+</body>
+
+</html>
