@@ -109,6 +109,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
 
     polymorph_core.on("updateItem", (d) => {
         // Can't just use modifiedItem because if other source  loads lu 10 and I load lu 5 then want to push lu 10
+        if (!polymorph_core.items[d.id]._lu_) polymorph_core.items[d.id]._lu_ = Date.now(); // For very new items
         updateCache(d.id, polymorph_core.items[d.id]._lu_);
     });
 
