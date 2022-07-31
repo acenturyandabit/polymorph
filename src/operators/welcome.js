@@ -16,10 +16,10 @@ polymorph_core.registerOperator("welcome", {
 
     let hour_of_day = (new Date().getHours());
     let time_of_day = "Morning";
-    if (hour_of_day > 12) {
-        time_of_day = "Afternoon"
-    } else if (hour_of_day > 7) {
+    if (hour_of_day > 17) {
         time_of_day = "Evening"
+    } else if (hour_of_day > 11) {
+        time_of_day = "Afternoon"
     }
 
     //Add content-independent HTML here.
@@ -62,14 +62,11 @@ polymorph_core.registerOperator("welcome", {
         }
     </style>
     <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
-        <!--Modal thingy-->
-        <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
-            <!--All but bottom-->
-            <div style="display: flex; flex-direction: row; padding: 30px; height: calc(100% - 60px);">
-                <div style="display: flex; flex-direction:column; flex: 1 1 50%">
+        <div style="position:absolute; max-width: 1200px; width:100%; height: 70vh; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black; padding: 30px;">
+            <div style="flex-direction: column; padding: 30px; height: calc(100% - 60px); overflow-y: auto">
                 <h2>Good ${time_of_day}</h2>
                 <h3>New</h3>
-                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
+                <div class="templateList minibuttons" style="display:flex; height:20%;">
                     <a class="newDocButton" href="#">
                         <div>
                             <span>New document from scratch</span>
@@ -93,21 +90,20 @@ polymorph_core.registerOperator("welcome", {
                 <h3>Open an existing document</h3>
                 <div>
                     <div class="recentDocuments">
+                    </div>
+                    <div class="lobbydocs" style="display:none">
+                        <h4>Local lobby documents:</h4>
+                        <div>
                         </div>
-                        <div class="lobbydocs" style="display:none">
-                            <h4>Local lobby documents:</h4>
-                            <div>
-                            </div>
-                        </div>
-                        <div class="globbydocs" style="display:none">
-                            <h4>Local git lobby documents:</h4>
-                            <div>
-                            </div>
+                    </div>
+                    <div class="globbydocs" style="display:none">
+                        <h4>Local git lobby documents:</h4>
+                        <div>
                         </div>
                     </div>
                 </div>
                 <div style="flex: 1 1 50%">
-                    <div style="display:flex; flex-direction: column; height: 100%">
+                    <div style="display:flex; flex-direction: column;">
                         <div style="flex: 3 3 75%">
                         <div style="display: flex; flex: 1 1 25%;" class="minibuttons">
                                     <a href="docs">Documentation</a>
