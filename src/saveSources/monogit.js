@@ -1,4 +1,4 @@
-polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
+polymorph_core.registerSaveSource("gitlite2", function (save_source_data) {
     polymorph_core.saveSourceTemplate.call(this, save_source_data);
     //initialise here
 
@@ -11,7 +11,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         if (this.internalCache[id]._lu_ < newLU) {
             this.internalCache[id]._lu_ = newLU;
             this.internalCache[id].c = true;
-        } 
+        }
         if (forceUnchanged) {
             this.internalCache[id].c = false;
         }
@@ -19,12 +19,20 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
     this.lastRecvCommit = 0;
 
 
-    this.pushAll = async function(data) {
+    this.pushAll = async function (data) {
         // data is useful if manual (first) push. if take data, then just send data. usersave should not have data.
-        let toSend = { commit: 0, items: {} };
+        let toSend = { commit: 0, items: {}, password: this.settings.data.password || "" };
         if (data) {
             toSend.items = data;
             toSend.commit = 0;
+            for (let i in data) {
+                if (!this.internalCache[i]) {
+                    this.internalCache[i] = {
+                        _lu_: data[i]._lu_ || 0,
+                        c: true
+                    }
+                }
+            }
         } else {
             toSend.commit = this.lastRecvCommit;
             //try pushing deltas, if server doesn't recieve it then warn user
@@ -38,31 +46,35 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         }
         if (Object.keys(toSend.items).length > 0) {
             let recvdata;
-            try{
+            try {
                 recvdata = await fetch(this.settings.data.saveTo, { method: "POST", body: JSON.stringify(toSend) });
                 if (recvdata.ok) {
                     // Handle incoming new items
                     let datajson = await recvdata.json();
-                    this.lastRecvCommit = datajson.commit;
-                    for (let i in datajson.items) {
-                        if (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_) {
-                            polymorph_core.items[i] = datajson.items[i];
-                            updateCache(i, datajson.items[i]._lu_);
-                            polymorph_core.fire("updateItem", { id: i, sender: this });
-                            this.internalCache[i].c = false; // remote has it, no need to flag it
+                    if (datajson.err) {
+                        throw datajson.err;
+                    } else {
+                        this.lastRecvCommit = datajson.commit;
+                        for (let i in datajson.items) {
+                            if (!polymorph_core.items[i] || (datajson.items[i]._lu_ > polymorph_core.items[i]._lu_)) {
+                                polymorph_core.items[i] = datajson.items[i];
+                                updateCache(i, datajson.items[i]._lu_);
+                                polymorph_core.fire("updateItem", { id: i, sender: this });
+                                this.internalCache[i].c = false; // remote has it, no need to flag it
+                            }
                         }
-                    }
 
-                    // Unflag sent items
-                    for (let i in toSend.items){
-                        this.internalCache[i].c = false;
+                        // Unflag sent items
+                        for (let i in toSend.items) {
+                            this.internalCache[i].c = false;
+                        }
                     }
                 } else {
                     throw "400"
                 }
-            }catch(e){
+            } catch (e) {
                 console.log(e);
-                alert("Warning: error with gitlite source.");
+                alert("Warning: error with gitlite source: " + e);
                 return;
             }
         }
@@ -70,10 +82,17 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
         polymorph_core.showNotification('Gitlite Saved', 'success');
     }
 
-    this.pullAll = async function() {
-        let data = await fetch(this.settings.data.loadFrom);
+    this.pullAll = async function () {
+        let data = await fetch(this.settings.data.loadFrom, {
+            method: "POST",
+            body: JSON.stringify({ password: this.settings.data.password || "" })
+        });
         if (data.ok) {
             let datajson = await data.json();
+            if (datajson.err) {
+                alert(datajson.err);
+                return {};
+            }
             // will have a commit id and a full document
             datajson.items = polymorph_core.datautils.decompress(datajson.items);
             for (let i in datajson.items) {
@@ -82,7 +101,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
             this.lastRecvCommit = datajson.commit;
             return datajson.items;
         } else {
-            alert("Warning: error form monogit");
+            alert("Warning: error from monogit");
         }
     }
 
@@ -274,8 +293,16 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
             div: this.dialog,
             type: "text",
             object: this.settings.data,
+            property: "password",
+            label: "Password",
+            placeholder: 0
+        }),
+        new polymorph_core._option({
+            div: this.dialog,
+            type: "text",
+            object: this.settings.data,
             property: "throttle",
-            label: "Throttle (number of changes before sending)",
+            label: "Throttle (number of saves before sending)",
             placeholder: 0
         }),
         /*
@@ -309,7 +336,7 @@ polymorph_core.registerSaveSource("gitlite2", function(save_source_data) {
             label: "View conflicts"
         })
     ]
-    this.showDialog = function() {
+    this.showDialog = function () {
         fixSharingLink();
         ops.forEach(i => i.load());
     }

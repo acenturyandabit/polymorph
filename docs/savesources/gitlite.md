@@ -1,4 +1,0 @@
-## gitlite
-Inspired by `git`, the `gitlite` save source allows large documents to be saved incrementally, reducing both bandwidth and storage requirements.
-
-At load time, the gitlite save source keeps a record of the saved status of each item. Every item starts saved. When items are updated (notified through an `updateItem` event), the item is flagged as unsaved. When the user presses save, the gitlite operator sends the unsaved items to a backend. The backend may choose to respond with a list of items which have changed if the document is being edited by multiple individuals; and the gitlite operator will propagate those changes to the user. 

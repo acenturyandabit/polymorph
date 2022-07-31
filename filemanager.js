@@ -70,8 +70,8 @@
         "src/saveSources/permalink.js",
         "src/saveSources/lobby.js",
         "src/saveSources/server.js",
-        "src/saveSources/gitlite.js",
-        "src/saveSources/gitlite2.js",
+        "src/saveSources/hilagit.js",
+        "src/saveSources/monogit.js",
         "src/saveSources/broadcastsync.js",
         "src/core_modules/core/core.static.js",
     ];
@@ -86,8 +86,8 @@
         "src/saveSources/permalink.js",
         "src/saveSources/lobby.js",
         "src/saveSources/server.js",
-        "src/saveSources/gitlite.js",
-        "src/saveSources/gitlite2.js",
+        "src/saveSources/hilagit.js",
+        "src/saveSources/monogit.js",
         "src/saveSources/broadcastsync.js"
     ];
     filesToRemoveInStatic.forEach(i => {
@@ -104,8 +104,8 @@
         "src/saveSources/permalink.js",
         "src/saveSources/lobby.js",
         "src/saveSources/server.js",
-        "src/saveSources/gitlite.js",
-        "src/saveSources/gitlite2.js",
+        "src/saveSources/hilagit.js",
+        "src/saveSources/monogit.js",
         "src/saveSources/broadcastsync.js"
     ];
     filesToRemoveInUnitCore.forEach(i => {
