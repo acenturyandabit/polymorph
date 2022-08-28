@@ -175,7 +175,7 @@ polymorph_core.registerOperator("itemcluster2", {
     }
 
     this.itemIsVisible = (i) => {
-        if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+        if (this.itemRelevant(i) && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
             return true;
         }
     }
