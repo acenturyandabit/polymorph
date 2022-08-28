@@ -5,8 +5,8 @@ polymorph_core.on("UIstart", () => {
         if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return true; //never delete rects and operators? this wont end well
         if (id == "_meta") return true; //dont delete the metaitem
         let toDelete = true;
-        for (let i in this.containers) {
-            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+        for (let i in polymorph_core.containers) {
+            if (polymorph_core.containers[i].operator && polymorph_core.containers[i].operator.itemRelevant && polymorph_core.containers[i].operator.itemRelevant(id)) {
                 toDelete = false;
             }
         }
