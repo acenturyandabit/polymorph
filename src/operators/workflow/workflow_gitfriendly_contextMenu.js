@@ -3,16 +3,15 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     let contextmenu;
     let recordContexted = (e) => {
         this.contextTarget = e.target;
-        /*
-        while (!this.contextTarget.matches(".floatingItem")) this.contextTarget = this.contextTarget.parentElement;
+
+        while (!this.contextTarget.matches("[data-id]")) this.contextTarget = this.contextTarget.parentElement;
         if (polymorph_core.items[this.contextTarget.dataset.id].style) {
-            contextmenu.querySelector(".background").value = polymorph_core.items[this.contextTarget.dataset.id].style.background || "";
-            contextmenu.querySelector(".color").value = polymorph_core.items[this.contextTarget.dataset.id].style.color || "";
+            contextmenu.querySelector("[data-action='background']").value = polymorph_core.items[this.contextTarget.dataset.id].style.background || "";
+            contextmenu.querySelector("[data-action='color']").value = polymorph_core.items[this.contextTarget.dataset.id].style.color || "";
         } else {
-            contextmenu.querySelector(".background").value = "";
-            contextmenu.querySelector(".color").value = "";
+            contextmenu.querySelector("[data-action='background']").value = "";
+            contextmenu.querySelector("[data-action='color']").value = "";
         }
-        */
         return true;
     }
     let contextMenuManager = new _contextMenuManager(this.rootdiv);
@@ -39,8 +38,10 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
 
     contextmenu.addEventListener("click", (e) => {
         if (this.contextMenuActions[e.target.dataset.action]) {
-            this.contextMenuActions[e.target.dataset.action](e);
-            contextmenu.style.display = "none";
+            if (this.contextMenuActions[e.target.dataset.action](e)) {
+                contextmenu.style.display = "none";
+            };
+
         }
     });
     contextmenu.addEventListener("input", (e) => {
@@ -49,35 +50,49 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     this.contextmenu = contextmenu;
     //<li data-action="sortbydate">Copy subitems recursively as list</li>
     this.contextMenuActions = {};
-    /*let savedStyle = undefined;
+
+    let savedStyle = undefined;
     this.contextMenuActions["cstyl"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
+        let id = this.contextTarget.dataset.id;
         savedStyle = polymorph_core.items[id].style;
+        return true;
     }
 
     this.contextMenuActions["pstyl"] = (e) => {
         if (savedStyle) {
-            let spanWithID = this.contextTarget.parentElement.parentElement;
-            let id = spanWithID.dataset.id;
+            let id = this.contextTarget.dataset.id;
             polymorph_core.items[id].style = savedStyle;
             this.contextTarget.style.background = savedStyle.background;
             this.contextTarget.style.color = savedStyle.color;
         }
+        return true;
     }
 
     this.contextMenuActions["color"] = (e) => {
-        spanWithID = e.target.value;
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
+        let id = this.contextTarget.dataset.id;
+        if (!polymorph_core.items[id].style) polymorph_core.items[id].style = {
+            color: "white",
+            background: "rgba(0,0,0,0)"
+        }
+        polymorph_core.items[id].style.color = e.target.value;
+
+        this.contextTarget.style.background = polymorph_core.items[id].style.background;
+        this.contextTarget.style.color = polymorph_core.items[id].style.color;
+        polymorph_core.fire("updateItem", { d: id, sender: this });
     }
 
     this.contextMenuActions["background"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
-    }*/
+        let id = this.contextTarget.dataset.id;
+        if (!polymorph_core.items[id].style) polymorph_core.items[id].style = {
+            color: "white",
+            background: "rgba(0,0,0,0)"
+        }
+        polymorph_core.items[id].style.background = e.target.value;
+
+        this.contextTarget.style.background = polymorph_core.items[id].style.background;
+        this.contextTarget.style.color = polymorph_core.items[id].style.color;
+        polymorph_core.fire("updateItem", { d: id, sender: this });
+    }
 
     this.contextMenuActions["copylistinternal"] = (e) => {
         let itmID = this.resolveSpan(this.contextTarget).id;
@@ -109,6 +124,7 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
             orderProp: this.settings.orderProperty,
             items: itemsAll
         });
+        return true;
     }
 
     this.contextMenuActions["pasteInternal"] = (e) => {
@@ -124,30 +140,30 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
                     }
                     polymorph_core.items[clip0.items[0]][this.settings.parentProperty] = this.resolveSpan(this.contextTarget).id;
                     polymorph_core.fire("updateItem", { id: clip0.items[0] });
-
             }
         }
+        return true;
     }
 
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
-        let rootElementPair = [this.contextTarget.parentElement.parentElement,0];
+        let rootElementPair = [this.contextTarget, 0];
         let runStack = [rootElementPair];
         let resultStack = [];
-        while (runStack.length){
+        while (runStack.length) {
             let top = runStack.pop();
             resultStack.push([top[0].children[0].children[1].innerText, top[1]])
-            let childItemDiv = top[0].children[top[0].children.length-1]; // not just 1, becuase of the rich edit mode. but always last
-            for (let i=childItemDiv.children.length-1;i>=0;i--){
+            let childItemDiv = top[0].children[top[0].children.length - 1]; // not just 1, becuase of the rich edit mode. but always last
+            for (let i = childItemDiv.children.length - 1; i >= 0; i--) {
                 runStack.push([
                     childItemDiv.children[i],
-                    top[1]+1
+                    top[1] + 1
                 ]);
             }
         }
         //convert to indented list
-        let text = resultStack.map(pair=>Array(pair[1]*4).fill(" ").join("") + "- " + pair[0]).join("\n");
+        let text = resultStack.map(pair => Array(pair[1] * 4).fill(" ").join("") + "- " + pair[0]).join("\n");
 
 
         /* old method
@@ -177,19 +193,20 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
                     document.body.removeChild(textarea);
                 }
             }
+        return true;
     }
     this.contextMenuActions["delitm"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
+        let id = this.contextTarget.dataset.id;
         delete polymorph_core.items[id][this.settings.filter];
-        if (this.focusOnPrev(spanWithID.children[0].children[1]) == false) this.focusOnNext(spanWithID.children[0].children[1]);
-        if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 2) {
+        if (this.focusOnPrev(this.contextTarget.children[0].children[1]) == false) this.focusOnNext(this.contextTarget.children[0].children[1]);
+        if (!this.contextTarget.parentElement.parentElement.dataset.id && this.contextTarget.parentElement.children.length == 2) {
             // if this is a root item and it is about to be deleted so that the root would only have the cursorspan, show the cursorspan
             this.cursorSpan.style.display = "block";
         }
         this.renderItem(id); // remove the span
         container.fire("updateItem", { id: id, sender: this });
         container.fire("deleteItem", { id: id, sender: this });
+        return true;
     }
 
     // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
