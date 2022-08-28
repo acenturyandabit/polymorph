@@ -319,9 +319,9 @@ polymorph_core.registerSaveSource("gitlite2", function (save_source_data) {
             div: this.dialog,
             type: "button",
             fn: () => {
-                this.settings.data.saveTo = window.location.origin + "/gitsave?f=" + polymorph_core.currentDocID;
-                this.settings.data.loadFrom = window.location.origin + "/gitload?f=" + polymorph_core.currentDocID;
-                this.settings.data.conflictFrom = window.location.origin + "/gitconflicts?f=" + polymorph_core.currentDocID;
+                this.settings.data.saveTo = window.location.origin + "/monogitsave?f=" + polymorph_core.currentDocID;
+                this.settings.data.loadFrom = window.location.origin + "/monogitload?f=" + polymorph_core.currentDocID;
+                this.settings.data.conflictFrom = window.location.origin + "/monogitconflicts?f=" + polymorph_core.currentDocID;
                 this.settings.data.wsAddr = `ws://${window.location.hostname}:29384`
                 this.showDialog();
             },
