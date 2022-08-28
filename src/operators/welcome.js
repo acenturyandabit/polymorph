@@ -42,7 +42,6 @@ polymorph_core.registerOperator("welcome", {
         }
         .minibuttons a>div{
             display: block;
-            padding-top: 100%;
             position:relative;
         }
         .minibuttons a>div>span{
