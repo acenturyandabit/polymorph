@@ -21,6 +21,7 @@
                 delete data[i];
             }
         }
+        return data;
     }
 
     polymorph_core.registerSaveSource("toText", function(save_source_data) { // a sample save source, implementing a number of functions.
