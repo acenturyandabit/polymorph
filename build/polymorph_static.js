@@ -3681,8 +3681,9 @@ if (!isPhone()) {
             return true;
         }
 
-        //operator creation
+        //operator creation / rect deletion
         this.plus.addEventListener("click", (e) => {
+            // When shift is held, plus turns into a cross
             if (e.getModifierState("Shift") && this.parent instanceof polymorph_core.rect) {
                 if (confirm("WARNING: You are about to delete this rect and all its containers. THIS CAN HAVE SERIOUS CONSEQUENCES. Are you sure you want to do this?")) {
                     let myIndex = this.parent.children.indexOf(this);
@@ -3705,8 +3706,10 @@ if (!isPhone()) {
                     delete polymorph_core.items[rectID]._rd;
                 }
             } else {
+                // Operator creation
                 let newContainer = { _od: { t: "opSelect", p: rectID } };
                 let newContainerID = polymorph_core.insertItem(newContainer);
+                polymorph_core.fire("updateItem", { id: newContainerID });
                 polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
                 this.switchOperator(newContainerID);
             }
@@ -3951,12 +3954,14 @@ if (!isPhone()) {
             delete polymorph_core.containers[containerid];
             delete polymorph_core.items[containerid]._od;
             let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
-            polymorph_core.items[newID]._od.p = rectID;
+            polymorph_core.items[newID]._od.p = this.id;
             polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID; //facilitate subframe deep copy
             polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
-            polymorph_core.fire("updateItem", { id: rectID, sender: this });
             this.switchOperator(newID);
             tabmenu.style.display = "none";
+            polymorph_core.fire("updateItem", { id: this.id, sender: this });
+            polymorph_core.fire("updateItem", { id: newID, sender: this });
+            polymorph_core.fire("updateItem", { id: containerid, sender: this });
         })
         /*
 tabmenu.querySelector(".xpfr").addEventListener("click", () => {
@@ -4202,7 +4207,8 @@ tabmenu.style.display = "none";
         }
         //Make draggable borders.
         this.redrawBorders();
-        //events
+
+        //Mouse move handler: Handles resizing and splitting rects.
         //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
         this.mouseMoveHandler = (e) => {
             if (this.children) {
@@ -4233,14 +4239,17 @@ tabmenu.style.display = "none";
                         return;
                     }
                     e.preventDefault();
+
+
                     // a split has been called. Initialise the split!
+                    let IDsToUpdate = [this.id];
                     this.outerDiv.style.border = "none";
                     //remove all my children
                     //except the tutorial div
-                    let tmp;
-                    if (this.outerDiv.querySelector(".tutorial")) tmp = this.outerDiv.querySelector(".tutorial");
+                    let savedTutorialDiv;
+                    if (this.outerDiv.querySelector(".tutorial")) savedTutorialDiv = this.outerDiv.querySelector(".tutorial");
                     while (this.outerDiv.children.length) this.outerDiv.children[0].remove();
-                    if (tmp) this.outerDiv.appendChild(tmp);
+                    if (savedTutorialDiv) this.outerDiv.appendChild(savedTutorialDiv);
 
                     //Create new rects
                     let _XorY = (this.split > 1) * 1;
@@ -4249,6 +4258,8 @@ tabmenu.style.display = "none";
                         polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 0, ps: _firstOrSecond } }),
                         polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 1, ps: _firstOrSecond } })
                     ];
+                    IDsToUpdate = [...IDsToUpdate, ...newRectIDs];
+
                     //instantiate the rects
                     newRectIDs.forEach((v) => {
                         polymorph_core.rects[v] = new polymorph_core.rect(v);
@@ -4259,6 +4270,7 @@ tabmenu.style.display = "none";
                         v.settings.p = newRectIDs[!_firstOrSecond * 1];
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].settings.s = v.id;
+                        IDsToUpdate.push(v.id);
                     });
 
                     //force a refresh
@@ -4266,6 +4278,9 @@ tabmenu.style.display = "none";
                         v.refresh();
                         v.resizing = this.split ^ 1
                     });
+
+                    //Fire updates to everything so it saves
+                    IDsToUpdate.forEach(i => polymorph_core.fire("updateItem", { id: i }));
                 }
                 //for resizing
                 if (this.resizing != -1) {
