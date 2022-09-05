@@ -8633,7 +8633,7 @@ polymorph_core.registerOperator("workflow_gf", {
     description: "Nested, plaintext lists. Workflowy emulation.",
     imageurl: "assets/operators/wkflow.PNG",
     section: "Standard"
-}, function(container) {
+}, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         titleProperty: "title",
@@ -8757,7 +8757,10 @@ polymorph_core.registerOperator("workflow_gf", {
     }
 
     this.holdExpanded = {};
-    let cachedChildren = {}; // dict of id of children id
+
+    // cache of item children, set by child when child is renderItem'd
+    let cachedChildren = {}; // key: id of children id
+
     let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
         let childrenDiv = this.getChildrenDiv(spanWithID);
         if (toExpanded == undefined) { // toggle
@@ -8873,8 +8876,8 @@ polymorph_core.registerOperator("workflow_gf", {
         focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
 
-    this.focusOnPrev=focusOnPrev;
-    this.focusOnNext=focusOnNext;
+    this.focusOnPrev = focusOnPrev;
+    this.focusOnNext = focusOnNext;
 
     //removes all parents of the item with id 'id'.
     let setParent = (id, newParent) => {
@@ -8950,7 +8953,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
                     try {
                         oldDateString = polymorph_core.items[id][key].datestring;
-                    } catch (e) {}
+                    } catch (e) { }
                     if (oldDateString == keyset[1][ltrkey]) continue;
                     polymorph_core.items[id][key] = {
                         datestring: keyset[1][ltrkey]
@@ -8982,10 +8985,10 @@ polymorph_core.registerOperator("workflow_gf", {
         ctrl: false, // also command on mac, eventually
         alt: false
     };
-    let disableSortOnShuffle=false;
+    let disableSortOnShuffle = false;
     let handleKeyEvent = (key, id) => {
         let spanWithID = this.renderedItemCache[id].el;
-        disableSortOnShuffle=false;
+        disableSortOnShuffle = false;
         switch (key) {
             case "Backspace":
                 let bcursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
@@ -9032,11 +9035,11 @@ polymorph_core.registerOperator("workflow_gf", {
                 // console.log the two parts
                 if (modifiers["alt"]) {
                     let partA, partB;
-                    if (this.settings.advancedInputMode){
+                    if (this.settings.advancedInputMode) {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = this.plaintextContenteditableRender.children[1].innerText.slice(range.startOffset);
-                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);                        
-                    }else{
+                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);
+                    } else {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
                         partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
@@ -9084,7 +9087,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (modifiers["alt"]) {
                     //move item up
                     if (spanWithID.previousElementSibling) {
-                        disableSortOnShuffle=true;
+                        disableSortOnShuffle = true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
@@ -9102,7 +9105,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 bumpWasTriggeredByUserEvent = true;
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
-                        disableSortOnShuffle=true;
+                        disableSortOnShuffle = true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
@@ -9356,7 +9359,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     // Arrange the items under the specified parent (id string). 
     // Will also sort by date if it is configured to.
-    let sortParent = (parent) => {
+    let _sortParent = (parent) => {
         // look through my immediate children and assign them numbers
         if (this.renderedItemCache[parent]) {
             let itemsToUpdate = []; // store items to update and update them at the end because otherwise sometimes rendering will cause double-ups
@@ -9388,7 +9391,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             itemsToUpdate.push(v[0]);
                         }
                     });
-            } else if (this.settings.autoSortAlpha){
+            } else if (this.settings.autoSortAlpha) {
                 Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children)
                     .filter(i => !(i.classList.contains("cursorspan")))
                     .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id].title : undefined])
@@ -9401,7 +9404,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             itemsToUpdate.push(v[0]);
                         }
                     });
-            }else{
+            } else {
                 Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
                     if (polymorph_core.items[v.dataset.id][this.settings.orderProperty] != i) {
                         polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
@@ -9417,6 +9420,10 @@ polymorph_core.registerOperator("workflow_gf", {
             restoreFocus(fobj);
         }
     }
+    let sortParentCap = new capacitor(1000, 10, (p) => {
+        _sortParent(p);
+    });
+    let sortParent = sortParentCap.submit;
 
 
     container.on("doSort", (d) => {
@@ -9452,7 +9459,7 @@ polymorph_core.registerOperator("workflow_gf", {
     // Takes an IDstring OR an element and returns a standardized tuple.
     this.resolveSpan = (item) => {
         let baseSpan = undefined;
-        if (typeof(item) == "string") {
+        if (typeof (item) == "string") {
             baseSpan = this.renderedItemCache[item].el;
         } else {
             // might be an element
@@ -9473,11 +9480,11 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.renderItem = (id, flags = "") => {
         // Options
-        
+
         let fromParent = flags.includes("p");
         // If from parent, then dont reorganise the parent, because the 
         // parent just opened up and its likely to have a bunch of people all asking to reorganize it
-        
+
         dontFocus = flags.includes("d");
         tmpExpanded = flags.includes("e");
         if (!this.itemRelevant(id)) {
@@ -9493,7 +9500,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     oldFocus = undefined;
                 });
             }
-            //check if the item's parent exists and is expanded
+            //check if the item's parent exists
             let parentID = polymorph_core.items[id][this.settings.parentProperty] || "";
             let myOrder = polymorph_core.items[id][this.settings.orderProperty] || 0;
             if (!cachedChildren[parentID]) cachedChildren[parentID] = {};
@@ -9531,7 +9538,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 //cache and update the text
                 let notNullItemTitle = (polymorph_core.items[id][this.settings.titleProperty] || " ");
-                
+
                 // Special case for dates with 'auto'; anything with auto will be invalidated. (Icky! Might be a better way to do this.)
                 if (this.renderedItemCache[id].renderedText != notNullItemTitle || notNullItemTitle.includes("auto")) {
                     this.renderedItemCache[id].renderedText = notNullItemTitle;
@@ -9549,7 +9556,7 @@ polymorph_core.registerOperator("workflow_gf", {
                                 let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
                                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                                     try {
-                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined,{ weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour:'numeric', minute:'numeric' })}}`;
+                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' })}}`;
                                     } catch (e) {
                                         return `\\{${ltrkey}:${"Invalid Date"}}`;
                                     }
@@ -9569,9 +9576,9 @@ polymorph_core.registerOperator("workflow_gf", {
                     }
                 }
 
-                if (polymorph_core.items[id].style){
-                    thisIDSpan.style.background=polymorph_core.items[id].style.background;
-                    thisIDSpan.style.color=polymorph_core.items[id].style.color;
+                if (polymorph_core.items[id].style) {
+                    thisIDSpan.style.background = polymorph_core.items[id].style.background;
+                    thisIDSpan.style.color = polymorph_core.items[id].style.color;
                 }
 
                 /////
@@ -9598,7 +9605,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     else placeBefore = this.innerRoot.children[1]; // special case because cursorspan exists in innerroot
 
                     if ((thisIDSpan.parentElement != this.getChildrenDiv(this.renderedItemCache[parentID].el) || // parent wrong
-                            thisIDSpan.nextElementSibling != placeBefore) && // order wrong
+                        thisIDSpan.nextElementSibling != placeBefore) && // order wrong
                         thisIDSpan != placeBefore) { // not just a render-in-place
                         thisIDSpan.remove();
                         this.getChildrenDiv(this.renderedItemCache[parentID].el).insertBefore(thisIDSpan, placeBefore);
@@ -9642,7 +9649,15 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 this.cursorSpan.style.display = "none"; // something got rendered, hide the cursorspan
             } else {
-                // check that maybe my current parent is not my actual parent? ... todo
+                // check that maybe my current parent is not my actual parent
+                // in case an item is moved
+                if (this.renderedItemCache[id] && this.renderedItemCache[id].el.parentElement.parentElement.dataset.id != polymorph_core.items[id][this.settings.parentProperty]) {
+                    // We were not renderd, which means our parent is unexpanded
+                    // but we shouldn't be here
+                    // therefore remove self 
+                    this.renderedItemCache[id].el.remove();
+                    delete this.renderedItemCache[id];
+                }
             }
         }
     }
@@ -9651,10 +9666,20 @@ polymorph_core.registerOperator("workflow_gf", {
         let id = d.id;
         let flags = d.flags || "d";
 
-        // Want to keep focus if we have focus
-        let oldFocus = saveFocus();
-        this.renderItem(id, flags); // prevent bumpparentreorganise on external updates
-        restoreFocus(oldFocus);
+        if (this.itemRelevant(id)) {
+            // Want to keep focus if we have focus
+            let oldFocus = saveFocus();
+            this.renderItem(id, flags); // prevent bumpparentreorganise on external updates
+            // Unless we need to...
+            if (this.settings.autoSortAlpha || this.settings.autoSortDate) {
+                sortParent(polymorph_core.items[id][this.settings.parentProperty] || "");
+            }
+            restoreFocus(oldFocus);
+        } else if (this.renderedItemCache[id]) {
+            // items deleted externally
+            this.renderedItemCache[id].el.remove();
+            delete this.renderedItemCache[id];
+        }
     });
 
     container.on("createItem", (d) => {
@@ -9665,7 +9690,7 @@ polymorph_core.registerOperator("workflow_gf", {
     });
 
     //first time load: render everything WITHOUT OLDFOCUS
-    this.refresh = function() {
+    this.refresh = function () {
         itemsShouldBeEditable = this.settings.isEditable && !this.settings.advancedInputMode;
         if (this.settings.focusExclusionMode) {
             this.focusModeRefresh();
@@ -9844,15 +9869,21 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.dialogDiv.appendChild(importFacilities);
 
-    this.showDialog = function() {
+    this.showDialog = function () {
         for (let i in options) {
             options[i].load();
         }
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function() {
-        this.refresh();
+    this.dialogUpdateSettings = function () {
         // This is called when your dialog is closed. Use it to update your container!
+
+        // Sort the items alphabetically, if that option is checked
+        if (this.settings.autoSortAlpha) {
+            sortParent("");
+        }
+
+        this.refresh();
     }
     workflowy_gitfriendly_extend_contextMenu.apply(this);
     workflowy_gitfriendly_search.apply(this);
