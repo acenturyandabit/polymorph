@@ -404,9 +404,8 @@ polymorph_core.registerOperator("workflow_gf", {
                 break;
             case "Enter":
                 let newID = this.createItem();
-                // console.log the two parts
+                let partA, partB;
                 if (modifiers["alt"]) {
-                    let partA, partB;
                     if (this.settings.advancedInputMode) {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = this.plaintextContenteditableRender.children[1].innerText.slice(range.startOffset);
@@ -416,6 +415,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
                         partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
                     }
+                    // Split into two parts, check the length later to determine which should go first
                     if (partB.length) {
                         polymorph_core.items[id][this.settings.titleProperty] = partA;
                         this.renderItem(id);
@@ -428,21 +428,28 @@ polymorph_core.registerOperator("workflow_gf", {
                     polymorph_core.items[newID][this.settings.orderProperty] = -1;
                 } else {
                     // check if the item should go before or after the current item based on where the cursor is
-                    let shouldBefore = this.rootdiv.getRootNode().getSelection();
-                    if (shouldBefore.rangeCount == 0) {
-                        shouldBefore = false; // likely an alt-enter
-                    } else {
-                        shouldBefore = shouldBefore.getRangeAt(0).startOffset;
-                        if (shouldBefore < polymorph_core.items[id][this.settings.titleProperty].length / 2) {
-                            shouldBefore = true;
+                    let newItemShouldBeBefore = false;
+                    if (modifiers["alt"]){
+                        // Splitting always has partA before partB, since partB goes second
+                        // We choose which one to focus on afterward (the longer one)
+                        newItemShouldBeBefore = false;
+                    }else{
+                        let currentSelectionPosition = this.rootdiv.getRootNode().getSelection();
+                        if (currentSelectionPosition.rangeCount == 0) {
+                            shouldBefore = false; // entered on an empty range
                         } else {
-                            shouldBefore = false;
+                            currentSelectionPosition = currentSelectionPosition.getRangeAt(0).startOffset;
+                            if (currentSelectionPosition < polymorph_core.items[id][this.settings.titleProperty].length / 2) {
+                                newItemShouldBeBefore = true;
+                            } else {
+                                newItemShouldBeBefore = false;
+                            }
                         }
                     }
 
                     // place the item near the current item
                     setParent(newID, polymorph_core.items[id][this.settings.parentProperty]);
-                    if (shouldBefore) {
+                    if (newItemShouldBeBefore) {
                         polymorph_core.items[newID][this.settings.orderProperty] = polymorph_core.items[id][this.settings.orderProperty] - 0.5;
                     } else {
                         polymorph_core.items[newID][this.settings.orderProperty] = polymorph_core.items[id][this.settings.orderProperty] + 0.5;
@@ -452,7 +459,19 @@ polymorph_core.registerOperator("workflow_gf", {
                 container.fire("createItem", { id: newID, sender: this });
                 container.fire("updateItem", { id: newID, sender: this });
                 this.renderItem(newID, "d");
-                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
+                if (modifiers["alt"]){
+                    if (partA.length > partB.length){
+                        // partA (older part) is longer than partB (newer part)
+                        // So focus on partA
+                        focusOnElement(this.rootdiv.querySelector(`span[data-id='${id}']`).children[0].children[1]);
+                    }else{
+                        // partB (newer part) is longer than partA (older part)
+                        // So focus on partB
+                        focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
+                    }
+                }else{
+                    focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
+                }
                 break;
             case "ArrowUp":
                 bumpWasTriggeredByUserEvent = true;
@@ -539,7 +558,12 @@ polymorph_core.registerOperator("workflow_gf", {
                             // already a root node, do nothing
                         }
                     }
-                }
+                };
+                break;
+            default:
+                // Delay/cancel sorting if sorting has been called, on ordinary keypresses
+                sortParentCap.cancel();
+                break
         }
     }
 

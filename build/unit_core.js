@@ -3410,7 +3410,7 @@ if (!isPhone()) {
     //pseudo parents should implement following methods:
     //.polymorph_core property
     //
-    polymorph_core.newRect = function(parent, ID) {
+    polymorph_core.newRect = function (parent, ID) {
         if (!ID) ID = polymorph_core.insertItem({
             _rd: {
                 p: parent,
@@ -3446,7 +3446,7 @@ if (!isPhone()) {
         }
     })
 
-    polymorph_core.rect = function(rectID) {
+    polymorph_core.rect = function (rectID) {
         this.id = rectID; //might be helpful
         polymorph_core.rects[rectID] = this;
         Object.defineProperty(this, "settings", {
@@ -3704,11 +3704,13 @@ if (!isPhone()) {
             polymorph_core.containers[containerid].refresh();
             //Overall refresh because borders are dodgy
             polymorph_core.containers[this.settings.s].refresh();
+            polymorph_core.fire("updateItem", { id: this.id });
             return true;
         }
 
-        //operator creation
+        //operator creation / rect deletion
         this.plus.addEventListener("click", (e) => {
+            // When shift is held, plus turns into a cross
             if (e.getModifierState("Shift") && this.parent instanceof polymorph_core.rect) {
                 if (confirm("WARNING: You are about to delete this rect and all its containers. THIS CAN HAVE SERIOUS CONSEQUENCES. Are you sure you want to do this?")) {
                     let myIndex = this.parent.children.indexOf(this);
@@ -3731,8 +3733,10 @@ if (!isPhone()) {
                     delete polymorph_core.items[rectID]._rd;
                 }
             } else {
+                // Operator creation
                 let newContainer = { _od: { t: "opSelect", p: rectID } };
                 let newContainerID = polymorph_core.insertItem(newContainer);
+                polymorph_core.fire("updateItem", { id: newContainerID });
                 polymorph_core.containers[newContainerID] = new polymorph_core.container(newContainerID);
                 this.switchOperator(newContainerID);
             }
@@ -3767,7 +3771,7 @@ if (!isPhone()) {
                 polymorph_core.containers[containerid].remove();
                 delete polymorph_core.containers[containerid];
                 delete polymorph_core.items[containerid]._od;
-                polymorph_core.fire("updateItem",{id: containerid});
+                polymorph_core.fire("updateItem", { id: containerid });
             }
         })
 
@@ -3953,38 +3957,40 @@ if (!isPhone()) {
         })
 
         tabmenu.querySelector(".cpfr").addEventListener("click", () => {
-                // at the tab, create a new subframe operator
-                polymorph_core.copiedFrameID = contextedOperatorIndex;
-                tabmenu.style.display = "none";
-            })
-            /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
-                //export as a whole doc! how generous
-                let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
-                tabmenu.style.display = "none";
-                polymorph_core.dialog.prompt(tta);
-                //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
-                //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
-                let collatedItems = polymorph_core.items;
-                tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
-                "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
-            })*/
+            // at the tab, create a new subframe operator
+            polymorph_core.copiedFrameID = contextedOperatorIndex;
+            tabmenu.style.display = "none";
+        })
+        /*tabmenu.querySelector(".xdoc").addEventListener("click", () => {
+            //export as a whole doc! how generous
+            let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
+            tabmenu.style.display = "none";
+            polymorph_core.dialog.prompt(tta);
+            //how about this - export all the items, then the importer can just run the garbage cleaner on it when it starts?
+            //or even better for future security: create a separate polymorph_core instance, and get it to GC itself. TODO!
+            let collatedItems = polymorph_core.items;
+            tta.querySelector("textarea").value = `{"displayName":"export-${new Date().toDateString()}","currentView":"default","id":"${polymorph_core.guid(5)}","views":{"default":{
+            "o":[${JSON.stringify(this.containers[contextedOperatorIndex].toSaveData())}],"s":0,"x":0,"f":1,"p":0}},"items":${JSON.stringify(collatedItems)}}`;
+        })*/
 
         tabmenu.querySelector(".psfr").addEventListener("click", () => {
-                // Ditch the old container
-                let containerid = contextedOperatorIndex;
-                this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
-                this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
-                delete polymorph_core.containers[containerid];
-                delete polymorph_core.items[containerid]._od;
-                let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
-                polymorph_core.items[newID]._od.p = rectID;
-                polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID; //facilitate subframe deep copy
-                polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
-                polymorph_core.fire("updateItem", { id: rectID, sender: this });
-                this.switchOperator(newID);
-                tabmenu.style.display = "none";
-            })
-            /*
+            // Ditch the old container
+            let containerid = contextedOperatorIndex;
+            this.tabbar.querySelector(`[data-containerid="${containerid}"]`).remove();
+            this.innerDivContainer.querySelector(`[data-containerid="${containerid}"]`).remove();
+            delete polymorph_core.containers[containerid];
+            delete polymorph_core.items[containerid]._od;
+            let newID = polymorph_core.insertItem(JSON.parse(JSON.stringify(polymorph_core.items[polymorph_core.copiedFrameID])));
+            polymorph_core.items[newID]._od.p = this.id;
+            polymorph_core.items[newID]._od.data.operatorClonedFrom = polymorph_core.copiedFrameID; //facilitate subframe deep copy
+            polymorph_core.containers[contextedOperatorIndex] = new polymorph_core.container(newID);
+            this.switchOperator(newID);
+            tabmenu.style.display = "none";
+            polymorph_core.fire("updateItem", { id: this.id, sender: this });
+            polymorph_core.fire("updateItem", { id: newID, sender: this });
+            polymorph_core.fire("updateItem", { id: containerid, sender: this });
+        })
+        /*
 tabmenu.querySelector(".xpfr").addEventListener("click", () => {
 let tta = htmlwrap("<h1>Operator export:</h1><br><textarea style='height:30vh'></textarea>");
 tabmenu.style.display = "none";
@@ -4010,7 +4016,7 @@ polymorph_core.fire('updateItem', { id: i });
 tabmenu.style.display = "none";
 })
 */
-            //And a delegated settings button handler
+        //And a delegated settings button handler
         this.tabbar.addEventListener("click", (e) => {
             if (e.target.tagName.toLowerCase() == "img") {
                 //dont show settings - instead, copy the settings div onto the polymorph_core settings div.
@@ -4188,47 +4194,48 @@ tabmenu.style.display = "none";
         let borders = ['left', 'right', 'top', 'bottom'];
 
         this.redrawBorders = () => {
-                if (!this.settings) return;
-                if (this.shiftPressed) {
-                    if (!this.children) {
-                        this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                        if (this.parent instanceof polymorph_core.rect) {
-                            /*if (this.settings.x) {
-                                this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
-                            } else {
-                                this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
-                            }*/
-                        }
-                        if (highlightDirn != -1) {
-                            this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
-                        }
-                    } else {
-                        this.outerDiv.style.border = "";
-                    }
-                } else if (this.parent instanceof polymorph_core.rect) {
-                    this.outerDiv.style.border = "";
-                    if (this.settings.f) {
-                        this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
-                    }
-                    if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
-                        this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
-                    }
-                    if (this.outerDiv.parentElement) {
-                        // on load parentElement doesnt exist
+            if (!this.settings) return;
+            if (this.shiftPressed) {
+                if (!this.children) {
+                    this.outerDiv.style.border = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                    if (this.parent instanceof polymorph_core.rect) {
                         /*if (this.settings.x) {
-                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                            this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth - 2 * RECT_BORDER_WIDTH;
                         } else {
-                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                            this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight - 2 * RECT_BORDER_WIDTH;
                         }*/
+                    }
+                    if (highlightDirn != -1) {
+                        this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
                     }
                 } else {
                     this.outerDiv.style.border = "";
                 }
-
+            } else if (this.parent instanceof polymorph_core.rect) {
+                this.outerDiv.style.border = "";
+                if (this.settings.f) {
+                    this.outerDiv.style["border-" + (this.settings.x ? "top" : "left")] = RECT_BORDER_WIDTH + `px ${RECT_BORDER_COLOR} solid`;
+                }
+                if ((this.settings.f && ((highlightDirn == 2 && this.settings.x == 1) || (highlightDirn == 0 && this.settings.x == 0)))) {
+                    this.outerDiv.style["border-" + borders[highlightDirn]] = RECT_BORDER_WIDTH + "px red solid";
+                }
+                if (this.outerDiv.parentElement) {
+                    // on load parentElement doesnt exist
+                    /*if (this.settings.x) {
+                        this.outerDiv.style.width = this.outerDiv.parentElement.clientWidth;
+                    } else {
+                        this.outerDiv.style.height = this.outerDiv.parentElement.clientHeight;
+                    }*/
+                }
+            } else {
+                this.outerDiv.style.border = "";
             }
-            //Make draggable borders.
+
+        }
+        //Make draggable borders.
         this.redrawBorders();
-        //events
+
+        //Mouse move handler: Handles resizing and splitting rects.
         //this is called by both actual mouse moves and delegations, so don't put it directly as the handler.
         this.mouseMoveHandler = (e) => {
             if (this.children) {
@@ -4259,14 +4266,17 @@ tabmenu.style.display = "none";
                         return;
                     }
                     e.preventDefault();
+
+
                     // a split has been called. Initialise the split!
+                    let IDsToUpdate = [this.id];
                     this.outerDiv.style.border = "none";
                     //remove all my children
                     //except the tutorial div
-                    let tmp;
-                    if (this.outerDiv.querySelector(".tutorial")) tmp = this.outerDiv.querySelector(".tutorial");
+                    let savedTutorialDiv;
+                    if (this.outerDiv.querySelector(".tutorial")) savedTutorialDiv = this.outerDiv.querySelector(".tutorial");
                     while (this.outerDiv.children.length) this.outerDiv.children[0].remove();
-                    if (tmp) this.outerDiv.appendChild(tmp);
+                    if (savedTutorialDiv) this.outerDiv.appendChild(savedTutorialDiv);
 
                     //Create new rects
                     let _XorY = (this.split > 1) * 1;
@@ -4275,6 +4285,8 @@ tabmenu.style.display = "none";
                         polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 0, ps: _firstOrSecond } }),
                         polymorph_core.insertItem({ _rd: { p: rectID, x: _XorY, f: 1, ps: _firstOrSecond } })
                     ];
+                    IDsToUpdate = [...IDsToUpdate, ...newRectIDs];
+
                     //instantiate the rects
                     newRectIDs.forEach((v) => {
                         polymorph_core.rects[v] = new polymorph_core.rect(v);
@@ -4285,6 +4297,7 @@ tabmenu.style.display = "none";
                         v.settings.p = newRectIDs[!_firstOrSecond * 1];
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].tieContainer(v.id);
                         polymorph_core.rects[newRectIDs[!_firstOrSecond * 1]].settings.s = v.id;
+                        IDsToUpdate.push(v.id);
                     });
 
                     //force a refresh
@@ -4292,6 +4305,9 @@ tabmenu.style.display = "none";
                         v.refresh();
                         v.resizing = this.split ^ 1
                     });
+
+                    //Fire updates to everything so it saves
+                    IDsToUpdate.forEach(i => polymorph_core.fire("updateItem", { id: i }));
                 }
                 //for resizing
                 if (this.resizing != -1) {
@@ -4364,25 +4380,25 @@ tabmenu.style.display = "none";
             this.split = -1;
         })
         this.outerDiv.addEventListener("mousedown", (e) => {
-                let dirn = -1;
-                let cr = this.outerDiv.getClientRects()[0];
-                if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
-                    dirn = 0;
-                } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
-                    dirn = 1;
-                } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
-                    dirn = 2;
-                } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
-                    dirn = 3;
-                }
-                if (e.shiftKey) {
-                    this.split = dirn;
-                } else {
-                    this.resizing = dirn;
-                }
+            let dirn = -1;
+            let cr = this.outerDiv.getClientRects()[0];
+            if (e.clientX - cr.left <= RECT_BORDER_WIDTH && e.clientX - cr.left >= 0) {
+                dirn = 0;
+            } else if (cr.left + cr.width - e.clientX <= RECT_BORDER_WIDTH && cr.left + cr.width - e.clientX >= 0) {
+                dirn = 1;
+            } else if (e.clientY - cr.top <= RECT_BORDER_WIDTH && e.clientY - cr.top >= 0) {
+                dirn = 2;
+            } else if (cr.top + cr.height - e.clientY <= RECT_BORDER_WIDTH && cr.top + cr.height - e.clientY >= 0) {
+                dirn = 3;
+            }
+            if (e.shiftKey) {
+                this.split = dirn;
+            } else {
+                this.resizing = dirn;
+            }
 
-            })
-            ///Saving
+        })
+        ///Saving
         this.toSaveData = () => {
             //just ensure your item data is accurate.
             return this.settings;
@@ -4937,8 +4953,8 @@ polymorph_core.on("UIstart", () => {
         if (polymorph_core.items[id]._od || polymorph_core.items[id]._rd) return true; //never delete rects and operators? this wont end well
         if (id == "_meta") return true; //dont delete the metaitem
         let toDelete = true;
-        for (let i in this.containers) {
-            if (this.containers[i].operator && this.containers[i].operator.itemRelevant && this.containers[i].operator.itemRelevant(id)) {
+        for (let i in polymorph_core.containers) {
+            if (polymorph_core.containers[i].operator && polymorph_core.containers[i].operator.itemRelevant && polymorph_core.containers[i].operator.itemRelevant(id)) {
                 toDelete = false;
             }
         }
@@ -8379,16 +8395,15 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     let contextmenu;
     let recordContexted = (e) => {
         this.contextTarget = e.target;
-        /*
-        while (!this.contextTarget.matches(".floatingItem")) this.contextTarget = this.contextTarget.parentElement;
+
+        while (!this.contextTarget.matches("[data-id]")) this.contextTarget = this.contextTarget.parentElement;
         if (polymorph_core.items[this.contextTarget.dataset.id].style) {
-            contextmenu.querySelector(".background").value = polymorph_core.items[this.contextTarget.dataset.id].style.background || "";
-            contextmenu.querySelector(".color").value = polymorph_core.items[this.contextTarget.dataset.id].style.color || "";
+            contextmenu.querySelector("[data-action='background']").value = polymorph_core.items[this.contextTarget.dataset.id].style.background || "";
+            contextmenu.querySelector("[data-action='color']").value = polymorph_core.items[this.contextTarget.dataset.id].style.color || "";
         } else {
-            contextmenu.querySelector(".background").value = "";
-            contextmenu.querySelector(".color").value = "";
+            contextmenu.querySelector("[data-action='background']").value = "";
+            contextmenu.querySelector("[data-action='color']").value = "";
         }
-        */
         return true;
     }
     let contextMenuManager = new _contextMenuManager(this.rootdiv);
@@ -8415,8 +8430,10 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
 
     contextmenu.addEventListener("click", (e) => {
         if (this.contextMenuActions[e.target.dataset.action]) {
-            this.contextMenuActions[e.target.dataset.action](e);
-            contextmenu.style.display = "none";
+            if (this.contextMenuActions[e.target.dataset.action](e)) {
+                contextmenu.style.display = "none";
+            };
+
         }
     });
     contextmenu.addEventListener("input", (e) => {
@@ -8425,35 +8442,49 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     this.contextmenu = contextmenu;
     //<li data-action="sortbydate">Copy subitems recursively as list</li>
     this.contextMenuActions = {};
-    /*let savedStyle = undefined;
+
+    let savedStyle = undefined;
     this.contextMenuActions["cstyl"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
+        let id = this.contextTarget.dataset.id;
         savedStyle = polymorph_core.items[id].style;
+        return true;
     }
 
     this.contextMenuActions["pstyl"] = (e) => {
         if (savedStyle) {
-            let spanWithID = this.contextTarget.parentElement.parentElement;
-            let id = spanWithID.dataset.id;
+            let id = this.contextTarget.dataset.id;
             polymorph_core.items[id].style = savedStyle;
             this.contextTarget.style.background = savedStyle.background;
             this.contextTarget.style.color = savedStyle.color;
         }
+        return true;
     }
 
     this.contextMenuActions["color"] = (e) => {
-        spanWithID = e.target.value;
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
+        let id = this.contextTarget.dataset.id;
+        if (!polymorph_core.items[id].style) polymorph_core.items[id].style = {
+            color: "white",
+            background: "rgba(0,0,0,0)"
+        }
+        polymorph_core.items[id].style.color = e.target.value;
+
+        this.contextTarget.style.background = polymorph_core.items[id].style.background;
+        this.contextTarget.style.color = polymorph_core.items[id].style.color;
+        polymorph_core.fire("updateItem", { d: id, sender: this });
     }
 
     this.contextMenuActions["background"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
-        savedStyle = polymorph_core.items[id].style;
-    }*/
+        let id = this.contextTarget.dataset.id;
+        if (!polymorph_core.items[id].style) polymorph_core.items[id].style = {
+            color: "white",
+            background: "rgba(0,0,0,0)"
+        }
+        polymorph_core.items[id].style.background = e.target.value;
+
+        this.contextTarget.style.background = polymorph_core.items[id].style.background;
+        this.contextTarget.style.color = polymorph_core.items[id].style.color;
+        polymorph_core.fire("updateItem", { d: id, sender: this });
+    }
 
     this.contextMenuActions["copylistinternal"] = (e) => {
         let itmID = this.resolveSpan(this.contextTarget).id;
@@ -8485,6 +8516,7 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
             orderProp: this.settings.orderProperty,
             items: itemsAll
         });
+        return true;
     }
 
     this.contextMenuActions["pasteInternal"] = (e) => {
@@ -8500,30 +8532,30 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
                     }
                     polymorph_core.items[clip0.items[0]][this.settings.parentProperty] = this.resolveSpan(this.contextTarget).id;
                     polymorph_core.fire("updateItem", { id: clip0.items[0] });
-
             }
         }
+        return true;
     }
 
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
-        let rootElementPair = [this.contextTarget.parentElement.parentElement,0];
+        let rootElementPair = [this.contextTarget, 0];
         let runStack = [rootElementPair];
         let resultStack = [];
-        while (runStack.length){
+        while (runStack.length) {
             let top = runStack.pop();
             resultStack.push([top[0].children[0].children[1].innerText, top[1]])
-            let childItemDiv = top[0].children[top[0].children.length-1]; // not just 1, becuase of the rich edit mode. but always last
-            for (let i=childItemDiv.children.length-1;i>=0;i--){
+            let childItemDiv = top[0].children[top[0].children.length - 1]; // not just 1, becuase of the rich edit mode. but always last
+            for (let i = childItemDiv.children.length - 1; i >= 0; i--) {
                 runStack.push([
                     childItemDiv.children[i],
-                    top[1]+1
+                    top[1] + 1
                 ]);
             }
         }
         //convert to indented list
-        let text = resultStack.map(pair=>Array(pair[1]*4).fill(" ").join("") + "- " + pair[0]).join("\n");
+        let text = resultStack.map(pair => Array(pair[1] * 4).fill(" ").join("") + "- " + pair[0]).join("\n");
 
 
         /* old method
@@ -8553,19 +8585,20 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
                     document.body.removeChild(textarea);
                 }
             }
+        return true;
     }
     this.contextMenuActions["delitm"] = (e) => {
-        let spanWithID = this.contextTarget.parentElement.parentElement;
-        let id = spanWithID.dataset.id;
+        let id = this.contextTarget.dataset.id;
         delete polymorph_core.items[id][this.settings.filter];
-        if (this.focusOnPrev(spanWithID.children[0].children[1]) == false) this.focusOnNext(spanWithID.children[0].children[1]);
-        if (!spanWithID.parentElement.parentElement.dataset.id && spanWithID.parentElement.children.length == 2) {
+        if (this.focusOnPrev(this.contextTarget.children[0].children[1]) == false) this.focusOnNext(this.contextTarget.children[0].children[1]);
+        if (!this.contextTarget.parentElement.parentElement.dataset.id && this.contextTarget.parentElement.children.length == 2) {
             // if this is a root item and it is about to be deleted so that the root would only have the cursorspan, show the cursorspan
             this.cursorSpan.style.display = "block";
         }
         this.renderItem(id); // remove the span
         container.fire("updateItem", { id: id, sender: this });
         container.fire("deleteItem", { id: id, sender: this });
+        return true;
     }
 
     // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
@@ -8627,7 +8660,7 @@ polymorph_core.registerOperator("workflow_gf", {
     description: "Nested, plaintext lists. Workflowy emulation.",
     imageurl: "assets/operators/wkflow.PNG",
     section: "Standard"
-}, function(container) {
+}, function (container) {
     //default settings - as if you instantiated from scratch. This will merge with your existing settings from previous instatiations, facilitated by operatorTemplate.
     let defaultSettings = {
         titleProperty: "title",
@@ -8751,7 +8784,10 @@ polymorph_core.registerOperator("workflow_gf", {
     }
 
     this.holdExpanded = {};
-    let cachedChildren = {}; // dict of id of children id
+
+    // cache of item children, set by child when child is renderItem'd
+    let cachedChildren = {}; // key: id of children id
+
     let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
         let childrenDiv = this.getChildrenDiv(spanWithID);
         if (toExpanded == undefined) { // toggle
@@ -8867,8 +8903,8 @@ polymorph_core.registerOperator("workflow_gf", {
         focusOnElement(toFocusOnSpan.children[0].children[1]);
     }
 
-    this.focusOnPrev=focusOnPrev;
-    this.focusOnNext=focusOnNext;
+    this.focusOnPrev = focusOnPrev;
+    this.focusOnNext = focusOnNext;
 
     //removes all parents of the item with id 'id'.
     let setParent = (id, newParent) => {
@@ -8944,7 +8980,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`; // Transform the key to something we care about, otherwise you'll get a spamload of properties like d da dat data for \{dataset}
                     try {
                         oldDateString = polymorph_core.items[id][key].datestring;
-                    } catch (e) {}
+                    } catch (e) { }
                     if (oldDateString == keyset[1][ltrkey]) continue;
                     polymorph_core.items[id][key] = {
                         datestring: keyset[1][ltrkey]
@@ -8976,10 +9012,10 @@ polymorph_core.registerOperator("workflow_gf", {
         ctrl: false, // also command on mac, eventually
         alt: false
     };
-    let disableSortOnShuffle=false;
+    let disableSortOnShuffle = false;
     let handleKeyEvent = (key, id) => {
         let spanWithID = this.renderedItemCache[id].el;
-        disableSortOnShuffle=false;
+        disableSortOnShuffle = false;
         switch (key) {
             case "Backspace":
                 let bcursorPos = spanWithID.children[0].children[1].getRootNode().getSelection().getRangeAt(0).startOffset;
@@ -9026,11 +9062,11 @@ polymorph_core.registerOperator("workflow_gf", {
                 // console.log the two parts
                 if (modifiers["alt"]) {
                     let partA, partB;
-                    if (this.settings.advancedInputMode){
+                    if (this.settings.advancedInputMode) {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = this.plaintextContenteditableRender.children[1].innerText.slice(range.startOffset);
-                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);                        
-                    }else{
+                        partA = this.plaintextContenteditableRender.children[1].innerText.slice(0, range.startOffset);
+                    } else {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
                         partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
@@ -9078,7 +9114,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (modifiers["alt"]) {
                     //move item up
                     if (spanWithID.previousElementSibling) {
-                        disableSortOnShuffle=true;
+                        disableSortOnShuffle = true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
@@ -9096,7 +9132,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 bumpWasTriggeredByUserEvent = true;
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
-                        disableSortOnShuffle=true;
+                        disableSortOnShuffle = true;
                         polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
@@ -9350,7 +9386,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     // Arrange the items under the specified parent (id string). 
     // Will also sort by date if it is configured to.
-    let sortParent = (parent) => {
+    let _sortParent = (parent) => {
         // look through my immediate children and assign them numbers
         if (this.renderedItemCache[parent]) {
             let itemsToUpdate = []; // store items to update and update them at the end because otherwise sometimes rendering will cause double-ups
@@ -9382,7 +9418,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             itemsToUpdate.push(v[0]);
                         }
                     });
-            } else if (this.settings.autoSortAlpha){
+            } else if (this.settings.autoSortAlpha) {
                 Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children)
                     .filter(i => !(i.classList.contains("cursorspan")))
                     .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id].title : undefined])
@@ -9395,7 +9431,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             itemsToUpdate.push(v[0]);
                         }
                     });
-            }else{
+            } else {
                 Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children).filter((i) => !(i.classList.contains("cursorspan"))).forEach((v, i) => {
                     if (polymorph_core.items[v.dataset.id][this.settings.orderProperty] != i) {
                         polymorph_core.items[v.dataset.id][this.settings.orderProperty] = i;
@@ -9411,6 +9447,10 @@ polymorph_core.registerOperator("workflow_gf", {
             restoreFocus(fobj);
         }
     }
+    let sortParentCap = new capacitor(1000, 10, (p) => {
+        _sortParent(p);
+    });
+    let sortParent = sortParentCap.submit;
 
 
     container.on("doSort", (d) => {
@@ -9446,7 +9486,7 @@ polymorph_core.registerOperator("workflow_gf", {
     // Takes an IDstring OR an element and returns a standardized tuple.
     this.resolveSpan = (item) => {
         let baseSpan = undefined;
-        if (typeof(item) == "string") {
+        if (typeof (item) == "string") {
             baseSpan = this.renderedItemCache[item].el;
         } else {
             // might be an element
@@ -9467,11 +9507,11 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.renderItem = (id, flags = "") => {
         // Options
-        
+
         let fromParent = flags.includes("p");
         // If from parent, then dont reorganise the parent, because the 
         // parent just opened up and its likely to have a bunch of people all asking to reorganize it
-        
+
         dontFocus = flags.includes("d");
         tmpExpanded = flags.includes("e");
         if (!this.itemRelevant(id)) {
@@ -9487,7 +9527,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     oldFocus = undefined;
                 });
             }
-            //check if the item's parent exists and is expanded
+            //check if the item's parent exists
             let parentID = polymorph_core.items[id][this.settings.parentProperty] || "";
             let myOrder = polymorph_core.items[id][this.settings.orderProperty] || 0;
             if (!cachedChildren[parentID]) cachedChildren[parentID] = {};
@@ -9525,7 +9565,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 //cache and update the text
                 let notNullItemTitle = (polymorph_core.items[id][this.settings.titleProperty] || " ");
-                
+
                 // Special case for dates with 'auto'; anything with auto will be invalidated. (Icky! Might be a better way to do this.)
                 if (this.renderedItemCache[id].renderedText != notNullItemTitle || notNullItemTitle.includes("auto")) {
                     this.renderedItemCache[id].renderedText = notNullItemTitle;
@@ -9543,7 +9583,7 @@ polymorph_core.registerOperator("workflow_gf", {
                                 let key = `_${this.settings.bracketPropertyPrefix}_${ltrkey}`;
                                 if (this.settings.propAsDate.split(",").includes(ltrkey)) {
                                     try {
-                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined,{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric' })}}`;
+                                        return `\\{${ltrkey}:${dateParser.getSortingTime(polymorph_core.items[id][key]).date.toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' })}}`;
                                     } catch (e) {
                                         return `\\{${ltrkey}:${"Invalid Date"}}`;
                                     }
@@ -9561,6 +9601,11 @@ polymorph_core.registerOperator("workflow_gf", {
                     } else {
                         thisIDSpan.children[0].children[1].innerText = notNullItemTitle; //= polymorph_core.RTRenderProperty(notNullItemTitle);
                     }
+                }
+
+                if (polymorph_core.items[id].style) {
+                    thisIDSpan.style.background = polymorph_core.items[id].style.background;
+                    thisIDSpan.style.color = polymorph_core.items[id].style.color;
                 }
 
                 /////
@@ -9587,7 +9632,7 @@ polymorph_core.registerOperator("workflow_gf", {
                     else placeBefore = this.innerRoot.children[1]; // special case because cursorspan exists in innerroot
 
                     if ((thisIDSpan.parentElement != this.getChildrenDiv(this.renderedItemCache[parentID].el) || // parent wrong
-                            thisIDSpan.nextElementSibling != placeBefore) && // order wrong
+                        thisIDSpan.nextElementSibling != placeBefore) && // order wrong
                         thisIDSpan != placeBefore) { // not just a render-in-place
                         thisIDSpan.remove();
                         this.getChildrenDiv(this.renderedItemCache[parentID].el).insertBefore(thisIDSpan, placeBefore);
@@ -9631,7 +9676,15 @@ polymorph_core.registerOperator("workflow_gf", {
                 }
                 this.cursorSpan.style.display = "none"; // something got rendered, hide the cursorspan
             } else {
-                // check that maybe my current parent is not my actual parent? ... todo
+                // check that maybe my current parent is not my actual parent
+                // in case an item is moved
+                if (this.renderedItemCache[id] && this.renderedItemCache[id].el.parentElement.parentElement.dataset.id != polymorph_core.items[id][this.settings.parentProperty]) {
+                    // We were not renderd, which means our parent is unexpanded
+                    // but we shouldn't be here
+                    // therefore remove self 
+                    this.renderedItemCache[id].el.remove();
+                    delete this.renderedItemCache[id];
+                }
             }
         }
     }
@@ -9640,10 +9693,20 @@ polymorph_core.registerOperator("workflow_gf", {
         let id = d.id;
         let flags = d.flags || "d";
 
-        // Want to keep focus if we have focus
-        let oldFocus = saveFocus();
-        this.renderItem(id, flags); // prevent bumpparentreorganise on external updates
-        restoreFocus(oldFocus);
+        if (this.itemRelevant(id)) {
+            // Want to keep focus if we have focus
+            let oldFocus = saveFocus();
+            this.renderItem(id, flags); // prevent bumpparentreorganise on external updates
+            // Unless we need to...
+            if (this.settings.autoSortAlpha || this.settings.autoSortDate) {
+                sortParent(polymorph_core.items[id][this.settings.parentProperty] || "");
+            }
+            restoreFocus(oldFocus);
+        } else if (this.renderedItemCache[id]) {
+            // items deleted externally
+            this.renderedItemCache[id].el.remove();
+            delete this.renderedItemCache[id];
+        }
     });
 
     container.on("createItem", (d) => {
@@ -9654,7 +9717,7 @@ polymorph_core.registerOperator("workflow_gf", {
     });
 
     //first time load: render everything WITHOUT OLDFOCUS
-    this.refresh = function() {
+    this.refresh = function () {
         itemsShouldBeEditable = this.settings.isEditable && !this.settings.advancedInputMode;
         if (this.settings.focusExclusionMode) {
             this.focusModeRefresh();
@@ -9833,15 +9896,21 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.dialogDiv.appendChild(importFacilities);
 
-    this.showDialog = function() {
+    this.showDialog = function () {
         for (let i in options) {
             options[i].load();
         }
         // update your dialog elements with your settings
     }
-    this.dialogUpdateSettings = function() {
-        this.refresh();
+    this.dialogUpdateSettings = function () {
         // This is called when your dialog is closed. Use it to update your container!
+
+        // Sort the items alphabetically, if that option is checked
+        if (this.settings.autoSortAlpha) {
+            sortParent("");
+        }
+
+        this.refresh();
     }
     workflowy_gitfriendly_extend_contextMenu.apply(this);
     workflowy_gitfriendly_search.apply(this);
@@ -14245,7 +14314,7 @@ polymorph_core.registerOperator("itemcluster2", {
     }
 
     this.itemIsVisible = (i) => {
-        if (polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
+        if (this.itemRelevant(i) && polymorph_core.items[i].itemcluster && polymorph_core.items[i].itemcluster.viewData && polymorph_core.items[i].itemcluster.viewData[this.settings.currentViewName]) {
             return true;
         }
     }
@@ -15392,10 +15461,10 @@ polymorph_core.registerOperator("welcome", {
 
     let hour_of_day = (new Date().getHours());
     let time_of_day = "Morning";
-    if (hour_of_day > 12) {
-        time_of_day = "Afternoon"
-    } else if (hour_of_day > 7) {
+    if (hour_of_day > 17) {
         time_of_day = "Evening"
+    } else if (hour_of_day > 11) {
+        time_of_day = "Afternoon"
     }
 
     //Add content-independent HTML here.
@@ -15418,7 +15487,6 @@ polymorph_core.registerOperator("welcome", {
         }
         .minibuttons a>div{
             display: block;
-            padding-top: 100%;
             position:relative;
         }
         .minibuttons a>div>span{
@@ -15438,14 +15506,11 @@ polymorph_core.registerOperator("welcome", {
         }
     </style>
     <div style="position: relative; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
-        <!--Modal thingy-->
-        <div style="position:absolute; max-width: 1200px; width:100%; max-height: 800px; height:100%; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black;">
-            <!--All but bottom-->
-            <div style="display: flex; flex-direction: row; padding: 30px; height: calc(100% - 60px);">
-                <div style="display: flex; flex-direction:column; flex: 1 1 50%">
+        <div style="position:absolute; max-width: 1200px; width:100%; height: 70vh; transform: translate(-50%,-50%);left: 50%; top: 50%; background: white; border-radius: 3%; color:black; padding: 30px;">
+            <div style="flex-direction: column; padding: 30px; height: calc(100% - 60px); overflow-y: auto">
                 <h2>Good ${time_of_day}</h2>
                 <h3>New</h3>
-                <div class="templateList minibuttons" style="display:flex; flex-wrap:wrap;">
+                <div class="templateList minibuttons" style="display:flex; height:20%;">
                     <a class="newDocButton" href="#">
                         <div>
                             <span>New document from scratch</span>
@@ -15469,21 +15534,20 @@ polymorph_core.registerOperator("welcome", {
                 <h3>Open an existing document</h3>
                 <div>
                     <div class="recentDocuments">
+                    </div>
+                    <div class="lobbydocs" style="display:none">
+                        <h4>Local lobby documents:</h4>
+                        <div>
                         </div>
-                        <div class="lobbydocs" style="display:none">
-                            <h4>Local lobby documents:</h4>
-                            <div>
-                            </div>
-                        </div>
-                        <div class="globbydocs" style="display:none">
-                            <h4>Local git lobby documents:</h4>
-                            <div>
-                            </div>
+                    </div>
+                    <div class="globbydocs" style="display:none">
+                        <h4>Local git lobby documents:</h4>
+                        <div>
                         </div>
                     </div>
                 </div>
                 <div style="flex: 1 1 50%">
-                    <div style="display:flex; flex-direction: column; height: 100%">
+                    <div style="display:flex; flex-direction: column;">
                         <div style="flex: 3 3 75%">
                         <div style="display: flex; flex: 1 1 25%;" class="minibuttons">
                                     <a href="docs">Documentation</a>

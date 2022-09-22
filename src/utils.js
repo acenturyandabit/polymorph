@@ -1,51 +1,52 @@
+// Capacitor. Prevents multiple calls to an underlying resource-intensive or disruptive function from occuring,
+// by buffering the call for a later, more appropriate time.
 function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
     let options = {
         fireFirst: false,
         afterLast: true,
     };
-    if (typeof(settings) == "boolean") {
+    if (typeof (settings) == "boolean") {
         options.fireFirst = settings;
     } else {
         Object.assign(options, settings);
     }
-    let me = this;
     let lastUID;
     let lastData;
     let tcount = 0;
     let rqcount = 0;
     let pid = undefined;
     let prefire = false;
-    this.forceSend = function() {
+    this.forceSend = () => {
         send(lastUID, lastData);
         rqcount = 0;
         clearTimeout(pid);
         pid = undefined;
     }
-    this.checkAndUpdate = function() {
+    this.checkAndUpdate = () => {
         tcount -= checkInterval;
         if (tcount <= 0) {
             if (!prefire) {
-                me.forceSend();
+                this.forceSend();
             }
         } else {
-            pid = setTimeout(me.checkAndUpdate, checkInterval);
+            pid = setTimeout(this.checkAndUpdate, checkInterval);
         }
     }
-    this.submit = function(UID, data) {
+    this.submit = (UID, data) => {
         if (options.presubmit) options.presubmit();
         if (lastUID != UID && lastUID) {
-            me.forceSend();
+            this.forceSend();
         } else {
             if (rqcount == 0 && options.fireFirst) {
                 lastUID = UID;
-                me.forceSend();
+                this.forceSend();
                 prefire = true;
             } else {
                 prefire = false;
             }
             rqcount++;
-            if (rqcount > limit) {
-                me.forceSend();
+            if (rqcount == limit) {
+                this.forceSend();
                 rqcount = 1;
             }
             if (options.afterLast && pid) {
@@ -54,11 +55,16 @@ function capacitor(t, limit, send, settings = {}, checkInterval = 100) {
             }
             if (!pid) {
                 tcount = t;
-                pid = setTimeout(me.checkAndUpdate, checkInterval);
+                pid = setTimeout(this.checkAndUpdate, checkInterval);
             }
         }
         lastUID = UID;
         lastData = data;
+    }
+    this.cancel = ()=>{
+        rqcount = 0;
+        clearTimeout(pid);
+        pid = undefined;
     }
 }
 
@@ -74,7 +80,7 @@ function htmlwrap(html, el) {
 
 function waitForFn(property) {
     let me = this;
-    if (!this[property]) this[property] = function(args) {
+    if (!this[property]) this[property] = function (args) {
         setTimeout(() => me[property].apply(me, arguments), 1000);
     }
 }
