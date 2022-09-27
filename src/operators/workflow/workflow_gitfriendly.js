@@ -203,6 +203,7 @@ polymorph_core.registerOperator("workflow_gf", {
             el.click(); // for phones
             restoreClickFlag = false;
             this.setShowPlaintext(el);
+            el.scrollIntoViewIfNeeded();
         });
     }
 
@@ -260,6 +261,7 @@ polymorph_core.registerOperator("workflow_gf", {
         polymorph_core.items[id][this.settings.parentProperty] = newParent;
     }
 
+    // Deal with slash properties
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = this.resolveSpan(e.target).id;
@@ -404,7 +406,10 @@ polymorph_core.registerOperator("workflow_gf", {
                 break;
             case "Enter":
                 let newID = this.createItem();
-                // console.log the two parts
+                
+                // Remember which element is longer in focus mode
+                let focusIsNewItemLonger = false;
+
                 if (modifiers["alt"]) {
                     let partA, partB;
                     if (this.settings.advancedInputMode) {
@@ -415,6 +420,9 @@ polymorph_core.registerOperator("workflow_gf", {
                         let range = this.rootdiv.getRootNode().getSelection().getRangeAt(0);
                         partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
                         partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
+                    }
+                    if (partB.length>partA.length){
+                        focusIsNewItemLonger = true;
                     }
                     if (partB.length) {
                         polymorph_core.items[id][this.settings.titleProperty] = partA;
@@ -429,8 +437,11 @@ polymorph_core.registerOperator("workflow_gf", {
                 } else {
                     // check if the item should go before or after the current item based on where the cursor is
                     let shouldBefore = this.rootdiv.getRootNode().getSelection();
-                    if (shouldBefore.rangeCount == 0) {
-                        shouldBefore = false; // likely an alt-enter
+                    if (modifiers["alt"]) {
+                        // likely an alt-enter
+                        // Always put part B before part A since part B comes afterwards
+                        // but choose which one to focus on later (the longer one)
+                        shouldBefore = false; 
                     } else {
                         shouldBefore = shouldBefore.getRangeAt(0).startOffset;
                         if (shouldBefore < polymorph_core.items[id][this.settings.titleProperty].length / 2) {
@@ -452,7 +463,13 @@ polymorph_core.registerOperator("workflow_gf", {
                 container.fire("createItem", { id: newID, sender: this });
                 container.fire("updateItem", { id: newID, sender: this });
                 this.renderItem(newID, "d");
-                focusOnElement(this.rootdiv.querySelector(`span[data-id='${newID}']`).children[0].children[1]);
+
+                let elementToFocusOn=newID;
+                if (modifiers["alt"]){
+                    // focus on element with more text so that splitting can continue
+                    if (!focusIsNewItemLonger)elementToFocusOn = id;
+                }
+                focusOnElement(this.rootdiv.querySelector(`span[data-id='${elementToFocusOn}']`).children[0].children[1]);
                 break;
             case "ArrowUp":
                 bumpWasTriggeredByUserEvent = true;
@@ -543,6 +560,7 @@ polymorph_core.registerOperator("workflow_gf", {
         }
     }
 
+    // Creating items and handling special keys
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             // special keys handler (delegated at span id span level)
@@ -616,6 +634,9 @@ polymorph_core.registerOperator("workflow_gf", {
             restoreClickFlag = false;
         }
     });
+
+
+    // Changing items
     this.rootdiv.addEventListener("input", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = e.target.parentElement.parentElement.dataset.id;
@@ -673,8 +694,11 @@ polymorph_core.registerOperator("workflow_gf", {
                 container.fire("updateItem", { id: p.dataset.id, sender: this });
                 p = p.parentElement.parentElement;
             }
-            if (container.visible()) el.scrollIntoViewIfNeeded();
-            //focusOnElement(el, 0);
+            // Done in focusOnElement
+            //if (container.visible()) el.scrollIntoViewIfNeeded();
+
+            // When clicking on an item elsewhere e.g. on a calendar, focus the item (even if another item was focused before)
+            focusOnElement(el, 0);
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             el.classList.add("tmpFocused");
         }
@@ -722,6 +746,7 @@ polymorph_core.registerOperator("workflow_gf", {
         selection.removeAllRanges();
         selection.addRange(range);
         if (root.firstChild) root.click(); // refocus on phone as well
+        root.scrollIntoViewIfNeeded();
         restoreClickFlag = false;
     }
 
@@ -731,11 +756,15 @@ polymorph_core.registerOperator("workflow_gf", {
 
     // Arrange the items under the specified parent (id string). 
     // Will also sort by date if it is configured to.
-    let _sortParent = (parent) => {
+    let _sortParent = (parent, sortMethod) => {
+        if (!sortMethod) {
+            if (this.settings.autoSortDate) sortMethod = "DATE";
+            else if (this.settings.autoSortAlpha) sortMethod = "ALPHA";
+        }
         // look through my immediate children and assign them numbers
         if (this.renderedItemCache[parent]) {
             let itemsToUpdate = []; // store items to update and update them at the end because otherwise sometimes rendering will cause double-ups
-            if (this.settings.autoSortDate) {
+            if (sortMethod == "DATE") {
                 let getDate = (obj) => {
                     if (!obj) return undefined;
                     try {
@@ -763,7 +792,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             itemsToUpdate.push(v[0]);
                         }
                     });
-            } else if (this.settings.autoSortAlpha) {
+            } else if (sortMethod == "ALPHA") {
                 Array.from(this.getChildrenDiv(this.renderedItemCache[parent].el).children)
                     .filter(i => !(i.classList.contains("cursorspan")))
                     .map(i => [i.dataset.id, polymorph_core.items[i.dataset.id] ? polymorph_core.items[i.dataset.id].title : undefined])
@@ -796,7 +825,7 @@ polymorph_core.registerOperator("workflow_gf", {
         _sortParent(p);
     });
     let sortParent = sortParentCap.submit;
-
+    this.sortParent = _sortParent;
 
     container.on("doSort", (d) => {
         sortParent(d.id);

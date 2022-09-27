@@ -1,5 +1,5 @@
 let workflowy_gitfriendly_extend_contextMenu = function () {
-    this.contextTarget = undefined;
+    this.contextTarget = undefined; // An item with a dataset-id.
     let contextmenu;
     let recordContexted = (e) => {
         this.contextTarget = e.target;
@@ -17,13 +17,18 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     let contextMenuManager = new _contextMenuManager(this.rootdiv);
     contextmenu = contextMenuManager.registerContextMenu(
         `
-    <li data-action="sortbydate">Sort by date</li>
+    <li>Sort items
+        <ul class="submenu">
+            <li data-action="sortbydate">Sort by Date</li>
+            <li data-action="sortbyalpha">Sort Alphabetically</li>
+        </ul>
+    </li>
     <li data-action="delitm">Delete item</li>
     <li>Copy items
-    <ul class="submenu">
-        <li data-action="copylist">Copy item tree for pasting</li>
-        <li data-action="copylistinternal">Copy item tree internally</li>
-    </ul>
+        <ul class="submenu">
+            <li data-action="copylist">Copy item tree for pasting</li>
+            <li data-action="copylistinternal">Copy item tree internally</li>
+        </ul>
     </li>
     <li data-action="pasteInternal">Paste items</li>
     <li>Edit style
@@ -209,6 +214,16 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
+    this.contextMenuActions["sortbydate"] = (e) =>{
+        let id = this.contextTarget.dataset.id;
+        let parentID = polymorph_core.items[id][this.settings.parentProperty];
+        this.sortParent(parentID, "DATE");
+    }
+    this.contextMenuActions["sortbyalpha"] = (e) =>{
+        let id = this.contextTarget.dataset.id;
+        let parentID = polymorph_core.items[id][this.settings.parentProperty];
+        this.sortParent(parentID, "ALPHA");
+    }
     // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
     //     // clarify the toOrder first
     //     if (root.target) root = undefined;
