@@ -8977,8 +8977,12 @@ polymorph_core.registerOperator("workflow_gf", {
         if (e.target.matches(`span[data-id] span`)) {
             let id = this.resolveSpan(e.target).id;
             let lastKeyWasBackslash = e.key == '\\';
-            if (e.key=='Unidentified' && e.target.innerText.includes("\\")){
-                lastKeyWasBackslash = true;
+            if (e.key == 'Unidentified' && e.target.innerText.includes("\\")) {
+                let lastSelection = e.target.getRootNode().getSelection();
+                let lastCharacterPressed = lastSelection.anchorNode.textContent[lastSelection.anchorOffset - 1];
+                if (lastCharacterPressed == "\\") {
+                    lastKeyWasBackslash = true;
+                }
             }
             if (lastKeyWasBackslash) {
                 // add curly brackets to the position
@@ -9121,7 +9125,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 break;
             case "Enter":
                 let newID = this.createItem();
-                
+
                 // Remember which element is longer in focus mode
                 let focusIsNewItemLonger = false;
 
@@ -9136,7 +9140,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         partB = spanWithID.children[0].children[1].innerText.slice(range.startOffset);
                         partA = spanWithID.children[0].children[1].innerText.slice(0, range.startOffset);
                     }
-                    if (partB.length>partA.length){
+                    if (partB.length > partA.length) {
                         focusIsNewItemLonger = true;
                     }
                     if (partB.length) {
@@ -9156,7 +9160,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         // likely an alt-enter
                         // Always put part B before part A since part B comes afterwards
                         // but choose which one to focus on later (the longer one)
-                        shouldBefore = false; 
+                        shouldBefore = false;
                     } else {
                         shouldBefore = shouldBefore.getRangeAt(0).startOffset;
                         if (shouldBefore < polymorph_core.items[id][this.settings.titleProperty].length / 2) {
@@ -9179,10 +9183,10 @@ polymorph_core.registerOperator("workflow_gf", {
                 container.fire("updateItem", { id: newID, sender: this });
                 this.renderItem(newID, "d");
 
-                let elementToFocusOn=newID;
-                if (modifiers["alt"]){
+                let elementToFocusOn = newID;
+                if (modifiers["alt"]) {
                     // focus on element with more text so that splitting can continue
-                    if (!focusIsNewItemLonger)elementToFocusOn = id;
+                    if (!focusIsNewItemLonger) elementToFocusOn = id;
                 }
                 focusOnElement(this.rootdiv.querySelector(`span[data-id='${elementToFocusOn}']`).children[0].children[1]);
                 break;
@@ -9287,9 +9291,9 @@ polymorph_core.registerOperator("workflow_gf", {
             modifierButtons.forEach(i => { if (i.classList.contains("pressed")) i.classList.remove("pressed") });
 
             // Implicit enters from phone
-            let keyPressed=e.key;
-            if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key=='Unidentified'){
-                keyPressed="Enter";
+            let keyPressed = e.key;
+            if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key == 'Unidentified') {
+                keyPressed = "Enter";
             }
             handleKeyEvent(keyPressed, id);
 
