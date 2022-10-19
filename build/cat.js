@@ -9459,7 +9459,14 @@ polymorph_core.registerOperator("workflow_gf", {
             modifiers["shift"] = e.shiftKey;
             modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] |= i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
             modifierButtons.forEach(i => { if (i.classList.contains("pressed")) i.classList.remove("pressed") });
-            handleKeyEvent(e.key, id);
+
+            // Implicit enters from phone
+            let keyPressed=e.key;
+            if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key=='Unidentified'){
+                keyPressed="Enter";
+            }
+            handleKeyEvent(keyPressed, id);
+
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
                 e.preventDefault();
@@ -9508,6 +9515,8 @@ polymorph_core.registerOperator("workflow_gf", {
         }
     });
 
+
+    let phonePrevText = "";
     this.rootdiv.addEventListener("click", (e) => {
         if (restoreClickFlag) return;
         if (e.target.matches(`span[data-id] span.toprow span`)) {
@@ -9521,6 +9530,7 @@ polymorph_core.registerOperator("workflow_gf", {
             restoreClickFlag = true;
             container.fire("focusItem", { id: id, sender: this });
             restoreClickFlag = false;
+            phonePrevText = e.target.innerText;
         }
     });
 

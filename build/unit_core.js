@@ -1184,7 +1184,9 @@ polymorph_core.on("titleButtonsReady", () => {
                     id: polymorph_core.currentDocID
                 }
             });
-            if (isPhone()) polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
+            if (isPhone()) {
+                polymorph_core.userData.documents[polymorph_core.currentDocID].autosave = true;
+            }
             polymorph_core.saveUserData();
             //Don't attempt to load, since there is nothing to load in the first place
             //Show the loading operator
