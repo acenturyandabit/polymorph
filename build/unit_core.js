@@ -8973,16 +8973,16 @@ polymorph_core.registerOperator("workflow_gf", {
     }
 
     // Deal with slash properties
+    let lastPhoneBeforeInput = null;
+    this.rootdiv.addEventListener("beforeinput", (e) => {
+        lastPhoneBeforeInput = e.data;
+    })
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = this.resolveSpan(e.target).id;
             let lastKeyWasBackslash = e.key == '\\';
-            if (e.key == 'Unidentified' && e.target.innerText.includes("\\")) {
-                let lastSelection = e.target.getRootNode().getSelection();
-                let lastCharacterPressed = lastSelection.anchorNode.textContent[lastSelection.anchorOffset - 1];
-                if (lastCharacterPressed == "\\") {
-                    lastKeyWasBackslash = true;
-                }
+            if (e.key == 'Unidentified' && lastPhoneBeforeInput == "\\") {
+                lastKeyWasBackslash = true;
             }
             if (lastKeyWasBackslash) {
                 // add curly brackets to the position

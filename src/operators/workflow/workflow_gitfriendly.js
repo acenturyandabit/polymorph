@@ -262,32 +262,29 @@ polymorph_core.registerOperator("workflow_gf", {
     }
 
     // Deal with slash properties
-    let lastPhoneBeforeInput = null;
+    let checkBackslash = (target) => {
+        // add curly brackets to the position
+        let selection = target.getRootNode().getSelection().getRangeAt(0);
+        result = selection.commonAncestorContainer.textContent.split("");
+        result.splice(selection.startOffset, 0, "\\", "{", "}");
+        result = result.join("");
+        let oldStart = selection.startOffset;
+        selection.commonAncestorContainer.textContent = result;
+        // edge case where we start with a \ which causes commonancestor to actually be toprow
+        if (selection.commonAncestorContainer.tagName == "SPAN") {
+            focusOnElement(selection.commonAncestorContainer, oldStart + 2);
+        } else {
+            focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
+        }
+    }
     this.rootdiv.addEventListener("beforeinput", (e) => {
-        lastPhoneBeforeInput = e.data;
+        if (e.data == "\\") checkBackslash();
     })
+
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
-            let id = this.resolveSpan(e.target).id;
-            let lastKeyWasBackslash = e.key == '\\';
-            if (e.key == 'Unidentified' && lastPhoneBeforeInput == "\\") {
-                lastKeyWasBackslash = true;
-            }
-            if (lastKeyWasBackslash) {
-                // add curly brackets to the position
-                let selection = e.target.getRootNode().getSelection().getRangeAt(0);
-                console.log(selection);
-                result = selection.commonAncestorContainer.textContent.split("");
-                result.splice(selection.startOffset, 0, "\\", "{", "}");
-                result = result.join("");
-                let oldStart = selection.startOffset;
-                selection.commonAncestorContainer.textContent = result;
-                // edge case where we start with a \ which causes commonancestor to actually be toprow
-                if (selection.commonAncestorContainer.tagName == "SPAN") {
-                    focusOnElement(selection.commonAncestorContainer, oldStart + 2);
-                } else {
-                    focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
-                }
+            if (e.key == "\\") {
+                checkBackslash(e.target);
                 e.preventDefault();
             }
         }
