@@ -406,17 +406,17 @@ function _polymorph_core() {
     })
 
     //Document level functions
-    this.updateSettings = (isLoading) => {
+    this.updateSettings = () => {
         this.documentTitleElement.innerText = this.items._meta.displayName;
         if (!polymorph_core.isStaticMode()) {
             document.querySelector("title").innerHTML =
                 this.items._meta.displayName + " - Polymorph";
         }
-        if (!isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
+        if (!polymorph_core.isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
         this.fire("updateSettings");
     };
 
-    this.on("updateSettings", () => {
+    this.on("updateSettings", (d) => {
         this.fire("updateItem", { id: "_meta" });
     })
     let tc = new capacitor(1000, 10, () => {
@@ -1463,15 +1463,18 @@ polymorph_core.on("titleButtonsReady", () => {
         }
         polymorph_core.fire('mergeBegin'); // for save sources to recognise that we are starting a merge.
 
+        polymorph_core.isLoading = true; // Global lock because all instances of updateItems needs to
         for (let i in data) {
             //shouldnt hurt to fire update on other items
             polymorph_core.fire('updateItem', { id: i, loadProcess: true });
         }
         //show the prevailing rect
+            // not trigger the updateRecentDocuments
         polymorph_core.switchView(polymorph_core.items._meta.currentView);
         polymorph_core.datautils.linkSanitize();
         polymorph_core.updateSettings(true);
         polymorph_core.fire('mergeComplete');
+        polymorph_core.isLoading = false;
     }
 
 })();
@@ -4943,6 +4946,10 @@ if (!isPhone()) {
             background: green;
         }
 
+        .notifArea>div.error{
+            background: red;
+        }
+
         </style>
         </div>
         `);
@@ -5501,6 +5508,9 @@ function _dateParser() {
         } else {
             result.endDate = new Date(result.date.getTime() + 1000 * 60 * 60);
         }
+        if (resolveToDate(refdate).getTime() == result.endDate.getTime()) {
+            throw "ERROR End date is the same as reference date, event has 0 duration; will cause infinite loop.";
+        }
         return result;
     };
 
@@ -5537,7 +5547,7 @@ function _dateParser() {
         else { options.endDate = resolveToDate(options.endDate); }
 
         // If the event is 'auto', then reset the startDate to now().
-        if (event.datestring.includes("auto")){
+        if (event.datestring.includes("auto")) {
             event.reference = new Date();
         }
 
@@ -5599,7 +5609,7 @@ function _dateParser() {
             }
         }
         // Sort the entries by recency
-        possibleDates.sort((a, b) => a.startDate - b.startDate);
+        possibleDates.sort((a, b) => a.date - b.date);
         // if global occurrencecount, take only the occurrences that matter.
         if (options.occurenceCount) {
             possibleDates = possibleDates.slice(0, options.occurenceCount);
@@ -7442,6 +7452,7 @@ polymorph_core.registerOperator("descbox", {
     let defaultSettings = {
         property: "description",
         auxProperty: "title",
+        currentID: container.id,
         showTags: false
     };
 
@@ -7637,7 +7648,7 @@ polymorph_core.registerOperator("descbox", {
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
-            property: "currentItem",
+            property: "currentID",
             label: "Item to display:"
         }),
         property: new polymorph_core._option({
