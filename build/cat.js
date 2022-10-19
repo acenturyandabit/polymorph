@@ -9151,11 +9151,11 @@ polymorph_core.registerOperator("workflow_gf", {
     }
 
     // Deal with slash properties
-    let checkBackslash = (target) => {
+    let checkBackslash = (target, doAdditionalSplice) => {
         // add curly brackets to the position
         let selection = target.getRootNode().getSelection().getRangeAt(0);
         result = selection.commonAncestorContainer.textContent.split("");
-        result.splice(selection.startOffset, 0, "\\", "{", "}");
+        result.splice(selection.startOffset, doAdditionalSplice ? 1 : 0, "\\", "{", "}");
         result = result.join("");
         let oldStart = selection.startOffset;
         selection.commonAncestorContainer.textContent = result;
@@ -9167,7 +9167,7 @@ polymorph_core.registerOperator("workflow_gf", {
         }
     }
     this.rootdiv.addEventListener("beforeinput", (e) => {
-        if (e.data == "\\") checkBackslash(e.target);
+        if (e.data == "\\") checkBackslash(e.target,true);
     })
 
     this.rootdiv.addEventListener("keydown", (e) => {
