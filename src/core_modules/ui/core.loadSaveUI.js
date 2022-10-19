@@ -9,7 +9,6 @@
         polymorph_core.fire("userSave", d);
         let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs")) || {};
         recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
-        localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
     polymorph_core.addCreationOption = (id, name) => {
@@ -60,7 +59,7 @@
         });
         polymorph_core.autosaveCapacitor = new capacitor(500, 2000, polymorph_core.userSave);
         polymorph_core.on("updateItem", function(d) {
-            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !polymorph_core.isLoading) {
                 polymorph_core.autosaveCapacitor.submit();
             }
         });
@@ -191,7 +190,7 @@
     //a little nicety to warn user of unsaved items.
     polymorph_core.saved_until = Date.now();
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.loadProcess) { //if event was not triggered by a loading action
+        if (!e || !polymorph_core.isLoading) { //if event was not triggered by a loading action
             polymorph_core.last_change_time = Date.now();
         }
     });

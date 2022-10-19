@@ -74,7 +74,7 @@ polymorph_core.registerSaveSource("gitlite2", function (save_source_data) {
                 }
             } catch (e) {
                 console.log(e);
-                alert("Warning: error with gitlite source: " + e);
+                polymorph_core.showNotification('Gitlite Save Failed', 'error');
                 return;
             }
         }

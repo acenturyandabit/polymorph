@@ -271,17 +271,17 @@ function _polymorph_core() {
     })
 
     //Document level functions
-    this.updateSettings = (isLoading) => {
+    this.updateSettings = () => {
         this.documentTitleElement.innerText = this.items._meta.displayName;
         if (!polymorph_core.isStaticMode()) {
             document.querySelector("title").innerHTML =
                 this.items._meta.displayName + " - Polymorph";
         }
-        if (!isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
+        if (!polymorph_core.isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
         this.fire("updateSettings");
     };
 
-    this.on("updateSettings", () => {
+    this.on("updateSettings", (d) => {
         this.fire("updateItem", { id: "_meta" });
     })
     let tc = new capacitor(1000, 10, () => {

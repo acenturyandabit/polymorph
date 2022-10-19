@@ -109,6 +109,9 @@ function _dateParser() {
         } else {
             result.endDate = new Date(result.date.getTime() + 1000 * 60 * 60);
         }
+        if (resolveToDate(refdate).getTime() == result.endDate.getTime()) {
+            throw "ERROR End date is the same as reference date, event has 0 duration; will cause infinite loop.";
+        }
         return result;
     };
 
@@ -145,7 +148,7 @@ function _dateParser() {
         else { options.endDate = resolveToDate(options.endDate); }
 
         // If the event is 'auto', then reset the startDate to now().
-        if (event.datestring.includes("auto")){
+        if (event.datestring.includes("auto")) {
             event.reference = new Date();
         }
 
@@ -207,7 +210,7 @@ function _dateParser() {
             }
         }
         // Sort the entries by recency
-        possibleDates.sort((a, b) => a.startDate - b.startDate);
+        possibleDates.sort((a, b) => a.date - b.date);
         // if global occurrencecount, take only the occurrences that matter.
         if (options.occurenceCount) {
             possibleDates = possibleDates.slice(0, options.occurenceCount);

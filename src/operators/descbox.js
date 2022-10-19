@@ -9,6 +9,7 @@ polymorph_core.registerOperator("descbox", {
     let defaultSettings = {
         property: "description",
         auxProperty: "title",
+        currentID: container.id,
         showTags: false
     };
 
@@ -204,7 +205,7 @@ polymorph_core.registerOperator("descbox", {
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
-            property: "currentItem",
+            property: "currentID",
             label: "Item to display:"
         }),
         property: new polymorph_core._option({

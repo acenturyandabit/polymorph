@@ -256,6 +256,10 @@ if (!isPhone()) {
             background: green;
         }
 
+        .notifArea>div.error{
+            background: red;
+        }
+
         </style>
         </div>
         `);

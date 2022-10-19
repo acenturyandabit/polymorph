@@ -406,17 +406,17 @@ function _polymorph_core() {
     })
 
     //Document level functions
-    this.updateSettings = (isLoading) => {
+    this.updateSettings = () => {
         this.documentTitleElement.innerText = this.items._meta.displayName;
         if (!polymorph_core.isStaticMode()) {
             document.querySelector("title").innerHTML =
                 this.items._meta.displayName + " - Polymorph";
         }
-        if (!isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
+        if (!polymorph_core.isLoading) this.filescreen.saveRecentDocument(this.currentDocID, undefined, this.items._meta.displayName);
         this.fire("updateSettings");
     };
 
-    this.on("updateSettings", () => {
+    this.on("updateSettings", (d) => {
         this.fire("updateItem", { id: "_meta" });
     })
     let tc = new capacitor(1000, 10, () => {
@@ -1436,15 +1436,18 @@ polymorph_core.on("titleButtonsReady", () => {
         }
         polymorph_core.fire('mergeBegin'); // for save sources to recognise that we are starting a merge.
 
+        polymorph_core.isLoading = true; // Global lock because all instances of updateItems needs to
         for (let i in data) {
             //shouldnt hurt to fire update on other items
             polymorph_core.fire('updateItem', { id: i, loadProcess: true });
         }
         //show the prevailing rect
+            // not trigger the updateRecentDocuments
         polymorph_core.switchView(polymorph_core.items._meta.currentView);
         polymorph_core.datautils.linkSanitize();
         polymorph_core.updateSettings(true);
         polymorph_core.fire('mergeComplete');
+        polymorph_core.isLoading = false;
     }
 
 })();
@@ -2010,7 +2013,6 @@ polymorph_core.on("titleButtonsReady", () => {
         polymorph_core.fire("userSave", d);
         let recents = JSON.parse(localStorage.getItem("__polymorph_recent_docs")) || {};
         recents[polymorph_core.currentDocID] = { url: window.location.href, displayName: polymorph_core.currentDoc.displayName };
-        localStorage.setItem("__polymorph_recent_docs", JSON.stringify(recents));
     };
 
     polymorph_core.addCreationOption = (id, name) => {
@@ -2061,7 +2063,7 @@ polymorph_core.on("titleButtonsReady", () => {
         });
         polymorph_core.autosaveCapacitor = new capacitor(500, 2000, polymorph_core.userSave);
         polymorph_core.on("updateItem", function(d) {
-            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !d.loadProcess) {
+            if (polymorph_core.userData.documents[polymorph_core.currentDocID].autosave && !polymorph_core.isSaving && !polymorph_core.isLoading) {
                 polymorph_core.autosaveCapacitor.submit();
             }
         });
@@ -2192,7 +2194,7 @@ polymorph_core.on("titleButtonsReady", () => {
     //a little nicety to warn user of unsaved items.
     polymorph_core.saved_until = Date.now();
     polymorph_core.on("updateItem", (e) => {
-        if (!e || !e.loadProcess) { //if event was not triggered by a loading action
+        if (!e || !polymorph_core.isLoading) { //if event was not triggered by a loading action
             polymorph_core.last_change_time = Date.now();
         }
     });
@@ -5122,6 +5124,10 @@ if (!isPhone()) {
             background: green;
         }
 
+        .notifArea>div.error{
+            background: red;
+        }
+
         </style>
         </div>
         `);
@@ -5680,6 +5686,9 @@ function _dateParser() {
         } else {
             result.endDate = new Date(result.date.getTime() + 1000 * 60 * 60);
         }
+        if (resolveToDate(refdate).getTime() == result.endDate.getTime()) {
+            throw "ERROR End date is the same as reference date, event has 0 duration; will cause infinite loop.";
+        }
         return result;
     };
 
@@ -5716,7 +5725,7 @@ function _dateParser() {
         else { options.endDate = resolveToDate(options.endDate); }
 
         // If the event is 'auto', then reset the startDate to now().
-        if (event.datestring.includes("auto")){
+        if (event.datestring.includes("auto")) {
             event.reference = new Date();
         }
 
@@ -5778,7 +5787,7 @@ function _dateParser() {
             }
         }
         // Sort the entries by recency
-        possibleDates.sort((a, b) => a.startDate - b.startDate);
+        possibleDates.sort((a, b) => a.date - b.date);
         // if global occurrencecount, take only the occurrences that matter.
         if (options.occurenceCount) {
             possibleDates = possibleDates.slice(0, options.occurenceCount);
@@ -7621,6 +7630,7 @@ polymorph_core.registerOperator("descbox", {
     let defaultSettings = {
         property: "description",
         auxProperty: "title",
+        currentID: container.id,
         showTags: false
     };
 
@@ -7816,7 +7826,7 @@ polymorph_core.registerOperator("descbox", {
             div: this.dialogDiv,
             type: "text",
             object: this.settings,
-            property: "currentItem",
+            property: "currentID",
             label: "Item to display:"
         }),
         property: new polymorph_core._option({
@@ -17452,7 +17462,7 @@ polymorph_core.registerSaveSource("gitlite2", function (save_source_data) {
                 }
             } catch (e) {
                 console.log(e);
-                alert("Warning: error with gitlite source: " + e);
+                polymorph_core.showNotification('Gitlite Save Failed', 'error');
                 return;
             }
         }
