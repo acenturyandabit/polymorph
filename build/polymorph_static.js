@@ -8962,8 +8962,10 @@ polymorph_core.registerOperator("workflow_gf", {
         }
     }
     this.rootdiv.addEventListener("beforeinput", (e) => {
-        if (e.data == "\\") checkBackslash(e.target);
-        e.preventDefault();
+        if (e.data == "\\") {
+            checkBackslash(e.target);
+            e.preventDefault();
+        }
     })
 
     this.rootdiv.addEventListener("keydown", (e) => {
