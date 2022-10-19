@@ -8949,7 +8949,11 @@ polymorph_core.registerOperator("workflow_gf", {
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
             let id = this.resolveSpan(e.target).id;
-            if (e.key == '\\') {
+            let lastKeyWasBackslash = e.key == '\\';
+            if (e.key=='Unidentified' && e.target.innerText.includes("\\")){
+                lastKeyWasBackslash = true;
+            }
+            if (lastKeyWasBackslash) {
                 // add curly brackets to the position
                 let selection = e.target.getRootNode().getSelection().getRangeAt(0);
                 console.log(selection);
