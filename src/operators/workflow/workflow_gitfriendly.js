@@ -131,7 +131,7 @@ polymorph_core.registerOperator("workflow_gf", {
     this.holdExpanded = {};
 
     // cache of item children, set by child when child is renderItem'd
-    let cachedChildren = {}; // key: id of children id
+    this.cachedChildren = {}; // key: id of children id
 
     let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
         let childrenDiv = this.getChildrenDiv(spanWithID);
@@ -139,7 +139,7 @@ polymorph_core.registerOperator("workflow_gf", {
             if (childrenDiv.style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
-        if (!cachedChildren[spanWithID.dataset.id] || !Object.keys(cachedChildren[spanWithID.dataset.id]).length) return;
+        if (!this.cachedChildren[spanWithID.dataset.id] || !Object.keys(this.cachedChildren[spanWithID.dataset.id]).length) return;
         if (!temporary) {
             delete this.holdExpanded[spanWithID.dataset.id];
             polymorph_core.items[spanWithID.dataset.id][this.settings.collapseProperty] = !toExpanded;
@@ -254,8 +254,8 @@ polymorph_core.registerOperator("workflow_gf", {
 
     //removes all parents of the item with id 'id'.
     let setParent = (id, newParent) => {
-        if (cachedChildren[polymorph_core.items[id][this.settings.parentProperty]] && cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id]) {
-            delete cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id];
+        if (this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]] && this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id]) {
+            delete this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id];
             bumpParentReorganise(polymorph_core.items[id][this.settings.parentProperty]);
         }
         polymorph_core.items[id][this.settings.parentProperty] = newParent;
@@ -266,7 +266,7 @@ polymorph_core.registerOperator("workflow_gf", {
         // add curly brackets to the position
         let selection = target.getRootNode().getSelection().getRangeAt(0);
         result = selection.commonAncestorContainer.textContent.split("");
-        result.splice(selection.startOffset,0, "\\", "{", "}");
+        result.splice(selection.startOffset, 0, "\\", "{", "}");
         result = result.join("");
         let oldStart = selection.startOffset;
         selection.commonAncestorContainer.textContent = result;
@@ -724,7 +724,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.deleteItem = (id) => {
         //Find its parent and nerf it - if it doesnt have a parent, take it off the rootitems.
-        let ccid = cachedChildren[polymorph_core.items[id][this.settings.parentProperty]];
+        let ccid = this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]];
         if (ccid && ccid[id]) delete ccid[id];
         container.fire("updateItem", { id: id, sender: this });
     }
@@ -922,8 +922,8 @@ polymorph_core.registerOperator("workflow_gf", {
             //check if the item's parent exists
             let parentID = polymorph_core.items[id][this.settings.parentProperty] || "";
             let myOrder = polymorph_core.items[id][this.settings.orderProperty] || 0;
-            if (!cachedChildren[parentID]) cachedChildren[parentID] = {};
-            cachedChildren[parentID][id] = myOrder;
+            if (!this.cachedChildren[parentID]) this.cachedChildren[parentID] = {};
+            this.cachedChildren[parentID][id] = myOrder;
             if (!fromParent && !(this.settings.focusExclusionMode && id == this.settings.focusExclusionID)) bumpParentReorganise(parentID);
 
             //let my parent know it has children either when it renders or if it has already rendered, now.
@@ -1036,7 +1036,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 // rerender my children
                 /////
 
-                if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
+                if (this.cachedChildren[id] && Object.keys(this.cachedChildren[id]).length) {
                     // I have children yay
                     let shouldBeCollapsedNow = !(id in this.holdExpanded) && polymorph_core.items[id][this.settings.collapseProperty];
                     let collapseDiv = this.getChildrenDiv(thisIDSpan);
@@ -1055,9 +1055,9 @@ polymorph_core.registerOperator("workflow_gf", {
                         this.renderedItemCache[id][this.settings.collapseProperty] = shouldBeCollapsedNow;
                     }
                     // might be wise to rerender them if they dont exist yet
-                    // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
+                    // for everything in this.cachedChildren[id], if it is still relevant but not one of my children, then render it.
                     let renderedChildren = Array.from(collapseDiv.children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
-                    for (let i in cachedChildren[id]) {
+                    for (let i in this.cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
                             this.renderItem(i, "pd");
                         }
@@ -1121,6 +1121,23 @@ polymorph_core.registerOperator("workflow_gf", {
             // needs to be here so that when item is instantialised, items will render.
         }
     }
+
+    // Mobile bits and pieces
+    this.setMobileFocused = () => {
+        // Permanently show the virtual keyboard
+        if ('virtualKeyboard' in navigator) {
+            // The VirtualKeyboard API is supported!
+            navigator.virtualKeyboard.overlaysContent = true;
+            navigator.virtualKeyboard.show();
+          }
+    }
+
+    this.clearMobileFocused = () => {
+        if ('virtualKeyboard' in navigator) {
+            navigator.virtualKeyboard.overlaysContent = false;
+        }
+    }
+
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");

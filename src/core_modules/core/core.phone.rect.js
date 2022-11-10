@@ -120,16 +120,32 @@ if (isPhone()) {
         this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
 
         this.switchOperator = (id) => {
+            // Hide the sidebar menu for mobile. 
             polymorph_core.toggleMenu(false);
+
+            // Hide all other containers
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
+
+            // Show the correct container
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
+            
+            // Update _meta item to remember which container is focused
             polymorph_core.currentOperator = id;
             polymorph_core.items._meta.focusedContainer = id;
             polymorph_core.fire("updateItem", { id: "_meta", sender: this });
 
+            // Change the operator name at the top of the screen
             document.querySelector(".operatorName").parentElement.style.display = "inline";
             document.querySelector(".operatorName").innerText = polymorph_core.items[id]._od.tabbarName;
 
+            if (polymorph_core.lastFocusedMobileOperator){
+                if (polymorph_core.lastFocusedMobileOperator.clearMobileFocused){
+                    polymorph_core.lastFocusedMobileOperator.clearMobileFocused();
+                }
+            }
+            if (polymorph_core.containers[id].operator.setMobileFocused){
+                polymorph_core.containers[id].operator.setMobileFocused();
+            }
             polymorph_core.containers[id].refresh();
         }
 
@@ -203,6 +219,7 @@ if (isPhone()) {
         this.toSaveData = () => {};
     };
 
+    // For switching views. A view is a set of rects and oeprators. Having multiple views never really took off. This is now just a loading function for the main view.
     polymorph_core.switchView = (id) => {
         polymorph_core.currentDoc.currentView = id;
         document.querySelector("#rectList").children[0].remove();
