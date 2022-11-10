@@ -8974,7 +8974,9 @@ polymorph_core.registerOperator("workflow_gf", {
         // add curly brackets to the position
         let selection = target.getRootNode().getSelection().getRangeAt(0);
         let result = selection.commonAncestorContainer.textContent.split("");
-        result.splice(selection.startOffset, 0, "\\", "{", "}");
+        // if we are on phone, need to trim off the "\" that is added from beforeInput
+        let iphn = isPhone() ? 1 : 0;
+        result.splice(selection.startOffset - iphn, iphn, "\\", "{", "}");
         result = result.join("");
         let oldStart = selection.startOffset;
         selection.commonAncestorContainer.textContent = result;
@@ -8989,12 +8991,13 @@ polymorph_core.registerOperator("workflow_gf", {
     if (isPhone()) {
         // Some mobile specific stuff
 
-        this.rootdiv.addEventListener("beforeinput", (e) => {
-            if (e.data == "\\") {
-                checkBackslash(e.target);
-                e.preventDefault();
-            }
-        })
+        // this.rootdiv.addEventListener("beforeinput", (e) => {
+        //     if (e.data == "\\") {
+        //         // mobile slashes are cursed, save this for another time
+        //         checkBackslash(e.target);
+        //         e.preventDefault();
+        //     }
+        // })
 
         // Enter fires twice for some reason; debounce
         let enterDebounceEventTime = 0;
@@ -9143,10 +9146,11 @@ polymorph_core.registerOperator("workflow_gf", {
                         focusOnElement(preParent.children[0].children[1], -1);
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
-
-                    if (options && options.eventToPrevent) {
-                        options.eventToPrevent.preventDefault();
+                    // Phone focus keyboard reveal can only be triggered from a user action, so we must action the focusItem here rather than in the setTimeout
+                    if (isPhone()) {
+                        triggerFocus();
                     }
+
                 }
                 break;
             case "Enter":
@@ -9323,13 +9327,7 @@ polymorph_core.registerOperator("workflow_gf", {
             if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key == 'Unidentified') {
                 keyPressed = "Enter";
             }
-            handleKeyEvent(keyPressed, id, { eventToPrevent: e });
-
-            // Phone focus keyboard reveal can only be triggered from a user action, so we must action the focusItem here rather than in the setTimeout
-            if (isPhone()) {
-                triggerFocus();
-            }
-
+            handleKeyEvent(keyPressed, id);
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
                 e.preventDefault();
@@ -9867,23 +9865,6 @@ polymorph_core.registerOperator("workflow_gf", {
             }
             // This is called when the parent container is resized.
             // needs to be here so that when item is instantialised, items will render.
-        }
-    }
-
-    // Mobile bits and pieces
-    this.setMobileFocused = () => {
-        // Permanently show the virtual keyboard
-        if ('virtualKeyboard' in navigator) {
-            // The VirtualKeyboard API is supported!
-            navigator.virtualKeyboard.overlaysContent = true;
-            navigator.virtualKeyboard.show();
-            console.log("vkey ok");
-        }
-    }
-
-    this.clearMobileFocused = () => {
-        if ('virtualKeyboard' in navigator) {
-            navigator.virtualKeyboard.overlaysContent = false;
         }
     }
 
