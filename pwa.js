@@ -33,7 +33,7 @@ var _pwaManager = (() => {
     let serviceWorkerSettings = {
         urlsToCache: [
             "src/utils.js",
-            "src/filemanager.js",
+            "filemanager.js",
             "src/core.js",
             "src/core_modules/ui/core.tutorial.js",
             "src/core_modules/core/core.docLoading.js",
@@ -186,7 +186,7 @@ var _pwaManager = (() => {
             event.waitUntil(
                 caches.open(serviceWorkerSettings.CACHE_NAME).then(function(cache) {
                     dbglog("Opened cache: " + serviceWorkerSettings.CACHE_NAME);
-                    return cache.addAll(serviceWorkerSettings.urlsToCache);
+                    return cache.addAll(serviceWorkerSettings.urlsToCache).catch((e)=>console.log(e));
                 })
             );
             dbglog("hopefully everything is ok... ");
