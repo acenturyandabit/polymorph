@@ -8878,6 +8878,23 @@ polymorph_core.registerOperator("workflow_gf", {
         return id;
     }
 
+
+
+    let lastFocusBlob = {};
+
+    let triggerFocus = () => {
+        lastFocusBlob.range.setStart(lastFocusBlob.newP, lastFocusBlob.index);
+        lastFocusBlob.sel.removeAllRanges();
+        lastFocusBlob.sel.addRange(lastFocusBlob.range);
+        if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
+        lastFocusBlob.el.classList.add("tmpFocused");
+        lastFocusBlob.el.focus();
+        lastFocusBlob.el.click(); // for phones
+        restoreClickFlag = false;
+        this.setShowPlaintext(lastFocusBlob.el);
+        lastFocusBlob.el.scrollIntoViewIfNeeded();
+    }
+
     let focusOnElement = (el, index) => {
         let range = document.createRange();
         let newP = el;
@@ -8894,18 +8911,8 @@ polymorph_core.registerOperator("workflow_gf", {
         range.collapse(true);
         let sel = this.rootdiv.getRootNode().getSelection();
         restoreClickFlag = true;
-        setTimeout(() => {
-            range.setStart(newP, index);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
-            el.classList.add("tmpFocused");
-            el.focus();
-            el.click(); // for phones
-            restoreClickFlag = false;
-            this.setShowPlaintext(el);
-            el.scrollIntoViewIfNeeded();
-        });
+        lastFocusBlob = { el, sel, newP, index, range };
+        setTimeout(triggerFocus);
     }
 
     let focusOnPrev = (etarget) => {
@@ -8966,7 +8973,7 @@ polymorph_core.registerOperator("workflow_gf", {
     let checkBackslash = (target) => {
         // add curly brackets to the position
         let selection = target.getRootNode().getSelection().getRangeAt(0);
-        result = selection.commonAncestorContainer.textContent.split("");
+        let result = selection.commonAncestorContainer.textContent.split("");
         result.splice(selection.startOffset, 0, "\\", "{", "}");
         result = result.join("");
         let oldStart = selection.startOffset;
@@ -8978,12 +8985,36 @@ polymorph_core.registerOperator("workflow_gf", {
             focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
         }
     }
-    this.rootdiv.addEventListener("beforeinput", (e) => {
-        if (e.data == "\\") {
-            checkBackslash(e.target);
-            e.preventDefault();
-        }
-    })
+
+    if (isPhone()) {
+        // Some mobile specific stuff
+
+        this.rootdiv.addEventListener("beforeinput", (e) => {
+            if (e.data == "\\") {
+                checkBackslash(e.target);
+                e.preventDefault();
+            }
+        })
+
+        // Enter fires twice for some reason; debounce
+        let enterDebounceEventTime = 0;
+
+        this.rootdiv.addEventListener("input", (e) => {
+            // This is an edge case for new items that only fires when enter is pressed at the end of a line. 
+            // Otherwise keydown fires.
+            if (e.data.endsWith("\n")) {
+                // trim the enter off
+                let selection = e.target.innerText;
+                if (e.timeStamp - enterDebounceEventTime > 300) { // millis
+                    // Since this fires on new item, force to put the item after.
+                    // The selection-based item positioning fails becuase the editor changes the selection to something weird
+                    handleKeyEvent("Enter", e.target.parentElement.parentElement.dataset.id, { forceNewItemAfter: true });
+                }
+                e.target.innerText = selection.slice(0, selection.length - 1);
+                enterDebounceEventTime = e.timeStamp;
+            }
+        })
+    }
 
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
@@ -9069,7 +9100,7 @@ polymorph_core.registerOperator("workflow_gf", {
         alt: false
     };
     let disableSortOnShuffle = false;
-    let handleKeyEvent = (key, id) => {
+    let handleKeyEvent = (key, id, options) => {
         let spanWithID = this.renderedItemCache[id].el;
         disableSortOnShuffle = false;
         switch (key) {
@@ -9103,6 +9134,8 @@ polymorph_core.registerOperator("workflow_gf", {
                     container.fire("updateItem", { id: id, sender: this });
                     container.fire("deleteItem", { id: id, sender: this });
 
+                    //focus on the previous item if exists
+                    // Essential for making the virtual keyboard not hide.
                     if (preParent && preParent.dataset.id) {
                         // attach the remaining text to the upper parent
                         polymorph_core.items[preParent.dataset.id][this.settings.titleProperty] += remainingText;
@@ -9110,7 +9143,10 @@ polymorph_core.registerOperator("workflow_gf", {
                         focusOnElement(preParent.children[0].children[1], -1);
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
-                    //focus on the previous item if exists, otherwise on next element
+
+                    if (options && options.eventToPrevent) {
+                        options.eventToPrevent.preventDefault();
+                    }
                 }
                 break;
             case "Enter":
@@ -9159,6 +9195,8 @@ polymorph_core.registerOperator("workflow_gf", {
                             shouldBefore = false;
                         }
                     }
+
+                    if (options && options.forceNewItemAfter) shouldBefore = false;
 
                     // place the item near the current item
                     setParent(newID, polymorph_core.items[id][this.settings.parentProperty]);
@@ -9285,7 +9323,12 @@ polymorph_core.registerOperator("workflow_gf", {
             if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key == 'Unidentified') {
                 keyPressed = "Enter";
             }
-            handleKeyEvent(keyPressed, id);
+            handleKeyEvent(keyPressed, id, { eventToPrevent: e });
+
+            // Phone focus keyboard reveal can only be triggered from a user action, so we must action the focusItem here rather than in the setTimeout
+            if (isPhone()) {
+                triggerFocus();
+            }
 
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
@@ -9452,6 +9495,10 @@ polymorph_core.registerOperator("workflow_gf", {
         if (!container.visible()) return;
         if (restoreClickFlag) return;
         let root = focusObj.root;
+        if (root.contentEditable != "true") {
+            // We probably deleted the element, abort
+            return;
+        }
         let offset = focusObj.offset;
         let range = document.createRange();
         if (root.firstChild) {
@@ -9830,7 +9877,8 @@ polymorph_core.registerOperator("workflow_gf", {
             // The VirtualKeyboard API is supported!
             navigator.virtualKeyboard.overlaysContent = true;
             navigator.virtualKeyboard.show();
-          }
+            console.log("vkey ok");
+        }
     }
 
     this.clearMobileFocused = () => {
