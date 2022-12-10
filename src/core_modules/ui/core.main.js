@@ -174,7 +174,7 @@ if (!isPhone()) {
     polymorph_core.on("UIstart", () => {
         if (!polymorph_core.isStaticMode()) {
             polymorph_core.topbar.add("File/Open").addEventListener("click", () => {
-                window.open(window.location.pathname + "?o", "_blank");
+                window.location.href=window.location.pathname + "?o";
             })
             polymorph_core.topbar.add("File/New").addEventListener("click", () => {
                 window.open(window.location.pathname + "?o", "_blank");

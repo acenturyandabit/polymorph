@@ -3330,16 +3330,32 @@ if (isPhone()) {
         this.containerVisible = (containerID) => polymorph_core.currentOperator == containerID;
 
         this.switchOperator = (id) => {
+            // Hide the sidebar menu for mobile. 
             polymorph_core.toggleMenu(false);
+
+            // Hide all other containers
             Array.from(document.querySelectorAll("#body>*")).forEach(e => e.style.display = "none");
+
+            // Show the correct container
             document.querySelector(`#body>[data-container='${id}']`).style.display = "block";
+            
+            // Update _meta item to remember which container is focused
             polymorph_core.currentOperator = id;
             polymorph_core.items._meta.focusedContainer = id;
             polymorph_core.fire("updateItem", { id: "_meta", sender: this });
 
+            // Change the operator name at the top of the screen
             document.querySelector(".operatorName").parentElement.style.display = "inline";
             document.querySelector(".operatorName").innerText = polymorph_core.items[id]._od.tabbarName;
 
+            if (polymorph_core.lastFocusedMobileOperator){
+                if (polymorph_core.lastFocusedMobileOperator.clearMobileFocused){
+                    polymorph_core.lastFocusedMobileOperator.clearMobileFocused();
+                }
+            }
+            if (polymorph_core.containers[id].operator.setMobileFocused){
+                polymorph_core.containers[id].operator.setMobileFocused();
+            }
             polymorph_core.containers[id].refresh();
         }
 
@@ -3413,6 +3429,7 @@ if (isPhone()) {
         this.toSaveData = () => {};
     };
 
+    // For switching views. A view is a set of rects and oeprators. Having multiple views never really took off. This is now just a loading function for the main view.
     polymorph_core.switchView = (id) => {
         polymorph_core.currentDoc.currentView = id;
         document.querySelector("#rectList").children[0].remove();
@@ -8842,7 +8859,7 @@ polymorph_core.registerOperator("workflow_gf", {
     this.holdExpanded = {};
 
     // cache of item children, set by child when child is renderItem'd
-    let cachedChildren = {}; // key: id of children id
+    this.cachedChildren = {}; // key: id of children id
 
     let setExpandedState = (spanWithID, toExpanded, dontFocus, temporary) => {
         let childrenDiv = this.getChildrenDiv(spanWithID);
@@ -8850,7 +8867,7 @@ polymorph_core.registerOperator("workflow_gf", {
             if (childrenDiv.style.display == "none") toExpanded = true;
             else toExpanded = false;
         }
-        if (!cachedChildren[spanWithID.dataset.id] || !Object.keys(cachedChildren[spanWithID.dataset.id]).length) return;
+        if (!this.cachedChildren[spanWithID.dataset.id] || !Object.keys(this.cachedChildren[spanWithID.dataset.id]).length) return;
         if (!temporary) {
             delete this.holdExpanded[spanWithID.dataset.id];
             polymorph_core.items[spanWithID.dataset.id][this.settings.collapseProperty] = !toExpanded;
@@ -8888,6 +8905,23 @@ polymorph_core.registerOperator("workflow_gf", {
         return id;
     }
 
+
+
+    let lastFocusBlob = {};
+
+    let triggerFocus = () => {
+        lastFocusBlob.range.setStart(lastFocusBlob.newP, lastFocusBlob.index);
+        lastFocusBlob.sel.removeAllRanges();
+        lastFocusBlob.sel.addRange(lastFocusBlob.range);
+        if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
+        lastFocusBlob.el.classList.add("tmpFocused");
+        lastFocusBlob.el.focus();
+        lastFocusBlob.el.click(); // for phones
+        restoreClickFlag = false;
+        this.setShowPlaintext(lastFocusBlob.el);
+        lastFocusBlob.el.scrollIntoViewIfNeeded();
+    }
+
     let focusOnElement = (el, index) => {
         let range = document.createRange();
         let newP = el;
@@ -8904,18 +8938,8 @@ polymorph_core.registerOperator("workflow_gf", {
         range.collapse(true);
         let sel = this.rootdiv.getRootNode().getSelection();
         restoreClickFlag = true;
-        setTimeout(() => {
-            range.setStart(newP, index);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
-            el.classList.add("tmpFocused");
-            el.focus();
-            el.click(); // for phones
-            restoreClickFlag = false;
-            this.setShowPlaintext(el);
-            el.scrollIntoViewIfNeeded();
-        });
+        lastFocusBlob = { el, sel, newP, index, range };
+        setTimeout(triggerFocus);
     }
 
     let focusOnPrev = (etarget) => {
@@ -8965,8 +8989,8 @@ polymorph_core.registerOperator("workflow_gf", {
 
     //removes all parents of the item with id 'id'.
     let setParent = (id, newParent) => {
-        if (cachedChildren[polymorph_core.items[id][this.settings.parentProperty]] && cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id]) {
-            delete cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id];
+        if (this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]] && this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id]) {
+            delete this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]][id];
             bumpParentReorganise(polymorph_core.items[id][this.settings.parentProperty]);
         }
         polymorph_core.items[id][this.settings.parentProperty] = newParent;
@@ -8976,8 +9000,10 @@ polymorph_core.registerOperator("workflow_gf", {
     let checkBackslash = (target) => {
         // add curly brackets to the position
         let selection = target.getRootNode().getSelection().getRangeAt(0);
-        result = selection.commonAncestorContainer.textContent.split("");
-        result.splice(selection.startOffset,0, "\\", "{", "}");
+        let result = selection.commonAncestorContainer.textContent.split("");
+        // if we are on phone, need to trim off the "\" that is added from beforeInput
+        let iphn = isPhone() ? 1 : 0;
+        result.splice(selection.startOffset - iphn, iphn, "\\", "{", "}");
         result = result.join("");
         let oldStart = selection.startOffset;
         selection.commonAncestorContainer.textContent = result;
@@ -8988,10 +9014,37 @@ polymorph_core.registerOperator("workflow_gf", {
             focusOnElement(selection.commonAncestorContainer.parentElement, oldStart + 2);
         }
     }
-    this.rootdiv.addEventListener("beforeinput", (e) => {
-        if (e.data == "\\") checkBackslash(e.target);
-        e.preventDefault();
-    })
+
+    if (isPhone()) {
+        // Some mobile specific stuff
+
+        // this.rootdiv.addEventListener("beforeinput", (e) => {
+        //     if (e.data == "\\") {
+        //         // mobile slashes are cursed, save this for another time
+        //         checkBackslash(e.target);
+        //         e.preventDefault();
+        //     }
+        // })
+
+        // Enter fires twice for some reason; debounce
+        let enterDebounceEventTime = 0;
+
+        this.rootdiv.addEventListener("input", (e) => {
+            // This is an edge case for new items that only fires when enter is pressed at the end of a line. 
+            // Otherwise keydown fires.
+            if (e.data.endsWith("\n")) {
+                // trim the enter off
+                let selection = e.target.innerText;
+                if (e.timeStamp - enterDebounceEventTime > 300) { // millis
+                    // Since this fires on new item, force to put the item after.
+                    // The selection-based item positioning fails becuase the editor changes the selection to something weird
+                    handleKeyEvent("Enter", e.target.parentElement.parentElement.dataset.id, { forceNewItemAfter: true });
+                }
+                e.target.innerText = selection.slice(0, selection.length - 1);
+                enterDebounceEventTime = e.timeStamp;
+            }
+        })
+    }
 
     this.rootdiv.addEventListener("keydown", (e) => {
         if (e.target.matches(`span[data-id] span`)) {
@@ -9077,7 +9130,7 @@ polymorph_core.registerOperator("workflow_gf", {
         alt: false
     };
     let disableSortOnShuffle = false;
-    let handleKeyEvent = (key, id) => {
+    let handleKeyEvent = (key, id, options) => {
         let spanWithID = this.renderedItemCache[id].el;
         disableSortOnShuffle = false;
         switch (key) {
@@ -9111,6 +9164,8 @@ polymorph_core.registerOperator("workflow_gf", {
                     container.fire("updateItem", { id: id, sender: this });
                     container.fire("deleteItem", { id: id, sender: this });
 
+                    //focus on the previous item if exists
+                    // Essential for making the virtual keyboard not hide.
                     if (preParent && preParent.dataset.id) {
                         // attach the remaining text to the upper parent
                         polymorph_core.items[preParent.dataset.id][this.settings.titleProperty] += remainingText;
@@ -9118,7 +9173,11 @@ polymorph_core.registerOperator("workflow_gf", {
                         focusOnElement(preParent.children[0].children[1], -1);
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
-                    //focus on the previous item if exists, otherwise on next element
+                    // Phone focus keyboard reveal can only be triggered from a user action, so we must action the focusItem here rather than in the setTimeout
+                    if (isPhone()) {
+                        triggerFocus();
+                    }
+
                 }
                 break;
             case "Enter":
@@ -9167,6 +9226,8 @@ polymorph_core.registerOperator("workflow_gf", {
                             shouldBefore = false;
                         }
                     }
+
+                    if (options && options.forceNewItemAfter) shouldBefore = false;
 
                     // place the item near the current item
                     setParent(newID, polymorph_core.items[id][this.settings.parentProperty]);
@@ -9294,7 +9355,6 @@ polymorph_core.registerOperator("workflow_gf", {
                 keyPressed = "Enter";
             }
             handleKeyEvent(keyPressed, id);
-
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
                 e.preventDefault();
@@ -9433,7 +9493,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
     this.deleteItem = (id) => {
         //Find its parent and nerf it - if it doesnt have a parent, take it off the rootitems.
-        let ccid = cachedChildren[polymorph_core.items[id][this.settings.parentProperty]];
+        let ccid = this.cachedChildren[polymorph_core.items[id][this.settings.parentProperty]];
         if (ccid && ccid[id]) delete ccid[id];
         container.fire("updateItem", { id: id, sender: this });
     }
@@ -9460,6 +9520,10 @@ polymorph_core.registerOperator("workflow_gf", {
         if (!container.visible()) return;
         if (restoreClickFlag) return;
         let root = focusObj.root;
+        if (root.contentEditable != "true") {
+            // We probably deleted the element, abort
+            return;
+        }
         let offset = focusObj.offset;
         let range = document.createRange();
         if (root.firstChild) {
@@ -9631,8 +9695,8 @@ polymorph_core.registerOperator("workflow_gf", {
             //check if the item's parent exists
             let parentID = polymorph_core.items[id][this.settings.parentProperty] || "";
             let myOrder = polymorph_core.items[id][this.settings.orderProperty] || 0;
-            if (!cachedChildren[parentID]) cachedChildren[parentID] = {};
-            cachedChildren[parentID][id] = myOrder;
+            if (!this.cachedChildren[parentID]) this.cachedChildren[parentID] = {};
+            this.cachedChildren[parentID][id] = myOrder;
             if (!fromParent && !(this.settings.focusExclusionMode && id == this.settings.focusExclusionID)) bumpParentReorganise(parentID);
 
             //let my parent know it has children either when it renders or if it has already rendered, now.
@@ -9745,7 +9809,7 @@ polymorph_core.registerOperator("workflow_gf", {
                 // rerender my children
                 /////
 
-                if (cachedChildren[id] && Object.keys(cachedChildren[id]).length) {
+                if (this.cachedChildren[id] && Object.keys(this.cachedChildren[id]).length) {
                     // I have children yay
                     let shouldBeCollapsedNow = !(id in this.holdExpanded) && polymorph_core.items[id][this.settings.collapseProperty];
                     let collapseDiv = this.getChildrenDiv(thisIDSpan);
@@ -9764,9 +9828,9 @@ polymorph_core.registerOperator("workflow_gf", {
                         this.renderedItemCache[id][this.settings.collapseProperty] = shouldBeCollapsedNow;
                     }
                     // might be wise to rerender them if they dont exist yet
-                    // for everything in cachedChildren[id], if it is still relevant but not one of my children, then render it.
+                    // for everything in this.cachedChildren[id], if it is still relevant but not one of my children, then render it.
                     let renderedChildren = Array.from(collapseDiv.children).filter((i) => !(i.classList.contains("cursorspan"))).map(i => i.dataset.id).reduce((p, i) => { p[i] = true; return p }, {});
-                    for (let i in cachedChildren[id]) {
+                    for (let i in this.cachedChildren[id]) {
                         if (!renderedChildren[i] && this.itemRelevant(i)) {
                             this.renderItem(i, "pd");
                         }
@@ -9830,6 +9894,7 @@ polymorph_core.registerOperator("workflow_gf", {
             // needs to be here so that when item is instantialised, items will render.
         }
     }
+
 
     //Handle the settings dialog click!
     this.dialogDiv = document.createElement("div");
