@@ -8892,6 +8892,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
 
     let lastFocusBlob = {};
+    let lastFocusedID;
 
     let triggerFocus = () => {
         lastFocusBlob.range.setStart(lastFocusBlob.newP, lastFocusBlob.index);
@@ -8906,13 +8907,17 @@ polymorph_core.registerOperator("workflow_gf", {
         lastFocusBlob.el.scrollIntoViewIfNeeded();
     }
 
-    let focusOnElement = (el, index) => {
+    let focusOnElement = (el, index, focusImmediate = false) => {
         let range = document.createRange();
         let newP = el;
+        // We typically call focusElement on the actual text which is two layers deep.
+        lastFocusedID = el.parentElement.parentElement.dataset.id;
+        console.log("LFI changed to" + lastFocusedID)
         if (!newP.childNodes.length) {
             newP.focus();
             return;
         }
+        // Find the text node connected to the element
         if (!index) index = 0;
         while (newP.childNodes[0]) newP = newP.childNodes[0];
         if (index < 0) {
@@ -8923,7 +8928,10 @@ polymorph_core.registerOperator("workflow_gf", {
         let sel = this.rootdiv.getRootNode().getSelection();
         restoreClickFlag = true;
         lastFocusBlob = { el, sel, newP, index, range };
-        setTimeout(triggerFocus);
+
+        // wrap below in 'if' otherwise Enter doesn't work on mobile
+        if (focusImmediate) triggerFocus(); // Add because the focus needs to be directly on the click event for mobile
+        else setTimeout(triggerFocus);
     }
 
     let focusOnPrev = (etarget) => {
@@ -9149,17 +9157,17 @@ polymorph_core.registerOperator("workflow_gf", {
                     container.fire("deleteItem", { id: id, sender: this });
 
                     //focus on the previous item if exists
-                    // Essential for making the virtual keyboard not hide.
+                    // Essential for making the virtual keyboard not hide on mobile.
                     if (preParent && preParent.dataset.id) {
                         // attach the remaining text to the upper parent
                         polymorph_core.items[preParent.dataset.id][this.settings.titleProperty] += remainingText;
                         this.renderItem(preParent.dataset.id);
-                        focusOnElement(preParent.children[0].children[1], -1);
+                        focusOnElement(preParent.children[0].children[1], -1, isPhone());
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
-                    // Phone focus keyboard reveal can only be triggered from a user action, so we must action the focusItem here rather than in the setTimeout
-                    if (isPhone()) {
-                        triggerFocus();
+
+                    if (isPhone() && options && options.eventToDisable){
+                        options.eventToDisable.preventDefault();
                     }
 
                 }
@@ -9302,7 +9310,7 @@ polymorph_core.registerOperator("workflow_gf", {
                             this.renderItem(toExpand.dataset.id, "pd");
                             toExpand = toExpand.parentElement.parentElement;
                         }
-                        focusOnElement(spanWithID.children[0].children[1]);
+                        focusOnElement(spanWithID.children[0].children[1], undefined, true);
                     } else {
                         // shift tab: remove the child from the parent
                         let wasme = spanWithID.children[0].children[1];
@@ -9338,7 +9346,7 @@ polymorph_core.registerOperator("workflow_gf", {
             if (!phonePrevText.includes("\n") && e.target.innerText.includes("\n") && e.key == 'Unidentified') {
                 keyPressed = "Enter";
             }
-            handleKeyEvent(keyPressed, id);
+            handleKeyEvent(keyPressed, id, { eventToDisable: e });
             // if enter or tab: 
             if (e.key == "Enter" || e.key == "Tab") {
                 e.preventDefault();
@@ -9362,7 +9370,6 @@ polymorph_core.registerOperator("workflow_gf", {
     })
 
     // Bottom control panel for phone
-    let lastFocusedID = undefined;
     let modifierButtons = Array.from(this.rootdiv.querySelector(".bottomControlPanel").children).filter(i => i.classList.contains("modifier"));
     this.rootdiv.querySelector(".bottomControlPanel").addEventListener("click", (e) => {
         if (e.target.matches("button")) {
