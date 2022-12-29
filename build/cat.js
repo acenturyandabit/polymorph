@@ -3506,10 +3506,13 @@ if (isPhone()) {
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
         this.tiedToMe = [];
         this.tieRect = function(id) { //tie a child rect.
-            while (polymorph_core.rects[id].listContainer.children.length > 1) {
-                this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
+            if (polymorph_core.rects[id].listContainer != this.listContainer){
+                // Bubble up listcontainers so there is only one per 'set' of rects
+                while (polymorph_core.rects[id].listContainer.children.length > 1) {
+                    this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
+                }
+                polymorph_core.rects[id].listContainer = this.listContainer;
             }
-            polymorph_core.rects[id].listContainer = this.listContainer;
             this.tiedToMe.push(id);
             polymorph_core.rects[id].adjustTies();
         }
@@ -8638,7 +8641,7 @@ function workflowy_gitfriendly_search() {
 };
 
 let workflowy_gitfriendly_extend_contextMenu = function () {
-    this.contextTarget = undefined; // An item with a dataset-id.
+    this.contextTarget = undefined; // A HTML element with a dataset-id.
     let contextmenu;
     let recordContexted = (e) => {
         this.contextTarget = e.target;
@@ -8667,6 +8670,7 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         <ul class="submenu">
             <li data-action="copylist">Copy item tree for pasting</li>
             <li data-action="copylistinternal">Copy item tree internally</li>
+            <li data-action="copylistexternal">Copy for workflowy externally</li>
         </ul>
     </li>
     <li data-action="pasteInternal">Paste items</li>
@@ -8789,6 +8793,30 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
+    this.copyToClipboard = (text) => {
+        // Copies a string to the clipboard. 
+        if (window.clipboardData && window.clipboardData.setData) {
+            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+            return window.clipboardData.setData("Text", text);
+        } else
+            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+                let textarea = document.createElement("textarea");
+                textarea.textContent = text;
+                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+                } catch (ex) {
+                    console.warn("Copy to clipboard failed.", ex);
+                    return false;
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+        return true;
+    }
+
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
@@ -8817,28 +8845,11 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
             // Replace extra newlines
             text = text.replace("-\n", "-");
         */
-        // Copies a string to the clipboard. 
-        if (window.clipboardData && window.clipboardData.setData) {
-            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-            return window.clipboardData.setData("Text", text);
-        } else
-            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-                let textarea = document.createElement("textarea");
-                textarea.textContent = text;
-                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
-                } catch (ex) {
-                    console.warn("Copy to clipboard failed.", ex);
-                    return false;
-                } finally {
-                    document.body.removeChild(textarea);
-                }
-            }
-        return true;
+        this.copyToClipboard(text);
     }
+
+    this.contextMenuActions["copylistexternal"] = this.copylistExternal
+
     this.contextMenuActions["delitm"] = (e) => {
         let id = this.contextTarget.dataset.id;
         delete polymorph_core.items[id][this.settings.filter];
@@ -8853,12 +8864,12 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
-    this.contextMenuActions["sortbydate"] = (e) =>{
+    this.contextMenuActions["sortbydate"] = (e) => {
         let id = this.contextTarget.dataset.id;
         let parentID = polymorph_core.items[id][this.settings.parentProperty];
         this.sortParent(parentID, "DATE");
     }
-    this.contextMenuActions["sortbyalpha"] = (e) =>{
+    this.contextMenuActions["sortbyalpha"] = (e) => {
         let id = this.contextTarget.dataset.id;
         let parentID = polymorph_core.items[id][this.settings.parentProperty];
         this.sortParent(parentID, "ALPHA");
@@ -8915,6 +8926,74 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
     // }
 };
 
+let workflow_recursive_paste = function () {
+    const mappings = ["parentProperty","orderProperty","titleProperty","filter"];
+
+    this.check_workflow_recursive_paste = (text, rootID) => {
+        if (text.startsWith("__WORKFLOWY_IMPORT__")) {
+            try {
+                const jsonData = JSON.parse(text.slice("__WORKFLOWY_IMPORT__".length));
+                // This will be a dict of items
+                // Create the new items with new IDs
+                let oldID_newID_map = {};
+                for (let oldID in jsonData.items) {
+                    let newID = this.createItem();
+                    oldID_newID_map[oldID] = newID;
+                    // Remap the properties
+                    mappings.forEach(property=>{
+                        polymorph_core.items[newID][this.settings[property]] = jsonData.items[oldID][property];
+                    })
+
+                    
+                }
+                for (let oldID in jsonData.items){
+                    // Extra remapping for fromProperty
+                    currentNewID=oldID_newID_map[oldID];
+                    if (currentNewID == oldID_newID_map[jsonData.rootID]){
+                        // Assign root level parent to current span ID
+                        polymorph_core.items[currentNewID][this.settings.parentProperty] = rootID;
+                    }else{
+                        polymorph_core.items[currentNewID][this.settings.parentProperty]=oldID_newID_map[polymorph_core.items[currentNewID][this.settings.parentProperty]];
+                    }
+                    polymorph_core.fire("updateItem",{id: currentNewID, sender: this});
+                    this.renderItem(currentNewID)
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    this.copylistExternal=(e) => {
+        let mappingsArray = ["parentProperty","orderProperty","titleProperty","filter"];
+        const sublistAsJSON = {
+            rootID: this.contextTarget.dataset.id,
+            items: {}
+        }
+
+
+        let runStack = [this.contextTarget];
+        while (runStack.length) {
+            let top = runStack.pop();
+            let filteredItem = {};
+            mappingsArray.forEach(setting=>{
+                filteredItem[setting]=polymorph_core.items[top.dataset.id][this.settings[setting]];
+            })
+            sublistAsJSON.items[top.dataset.id]=filteredItem;
+            let childItemDiv = top.children[top.children.length - 1]; // not just 1, becuase of the rich edit mode. but always last
+            for (let i = childItemDiv.children.length - 1; i >= 0; i--) {
+                runStack.push(childItemDiv.children[i]);
+            }
+        }
+
+        this.copyToClipboard("__WORKFLOWY_IMPORT__" + JSON.stringify(sublistAsJSON));
+        return true;
+    }
+};
+
 // todo: on enter or defocus, create new item
 // tab to indent
 polymorph_core.registerOperator("workflow_gf", {
@@ -8944,6 +9023,7 @@ polymorph_core.registerOperator("workflow_gf", {
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
+    workflow_recursive_paste.apply(this);
     let itemsShouldBeEditable = this.settings.isEditable;
 
     //Add content-independent HTML here.
@@ -9637,9 +9717,10 @@ polymorph_core.registerOperator("workflow_gf", {
 
             // get text representation of clipboard
             var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-
-            // insert text manually
-            document.execCommand("insertHTML", false, text);
+            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)){
+                // insert text manually
+                document.execCommand("insertHTML", false, text);
+            };
         }
     });
 

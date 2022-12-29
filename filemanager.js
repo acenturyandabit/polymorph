@@ -38,6 +38,7 @@
         "src/operators/workflow/focusMode.js",
         "src/operators/workflow/search.js",
         "src/operators/workflow/workflow_gitfriendly_contextmenu.js",
+        "src/operators/workflow/workflow_recursive_paste.js",
         "src/operators/workflow/workflow_gitfriendly.js",
         "src/operators/workflow/advancedentry.js",
         //"src/operators/textflow.js",

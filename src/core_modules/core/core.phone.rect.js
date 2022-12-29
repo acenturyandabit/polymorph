@@ -107,10 +107,13 @@ if (isPhone()) {
         this.newContainerBtn = this.listContainer.querySelector("div.newcontainer");
         this.tiedToMe = [];
         this.tieRect = function(id) { //tie a child rect.
-            while (polymorph_core.rects[id].listContainer.children.length > 1) {
-                this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
+            if (polymorph_core.rects[id].listContainer != this.listContainer){
+                // Bubble up listcontainers so there is only one per 'set' of rects
+                while (polymorph_core.rects[id].listContainer.children.length > 1) {
+                    this.listContainer.appendChild(polymorph_core.rects[id].listContainer.children[0]);
+                }
+                polymorph_core.rects[id].listContainer = this.listContainer;
             }
-            polymorph_core.rects[id].listContainer = this.listContainer;
             this.tiedToMe.push(id);
             polymorph_core.rects[id].adjustTies();
         }

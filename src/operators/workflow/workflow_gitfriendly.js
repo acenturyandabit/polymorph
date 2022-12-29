@@ -27,6 +27,7 @@ polymorph_core.registerOperator("workflow_gf", {
     };
     polymorph_core.operatorTemplate.call(this, container, defaultSettings);
     _workflow_focusMode_extend.apply(this);
+    workflow_recursive_paste.apply(this);
     let itemsShouldBeEditable = this.settings.isEditable;
 
     //Add content-independent HTML here.
@@ -720,9 +721,10 @@ polymorph_core.registerOperator("workflow_gf", {
 
             // get text representation of clipboard
             var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-
-            // insert text manually
-            document.execCommand("insertHTML", false, text);
+            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)){
+                // insert text manually
+                document.execCommand("insertHTML", false, text);
+            };
         }
     });
 

@@ -1,5 +1,5 @@
 let workflowy_gitfriendly_extend_contextMenu = function () {
-    this.contextTarget = undefined; // An item with a dataset-id.
+    this.contextTarget = undefined; // A HTML element with a dataset-id.
     let contextmenu;
     let recordContexted = (e) => {
         this.contextTarget = e.target;
@@ -28,6 +28,7 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         <ul class="submenu">
             <li data-action="copylist">Copy item tree for pasting</li>
             <li data-action="copylistinternal">Copy item tree internally</li>
+            <li data-action="copylistexternal">Copy for workflowy externally</li>
         </ul>
     </li>
     <li data-action="pasteInternal">Paste items</li>
@@ -150,6 +151,30 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
+    this.copyToClipboard = (text) => {
+        // Copies a string to the clipboard. 
+        if (window.clipboardData && window.clipboardData.setData) {
+            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+            return window.clipboardData.setData("Text", text);
+        } else
+            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+                let textarea = document.createElement("textarea");
+                textarea.textContent = text;
+                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+                } catch (ex) {
+                    console.warn("Copy to clipboard failed.", ex);
+                    return false;
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+        return true;
+    }
+
 
     this.contextMenuActions["copylist"] = (e) => {
         console.log(this.contextTarget);
@@ -178,28 +203,11 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
             // Replace extra newlines
             text = text.replace("-\n", "-");
         */
-        // Copies a string to the clipboard. 
-        if (window.clipboardData && window.clipboardData.setData) {
-            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-            return window.clipboardData.setData("Text", text);
-        } else
-            if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-                let textarea = document.createElement("textarea");
-                textarea.textContent = text;
-                textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in Microsoft Edge.
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    return document.execCommand("copy"); // Security exception may be thrown by some browsers.
-                } catch (ex) {
-                    console.warn("Copy to clipboard failed.", ex);
-                    return false;
-                } finally {
-                    document.body.removeChild(textarea);
-                }
-            }
-        return true;
+        this.copyToClipboard(text);
     }
+
+    this.contextMenuActions["copylistexternal"] = this.copylistExternal
+
     this.contextMenuActions["delitm"] = (e) => {
         let id = this.contextTarget.dataset.id;
         delete polymorph_core.items[id][this.settings.filter];
@@ -214,12 +222,12 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
-    this.contextMenuActions["sortbydate"] = (e) =>{
+    this.contextMenuActions["sortbydate"] = (e) => {
         let id = this.contextTarget.dataset.id;
         let parentID = polymorph_core.items[id][this.settings.parentProperty];
         this.sortParent(parentID, "DATE");
     }
-    this.contextMenuActions["sortbyalpha"] = (e) =>{
+    this.contextMenuActions["sortbyalpha"] = (e) => {
         let id = this.contextTarget.dataset.id;
         let parentID = polymorph_core.items[id][this.settings.parentProperty];
         this.sortParent(parentID, "ALPHA");
