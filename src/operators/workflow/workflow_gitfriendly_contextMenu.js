@@ -222,64 +222,16 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
-    this.contextMenuActions["sortbydate"] = (e) => {
-        let id = this.contextTarget.dataset.id;
-        let parentID = polymorph_core.items[id][this.settings.parentProperty];
-        this.sortParent(parentID, "DATE");
+    let doContextSortFactory = (sortType)=>{
+        return ()=>{
+            let id = this.contextTarget.dataset.id;
+            let parentID = polymorph_core.items[id][this.settings.parentProperty];
+            // if root item, parent may be undefined; set to ""
+            if (!parentID)parentID="";
+            this.sortParent(parentID, sortType);
+        }
     }
-    this.contextMenuActions["sortbyalpha"] = (e) => {
-        let id = this.contextTarget.dataset.id;
-        let parentID = polymorph_core.items[id][this.settings.parentProperty];
-        this.sortParent(parentID, "ALPHA");
-    }
-    // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
-    //     // clarify the toOrder first
-    //     if (root.target) root = undefined;
-    //     // for now, just assume property is a date
-    //     if (!property) {
-    //         property = this.settings.propAsDate.split(",")[0]
-    //     }
-    //     if (!property) {
-    //         return;
-    //     }
 
-    //     let itemMapper = (a) => {
-    //         let result;
-    //         if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
-    //             result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
-    //             if (result) result = result.date;
-    //         }
-    //         if (!result) result = Date.now() * 10000;
-    //         return [a, result];
-    //     }
-    //     property = `_${this.settings.bracketPropertyPrefix}_${property}`;
-    //     if (root && root.dataset.id) {
-    //         let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
-    //     } else if (!root) {
-    //         let objs = this.rootItems.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         this.rootItems = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
-    //     }
-    //     if (!root) root = this.innerRoot;
-    //     else if (root.matches(".cursorspan")) return;
-    //     else root = root.children[1];
-    //     Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.contextMenuActions["sortbydate"](i, property, true));
-    //     if (!recursive) {
-    //         if (root != this.innerRoot) {
-    //             this.renderItem(root.dataset.id);
-    //         } else {
-    //             let rcopy = this.rootItems.map(i => i).reverse();
-    //             let prevSpan = this.innerRoot.querySelector(`span[data-id="${rcopy[0]}"]`);
-    //             for (let i of rcopy) {
-    //                 let nextSpan = this.innerRoot.querySelector(`span[data-id="${i}"]`);
-    //                 this.innerRoot.insertBefore(nextSpan, prevSpan);
-    //                 prevSpan = nextSpan;
-    //             }
-    //         }
-    //     }
-    // }
+    this.contextMenuActions["sortbydate"] = doContextSortFactory("DATE");
+    this.contextMenuActions["sortbyalpha"] = doContextSortFactory("ALPHA");
 }
