@@ -9403,7 +9403,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
 
-                    if (isPhone() && options && options.eventToDisable){
+                    if (isPhone() && options && options.eventToDisable) {
                         options.eventToDisable.preventDefault();
                     }
 
@@ -9484,7 +9484,14 @@ polymorph_core.registerOperator("workflow_gf", {
                     //move item up
                     if (spanWithID.previousElementSibling) {
                         disableSortOnShuffle = true;
-                        polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
+                        if (spanWithID.previousElementSibling.previousElementSibling && !spanWithID.previousElementSibling.previousElementSibling.matches(".cursorspan")) {
+                            // insert between two previous siblings
+                            let presib_order = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty];
+                            let presib2_order = polymorph_core.items[spanWithID.previousElementSibling.previousElementSibling.dataset.id][this.settings.orderProperty];
+                            polymorph_core.items[id][this.settings.orderProperty] = (presib_order + presib2_order) / 2;
+                        } else {
+                            polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
+                        }
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -9502,7 +9509,14 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
                         disableSortOnShuffle = true;
-                        polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
+                        if (spanWithID.nextElementSibling.nextElementSibling) {
+                            // insert between two next siblings
+                            let nxsib_order = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty];
+                            let nxsib2_order = polymorph_core.items[spanWithID.nextElementSibling.nextElementSibling.dataset.id][this.settings.orderProperty];
+                            polymorph_core.items[id][this.settings.orderProperty] = (nxsib_order + nxsib2_order) / 2;
+                        } else {
+                            polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
+                        }
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -9572,7 +9586,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (e.target.matches(`span[data-id] span`)) {
             // special keys handler (delegated at span id span level)
             let id = e.target.parentElement.parentElement.dataset.id;
-            modifiers["ctrl"] = e.ctrlKey;
+            modifiers["ctrl"] = e.ctrlKey || e.metaKey;
             modifiers["alt"] = e.altKey;
             modifiers["shift"] = e.shiftKey;
             modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] |= i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
@@ -9669,7 +9683,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
             // get text representation of clipboard
             var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)){
+            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)) {
                 // insert text manually
                 document.execCommand("insertHTML", false, text);
             };
