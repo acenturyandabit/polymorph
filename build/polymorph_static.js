@@ -8456,16 +8456,17 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         `
     <li>Sort items
         <ul class="submenu">
-            <li data-action="sortbydate">Sort by Date</li>
-            <li data-action="sortbyalpha">Sort Alphabetically</li>
+        <li data-action="sortbydate">Sort by Date</li>
+        <li data-action="sortbyalpha">Sort Alphabetically</li>
         </ul>
     </li>
+    <li data-action="copytxt">Copy text</li>
     <li data-action="delitm">Delete item</li>
-    <li>Copy items
+        <li>Copy items
         <ul class="submenu">
-            <li data-action="copylist">Copy item tree for pasting</li>
-            <li data-action="copylistinternal">Copy item tree internally</li>
-            <li data-action="copylistexternal">Copy for workflowy externally</li>
+        <li data-action="copylist">Copy item tree for pasting</li>
+        <li data-action="copylistinternal">Copy item tree internally</li>
+        <li data-action="copylistexternal">Copy for workflowy externally</li>
         </ul>
     </li>
     <li data-action="pasteInternal">Paste items</li>
@@ -8509,6 +8510,15 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
             this.contextTarget.style.color = savedStyle.color;
         }
         return true;
+    }
+
+    this.contextMenuActions["copytxt"] = (e) => {
+        try {
+            return document.execCommand("copy"); // Security exception may be thrown by some browsers.
+        } catch (ex) {
+            console.warn("Copy to clipboard failed.", ex);
+            return false;
+        }
     }
 
     this.contextMenuActions["color"] = (e) => {

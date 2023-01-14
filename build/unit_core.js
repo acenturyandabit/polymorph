@@ -8686,66 +8686,18 @@ let workflowy_gitfriendly_extend_contextMenu = function () {
         return true;
     }
 
-    this.contextMenuActions["sortbydate"] = (e) => {
-        let id = this.contextTarget.dataset.id;
-        let parentID = polymorph_core.items[id][this.settings.parentProperty];
-        this.sortParent(parentID, "DATE");
+    let doContextSortFactory = (sortType)=>{
+        return ()=>{
+            let id = this.contextTarget.dataset.id;
+            let parentID = polymorph_core.items[id][this.settings.parentProperty];
+            // if root item, parent may be undefined; set to ""
+            if (!parentID)parentID="";
+            this.sortParent(parentID, sortType);
+        }
     }
-    this.contextMenuActions["sortbyalpha"] = (e) => {
-        let id = this.contextTarget.dataset.id;
-        let parentID = polymorph_core.items[id][this.settings.parentProperty];
-        this.sortParent(parentID, "ALPHA");
-    }
-    // this.contextMenuActions["sortbydate"] = (root, property, recursive = false) => {
-    //     // clarify the toOrder first
-    //     if (root.target) root = undefined;
-    //     // for now, just assume property is a date
-    //     if (!property) {
-    //         property = this.settings.propAsDate.split(",")[0]
-    //     }
-    //     if (!property) {
-    //         return;
-    //     }
 
-    //     let itemMapper = (a) => {
-    //         let result;
-    //         if (polymorph_core.items[a][property] && polymorph_core.items[a][property].date && polymorph_core.items[a][property].date.length) {
-    //             result = dateParser.getSortingTime(polymorph_core.items[a][property].datestring, new Date(polymorph_core.items[a][property].date[0].refdate))
-    //             if (result) result = result.date;
-    //         }
-    //         if (!result) result = Date.now() * 10000;
-    //         return [a, result];
-    //     }
-    //     property = `_${this.settings.bracketPropertyPrefix}_${property}`;
-    //     if (root && root.dataset.id) {
-    //         let objs = polymorph_core.items[root.dataset.id].toOrder.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         polymorph_core.items[root.dataset.id].toOrder = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: root.dataset.id, sender: this });
-    //     } else if (!root) {
-    //         let objs = this.rootItems.map(itemMapper);
-    //         objs.sort((a, b) => a[1] - b[1]);
-    //         this.rootItems = objs.map(i => i[0]);
-    //         polymorph_core.fire("updateItem", { id: this.rootItemId, sender: this });
-    //     }
-    //     if (!root) root = this.innerRoot;
-    //     else if (root.matches(".cursorspan")) return;
-    //     else root = root.children[1];
-    //     Array.from(root.children).filter(i => i.tagName == "SPAN").forEach(i => this.contextMenuActions["sortbydate"](i, property, true));
-    //     if (!recursive) {
-    //         if (root != this.innerRoot) {
-    //             this.renderItem(root.dataset.id);
-    //         } else {
-    //             let rcopy = this.rootItems.map(i => i).reverse();
-    //             let prevSpan = this.innerRoot.querySelector(`span[data-id="${rcopy[0]}"]`);
-    //             for (let i of rcopy) {
-    //                 let nextSpan = this.innerRoot.querySelector(`span[data-id="${i}"]`);
-    //                 this.innerRoot.insertBefore(nextSpan, prevSpan);
-    //                 prevSpan = nextSpan;
-    //             }
-    //         }
-    //     }
-    // }
+    this.contextMenuActions["sortbydate"] = doContextSortFactory("DATE");
+    this.contextMenuActions["sortbyalpha"] = doContextSortFactory("ALPHA");
 };
 
 let workflow_recursive_paste = function () {
@@ -9273,7 +9225,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         container.fire("updateItem", { id: preParent.dataset.id, sender: this });
                     }
 
-                    if (isPhone() && options && options.eventToDisable){
+                    if (isPhone() && options && options.eventToDisable) {
                         options.eventToDisable.preventDefault();
                     }
 
@@ -9354,7 +9306,14 @@ polymorph_core.registerOperator("workflow_gf", {
                     //move item up
                     if (spanWithID.previousElementSibling) {
                         disableSortOnShuffle = true;
-                        polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
+                        if (spanWithID.previousElementSibling.previousElementSibling && !spanWithID.previousElementSibling.previousElementSibling.matches(".cursorspan")) {
+                            // insert between two previous siblings
+                            let presib_order = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty];
+                            let presib2_order = polymorph_core.items[spanWithID.previousElementSibling.previousElementSibling.dataset.id][this.settings.orderProperty];
+                            polymorph_core.items[id][this.settings.orderProperty] = (presib_order + presib2_order) / 2;
+                        } else {
+                            polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.previousElementSibling.dataset.id][this.settings.orderProperty] - 0.5;
+                        }
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -9372,7 +9331,14 @@ polymorph_core.registerOperator("workflow_gf", {
                 if (modifiers["alt"]) {
                     if (spanWithID.nextElementSibling) {
                         disableSortOnShuffle = true;
-                        polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
+                        if (spanWithID.nextElementSibling.nextElementSibling) {
+                            // insert between two next siblings
+                            let nxsib_order = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty];
+                            let nxsib2_order = polymorph_core.items[spanWithID.nextElementSibling.nextElementSibling.dataset.id][this.settings.orderProperty];
+                            polymorph_core.items[id][this.settings.orderProperty] = (nxsib_order + nxsib2_order) / 2;
+                        } else {
+                            polymorph_core.items[id][this.settings.orderProperty] = polymorph_core.items[spanWithID.nextElementSibling.dataset.id][this.settings.orderProperty] + 0.5;
+                        }
                         container.fire("updateItem", { id: id, sender: this }); // kick update on item so that 'to' changes // must update here, so that other instances are aware we've changed the index
                         this.renderItem(id);
                         spanWithID.children[0].children[1].focus();
@@ -9442,7 +9408,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (e.target.matches(`span[data-id] span`)) {
             // special keys handler (delegated at span id span level)
             let id = e.target.parentElement.parentElement.dataset.id;
-            modifiers["ctrl"] = e.ctrlKey;
+            modifiers["ctrl"] = e.ctrlKey || e.metaKey;
             modifiers["alt"] = e.altKey;
             modifiers["shift"] = e.shiftKey;
             modifierButtons.forEach(i => { modifiers[i.dataset.corrkey] |= i.classList.contains("pressed") | i.classList.contains("heavyPressed") });
@@ -9539,7 +9505,7 @@ polymorph_core.registerOperator("workflow_gf", {
 
             // get text representation of clipboard
             var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)){
+            if (!this.check_workflow_recursive_paste(text, e.target.parentElement.parentElement.dataset.id)) {
                 // insert text manually
                 document.execCommand("insertHTML", false, text);
             };
