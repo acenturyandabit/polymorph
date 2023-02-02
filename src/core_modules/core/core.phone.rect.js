@@ -146,9 +146,6 @@ if (isPhone()) {
                     polymorph_core.lastFocusedMobileOperator.clearMobileFocused();
                 }
             }
-            if (polymorph_core.containers[id].operator.setMobileFocused){
-                polymorph_core.containers[id].operator.setMobileFocused();
-            }
             polymorph_core.containers[id].refresh();
         }
 

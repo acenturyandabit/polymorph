@@ -67,6 +67,12 @@ polymorph_core.registerOperator("workflow_gf", {
         flex: 0 0 5%
         width: 100%;
         display: ${isPhone() ? "flex" : "none"};
+        position: fixed;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        transform-origin: left bottom;
+        transform: translate(0px, 0px) scale(1);
     }
 
     span.bottomControlPanel button{
@@ -673,6 +679,11 @@ polymorph_core.registerOperator("workflow_gf", {
     })
 
     // Bottom control panel for phone
+    // Automatic viewport adjustment
+    const bottomControlPanel = this.rootdiv.querySelector(".bottomControlPanel");
+    workflowy_stick(bottomControlPanel);
+
+
     let modifierButtons = Array.from(this.rootdiv.querySelector(".bottomControlPanel").children).filter(i => i.classList.contains("modifier"));
     this.rootdiv.querySelector(".bottomControlPanel").addEventListener("click", (e) => {
         if (e.target.matches("button")) {
@@ -747,7 +758,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (this.innerRoot.querySelector(`[data-id="${d.id}"]`)) this.innerRoot.querySelector(`[data-id="${d.id}"]`).remove();
     })
 
-    container.on("focusItem", (d) => {
+    const focusOnItemExternal=(d, doCursorFocus)=>{
         if (restoreClickFlag) return;
 
         // ignore own sender because we focus when we type text and it resets the cursor on restorefocus, tripping up the editing
@@ -780,10 +791,19 @@ polymorph_core.registerOperator("workflow_gf", {
             //if (container.visible()) el.scrollIntoViewIfNeeded();
 
             // When clicking on an item elsewhere e.g. on a calendar, focus the item (even if another item was focused before)
-            focusOnElement(el, 0);
+            if (doCursorFocus)focusOnElement(el, 0);
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             el.classList.add("tmpFocused");
+            el.scrollIntoView();
         }
+    }
+
+    container.on("highlightItem", (d) => {
+        // Softer version of focusItem which only highlights the item
+        focusOnItemExternal(d,false)
+    });
+    container.on("focusItem", (d) => {
+        focusOnItemExternal(d,true)
     })
 
     this.deleteItem = (id) => {
@@ -1033,7 +1053,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         // just do a replace of datestrings to actual dates
                         // find all property-like objects
 
-                        let components = (notNullItemTitle).split(/(\\\{.+\})/g);
+                        let components = (notNullItemTitle).split(/(\\\{.+?\})/g);
                         components = components.map(i => {
                             let match = /\\\{(.+?)\}/g.exec(i);
                             if (match) {

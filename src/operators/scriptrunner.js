@@ -52,6 +52,16 @@
                     border:1px solid black;
                     border-radius: 3px;
                 }
+
+                .logBlueFlash{
+                    white-space: pre-wrap;
+                    margin: 0;
+                    animation: firstShowBlink 0.3s;
+                }
+                @keyframes firstShowBlink{
+                    from {background: blue;}
+                    to {background: none;}
+                }
             </style>
             <p data-switchto="code">Code</p>
             <p data-switchto="ui">UI</p>
@@ -64,7 +74,7 @@
                     <li>Press here for a <a class="showRef" href="#">reference</a>.</li>
                     <li>Press 'Update' to execute this script.</li>
                 </ul>
-                <textarea style="width: 100%; flex: 1 1 80%; tab-size:4" placeholder="Enter script here:"></textarea>
+                <textarea style="width: 100%; flex: 1 1 80%; tab-size:4; white-space: nowrap" placeholder="Enter script here:"></textarea>
                 <button class="updatebtn">Update</button>
                 <button class="stopbtn">Stop script</button>
                 <button class="clogs">Clear logs</button>
@@ -136,9 +146,10 @@
         function instance() {
             this.log = function (data) {
                 let p = document.createElement("p");
-                p.style.whiteSpace = "pre-wrap";
+                p.classList.add("logBlueFlash");
                 p.innerHTML = JSON.stringify(data, null, 4);
                 me.rootdiv.querySelector("#output").appendChild(p);
+                p.scrollIntoView();
             }
             this.logEx = (data) => {
                 this.log(String(data))

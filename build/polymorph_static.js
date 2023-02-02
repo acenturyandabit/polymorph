@@ -3340,9 +3340,6 @@ if (isPhone()) {
                     polymorph_core.lastFocusedMobileOperator.clearMobileFocused();
                 }
             }
-            if (polymorph_core.containers[id].operator.setMobileFocused){
-                polymorph_core.containers[id].operator.setMobileFocused();
-            }
             polymorph_core.containers[id].refresh();
         }
 
@@ -8330,6 +8327,36 @@ polymorph_core.registerOperator("terminal", {
 
 });;
 
+function workflowy_stick(el){
+    var viewport = window.visualViewport;
+    const layoutSpanner = document.createElement("div"); 
+
+    document.body.appendChild(layoutSpanner);
+
+    layoutSpanner.style.position="fixed";
+    layoutSpanner.style.width="100%";
+    layoutSpanner.style.height="100%";
+    layoutSpanner.style.visibility="hidden";
+
+    function viewportHandler() {
+        // Since the bar is position: fixed we need to offset it by the visual
+        // viewport's offset from the layout viewport origin.
+        var offsetX = viewport.offsetLeft;
+        var offsetY = viewport.height
+                    - layoutSpanner.getBoundingClientRect().height
+                    + viewport.offsetTop;
+
+        // You could also do this by setting style.left and style.top if you
+        // use width: 100% instead.
+        el.style.transform = 'translate(' + 
+                                    offsetX + 'px,' +
+                                    offsetY + 'px) ' +
+                                    'scale(' + 1/viewport.scale + ')'
+    }
+    window.visualViewport.addEventListener('scroll', viewportHandler);
+    window.visualViewport.addEventListener('resize', viewportHandler);
+};
+
 // todo: on enter or defocus, create new item
 // tab to indent
 polymorph_core.registerOperator("workflow", {
@@ -8378,7 +8405,7 @@ function workflowy_gitfriendly_search() {
     this.rootdiv.querySelector(".searcher").addEventListener("keyup", (e) => {
         //hide all items
         this.holdExpanded = {};
-        if (e.target.value.length > 4) {
+        if (e.target.value.length > 2) {
             // Hide everything
             for (let i in this.renderedItemCache) {
                 if (i) {
@@ -8820,6 +8847,12 @@ polymorph_core.registerOperator("workflow_gf", {
         flex: 0 0 5%
         width: 100%;
         display: ${isPhone() ? "flex" : "none"};
+        position: fixed;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        transform-origin: left bottom;
+        transform: translate(0px, 0px) scale(1);
     }
 
     span.bottomControlPanel button{
@@ -9426,6 +9459,11 @@ polymorph_core.registerOperator("workflow_gf", {
     })
 
     // Bottom control panel for phone
+    // Automatic viewport adjustment
+    const bottomControlPanel = this.rootdiv.querySelector(".bottomControlPanel");
+    workflowy_stick(bottomControlPanel);
+
+
     let modifierButtons = Array.from(this.rootdiv.querySelector(".bottomControlPanel").children).filter(i => i.classList.contains("modifier"));
     this.rootdiv.querySelector(".bottomControlPanel").addEventListener("click", (e) => {
         if (e.target.matches("button")) {
@@ -9500,7 +9538,7 @@ polymorph_core.registerOperator("workflow_gf", {
         if (this.innerRoot.querySelector(`[data-id="${d.id}"]`)) this.innerRoot.querySelector(`[data-id="${d.id}"]`).remove();
     })
 
-    container.on("focusItem", (d) => {
+    const focusOnItemExternal=(d, doCursorFocus)=>{
         if (restoreClickFlag) return;
 
         // ignore own sender because we focus when we type text and it resets the cursor on restorefocus, tripping up the editing
@@ -9533,10 +9571,19 @@ polymorph_core.registerOperator("workflow_gf", {
             //if (container.visible()) el.scrollIntoViewIfNeeded();
 
             // When clicking on an item elsewhere e.g. on a calendar, focus the item (even if another item was focused before)
-            focusOnElement(el, 0);
+            if (doCursorFocus)focusOnElement(el, 0);
             if (this.innerRoot.querySelector(".tmpFocused")) this.innerRoot.querySelector(".tmpFocused").classList.remove("tmpFocused");
             el.classList.add("tmpFocused");
+            el.scrollIntoView();
         }
+    }
+
+    container.on("highlightItem", (d) => {
+        // Softer version of focusItem which only highlights the item
+        focusOnItemExternal(d,false)
+    });
+    container.on("focusItem", (d) => {
+        focusOnItemExternal(d,true)
     })
 
     this.deleteItem = (id) => {
@@ -9786,7 +9833,7 @@ polymorph_core.registerOperator("workflow_gf", {
                         // just do a replace of datestrings to actual dates
                         // find all property-like objects
 
-                        let components = (notNullItemTitle).split(/(\\\{.+\})/g);
+                        let components = (notNullItemTitle).split(/(\\\{.+?\})/g);
                         components = components.map(i => {
                             let match = /\\\{(.+?)\}/g.exec(i);
                             if (match) {
@@ -15993,6 +16040,16 @@ polymorph_core.registerOperator("welcome", {
                     border:1px solid black;
                     border-radius: 3px;
                 }
+
+                .logBlueFlash{
+                    white-space: pre-wrap;
+                    margin: 0;
+                    animation: firstShowBlink 0.3s;
+                }
+                @keyframes firstShowBlink{
+                    from {background: blue;}
+                    to {background: none;}
+                }
             </style>
             <p data-switchto="code">Code</p>
             <p data-switchto="ui">UI</p>
@@ -16005,7 +16062,7 @@ polymorph_core.registerOperator("welcome", {
                     <li>Press here for a <a class="showRef" href="#">reference</a>.</li>
                     <li>Press 'Update' to execute this script.</li>
                 </ul>
-                <textarea style="width: 100%; flex: 1 1 80%; tab-size:4" placeholder="Enter script here:"></textarea>
+                <textarea style="width: 100%; flex: 1 1 80%; tab-size:4; white-space: nowrap" placeholder="Enter script here:"></textarea>
                 <button class="updatebtn">Update</button>
                 <button class="stopbtn">Stop script</button>
                 <button class="clogs">Clear logs</button>
@@ -16077,9 +16134,10 @@ polymorph_core.registerOperator("welcome", {
         function instance() {
             this.log = function (data) {
                 let p = document.createElement("p");
-                p.style.whiteSpace = "pre-wrap";
+                p.classList.add("logBlueFlash");
                 p.innerHTML = JSON.stringify(data, null, 4);
                 me.rootdiv.querySelector("#output").appendChild(p);
+                p.scrollIntoView();
             }
             this.logEx = (data) => {
                 this.log(String(data))

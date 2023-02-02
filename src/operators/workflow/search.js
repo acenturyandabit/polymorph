@@ -3,7 +3,7 @@ function workflowy_gitfriendly_search() {
     this.rootdiv.querySelector(".searcher").addEventListener("keyup", (e) => {
         //hide all items
         this.holdExpanded = {};
-        if (e.target.value.length > 4) {
+        if (e.target.value.length > 2) {
             // Hide everything
             for (let i in this.renderedItemCache) {
                 if (i) {

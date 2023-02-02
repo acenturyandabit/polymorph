@@ -34,6 +34,7 @@
         "src/operators/descbox.js",
         "src/genui/intervalParser.js",
         "src/operators/terminal.js",
+        "src/operators/workflow/workflow.phonebar.sticky.js",
         "src/operators/workflow/workflow_shim.js",
         "src/operators/workflow/focusMode.js",
         "src/operators/workflow/search.js",
