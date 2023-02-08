@@ -67,7 +67,7 @@ polymorph_core.registerOperator("workflow_gf", {
         flex: 0 0 5%
         width: 100%;
         display: ${isPhone() ? "flex" : "none"};
-        position: fixed;
+        position: sticky;
         left: 0px;
         right: 0px;
         bottom: 0px;
