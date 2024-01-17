@@ -6800,21 +6800,25 @@ if (!isPhone()) {
 
         d.querySelector(".savetable").addEventListener("click", () => {
             var data = this.loadTableData();
-            //var data = "ahoooj";
+            var filename = 'myfilename.html';
             var file = new Blob([data], { type: 'text/plain' });
             if (window.navigator.msSaveOrOpenBlob) // IE10+
                 window.navigator.msSaveOrOpenBlob(file, filename);
             else { // Others
-                var a = document.createElement("a"),
-                    url = URL.createObjectURL(file);
+                // Download the file
+                var a = document.createElement("a");
+                var url = URL.createObjectURL(file);
                 a.href = url;
-                a.download = 'myfilename.html';
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(function() {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // Open the file in a new tab
+                var newTab = window.open('', '_blank');
+                newTab.document.write('<html><head><title>New table</title></head><body><pre>' + data + '</pre></body></html>');
+
             }
         })
 
